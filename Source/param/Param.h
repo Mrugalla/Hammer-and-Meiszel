@@ -46,6 +46,7 @@ namespace param
 		Power,
 
 		// low level parameters
+		ModalMix,
 		Resonance,
 		//
 		

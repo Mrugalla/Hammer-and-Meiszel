@@ -59,6 +59,7 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
+		case PID::ModalMix: return "Modal Mix";
 		case PID::Resonance: return "Resonance";
 
 		default: return "Invalid Parameter Name";
@@ -126,6 +127,7 @@ namespace param
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
+		case PID::ModalMix: return "Mixes between the 2 modal filters.";
 		case PID::Resonance: return "Higher resonance causes sharper ringing.";
 
 		default: return "Invalid Tooltip.";
@@ -1269,6 +1271,7 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
+		params.push_back(makeParam(PID::ModalMix, 0.f));
 		params.push_back(makeParam(PID::Resonance, .5f));
 		// LOW LEVEL PARAMS END
 

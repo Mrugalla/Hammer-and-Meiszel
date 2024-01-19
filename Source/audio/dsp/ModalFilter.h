@@ -9,6 +9,7 @@
 #include <BinaryData.h>
 #include <juce_dsp/juce_dsp.h>
 #include "Resonator.h"
+#include "AutoGain.h"
 
 namespace dsp
 {
@@ -135,6 +136,55 @@ namespace dsp
 			material.load();
 		}
 
+		inline double calcBandwidthFc(double reso, double sampleRateInv) noexcept
+		{
+			const auto bw = 20. - math::tanhApprox(3. * reso) * 19.;
+			const auto bwFc = bw * sampleRateInv;
+			return bwFc;
+		}
+
+		struct DualMaterial
+		{
+			DualMaterial() :
+				materials(),
+				peakInfos()
+			{
+				materials[0].load(BinaryData::Eiskaffee_wav, BinaryData::Eiskaffee_wavSize);
+				generateSaw(materials[1]);
+				peakInfos = materials[0].peakInfos;
+			}
+
+			void setMix(float mix) noexcept
+			{
+				for (auto i = 0; i < NumFilters; ++i)
+				{
+					const auto mag0 = materials[0].peakInfos[i].mag;
+					const auto mag1 = materials[1].peakInfos[i].mag;
+					const auto mag = mag0 + mix * (mag1 - mag0);
+					peakInfos[i].mag = mag;
+
+					const auto ratio0 = materials[0].peakInfos[i].ratio;
+					const auto ratio1 = materials[1].peakInfos[i].ratio;
+					const auto ratio = ratio0 + mix * (ratio1 - ratio0);
+					peakInfos[i].ratio = ratio;
+				}
+			}
+
+			double getMag(int i) const noexcept
+			{
+				return static_cast<double>(peakInfos[i].mag);
+			}
+
+			double getRatio(int i) const noexcept
+			{
+				return static_cast<double>(peakInfos[i].ratio);
+			}
+
+		protected:
+			std::array<Material, 2> materials;
+			std::array<Material::PeakInfo, NumFilters> peakInfos;
+		};
+
 		struct Filter
 		{
 			struct Voice
@@ -147,288 +197,86 @@ namespace dsp
 						Release
 					};
 
-					Envelope() :
-						env(0.),
-						atk(0.),
-						rls(0.),
-						state(State::Release),
-						noteOn(false)
-					{}
+					Envelope();
 
-					double operator()(bool _noteOn) noexcept
-					{
-						noteOn = _noteOn;
-						return operator()();
-					}
+					double operator()(bool) noexcept;
 
-					double operator()() noexcept
-					{
-						switch (state)
-						{
-						case State::Attack: return processAttack();
-						case State::Release: return processRelease();
-						default: return env;
-						}
-					}
+					double operator()() noexcept;
 
 					double env, atk, rls;
 					State state;
 					bool noteOn;
 				protected:
 
-					double processAttack() noexcept
-					{
-						if (noteOn)
-						{
-							env += atk * (1. - env);
-							if (1. - env < 1e-6)
-								env = 1.;
-							return env;
-						}
-						state = State::Release;
-						return processRelease();
-					}
+					double processAttack() noexcept;
 
-					double processRelease() noexcept
-					{
-						if (noteOn)
-						{
-							state = State::Attack;
-							return processAttack();
-						}
-						env += rls * (0. - env);
-						if (env < 1e-6)
-							env = 0.;
-						return env;
-					}
+					double processRelease() noexcept;
 				};
 
 				struct Filter
 				{
-					Filter(const arch::XenManager& _xen, const Material& _material) :
-						xen(_xen),
-						material(_material),
-						resonators(),
-						sampleRate(1.),
-						nyquist(.5),
-						numFiltersBelowNyquist(0)
-					{
-					}
+					Filter(const arch::XenManager&, const DualMaterial&);
 
-					void prepare(double _sampleRate)
-					{
-						sampleRate = _sampleRate;
-						nyquist = sampleRate * .5;
-						setFrequencyHz(1000.);
-					}
+					void prepare(double);
 
 					/* samples, midi, numChannels, numSamples */
-					void operator()(double** samples, const MidiBuffer& midi,
-						int numChannels, int numSamples) noexcept
-					{
-						auto s = 0;
-						for (const auto it : midi)
-						{
-							const auto msg = it.getMessage();
-							if (msg.isNoteOn())
-							{
-								const auto ts = it.samplePosition;
-								const auto pitch = static_cast<double>(msg.getNoteNumber());
-								const auto freq = xen.noteToFreqHzWithWrap(pitch);
-								setFrequencyHz(freq);
-								applyFilter(samples, numChannels, s, ts);
-								s = ts;
-							}
-						}
+					void operator()(double**, const MidiBuffer&, int, int) noexcept;
 
-						applyFilter(samples, numChannels, s, numSamples);
-					}
+					void setFrequencyHz(double) noexcept;
 
-					void setFrequencyHz(double freq) noexcept
-					{
-						for (auto i = 0; i < material.numFilters; ++i)
-						{
-							const auto& peakInfo = material.peakInfos[i];
-							const auto freqRatio = peakInfo.ratio;
-							const auto freqFilter = freq * freqRatio;
-							if (freqFilter < nyquist)
-							{
-								const auto fc = math::freqHzToFc(freqFilter, sampleRate);
-								auto& resonator = resonators[i];
-								resonator.setCutoffFc(fc);
-								resonator.reset();
-								resonator.update();
-							}
-							else
-							{
-								numFiltersBelowNyquist = i;
-								return;
-							}
-						}
-						numFiltersBelowNyquist = material.numFilters;
-					}
+					void updateFreqRatios() noexcept;
 
-					void setBandwidth(double bw) noexcept
-					{
-						for (auto i = 0; i < material.numFilters; ++i)
-						{
-							auto& resonator = resonators[i];
-							resonator.setBandwidth(bw);
-							resonator.update();
-						}
-					}
+					/* bw */
+					void setBandwidth(double) noexcept;
 
 				private:
 					const arch::XenManager& xen;
-					const Material& material;
+					const DualMaterial& material;
 					std::array<ResonatorStereo<Resonator2>, NumFilters> resonators;
-					double sampleRate, nyquist;
+					double freqHz, sampleRate, nyquist;
 					int numFiltersBelowNyquist;
 
-					void applyFilter(double** samples, int numChannels,
-						int startIdx, int endIdx) noexcept
-					{
-						const auto& peakInfos = material.peakInfos;
-
-						for (auto ch = 0; ch < numChannels; ++ch)
-						{
-							auto smpls = samples[ch];
-							for (auto i = startIdx; i < endIdx; ++i)
-							{
-								const auto dry = smpls[i];
-								auto wet = 0.;
-								for (auto f = 0; f < numFiltersBelowNyquist; ++f)
-									wet += resonators[f](dry, ch) * peakInfos[f].mag;
-								smpls[i] = wet;
-							}
-						}
-					}
+					/* samples, numChannels, startIdx, endIdx */
+					void applyFilter(double**, int, int, int) noexcept;
 				};
 
-				Voice(const arch::XenManager& xen, const Material& material) :
-					filter(xen, material),
-					env(),
-					envBuffer(),
-					sleepy(true)
-				{}
+				Voice(const arch::XenManager&, const DualMaterial&);
 
-				void prepare(double sampleRate)
-				{
-					filter.prepare(sampleRate);
-					env.atk = math::msToInc(2., sampleRate);
-					env.rls = math::msToInc(10., sampleRate);
-				}
+				void prepare(double);
 
-				void setBandwidth(double bw) noexcept
-				{
-					filter.setBandwidth(bw);
-				}
+				/* bw */
+				void setBandwidth(double) noexcept;
 
-				void operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
-					int numChannels, int numSamples) noexcept
-				{
-					if (midi.isEmpty() && sleepy)
-						return;
-					processBlock(samplesSrc, samplesDest, midi, numChannels, numSamples);
-					detectSleepy(samplesDest, numChannels, numSamples);
-				}
+				/* samplesSrc, samplesDest, midi, numChannels, numSamples */
+				void operator()(const double**, double**, const MidiBuffer&, int, int) noexcept;
 
 				Filter filter;
 				Envelope env;
 				std::array<double, BlockSize2x> envBuffer;
+				double gain;
 				bool sleepy;
 			protected:
-				void processBlock(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
-					int numChannels, int numSamples) noexcept
-				{
-					synthesizeEnvelope(midi, numSamples);
-					processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
-					filter(samplesDest, midi, numChannels, numSamples);
-				}
+				/* samplesSrc, samplesDest, midi, numChannels, numSamples */
+				void processBlock(const double**, double**, const MidiBuffer&, int, int) noexcept;
 
-				void synthesizeEnvelope(const MidiBuffer& midi, int numSamples) noexcept
-				{
-					auto s = 0;
-					for (const auto it : midi)
-					{
-						const auto msg = it.getMessage();
-						const auto ts = it.samplePosition;
-						if (msg.isNoteOn())
-						{
-							s = synthesizeEnvelope(s, ts);
-							env.noteOn = true;
-						}
-						else if (msg.isNoteOff())
-						{
-							s = synthesizeEnvelope(s, ts);
-							env.noteOn = false;
-						}
-						else
-							s = synthesizeEnvelope(s, ts);
-					}
+				/* midi, numSamples */
+				void synthesizeEnvelope(const MidiBuffer&, int) noexcept;
 
-					synthesizeEnvelope(s, numSamples);
-				}
+				/* s, ts */
+				int synthesizeEnvelope(int, int) noexcept;
 
-				int synthesizeEnvelope(int s, int ts) noexcept
-				{
-					while (s < ts)
-					{
-						envBuffer[s] = env();
-						++s;
-					}
-					return s;
-				}
+				/* samplesSrc, samplesDest, numChannels, numSamples */
+				void processEnvelope(const double**, double**, int, int) noexcept;
 
-				void processEnvelope(const double** samplesSrc, double** samplesDest,
-					int numChannels, int numSamples) noexcept
-				{
-					for (auto ch = 0; ch < numChannels; ++ch)
-					{
-						const auto smplsSrc = samplesSrc[ch];
-						auto smplsDest = samplesDest[ch];
+				/* samplesDest, numChannels, numSamples */
+				void detectSleepy(double**, int, int) noexcept;
 
-						SIMD::multiply(smplsDest, smplsSrc, envBuffer.data(), numSamples);
-					}
-				}
-
-				void detectSleepy(double** samplesDest, int numChannels, int numSamples) noexcept
-				{
-					if(env.state != Envelope::State::Release)
-					{
-						sleepy = false;
-						return;
-					}
-
-					const bool bufferTooSmall = numSamples != BlockSize;
-					if (bufferTooSmall)
-						return;
-
-					sleepy = bufferSilent(samplesDest, numChannels, numSamples);
-					if (!sleepy)
-						return;
-
-					for (auto ch = 0; ch < numChannels; ++ch)
-						SIMD::clear(samplesDest[ch], numSamples);
-				}
-
-				bool bufferSilent(double* const* samplesDest, int numChannels, int numSamples) const noexcept
-				{
-					for (auto ch = 0; ch < numChannels; ++ch)
-					{
-						auto smpls = samplesDest[ch];
-						for (auto s = 0; s < numSamples; ++s)
-						{
-							auto smpl = std::abs(smpls[s]);
-							if (smpl > 1e-6)
-								return false;
-						}
-					}
-					return true;
-				}
+				/* samplesDest, numChannels, numSamples */
+				bool bufferSilent(double* const*, int, int) const noexcept;
 			};
 
 			Filter(const arch::XenManager& xen) :
+				autoGainReso(),
 				material(),
 				voices
 				{
@@ -439,7 +287,7 @@ namespace dsp
 				reso(-1.),
 				sampleRateInv(1.)
 			{
-				material.load(BinaryData::Eiskaffee_wav, BinaryData::Eiskaffee_wavSize);
+				initAutoGainReso();
 			}
 
 			void prepare(double sampleRate)
@@ -452,28 +300,43 @@ namespace dsp
 
 			/* samples, voiceSplit, parallelProcessor, reso]0,1], numChannels, numSamples */
 			void operator()(const double** samplesSrc, const MPESplit& voiceSplit,
-				PPMIDIBand& parallelProcessor, double _reso,
+				PPMIDIBand& parallelProcessor, double _modalMix, double _reso,
 				int numChannels, int numSamples) noexcept
 			{
+				updateModalMix(_modalMix);
 				updateReso(_reso);
 
 				for (auto v = 0; v < dsp::NumMPEChannels; ++v)
 					processVoice(samplesSrc, parallelProcessor, voiceSplit, v, numChannels, numSamples);
 			}
 
-			Material material;
+			AutoGain5 autoGainReso;
+			DualMaterial material;
 			std::array<Voice, NumMPEChannels> voices;
-			double reso, sampleRateInv;
+			double modalMix, reso, sampleRateInv;
 		private:
+			void updateModalMix(double _modalMix) noexcept
+			{
+				if (modalMix == _modalMix)
+					return;
+				modalMix = _modalMix;
+				material.setMix(static_cast<float>(modalMix));
+				for (auto& voice : voices)
+					voice.filter.updateFreqRatios();
+			}
+
 			void updateReso(double _reso) noexcept
 			{
 				if (reso == _reso)
 					return;
 				reso = _reso;
-				const auto bw = 20. - reso * 19.;
-				const auto bwFc = bw * sampleRateInv;
+				autoGainReso.updateParameterValue(reso);
+				const auto bwFc = calcBandwidthFc(reso, sampleRateInv);
 				for (auto& voice : voices)
+				{
 					voice.setBandwidth(bwFc);
+					voice.gain = autoGainReso();
+				}
 			}
 
 			void processVoice(const double** samplesSrc, PPMIDIBand& parallelProcessor, const MPESplit& voiceSplit, int v,
@@ -485,6 +348,31 @@ namespace dsp
 				double* vSamples[] = { band.l, band.r };
 				voices[v](samplesSrc, vSamples, vMIDI, numChannels, numSamples);
 			}
+
+			void initAutoGainReso()
+			{
+				ResonatorStereo<Resonator2> resonator;
+				resonator.setCutoffFc(500. / 44100.);
+				resonator.setGain(1.);
+				
+				autoGainReso.prepareGains
+				(
+					[&](double* smpls, double _reso, int numSamples)
+					{
+						reso = _reso;
+						const auto bwFc = calcBandwidthFc(reso, 1. / 44100.);
+						resonator.setBandwidth(bwFc);
+						resonator.update();
+						resonator.reset();
+						for (auto s = 0; s < numSamples; ++s)
+						{
+							const auto dry = smpls[s];
+							const auto wet = resonator(dry, 0);
+							smpls[s] = wet;
+						}
+					}
+				);
+			}
 		};
 	}
 	
@@ -493,7 +381,7 @@ namespace dsp
 /*
 
 todo:
-	gain compensate different resonance values
+	if importing sound can not produce NumFilters amount filters, discard or fallback method
 
 performance:
 	filter performance
@@ -503,10 +391,10 @@ performance:
 			freq
 
 features:
-	interpolate between 2 materials
-	saturate the mags with a parameter (lookuptable)
-
-bugs:
-	oversampling doubles the volume
+	material
+		mags
+			saturate
+		freqRatios
+			harmonize (nearest integer)
 
 */

@@ -24,6 +24,16 @@ namespace math
         return numerator / denominator;
     }
 
+    // for x != -9652.5
+    template<typename Float>
+    inline Float tanhApprox(Float x) noexcept
+    {
+		const auto x2 = x * x;
+		const auto numerator = x * (static_cast<Float>(135135) + x2 * (static_cast<Float>(17325) + x2 * static_cast<Float>(378)));
+		const auto denominator = static_cast<Float>(135135) + x2 * (static_cast<Float>(62370) + x2 * (static_cast<Float>(3150) + x2 * static_cast<Float>(28)));
+		return numerator / denominator;
+    }
+
     template <typename Float>
     inline Float slightlySmaller(Float x) noexcept
     {
@@ -55,7 +65,7 @@ namespace math
     }
 
     template<typename Float>
-    inline float getRMS(const Float* ar, const int size) noexcept
+    inline Float getRMS(const Float* ar, const int size) noexcept
     {
         auto rms = static_cast<Float>(0);
         for (auto i = 0; i < size; ++i)

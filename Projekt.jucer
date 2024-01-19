@@ -8,7 +8,7 @@
               pluginDesc="Harvests energy from unexpected sources" pluginManufacturer="Mrugalla"
               pluginManufacturerCode="Bbbb" pluginCode="Hmmz" pluginVST3Category="Filter,Fx,Tools"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOOut&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=true&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=0.f&#10;PPDGainOutMin=-24.f&#10;PPDGainOutMax=24.f&#10;&#10;PPDMaxXen=96"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOOut&#10;&#10;PPDHasStereoConfig=false&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=0.f&#10;PPDGainOutMin=-24.f&#10;PPDGainOutMax=24.f&#10;&#10;PPDMaxXen=96"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
@@ -114,6 +114,8 @@
       </GROUP>
       <GROUP id="{40307200-594D-4A49-C512-2C481058424A}" name="audio">
         <GROUP id="{59EAA807-50FE-F7F8-0D20-F8E7A0503840}" name="dsp">
+          <FILE id="AG7iE0" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
+          <FILE id="Vqq7T8" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
           <FILE id="yCB0ii" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>
           <FILE id="f6dMPF" name="Resonator.h" compile="0" resource="0" file="Source/audio/dsp/Resonator.h"/>
           <FILE id="S4ULQD" name="Convolver.cpp" compile="1" resource="0" file="Source/audio/dsp/Convolver.cpp"/>

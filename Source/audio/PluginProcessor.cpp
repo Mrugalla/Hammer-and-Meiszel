@@ -34,10 +34,13 @@ namespace audio
 
 		const auto samplesConst = const_cast<const double**>(samples);
 
+		const auto& modalMixParam = params(PID::ModalMix);
+		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
+
 		const auto& resoParam = params(PID::Resonance);
 		const auto reso = static_cast<double>(resoParam.getValMod());
 
-		modalFilter(samplesConst, voiceSplit, parallelProcessor, reso, numChannels, numSamples);
+		modalFilter(samplesConst, voiceSplit, parallelProcessor, modalMix, reso, numChannels, numSamples);
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);
 	}
 

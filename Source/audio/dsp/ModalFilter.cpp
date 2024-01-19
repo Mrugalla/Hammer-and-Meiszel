@@ -4,6 +4,8 @@ namespace dsp
 {
 	namespace modal
 	{
+		// Material
+
 		Material::Material() :
 			buffer(),
 			peakInfos(),
@@ -299,6 +301,298 @@ namespace dsp
 			makeSpectrumImage(std::move(name), buf, FFTSize, thresholdDb - 6.f, false,
 				peakIndexes, numFilters, true, isLog, sampleRate);
 		}
-	}
 
+		// Filter/Voice/Envelope
+
+		Filter::Voice::Envelope::Envelope() :
+			env(0.),
+			atk(0.),
+			rls(0.),
+			state(State::Release),
+			noteOn(false)
+		{}
+
+		double Filter::Voice::Envelope::operator()(bool _noteOn) noexcept
+		{
+			noteOn = _noteOn;
+			return operator()();
+		}
+
+		double Filter::Voice::Envelope::operator()() noexcept
+		{
+			switch (state)
+			{
+			case State::Attack: return processAttack();
+			case State::Release: return processRelease();
+			default: return env;
+			}
+		}
+
+		double Filter::Voice::Envelope::processAttack() noexcept
+		{
+			if (noteOn)
+			{
+				env += atk * (1. - env);
+				if (1. - env < 1e-6)
+					env = 1.;
+				return env;
+			}
+			state = State::Release;
+			return processRelease();
+		}
+
+		double Filter::Voice::Envelope::processRelease() noexcept
+		{
+			if (noteOn)
+			{
+				state = State::Attack;
+				return processAttack();
+			}
+			env += rls * (0. - env);
+			if (env < 1e-6)
+				env = 0.;
+			return env;
+		}
+
+		// Filter/Voice/Filter
+
+		Filter::Voice::Filter::Filter(const arch::XenManager& _xen, const DualMaterial& _material) :
+			xen(_xen),
+			material(_material),
+			resonators(),
+			freqHz(1000.),
+			sampleRate(1.),
+			nyquist(.5),
+			numFiltersBelowNyquist(0)
+		{
+		}
+
+		void Filter::Voice::Filter::prepare(double _sampleRate)
+		{
+			sampleRate = _sampleRate;
+			nyquist = sampleRate * .5;
+			setFrequencyHz(1000.);
+		}
+
+		/* samples, midi, numChannels, numSamples */
+		void Filter::Voice::Filter::operator()(double** samples, const MidiBuffer& midi,
+			int numChannels, int numSamples) noexcept
+		{
+			auto s = 0;
+			for (const auto it : midi)
+			{
+				const auto msg = it.getMessage();
+				if (msg.isNoteOn())
+				{
+					const auto ts = it.samplePosition;
+					const auto pitch = static_cast<double>(msg.getNoteNumber());
+					const auto freq = xen.noteToFreqHzWithWrap(pitch);
+					setFrequencyHz(freq);
+					applyFilter(samples, numChannels, s, ts);
+					s = ts;
+				}
+			}
+
+			applyFilter(samples, numChannels, s, numSamples);
+		}
+
+		void Filter::Voice::Filter::setFrequencyHz(double freq) noexcept
+		{
+			if (freqHz == freq)
+				return;
+			freqHz = freq;
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				const auto freqRatio = material.getRatio(i);
+				const auto freqFilter = freqHz * freqRatio;
+				if (freqFilter < nyquist)
+				{
+					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
+					auto& resonator = resonators[i];
+					resonator.setCutoffFc(fc);
+					resonator.reset();
+					resonator.update();
+				}
+				else
+				{
+					numFiltersBelowNyquist = i;
+					return;
+				}
+			}
+			numFiltersBelowNyquist = NumFilters;
+		}
+
+		void Filter::Voice::Filter::updateFreqRatios() noexcept
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				const auto freqRatio = material.getRatio(i);
+				const auto freqFilter = freqHz * freqRatio;
+				if (freqFilter < nyquist)
+				{
+					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
+					auto& resonator = resonators[i];
+					resonator.setCutoffFc(fc);
+					resonator.update();
+				}
+				else
+				{
+					numFiltersBelowNyquist = i;
+					return;
+				}
+			}
+			numFiltersBelowNyquist = NumFilters;
+		}
+
+		void Filter::Voice::Filter::setBandwidth(double bw) noexcept
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				auto& resonator = resonators[i];
+				resonator.setBandwidth(bw);
+				resonator.update();
+			}
+		}
+
+		void Filter::Voice::Filter::applyFilter(double** samples, int numChannels,
+			int startIdx, int endIdx) noexcept
+		{
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				auto smpls = samples[ch];
+				for (auto i = startIdx; i < endIdx; ++i)
+				{
+					const auto dry = smpls[i];
+					auto wet = 0.;
+					for (auto f = 0; f < numFiltersBelowNyquist; ++f)
+						wet += resonators[f](dry, ch) * material.getMag(f);
+					smpls[i] = wet;
+				}
+			}
+		}
+
+		// Filter/Voice
+
+		Filter::Voice::Voice(const arch::XenManager& xen, const DualMaterial& material) :
+			filter(xen, material),
+			env(),
+			envBuffer(),
+			gain(1.),
+			sleepy(true)
+		{}
+
+		void Filter::Voice::prepare(double sampleRate)
+		{
+			filter.prepare(sampleRate);
+			env.atk = math::msToInc(2., sampleRate);
+			env.rls = math::msToInc(10., sampleRate);
+		}
+
+		void Filter::Voice::setBandwidth(double bw) noexcept
+		{
+			filter.setBandwidth(bw);
+		}
+
+		void Filter::Voice::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
+			int numChannels, int numSamples) noexcept
+		{
+			if (midi.isEmpty() && sleepy)
+				return;
+			processBlock(samplesSrc, samplesDest, midi, numChannels, numSamples);
+			detectSleepy(samplesDest, numChannels, numSamples);
+		}
+
+		void Filter::Voice::processBlock(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
+			int numChannels, int numSamples) noexcept
+		{
+			synthesizeEnvelope(midi, numSamples);
+			processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
+			filter(samplesDest, midi, numChannels, numSamples);
+			for(auto ch = 0; ch < numChannels; ++ch)
+				SIMD::multiply(samplesDest[ch], gain, numSamples);
+		}
+
+		void Filter::Voice::synthesizeEnvelope(const MidiBuffer& midi, int numSamples) noexcept
+		{
+			auto s = 0;
+			for (const auto it : midi)
+			{
+				const auto msg = it.getMessage();
+				const auto ts = it.samplePosition;
+				if (msg.isNoteOn())
+				{
+					s = synthesizeEnvelope(s, ts);
+					env.noteOn = true;
+				}
+				else if (msg.isNoteOff())
+				{
+					s = synthesizeEnvelope(s, ts);
+					env.noteOn = false;
+				}
+				else
+					s = synthesizeEnvelope(s, ts);
+			}
+
+			synthesizeEnvelope(s, numSamples);
+		}
+
+		int Filter::Voice::synthesizeEnvelope(int s, int ts) noexcept
+		{
+			while (s < ts)
+			{
+				envBuffer[s] = env();
+				++s;
+			}
+			return s;
+		}
+
+		void Filter::Voice::processEnvelope(const double** samplesSrc, double** samplesDest,
+			int numChannels, int numSamples) noexcept
+		{
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				const auto smplsSrc = samplesSrc[ch];
+				auto smplsDest = samplesDest[ch];
+
+				SIMD::multiply(smplsDest, smplsSrc, envBuffer.data(), numSamples);
+			}
+		}
+
+		void Filter::Voice::detectSleepy(double** samplesDest, int numChannels, int numSamples) noexcept
+		{
+			if (env.state != Envelope::State::Release)
+			{
+				sleepy = false;
+				return;
+			}
+
+			const bool bufferTooSmall = numSamples != BlockSize;
+			if (bufferTooSmall)
+				return;
+
+			sleepy = bufferSilent(samplesDest, numChannels, numSamples);
+			if (!sleepy)
+				return;
+
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::clear(samplesDest[ch], numSamples);
+		}
+
+		bool Filter::Voice::bufferSilent(double* const* samplesDest, int numChannels, int numSamples) const noexcept
+		{
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				auto smpls = samplesDest[ch];
+				for (auto s = 0; s < numSamples; ++s)
+				{
+					auto smpl = std::abs(smpls[s]);
+					if (smpl > 1e-6)
+						return false;
+				}
+			}
+			return true;
+		}
+
+		// Filter
+	}
 }
