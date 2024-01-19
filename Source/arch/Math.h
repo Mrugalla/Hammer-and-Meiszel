@@ -39,13 +39,13 @@ namespace math
     template<typename Float>
     inline Float msToSamples(Float ms, Float Fs) noexcept
     {
-        return secsInSamples(ms * static_cast<Float>(.001), Fs);
+        return secsToSamples(ms * static_cast<Float>(.001), Fs);
     }
 
     template<typename Float>
     inline Float msToInc(Float ms, Float Fs) noexcept
     {
-        return static_cast<Float>(1) / msInSamples(ms, Fs);
+        return static_cast<Float>(1) / msToSamples(ms, Fs);
     }
 
     template<typename Float>

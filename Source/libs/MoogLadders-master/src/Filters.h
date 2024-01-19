@@ -10,7 +10,7 @@ namespace moog
 	{
 		enum Type { LP, HP, BP, AP, NOTCH, PEAK, LS, HS };
 		static constexpr double DefaultCutoffFc = 1000. / 44100.;
-		static constexpr double DefaultResonance = .1;
+		static constexpr double DefaultResonance = .8;
 
 		BiquadFilter() :
 			type(Type::BP),
@@ -151,21 +151,12 @@ namespace moog
 
 		void copyFrom(const BiquadFilter& other) noexcept
 		{
-			type = other.type;
 			for(auto i = 0; i < bCoef.size(); ++i)
 				bCoef[i] = other.bCoef[i];
 			for (auto i = 0; i < aCoef.size(); ++i)
 				aCoef[i] = other.aCoef[i];
-			omega = other.omega;
-			cosOmega = other.cosOmega;
-			sinOmega = other.sinOmega;
-			Q = other.Q;
-			alpha = other.alpha;
-			A = other.A;
-			for (auto i = 0; i < a.size(); ++i)
-				a[i] = other.a[i];
-			for (auto i = 0; i < b.size(); ++i)
-				b[i] = other.b[i];
+			for (auto i = 0; i < w.size(); ++i)
+				w[i] = other.w[i];
 		}
 
 		Type type;

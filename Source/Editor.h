@@ -32,7 +32,7 @@ namespace gui
         KnobPainterBasic painterMacro;
         KnobParam macroKnob;
 
-        ModalFilterMaterialView materialView;
+        //ModalFilterMaterialView materialView;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

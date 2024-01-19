@@ -1,5 +1,11 @@
 #pragma once
 #include "../param/Param.h"
+
+#include "../HammerUndMeiszelTests.h"
+
+#include "dsp/midi/AutoMPE.h"
+#include "dsp/midi/MPESplit.h"
+#include "dsp/ParallelProcessor.h"
 #include "dsp/ModalFilter.h"
 
 /*
@@ -32,6 +38,11 @@ namespace audio
 		const arch::XenManager& xen;
 		double sampleRate;
 
-		dsp::ModalFilter modalFilter;
+		test::MIDIRandomMelodyGenerator randomMelodyGenerator;
+
+		dsp::AutoMPE autoMPE;
+		dsp::MPESplit voiceSplit;
+		dsp::PPMIDIBand parallelProcessor;
+		dsp::modal::Filter modalFilter;
 	};
 }

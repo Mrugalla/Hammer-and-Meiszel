@@ -13,7 +13,8 @@ namespace dsp
 			bool noteOn;
 		};
 
-		using Voices = std::array<Voice, NumMPEChannels>;
+		static constexpr int VoicesSize = NumMPEChannels;
+		using Voices = std::array<Voice, VoicesSize>;
 
 		AutoMPE();
 
@@ -24,7 +25,7 @@ namespace dsp
 		Voices voices;
 		int channelIdx;
 
-		void incChannel() noexcept;
+		void incChannelIdx() noexcept;
 
 		/* msg, ts */
 		void processNoteOn(MidiMessage&, int);

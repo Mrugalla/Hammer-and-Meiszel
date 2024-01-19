@@ -4,551 +4,509 @@
 #include "../../arch/Math.h"
 #include "PRM.h"
 #include "Convolver.h"
+#include "ParallelProcessor.h"
+#include "midi/MPESplit.h"
 #include <BinaryData.h>
 #include <juce_dsp/juce_dsp.h>
+#include "Resonator.h"
 
 namespace dsp
 {
-	struct StereoFilter  
+	namespace modal
 	{
-		static constexpr double MinReso = 1.5;
-		static constexpr double ResoRange = 1.2;
-		static constexpr double MinResoGainDb = -2.;
-		static constexpr double MaxResoGainDb = -18.;
-		static constexpr int MaxSlope = 2;
-		using Filters = std::array<moog::BiquadFilterSlope<MaxSlope>, 2>;
-		using Type = typename moog::BiquadFilter::Type;
+#if JUCE_DEBUG
+		static constexpr int NumFilters = 12;
+#else
+		static constexpr int NumFilters = 48;
+#endif
 
-		StereoFilter() :
-			filters(),
-			cutoffFc(moog::BiquadFilter::DefaultCutoffFc),
-			reso(moog::BiquadFilter::DefaultResonance),
-			type(Type::BP),
-			gain(1.)
+		struct Material
 		{
-		}
-
-		void prepare() noexcept
-		{
-			for (auto& filter : filters)
-				filter.prepare();
-		}
-
-		void operator()(double** samples, int numChannels, int numSamples) noexcept
-		{
-			for (auto ch = 0; ch < numChannels; ++ch)
-			{
-				auto smpls = samples[ch];
-				filters[ch](smpls, numSamples);
-				SIMD::multiply(smpls, gain, numSamples);
-			}
-		}
-
-		double operator()(double sample, int ch) noexcept
-		{
-			return filters[ch](sample) * gain;
-		}
-
-		bool setCutoffFc(double fc) noexcept
-		{
-			if (cutoffFc == fc)
-				return false;
-			cutoffFc = fc;
-			filters[0].setCutoffFc(cutoffFc);
-			filters[1].copyFrom(filters[0]);
-			return true;
-		}
-
-		bool setResonance(double q) noexcept
-		{
-			if (reso == q)
-				return false;
-			reso = q;
-			const auto r = MinReso - reso * reso * ResoRange;
-			for (auto& filter : filters)
-				filter.setResonance(r);
-			gain = math::dbToAmp(MaxResoGainDb + r * (MinResoGainDb - MaxResoGainDb));
-			return true;
-		}
-
-		bool setType(Type _type) noexcept
-		{
-			if (type == _type)
-				return false;
-			type = _type;
-			for (auto& filter : filters)
-				filter.setType(type);
-			return true;
-		}
-
-		void setSlope(int slope) noexcept
-		{
-			for (auto& filter : filters)
-				filter.setSlope(slope);
-		}
-
-		void update() noexcept
-		{
-			filters[0].update();
-			filters[1].copyFrom(filters[0]);
-		}
-
-	protected:
-		Filters filters;
-		double cutoffFc, reso;
-		Type type;
-		double gain;
-	};
-
-	struct ModalFilter
-	{
-		static constexpr int FFTOrder = 15;
-		static constexpr int NumFilters = 64;
-
-		static constexpr int FFTSize = 1 << FFTOrder;
-		static constexpr int FFTSize2 = FFTSize * 2;
-		static constexpr float FFTSizeF = static_cast<float>(FFTSize);
-		static constexpr float FFTSizeInv = 1.f / FFTSizeF;
-		static constexpr int FFTSizeHalf = FFTSize / 2;
-		using MaterialBuffer = std::array<float, FFTSize>;
-		//using FifoBuffer = std::array<float, FFTSize2>;
-
-		class Material
-		{
+			static constexpr int FFTOrder = 15;
+			static constexpr int FFTSize = 1 << FFTOrder;
+			static constexpr int FFTSize2 = FFTSize * 2;
+			static constexpr float FFTSizeF = static_cast<float>(FFTSize);
+			static constexpr float FFTSizeInv = 1.f / FFTSizeF;
+			static constexpr int FFTSizeHalf = FFTSize / 2;
+			using MaterialBuffer = std::array<float, FFTSize>;
 			using FFT = juce::dsp::FFT;
-
-			struct PeakIndexInfo
-			{
-				std::vector<int> indexes;
-			};
 
 			struct PeakInfo
 			{
 				float mag;
 				float ratio;
 			};
-		public:
 
-			Material() :
-				buffer(),
-				updated(false),
-				audioSampleRate(0.f)
-			{
-			}
+			Material();
 
-			void load(const char* data, int size)
-			{
-				fillBuffer(data, size);
-				load();
-			}
+			// data, size
+			void load(const char*, int);
 
-			void load()
-			{
-				std::vector<float> fifo, binsNorm;
-				fifo.resize(FFTSize2);
-				applyFFT(fifo.data());
-				auto bins = fifo.data();
-				{
-					std::vector<float> binsLP;
-					binsLP.resize(FFTSize2);
-					applyLowpassIIR(binsLP.data(), bins, 50.f, .2f, 3);
-					binsNorm.resize(FFTSize2);
-					divide(binsNorm.data(), bins, binsLP.data());
-					normalize(binsNorm.data());
-				}
-				const auto harm0Idx = getMaxMagnitudeIdx(binsNorm.data(), 0, FFTSizeHalf);
-				std::vector<PeakIndexInfo> peakGroups;
-				generatePeakGroups(peakGroups, binsNorm.data(), harm0Idx, NumFilters);
-				std::vector<int> peakIndexes;
-				peakIndexes.resize(NumFilters);
-				generatePeakIndexes(peakIndexes, bins, peakGroups);
-				generatePeakInfos(bins, peakIndexes.data(), static_cast<float>(harm0Idx));
-				updated.store(true);
-			}
+			void load();
 
 			MaterialBuffer buffer;
 			std::array<PeakInfo, NumFilters> peakInfos;
 			std::atomic<bool> updated;
-			float audioSampleRate;
-		protected:
-			
-			void fillBuffer(const char* data, int size)
+			float sampleRate;
+			int numFilters;
+		private:
+			struct PeakIndexInfo
 			{
-				AudioBufferF tmpBuffer;
-				audioSampleRate = static_cast<float>(loadFromMemory(tmpBuffer, data, size));
-				const auto samples = tmpBuffer.getArrayOfReadPointers();
-				const auto numChannels = tmpBuffer.getNumChannels();
-				const auto numSamples = tmpBuffer.getNumSamples();
-				for(auto& b: buffer)
-					b = 0.f;
-				auto len = numSamples < FFTSize ? numSamples : FFTSize;
-				for (auto s = 0; s < len; ++s)
-					buffer[s] = samples[0][s];
-				for (auto ch = 1; ch < numChannels; ++ch)
-					for (auto s = 0; s < len; ++s)
-						buffer[s] += samples[ch][s];
-				const auto gain = 1.f / static_cast<float>(numChannels);
-				SIMD::multiply(buffer.data(), gain, len);
-			}
+				std::vector<int> indexes;
+			};
 
-			void applyFFT(float* fifo)
-			{
-				FFT fft(FFTOrder);
-				const auto windowFunc = [&](float x)
-				{
-					auto w = .5f - .5f * std::cos(TauF * x);
-					return w;
-				};
-				for (auto i = 0; i < FFTSize; ++i)
-				{
-					const auto x = static_cast<float>(i) * FFTSizeInv;
-					const auto wndw = windowFunc(x);
-					fifo[i] = buffer[i] * wndw;
-				}
-				fft.performRealOnlyForwardTransform(fifo, true);
-				generateMagnitudes(fifo);
-				normalize(fifo);
-			}
+			// data, size
+			void fillBuffer(const char*, int);
 
-			void generateMagnitudes(float* bins) noexcept
-			{
-				for (auto s = 0; s < FFTSize; ++s)
-					bins[s] = std::abs(bins[s]);
-			}
+			// fifo
+			void applyFFT(float*);
 
-			void normalize(float* bins) noexcept
-			{
-				auto max = 0.f;
-				for (auto s = 0; s < FFTSize; ++s)
-					if (max < bins[s])
-						max = bins[s];
-				const auto gain = 1.f / max;
-				for (auto s = 0; s < FFTSize; ++s)
-					bins[s] *= gain;
-			}
+			// bins
+			void generateMagnitudes(float*) noexcept;
 
-			void applyLowpassFIR(float* dest, const float* src,
-				float cutoff, float bw)
-			{
-				ImpulseResponse<float, FFTSize> ir;
-				ir.makeLowpass(44100.f, cutoff, bw, false);
-				const auto lpLen = FFTSize + ir.getLatency();
+			// bins
+			void normalize(float*) noexcept;
 
-				std::vector<int> wHead;
-				wHead.reserve(lpLen);
-				for (auto i = 0; i < lpLen; ++i)
-					wHead.emplace_back(i);
+			// dest, src, cutoff, bw
+			void applyLowpassFIR(float*, const float*, float, float);
 
-				dsp::Convolver<float, FFTSize> convolver(ir);
-				for (auto i = 0; i < lpLen; ++i)
-					dest[i] = convolver.processSample(src[i], convolver.ringBuffer[0].data(), wHead[i]);
-				applyNegativeDelay(dest, ir.getLatency());
-			}
+			// dest, src, cutoff, reso, slope
+			void applyLowpassIIR(float*, const float*, float, float, int = 1);
 
-			void applyLowpassIIR(float* dest, const float* src,
-				float cutoff, float reso, int slope = 1)
-			{
-				moog::BiquadFilter lp;
-				lp.setType(moog::BiquadFilter::Type::LP);
-				lp.setCutoffFc(cutoff / 44100.f);
-				lp.setResonance(reso);
-				lp.update();
+			// bins offset
+			void applyNegativeDelay(float*, int) noexcept;
 
-				for(auto i = FFTSize - 1; i != 0; --i)
-					dest[i] = static_cast<float>(lp(static_cast<double>(src[i])));
-				for(auto i = 0; i < FFTSize; ++i)
-					dest[i] = static_cast<float>(lp(static_cast<double>(dest[i])));
+			// dest, a, b
+			void divide(float*, const float*, const float*) noexcept;
 
-				for (auto i = 1; i < slope; ++i)
-				{
-					for (auto j = FFTSize - 1; j != 0; --j)
-						dest[j] = static_cast<float>(lp(static_cast<double>(dest[j])));
-					for (auto j = 0; j < FFTSize; ++j)
-						dest[j] = static_cast<float>(lp(static_cast<double>(dest[j])));
-				}
-			}
+			// bins, lowerLimitIdx, upperLimitidx
+			int getMaxMagnitudeIdx(const float*, int, int) const noexcept;
 
-			void applyNegativeDelay(float* bins, int offset) noexcept
-			{
-				for (auto s = 0; s < FFTSize; ++s)
-					bins[s] = bins[(s + offset) % FFTSize];
-			}
+			// bins, lowerLimitIdx, upperLimitidx
+			int getMinMagnitudeIdx(const float*, int, int) const noexcept;
 
-			void divide(float* dest, const float* a, const float* b) noexcept
-			{
-				for (auto i = 0; i < FFTSize; ++i)
-					if (b[i] != 0.f)
-						dest[i] = a[i] / b[i];
-					else
-						dest[i] = 0.f;
-			}
+			// peakGroups, binsNorm, minBinidx
+			float generatePeakGroups(std::vector<PeakIndexInfo>&, const float*, int);
 
-			int getMaxMagnitudeIdx(const float* bins, int lowerLimitIdx, int upperLimitIdx) const noexcept
-			{
-				auto idx = lowerLimitIdx;
-				auto max = bins[lowerLimitIdx];
-				for (auto b = lowerLimitIdx; b < upperLimitIdx; ++b)
-					if (max < bins[b])
-					{
-						max = bins[b];
-						idx = b;
-					}
-				return idx;
-			}
+			// peakGroups, binsNorm, targetThresholdDb, minBinIdx
+			void applyAdaptiveThreshold(std::vector<PeakIndexInfo>&, const float*, float, int);
 
-			int getMinMagnitudeIdx(const float* bins, int lowerLimitIdx, int upperLimitIdx) const noexcept
-			{
-				auto idx = lowerLimitIdx;
-				auto min = bins[lowerLimitIdx];
-				for (auto b = lowerLimitIdx; b < upperLimitIdx; ++b)
-					if (min > bins[b])
-					{
-						min = bins[b];
-						idx = b;
-					}
-				return idx;
-			}
+			// peakIndexes, bins, peakIdxInfos
+			void generatePeakIndexes(std::vector<int>&, const float*,
+				const std::vector<PeakIndexInfo>&);
 
-			float generatePeakGroups(std::vector<PeakIndexInfo>& peakGroups, const float* binsNorm, int minBinIdx, int numFilters)
-			{
-				auto targetThresholdDb = 0.f;
-				do
-				{
-					targetThresholdDb -= 2.f;
-					applyAdaptiveThreshold(peakGroups, binsNorm, targetThresholdDb, minBinIdx);
-				} while (peakGroups.size() < numFilters);
+			// fifo, peakIndexes
+			float getHarm0Idx(const float*, const int*) const noexcept;
 
-				return targetThresholdDb;
-			}
+			// fifo, peakIndexes
+			int getMinPeakIdx(const float*, const int*) const noexcept;
 
-			void applyAdaptiveThreshold(std::vector<PeakIndexInfo>& peakGroups, const float* binsNorm,
-				float targetThresholdDb, int minBinIdx)
-			{
-				const auto targetThreshold = math::dbToAmp(targetThresholdDb);
-				peakGroups.clear();
+			// fifo, peakIndexes, harm0Idx
+			void generatePeakInfos(const float*, const int*, float) noexcept;
 
-				for (auto i = minBinIdx; i < FFTSize; ++i)
-					if (binsNorm[i] > targetThreshold)
-					{
-						auto& peakInfo = peakGroups.emplace_back();
-						peakInfo.indexes.push_back(i);
-
-						const auto numNeighbors = 12;
-						auto j = i;
-						bool stillPeaking = false;
-						do
-						{
-							stillPeaking = false;
-
-							for (auto n = 0; n < numNeighbors; ++n)
-							{
-								++j;
-								if (j >= FFTSize)
-									return;
-								if (binsNorm[j] > targetThreshold)
-								{
-									peakInfo.indexes.push_back(j);
-									stillPeaking = true;
-									n = numNeighbors;
-								}
-							}
-						} while (stillPeaking);
-
-						i = j + 1;
-					}
-			}
-
-			void generatePeakIndexes(std::vector<int>& peakIndexes, const float* bins,
-				const std::vector<PeakIndexInfo>& peakIdxInfos)
-			{
-				for (auto i = 0; i < peakIndexes.size(); ++i)
-					peakIndexes[i] = getMaxMagnitudeIdx(bins, peakIdxInfos[i].indexes.front(), peakIdxInfos[i].indexes.back() + 1);
-			}
-
-			float getHarm0Idx(const float* fifo, const int* peakIndexes) const noexcept
-			{
-				auto peakIdx = peakIndexes[0];
-				auto peakMag = fifo[peakIdx];
-				auto harm0Mag = peakMag;
-				auto harm0Idx = static_cast<float>(peakIdx);
-				for (auto i = 1; i < NumFilters; ++i)
-				{
-					peakIdx = peakIndexes[i];
-					peakMag = fifo[peakIdx];
-					if (harm0Mag < peakMag)
-					{
-						harm0Mag = peakMag;
-						harm0Idx = static_cast<float>(peakIdx);
-					}
-				}
-				return harm0Idx;
-			}
-
-			int getMinPeakIdx(const float* fifo, const int* peakIndexes, int numFilters) const noexcept
-			{
-				auto j = 0;
-				auto peakIdx = peakIndexes[0];
-				auto peakMag = fifo[peakIdx];
-				for (auto i = 1; i < numFilters; ++i)
-				{
-					const auto peakIdx1 = peakIndexes[i];
-					const auto peakMag1 = fifo[peakIdx1];
-					if (peakMag1 < peakMag)
-					{
-						peakMag = peakMag1;
-						peakIdx = peakIdx1;
-						j = i;
-					}
-				}
-				return j;
-			}
-
-			void generatePeakInfos(const float* fifo, const int* peakIndexes, float harm0Idx) noexcept
-			{
-				for (auto i = 0; i < NumFilters; ++i)
-				{
-					const auto peakIdx = peakIndexes[i];
-					peakInfos[i].ratio = static_cast<float>(peakIdx) / harm0Idx;
-					peakInfos[i].mag = fifo[peakIdx];
-				}
-			}
-
-			void drawSpectrum(String&& name, const float* buf, float thresholdDb,
-				const int* peakIndexes, bool isLog)
-			{
-				makeSpectrumImage(std::move(name), buf, FFTSize, thresholdDb - 6.f, false,
-					peakIndexes, NumFilters, true, isLog, audioSampleRate);
-			}
+			// name, buf, thresholdDb, peakIndexes, isLog
+			void drawSpectrum(String&&, const float*, float,
+				const int*, bool);
 		};
 
-		ModalFilter(const arch::XenManager& _xen) :
-			xen(_xen),
-			filters(),
-			sampleRate(1.),
-			nyquist(.5),
-			material(),
-			reso(-1.),
-			numFiltersBelowNyquist(0)
+		inline void generateSaw(Material& material)
 		{
-			/*
-			material.audioSampleRate = 44100.f;
-			auto phase = 0.f;
-			const auto inc = 393.f / 44100.f;
-			for(auto s = 0; s < material.buffer.size(); ++s)
+			material.sampleRate = static_cast<float>(material.buffer.size());
+			for (auto s = 0; s < material.buffer.size(); ++s)
 			{
-				material.buffer[s] = 2.f * phase - 1.f;
-				phase += inc;
-				if (phase >= 1.f)
-					--phase;
+				const auto sF = static_cast<float>(s);
+				auto x = static_cast<float>(2 * NumFilters) * sF / material.sampleRate;
+				x = x - std::floor(x);
+				material.buffer[s] = 2.f * x - 1.f;
 			}
 			material.load();
-			*/
-
-			material.load(BinaryData::Eiskaffee_wav, BinaryData::Eiskaffee_wavSize);
-
-			for(auto& filter: filters)
-				filter.setSlope(2);
 		}
 
-		void prepare(double _sampleRate)
+		inline void generateSquare(Material& material)
 		{
-			sampleRate = _sampleRate;
-			nyquist = sampleRate * .5;
-			setFrequencyHz(1000.);
-		}
-
-		/* samples, midi, reso[0,1], numChannels, numSamples */
-		void operator()(double** samples, const MidiBuffer& midi,
-			double _reso, int numChannels, int numSamples) noexcept
-		{
-			if (reso != _reso)
+			material.sampleRate = static_cast<float>(material.buffer.size());
+			for (auto s = 0; s < material.buffer.size(); ++s)
 			{
-				reso = _reso;
-				for (auto& filter : filters)
-				{
-					filter.setResonance(reso);
-					filter.update();
-				}
+				const auto sF = static_cast<float>(s);
+				auto x = static_cast<float>(2 * NumFilters) * sF / material.sampleRate;
+				x = x - std::floor(x);
+				material.buffer[s] = x < .5f ? 1.f : -1.f;
 			}
-			
-			auto s = 0;
-			for (const auto it : midi)
+			material.load();
+		}
+
+		struct Filter
+		{
+			struct Voice
 			{
-				const auto msg = it.getMessage();
-				if (msg.isNoteOn())
+				struct Envelope
 				{
-					const auto ts = it.samplePosition;
-					const auto xenScale = xen.getXen();
-					const auto pitch = static_cast<double>(msg.getNoteNumber()) + xenScale;
-					const auto freq = xen.noteToFreqHzWithWrap(pitch);
-					setFrequencyHz(freq);
-					applyFilter(samples, numChannels, s, ts);
-					s = ts;
+					enum class State
+					{
+						Attack,
+						Release
+					};
+
+					Envelope() :
+						env(0.),
+						atk(0.),
+						rls(0.),
+						state(State::Release),
+						noteOn(false)
+					{}
+
+					double operator()(bool _noteOn) noexcept
+					{
+						noteOn = _noteOn;
+						return operator()();
+					}
+
+					double operator()() noexcept
+					{
+						switch (state)
+						{
+						case State::Attack: return processAttack();
+						case State::Release: return processRelease();
+						default: return env;
+						}
+					}
+
+					double env, atk, rls;
+					State state;
+					bool noteOn;
+				protected:
+
+					double processAttack() noexcept
+					{
+						if (noteOn)
+						{
+							env += atk * (1. - env);
+							if (1. - env < 1e-6)
+								env = 1.;
+							return env;
+						}
+						state = State::Release;
+						return processRelease();
+					}
+
+					double processRelease() noexcept
+					{
+						if (noteOn)
+						{
+							state = State::Attack;
+							return processAttack();
+						}
+						env += rls * (0. - env);
+						if (env < 1e-6)
+							env = 0.;
+						return env;
+					}
+				};
+
+				struct Filter
+				{
+					Filter(const arch::XenManager& _xen, const Material& _material) :
+						xen(_xen),
+						material(_material),
+						resonators(),
+						sampleRate(1.),
+						nyquist(.5),
+						numFiltersBelowNyquist(0)
+					{
+					}
+
+					void prepare(double _sampleRate)
+					{
+						sampleRate = _sampleRate;
+						nyquist = sampleRate * .5;
+						setFrequencyHz(1000.);
+					}
+
+					/* samples, midi, numChannels, numSamples */
+					void operator()(double** samples, const MidiBuffer& midi,
+						int numChannels, int numSamples) noexcept
+					{
+						auto s = 0;
+						for (const auto it : midi)
+						{
+							const auto msg = it.getMessage();
+							if (msg.isNoteOn())
+							{
+								const auto ts = it.samplePosition;
+								const auto pitch = static_cast<double>(msg.getNoteNumber());
+								const auto freq = xen.noteToFreqHzWithWrap(pitch);
+								setFrequencyHz(freq);
+								applyFilter(samples, numChannels, s, ts);
+								s = ts;
+							}
+						}
+
+						applyFilter(samples, numChannels, s, numSamples);
+					}
+
+					void setFrequencyHz(double freq) noexcept
+					{
+						for (auto i = 0; i < material.numFilters; ++i)
+						{
+							const auto& peakInfo = material.peakInfos[i];
+							const auto freqRatio = peakInfo.ratio;
+							const auto freqFilter = freq * freqRatio;
+							if (freqFilter < nyquist)
+							{
+								const auto fc = math::freqHzToFc(freqFilter, sampleRate);
+								auto& resonator = resonators[i];
+								resonator.setCutoffFc(fc);
+								resonator.reset();
+								resonator.update();
+							}
+							else
+							{
+								numFiltersBelowNyquist = i;
+								return;
+							}
+						}
+						numFiltersBelowNyquist = material.numFilters;
+					}
+
+					void setBandwidth(double bw) noexcept
+					{
+						for (auto i = 0; i < material.numFilters; ++i)
+						{
+							auto& resonator = resonators[i];
+							resonator.setBandwidth(bw);
+							resonator.update();
+						}
+					}
+
+				private:
+					const arch::XenManager& xen;
+					const Material& material;
+					std::array<ResonatorStereo<Resonator2>, NumFilters> resonators;
+					double sampleRate, nyquist;
+					int numFiltersBelowNyquist;
+
+					void applyFilter(double** samples, int numChannels,
+						int startIdx, int endIdx) noexcept
+					{
+						const auto& peakInfos = material.peakInfos;
+
+						for (auto ch = 0; ch < numChannels; ++ch)
+						{
+							auto smpls = samples[ch];
+							for (auto i = startIdx; i < endIdx; ++i)
+							{
+								const auto dry = smpls[i];
+								auto wet = 0.;
+								for (auto f = 0; f < numFiltersBelowNyquist; ++f)
+									wet += resonators[f](dry, ch) * peakInfos[f].mag;
+								smpls[i] = wet;
+							}
+						}
+					}
+				};
+
+				Voice(const arch::XenManager& xen, const Material& material) :
+					filter(xen, material),
+					env(),
+					envBuffer(),
+					sleepy(true)
+				{}
+
+				void prepare(double sampleRate)
+				{
+					filter.prepare(sampleRate);
+					env.atk = math::msToInc(2., sampleRate);
+					env.rls = math::msToInc(10., sampleRate);
 				}
+
+				void setBandwidth(double bw) noexcept
+				{
+					filter.setBandwidth(bw);
+				}
+
+				void operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
+					int numChannels, int numSamples) noexcept
+				{
+					if (midi.isEmpty() && sleepy)
+						return;
+					processBlock(samplesSrc, samplesDest, midi, numChannels, numSamples);
+					detectSleepy(samplesDest, numChannels, numSamples);
+				}
+
+				Filter filter;
+				Envelope env;
+				std::array<double, BlockSize2x> envBuffer;
+				bool sleepy;
+			protected:
+				void processBlock(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
+					int numChannels, int numSamples) noexcept
+				{
+					synthesizeEnvelope(midi, numSamples);
+					processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
+					filter(samplesDest, midi, numChannels, numSamples);
+				}
+
+				void synthesizeEnvelope(const MidiBuffer& midi, int numSamples) noexcept
+				{
+					auto s = 0;
+					for (const auto it : midi)
+					{
+						const auto msg = it.getMessage();
+						const auto ts = it.samplePosition;
+						if (msg.isNoteOn())
+						{
+							s = synthesizeEnvelope(s, ts);
+							env.noteOn = true;
+						}
+						else if (msg.isNoteOff())
+						{
+							s = synthesizeEnvelope(s, ts);
+							env.noteOn = false;
+						}
+						else
+							s = synthesizeEnvelope(s, ts);
+					}
+
+					synthesizeEnvelope(s, numSamples);
+				}
+
+				int synthesizeEnvelope(int s, int ts) noexcept
+				{
+					while (s < ts)
+					{
+						envBuffer[s] = env();
+						++s;
+					}
+					return s;
+				}
+
+				void processEnvelope(const double** samplesSrc, double** samplesDest,
+					int numChannels, int numSamples) noexcept
+				{
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						const auto smplsSrc = samplesSrc[ch];
+						auto smplsDest = samplesDest[ch];
+
+						SIMD::multiply(smplsDest, smplsSrc, envBuffer.data(), numSamples);
+					}
+				}
+
+				void detectSleepy(double** samplesDest, int numChannels, int numSamples) noexcept
+				{
+					if(env.state != Envelope::State::Release)
+					{
+						sleepy = false;
+						return;
+					}
+
+					const bool bufferTooSmall = numSamples != BlockSize;
+					if (bufferTooSmall)
+						return;
+
+					sleepy = bufferSilent(samplesDest, numChannels, numSamples);
+					if (!sleepy)
+						return;
+
+					for (auto ch = 0; ch < numChannels; ++ch)
+						SIMD::clear(samplesDest[ch], numSamples);
+				}
+
+				bool bufferSilent(double* const* samplesDest, int numChannels, int numSamples) const noexcept
+				{
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						auto smpls = samplesDest[ch];
+						for (auto s = 0; s < numSamples; ++s)
+						{
+							auto smpl = std::abs(smpls[s]);
+							if (smpl > 1e-6)
+								return false;
+						}
+					}
+					return true;
+				}
+			};
+
+			Filter(const arch::XenManager& xen) :
+				material(),
+				voices
+				{
+					Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material),
+					Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material),
+					Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material)
+				},
+				reso(-1.),
+				sampleRateInv(1.)
+			{
+				material.load(BinaryData::Eiskaffee_wav, BinaryData::Eiskaffee_wavSize);
 			}
 
-			applyFilter(samples, numChannels, s, numSamples);
-		}
-
-		Material& getMaterial() noexcept
-		{
-			return material;
-		}
-
-		void setFrequencyHz(double freq) noexcept
-		{
-			for (auto i = 0; i < NumFilters; ++i)
+			void prepare(double sampleRate)
 			{
-				const auto& peakInfo = material.peakInfos[i];
-				const auto freqRatio = peakInfo.ratio;
-				const auto freqFilter = freq * freqRatio;
-				if (freqFilter < nyquist)
-				{
-					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
-					auto& filter = filters[i];
-					filter.setCutoffFc(fc);
-					filter.update();
-				}
-				else
-				{
-					numFiltersBelowNyquist = i;
+				for (auto& voice : voices)
+					voice.prepare(sampleRate);
+				reso = -1.;
+				sampleRateInv = 1. / sampleRate;
+			}
+
+			/* samples, voiceSplit, parallelProcessor, reso]0,1], numChannels, numSamples */
+			void operator()(const double** samplesSrc, const MPESplit& voiceSplit,
+				PPMIDIBand& parallelProcessor, double _reso,
+				int numChannels, int numSamples) noexcept
+			{
+				updateReso(_reso);
+
+				for (auto v = 0; v < dsp::NumMPEChannels; ++v)
+					processVoice(samplesSrc, parallelProcessor, voiceSplit, v, numChannels, numSamples);
+			}
+
+			Material material;
+			std::array<Voice, NumMPEChannels> voices;
+			double reso, sampleRateInv;
+		private:
+			void updateReso(double _reso) noexcept
+			{
+				if (reso == _reso)
 					return;
-				}
+				reso = _reso;
+				const auto bw = 20. - reso * 19.;
+				const auto bwFc = bw * sampleRateInv;
+				for (auto& voice : voices)
+					voice.setBandwidth(bwFc);
 			}
-			numFiltersBelowNyquist = NumFilters;
-		}
 
-	protected:
-		const arch::XenManager& xen;
-		std::array<StereoFilter, NumFilters> filters;
-		double sampleRate, nyquist;
-		Material material;
-		double reso;
-		int numFiltersBelowNyquist;
-
-		void applyFilter(double** samples, int numChannels, int startIdx, int endIdx) noexcept
-		{
-			const auto& peakInfos = material.peakInfos;
-
-			for (auto ch = 0; ch < numChannels; ++ch)
+			void processVoice(const double** samplesSrc, PPMIDIBand& parallelProcessor, const MPESplit& voiceSplit, int v,
+				int numChannels, int numSamples) noexcept
 			{
-				auto smpls = samples[ch];
-				for (auto i = startIdx; i < endIdx; ++i)
-				{
-					const auto dry = smpls[i];
-					auto wet = filters[0](dry, ch) * peakInfos[0].mag;
-					for (auto f = 1; f < numFiltersBelowNyquist; ++f)
-						wet += filters[f](dry, ch) * peakInfos[f].mag;
-					smpls[i] = wet;
-				}
+				const auto vVoice = v + 2;
+				const auto& vMIDI = voiceSplit[vVoice];
+				auto band = parallelProcessor[v];
+				double* vSamples[] = { band.l, band.r };
+				voices[v](samplesSrc, vSamples, vMIDI, numChannels, numSamples);
 			}
-		}
-	};
+		};
+	}
+	
 }
 
 /*
 
 todo:
-saturate the mags with a parameter (lookuptable)
+	gain compensate different resonance values
+
+performance:
+	filter performance
+		SIMD
+		try copying filter state without recalcing coefficients
+			reso
+			freq
+
+features:
+	interpolate between 2 materials
+	saturate the mags with a parameter (lookuptable)
+
+bugs:
+	oversampling doubles the volume
 
 */

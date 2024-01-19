@@ -31,8 +31,8 @@ namespace gui
         },
         
         painterMacro(true),
-        macroKnob(utils),
-        materialView(utils, utils.audioProcessor.pluginProcessor.modalFilter)
+        macroKnob(utils)//,
+        //materialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.material)
     {
         layout.init
         (
@@ -58,7 +58,7 @@ namespace gui
         addAndMakeVisible(macroKnob);
         macroKnob.attachParameter("Macro", PID::Macro, &painterMacro);
         
-        addAndMakeVisible(materialView);
+        //addAndMakeVisible(materialView);
 
         const auto& user = *audioProcessor.state.props.getUserSettings();
         const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
@@ -99,7 +99,7 @@ namespace gui
         layout.place(macroKnob, 1, 2, 1, 2, false);
         layout.place(macroKnob.label, 1, 4, 1, 1, false);
 
-        layout.place(materialView, 2, 2, 1, 1, false);
+        //layout.place(materialView, 2, 2, 1, 1, false);
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

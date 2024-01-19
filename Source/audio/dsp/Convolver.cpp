@@ -145,4 +145,10 @@ namespace dsp
 
 		return y;
 	}
+
+	template struct ImpulseResponse<double, 1 << 8>;
+	template struct Convolver<double, 1 << 8>;
+
+	template struct ImpulseResponse<float, 1 << 15>;
+	template struct Convolver<float, 1 << 15>;
 }

@@ -69,14 +69,9 @@ namespace dsp
 		Buffer ringBuffer;
 	};
 
-	template struct ImpulseResponse<float, 1 << 8>;
-	template struct ImpulseResponse<double, 1 << 8>;
-	template struct Convolver<float, 1 << 8>;
-	template struct Convolver<double, 1 << 8>;
+	using ImpulseResponseD8 = ImpulseResponse<double, 1 << 8>;
+	using ConvolverD8 = Convolver<double, 1 << 8>;
 
-	//template struct ImpulseResponse<float, 1 << 15>;
-	//template struct ImpulseResponse<double, 1 << 15>;
-	//template struct Convolver<float, 1 << 15>;
-	//template struct Convolver<double, 1 << 15>;
-
+	using ImpulseResponseF15 = ImpulseResponse<float, 1 << 15>;
+	using ConvolverF15 = Convolver<float, 1 << 15>;
 }

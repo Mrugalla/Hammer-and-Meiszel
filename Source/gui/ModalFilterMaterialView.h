@@ -7,8 +7,7 @@ namespace gui
 	struct ModalFilterMaterialView :
 		public Comp
 	{
-		using ModalFilter = dsp::ModalFilter;
-		using Material = ModalFilter::Material;
+		using Material = dsp::modal::Material;
 
 		static constexpr int StepSize = 2;
 		static constexpr float StepSizeF = static_cast<float>(StepSize);
@@ -16,9 +15,9 @@ namespace gui
 
 		enum { kWaveformUpdatedCB, kNumCallbacks };
 
-		ModalFilterMaterialView(Utils& u, ModalFilter& modalFilter) :
+		ModalFilterMaterialView(Utils& u, Material& _material) :
 			Comp(u),
-			material(modalFilter.getMaterial()),
+			material(_material),
 			buffer(),
 			drawBipolar(false)
 		{

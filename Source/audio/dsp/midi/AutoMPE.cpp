@@ -11,14 +11,14 @@ namespace dsp
 	AutoMPE::AutoMPE() :
 		buffer(),
 		voices(),
-		channelIdx(0)
+		channelIdx(-1)
 	{}
 
-	void AutoMPE::operator()(MidiBuffer& midiMessages)
+	void AutoMPE::operator()(MidiBuffer& midi)
 	{
 		buffer.clear();
 
-		for (const auto it : midiMessages)
+		for (const auto it : midi)
 		{
 			auto msg = it.getMessage();
 
@@ -26,28 +26,30 @@ namespace dsp
 				processNoteOn(msg, it.samplePosition);
 			else if (msg.isNoteOff())
 				processNoteOff(msg);
+			else
+				msg.setChannel(1);
 
 			buffer.addEvent(msg, it.samplePosition);
 		}
 
-		midiMessages.swapWith(buffer);
+		midi.swapWith(buffer);
 	}
 
-	void AutoMPE::incChannel() noexcept
+	void AutoMPE::incChannelIdx() noexcept
 	{
-		channelIdx = (channelIdx + 1) & NumMPEChannels;
+		channelIdx = (channelIdx + 1) % voices.size();
 	}
 
 	void AutoMPE::processNoteOn(MidiMessage& msg, int ts)
 	{
-		for (auto ch = 0; ch < NumMPEChannels; ++ch)
+		for (auto ch = 0; ch < VoicesSize; ++ch)
 		{
-			incChannel();
+			incChannelIdx();
 			auto& voice = voices[channelIdx];
 			if (!voice.noteOn)
 				return processNoteOn(voice, msg);
 		}
-		incChannel();
+		incChannelIdx();
 		auto& voice = voices[channelIdx];
 		buffer.addEvent(MidiMessage::noteOff(voice.channel, voice.note), ts);
 		processNoteOn(voice, msg);
@@ -64,16 +66,16 @@ namespace dsp
 
 	void AutoMPE::processNoteOff(MidiMessage& msg) noexcept
 	{
-		for (auto ch = 0; ch < NumMPEChannels; ++ch)
+		for (auto ch = 0; ch < VoicesSize; ++ch)
 		{
 			auto i = channelIdx - ch;
 			if (i < 0)
-				i += NumChannels;
+				i += VoicesSize;
 
 			auto& voice = voices[i];
 
 			if (voice.noteOn && voice.note == msg.getNoteNumber())
-				return processNoteOff(msg);
+				return processNoteOff(voice, msg);
 		}
 	}
 

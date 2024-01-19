@@ -8,8 +8,6 @@ namespace dsp
 	{
 		static constexpr double LPCutoff = 20000.;
 		using OversamplerBuffer = std::array<std::array<double, BlockSize2x>, NumChannels>;
-		using IR = ImpulseResponse<double, 1 << 8>;
-		using Convolvr = Convolver<double, 1 << 8>;
 
 		struct BufferInfo
 		{
@@ -35,8 +33,8 @@ namespace dsp
 		OversamplerBuffer bufferUp;
 		BufferInfo bufferInfo;
 		WHead2x wHead;
-		IR irUp, irDown;
-		Convolvr filterUp, filterDown;
+		ImpulseResponseD8 irUp, irDown;
+		ConvolverD8 filterUp, filterDown;
 	public:
 		double sampleRateUp;
 		int numSamplesUp;

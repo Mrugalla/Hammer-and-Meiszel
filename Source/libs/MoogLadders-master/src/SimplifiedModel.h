@@ -30,16 +30,24 @@ namespace moog
 	struct SimplifiedMoog :
 		public LadderFilterBase
 	{
-		SimplifiedMoog()
+		// To keep the overall level approximately constant, comp should be set
+		// to 0.5 resulting in a 6 dB passband gain decrease at the maximum resonance
+		// (compared to a 12 dB decrease in the original Moog model
+		SimplifiedMoog() :
+			y(0.),
+			h(0.), h0(0.), g(0.), g1(0.)
 		{
-			// To keep the overall level approximately constant, comp should be set
-			// to 0.5 resulting in a 6 dB passband gain decrease at the maximum resonance
-			// (compared to a 12 dB decrease in the original Moog model
-			gainCompensation = 1.;
-
 			memset(stage, 0, sizeof(stage));
 			memset(stageZ1, 0, sizeof(stageZ1));
 			memset(stageTanh, 0, sizeof(stageTanh));
+		}
+
+		void copyFrom(SimplifiedMoog& other) noexcept
+		{
+			h = other.h;
+			h0 = other.h0;
+			g = other.g;
+			g1 = other.g1;
 		}
 
 		// This system is nonlinear so we are probably going to create a signal with components that exceed nyquist.
@@ -48,9 +56,9 @@ namespace moog
 		// The cheap solution is to zero-stuff the incoming sample buffer.
 		// With resampling, numSamples should be 2x the frame size of the existing sample rate.
 		// The output of this filter needs to be run through a decimator to return to the original samplerate.
-		double operator()(double sample) noexcept override
+		double operator()(double x) noexcept override
 		{
-			input = sample - (resonance * (output - gainCompensation * sample));
+			auto input = x - (resonance * (y - x));
 			stage[0] = (h * tanh(input) + h0 * stageZ1[0]) + g1 * stageTanh[0];
 			stageZ1[0] = stage[0];
 
@@ -67,8 +75,8 @@ namespace moog
 			stage[3] = h * stageZ1[3] + h0 * stageTanh[2] + g1 * tanh(stageZ1[3]);
 			stageZ1[3] = stage[3];
 
-			output = SNAP_TO_ZERO(stage[3]);
-			return output;
+			y = SNAP_TO_ZERO(stage[3]);
+			return y;
 		}
 
 		void setResonance(double r) noexcept override
@@ -80,11 +88,8 @@ namespace moog
 		{
 			cutoff = c;
 
-			// Not being oversampled at the moment... * 2 when functional
-			auto fs2 = sampleRate;
-
-			// Normalized cutoff [0, 1] in radians: ((2*pi) * cutoff / samplerate)
-			g = MOOG_TAU * cutoff / fs2; // feedback coefficient at fs*2 because of doublesampling
+			// Normalized cutoff [0, 1] in radians
+			g = MOOG_TAU * cutoff / sampleRate;
 			g *= MOOG_PI / 1.3; // correction factor that allows _cutoff to be supplied Hertz
 			g1 = 1. - g;
 
@@ -94,15 +99,10 @@ namespace moog
 		}
 
 	private:
-		double output;
-		double lastStage;
+		double y;
 		double stage[4];
 		double stageZ1[4];
 		double stageTanh[3];
-		double input;
-		double h;
-		double h0;
-		double g, g1;
-		float gainCompensation;
+		double h, h0, g, g1;
 	};
 }

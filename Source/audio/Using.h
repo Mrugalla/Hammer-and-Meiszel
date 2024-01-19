@@ -314,5 +314,3 @@ namespace dsp
 		makeImage(g, img, name, info);
 	}
 }
-
-#undef oopsie

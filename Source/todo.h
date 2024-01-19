@@ -6,11 +6,8 @@ ToThink
     -
 
 Hammer & Meißel
-    guter Lowpass Filter für Resonator: SimplifiedMoog
-        moduliert schnell
-        hat klare Resonanz
-        gain range von +12 zu +6db für gain match
     modal synth
+        polyphony
         make waveform audio object
             buffer
             size
@@ -19,6 +16,7 @@ Hammer & Meißel
 		    if updated or resized, repaint
 
 GUI
+    reintroduce custom mousecursor
     ModalFilterSampleView
         make n use local maxima array for drawing
     BuildDate

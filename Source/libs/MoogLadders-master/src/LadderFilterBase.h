@@ -11,7 +11,7 @@ namespace moog
 			sampleRate(1.)
 		{}
 
-		void prepare(double _sampleRate) noexcept
+		virtual void prepare(double _sampleRate) noexcept
 		{
 			sampleRate = _sampleRate;
 		}

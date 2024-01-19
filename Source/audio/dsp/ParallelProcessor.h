@@ -17,9 +17,14 @@ namespace dsp
 
 		ParallelProcessor();
 
+		/* samples, numChannels, numSamples */
 		void split(double* const*, int, int) noexcept;
 
+		/* samples, numChannels, numSamples */
 		void join(double* const*, int, int) noexcept;
+
+		/* samples, numChannels, numSamples */
+		void joinReplace(double* const*, int, int) noexcept;
 
 		/* gain, bandIdx, numChannels, numSamples */
 		void applyGain(double, int, int, int) noexcept;
@@ -28,6 +33,8 @@ namespace dsp
 		void applyGain(double*, int, int, int) noexcept;
 
 		Band getBand(int) noexcept;
+
+		Band operator[](int) noexcept;
 
 		/* only for parallel processors with exactly 2 bands
 		samples, mix, numChannels, numSamples */
@@ -46,11 +53,14 @@ namespace dsp
 		void joinDelta(double* const*, double, int, int) noexcept;
 
 	private:
-		std::array<std::array<double, BlockSize>, NumChannels> bands;
+		std::array<std::array<double, BlockSize2x>, NumChannels> bands;
 	};
 
 	using PP2Band = ParallelProcessor<2>;
 	using PP3Band = ParallelProcessor<3>;
 	using PP4Band = ParallelProcessor<4>;
 	using PP5Band = ParallelProcessor<5>;
+
+	using PPMPEBand = ParallelProcessor<NumMPEChannels>;
+	using PPMIDIBand = ParallelProcessor<NumMIDIChannels>;
 }

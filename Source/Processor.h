@@ -1,6 +1,4 @@
 #pragma once
-#define oopsie(x) jassert(!(x))
-
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "audio/PluginProcessor.h"
