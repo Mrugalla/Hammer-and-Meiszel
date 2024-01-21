@@ -60,6 +60,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		case PID::ModalMix: return "Modal Mix";
+		case PID::ModalHarmonize: return "Modal Harmonize";
 		case PID::Resonance: return "Resonance";
 
 		default: return "Invalid Parameter Name";
@@ -128,6 +129,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		case PID::ModalMix: return "Mixes between the 2 modal filters.";
+		case PID::ModalHarmonize: return "Shifts the resonators towards the harmonic series.";
 		case PID::Resonance: return "Higher resonance causes sharper ringing.";
 
 		default: return "Invalid Tooltip.";
@@ -1272,7 +1274,8 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::ModalMix, 0.f));
-		params.push_back(makeParam(PID::Resonance, .5f));
+		params.push_back(makeParam(PID::ModalHarmonize, 0.f));
+		params.push_back(makeParam(PID::Resonance, .6f));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

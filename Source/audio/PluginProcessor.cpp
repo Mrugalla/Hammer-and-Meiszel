@@ -28,8 +28,6 @@ namespace audio
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
 	{
-		//randomMelodyGenerator(midi, numSamples);
-
 		autoMPE(midi); voiceSplit(midi);
 
 		const auto samplesConst = const_cast<const double**>(samples);
@@ -37,10 +35,19 @@ namespace audio
 		const auto& modalMixParam = params(PID::ModalMix);
 		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
 
+		const auto& modalHarmonizeParam = params(PID::ModalHarmonize);
+		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValMod());
+
 		const auto& resoParam = params(PID::Resonance);
 		const auto reso = static_cast<double>(resoParam.getValMod());
 
-		modalFilter(samplesConst, voiceSplit, parallelProcessor, modalMix, reso, numChannels, numSamples);
+		modalFilter
+		(
+			samplesConst, voiceSplit, parallelProcessor,
+			modalMix, modalHarmonize, reso,
+			numChannels, numSamples
+		);
+
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);
 	}
 
