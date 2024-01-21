@@ -1274,7 +1274,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::ModalMix, 0.f));
-		params.push_back(makeParam(PID::ModalHarmonize, 0.f));
+		params.push_back(makeParam(PID::ModalHarmonize, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::Resonance, .6f));
 		// LOW LEVEL PARAMS END
 

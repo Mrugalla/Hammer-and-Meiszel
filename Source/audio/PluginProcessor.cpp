@@ -36,7 +36,7 @@ namespace audio
 		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
 
 		const auto& modalHarmonizeParam = params(PID::ModalHarmonize);
-		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValMod());
+		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValModDenorm());
 
 		const auto& resoParam = params(PID::Resonance);
 		const auto reso = static_cast<double>(resoParam.getValMod());

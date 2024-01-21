@@ -222,7 +222,7 @@ namespace dsp
 
 			void prepare(double);
 
-			// samplesSrc, voiceSplit, parallelProcessor, modalMix[0,1], modalHarmonize[0,1], reso[0,1], numChannels, numSamples
+			// samplesSrc, voiceSplit, parallelProcessor, modalMix[0,1], modalHarmonize[-1,1], reso[0,1], numChannels, numSamples
 			void operator()(const double**, const MPESplit&, PPMIDIBand&,
 				double, double, double, int, int) noexcept;
 
