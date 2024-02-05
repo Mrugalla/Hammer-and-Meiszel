@@ -150,6 +150,55 @@ namespace math
         return dbToAmp(db);
     }
 
+    template<typename T>
+    inline T cubicHermiteSpline(const T* buffer, T readHead, int size) noexcept
+    {
+        const auto iFloor = std::floor(readHead);
+        auto i1 = static_cast<int>(iFloor);
+        auto i0 = i1 - 1;
+        auto i2 = i1 + 1;
+        auto i3 = i1 + 2;
+        if (i3 >= size) i3 -= size;
+        if (i2 >= size) i2 -= size;
+        if (i0 < 0) i0 += size;
+
+        const auto t = readHead - iFloor;
+        const auto v0 = buffer[i0];
+        const auto v1 = buffer[i1];
+        const auto v2 = buffer[i2];
+        const auto v3 = buffer[i3];
+
+        const auto c0 = v1;
+        const auto c1 = static_cast<T>(.5) * (v2 - v0);
+        const auto c2 = v0 - static_cast<T>(2.5) * v1 + static_cast<T>(2.) * v2 - static_cast<T>(.5) * v3;
+        const auto c3 = static_cast<T>(1.5) * (v1 - v2) + static_cast<T>(.5) * (v3 - v0);
+
+        return ((c3 * t + c2) * t + c1) * t + c0;
+    }
+
+    template<typename T>
+    inline T cubicHermiteSpline(const T* buffer, T readHead) noexcept
+    {
+        const auto iFloor = std::floor(readHead);
+        auto i0 = static_cast<int>(iFloor);
+        auto i1 = i0 + 1;
+        auto i2 = i0 + 2;
+        auto i3 = i0 + 3;
+
+        const auto t = readHead - iFloor;
+        const auto v0 = buffer[i0];
+        const auto v1 = buffer[i1];
+        const auto v2 = buffer[i2];
+        const auto v3 = buffer[i3];
+
+        const auto c0 = v1;
+        const auto c1 = static_cast<T>(.5) * (v2 - v0);
+        const auto c2 = v0 - static_cast<T>(2.5) * v1 + static_cast<T>(2.) * v2 - static_cast<T>(.5) * v3;
+        const auto c3 = static_cast<T>(1.5) * (v1 - v2) + static_cast<T>(.5) * (v3 - v0);
+
+        return ((c3 * t + c2) * t + c1) * t + c0;
+    }
+
     /* oct [-n, n], semi [-12, 12], fine [-1, 1]*/
     template<typename Float>
     inline Float getRetuneValue(Float oct, Float semi, Float fine) noexcept

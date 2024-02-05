@@ -48,6 +48,9 @@ namespace param
 		// low level parameters
 		ModalMix,
 		ModalHarmonize,
+		ModalSaturate,
+		CombFeedback,
+		CombOct,
 		Resonance,
 		//
 		

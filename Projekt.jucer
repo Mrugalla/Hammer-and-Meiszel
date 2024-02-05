@@ -114,18 +114,6 @@
       </GROUP>
       <GROUP id="{40307200-594D-4A49-C512-2C481058424A}" name="audio">
         <GROUP id="{59EAA807-50FE-F7F8-0D20-F8E7A0503840}" name="dsp">
-          <FILE id="AG7iE0" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
-          <FILE id="Vqq7T8" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
-          <FILE id="yCB0ii" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>
-          <FILE id="f6dMPF" name="Resonator.h" compile="0" resource="0" file="Source/audio/dsp/Resonator.h"/>
-          <FILE id="S4ULQD" name="Convolver.cpp" compile="1" resource="0" file="Source/audio/dsp/Convolver.cpp"/>
-          <FILE id="CQadaB" name="Convolver.h" compile="0" resource="0" file="Source/audio/dsp/Convolver.h"/>
-          <FILE id="SpcdEn" name="ModalFilter.cpp" compile="1" resource="0" file="Source/audio/dsp/ModalFilter.cpp"/>
-          <FILE id="Z7vI0J" name="ModalFilter.h" compile="0" resource="0" file="Source/audio/dsp/ModalFilter.h"/>
-          <FILE id="u7s2sw" name="Filter.cpp" compile="1" resource="0" file="Source/audio/dsp/Filter.cpp"/>
-          <FILE id="Q6j13B" name="Filter.h" compile="0" resource="0" file="Source/audio/dsp/Filter.h"/>
-          <FILE id="geDg2S" name="SlewLimiter.cpp" compile="1" resource="0" file="Source/audio/dsp/SlewLimiter.cpp"/>
-          <FILE id="FhiUQT" name="SlewLimiter.h" compile="0" resource="0" file="Source/audio/dsp/SlewLimiter.h"/>
           <GROUP id="{1D5BCCCC-42EE-52A6-7B66-DBFC5CC929C4}" name="midi">
             <FILE id="ls4YaF" name="AutoMPE.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/AutoMPE.cpp"/>
             <FILE id="huAUKl" name="AutoMPE.h" compile="0" resource="0" file="Source/audio/dsp/midi/AutoMPE.h"/>
@@ -139,6 +127,22 @@
             <FILE id="cZnebq" name="XenRescaler.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/XenRescaler.cpp"/>
             <FILE id="taFAps" name="XenRescaler.h" compile="0" resource="0" file="Source/audio/dsp/midi/XenRescaler.h"/>
           </GROUP>
+          <FILE id="AG7iE0" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
+          <FILE id="Vqq7T8" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
+          <FILE id="yCB0ii" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>
+          <FILE id="f6dMPF" name="Resonator.h" compile="0" resource="0" file="Source/audio/dsp/Resonator.h"/>
+          <FILE id="S4ULQD" name="Convolver.cpp" compile="1" resource="0" file="Source/audio/dsp/Convolver.cpp"/>
+          <FILE id="CQadaB" name="Convolver.h" compile="0" resource="0" file="Source/audio/dsp/Convolver.h"/>
+          <FILE id="fQk7iF" name="Delay.cpp" compile="1" resource="0" file="Source/audio/dsp/Delay.cpp"/>
+          <FILE id="SddrPg" name="Delay.h" compile="0" resource="0" file="Source/audio/dsp/Delay.h"/>
+          <FILE id="Xg8M5o" name="DelayVoices.cpp" compile="1" resource="0" file="Source/audio/dsp/DelayVoices.cpp"/>
+          <FILE id="WVcMhW" name="DelayVoices.h" compile="0" resource="0" file="Source/audio/dsp/DelayVoices.h"/>
+          <FILE id="SpcdEn" name="ModalFilter.cpp" compile="1" resource="0" file="Source/audio/dsp/ModalFilter.cpp"/>
+          <FILE id="Z7vI0J" name="ModalFilter.h" compile="0" resource="0" file="Source/audio/dsp/ModalFilter.h"/>
+          <FILE id="u7s2sw" name="Filter.cpp" compile="1" resource="0" file="Source/audio/dsp/Filter.cpp"/>
+          <FILE id="Q6j13B" name="Filter.h" compile="0" resource="0" file="Source/audio/dsp/Filter.h"/>
+          <FILE id="geDg2S" name="SlewLimiter.cpp" compile="1" resource="0" file="Source/audio/dsp/SlewLimiter.cpp"/>
+          <FILE id="FhiUQT" name="SlewLimiter.h" compile="0" resource="0" file="Source/audio/dsp/SlewLimiter.h"/>
           <FILE id="Nem3gG" name="FFT.cpp" compile="1" resource="0" file="Source/audio/dsp/FFT.cpp"/>
           <FILE id="QAfcqn" name="FFT.h" compile="0" resource="0" file="Source/audio/dsp/FFT.h"/>
           <FILE id="IJRXRu" name="Oversampler.cpp" compile="1" resource="0" file="Source/audio/dsp/Oversampler.cpp"/>

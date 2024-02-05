@@ -11,7 +11,8 @@ namespace audio
 		autoMPE(),
 		voiceSplit(),
 		parallelProcessor(),
-		modalFilter(xen)
+		modalFilter(xen),
+		combFilter(xen)
 	{
 		//test::SpeedTestPB([&](double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples)
 		//{
@@ -24,6 +25,7 @@ namespace audio
 	{
 		sampleRate = _sampleRate;
 		modalFilter.prepare(sampleRate);
+		combFilter.prepare(sampleRate);
 	}
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
@@ -36,7 +38,17 @@ namespace audio
 		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
 
 		const auto& modalHarmonizeParam = params(PID::ModalHarmonize);
-		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValModDenorm());
+		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValMod());
+
+		const auto& modalSaturateParam = params(PID::ModalSaturate);
+		const auto modalSaturate = static_cast<double>(modalSaturateParam.getValModDenorm());
+
+		const auto& combFeedbackParam = params(PID::CombFeedback);
+		const auto combFeedback = static_cast<double>(combFeedbackParam.getValModDenorm());
+
+		const auto& combOctParam = params(PID::CombOct);
+		const auto combOct = static_cast<double>(combOctParam.getValModDenorm());
+		const auto combSemi = combOct * xen.getXen();
 
 		const auto& resoParam = params(PID::Resonance);
 		const auto reso = static_cast<double>(resoParam.getValMod());
@@ -44,7 +56,14 @@ namespace audio
 		modalFilter
 		(
 			samplesConst, voiceSplit, parallelProcessor,
-			modalMix, modalHarmonize, reso,
+			modalMix, modalHarmonize, modalSaturate, reso,
+			numChannels, numSamples
+		);
+
+		combFilter
+		(
+			voiceSplit, parallelProcessor,
+			combFeedback, combSemi,
 			numChannels, numSamples
 		);
 

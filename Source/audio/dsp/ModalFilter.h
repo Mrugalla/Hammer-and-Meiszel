@@ -18,7 +18,7 @@ namespace dsp
 #if JUCE_DEBUG
 		static constexpr int NumFilters = 12;
 #else
-		static constexpr int NumFilters = 24;
+		static constexpr int NumFilters = 12;
 #endif
 
 		struct Material
@@ -112,8 +112,8 @@ namespace dsp
 		{
 			DualMaterial();
 
-			// mix, harmonize
-			void setMix(double, double) noexcept;
+			// mix, harmonize, saturate
+			void setMix(double, double, double) noexcept;
 
 			// idx
 			double getMag(int) const noexcept;
@@ -222,17 +222,19 @@ namespace dsp
 
 			void prepare(double);
 
-			// samplesSrc, voiceSplit, parallelProcessor, modalMix[0,1], modalHarmonize[-1,1], reso[0,1], numChannels, numSamples
+			// samplesSrc, voiceSplit, parallelProcessor,
+			// modalMix[0,1], modalHarmonize[-1,1], modalSaturate[0,1], reso[0,1],
+			// numChannels, numSamples
 			void operator()(const double**, const MPESplit&, PPMIDIBand&,
-				double, double, double, int, int) noexcept;
+				double, double, double, double, int, int) noexcept;
 
 			AutoGain5 autoGainReso;
 			DualMaterial material;
 			std::array<Voice, NumMPEChannels> voices;
-			double modalMix, modalHarmonize, reso, sampleRateInv;
+			double modalMix, modalHarmonize, modalSaturate, reso, sampleRateInv;
 		private:
-			// modalMix, modalHarmonize
-			void updateModalMix(double, double) noexcept;
+			// modalMix, modalHarmonize, modalSaturate
+			void updateModalMix(double, double, double) noexcept;
 
 			void updateReso(double) noexcept;
 
@@ -249,7 +251,9 @@ namespace dsp
 /*
 
 todo:
-	
+
+bugs:
+	low reso break out since i added comb filter
 
 performance:
 	filter performance
@@ -259,10 +263,6 @@ performance:
 			freq
 
 features:
-	material
-		mags
-			saturate
-		freqRatios
-			harmonize (nearest integer)
+	interpret pitchbend msgs
 
 */

@@ -7,6 +7,7 @@
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
 #include "dsp/ModalFilter.h"
+#include "dsp/DelayVoices.h"
 
 /*
 This is where dsp custom to each individual plugin will be written
@@ -44,5 +45,6 @@ namespace audio
 		dsp::MPESplit voiceSplit;
 		dsp::PPMIDIBand parallelProcessor;
 		dsp::modal::Filter modalFilter;
+		dsp::CombFilterVoices combFilter;
 	};
 }
