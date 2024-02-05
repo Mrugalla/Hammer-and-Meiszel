@@ -4,8 +4,6 @@
 #include "../../arch/Math.h"
 #include "PRM.h"
 #include "Convolver.h"
-#include "ParallelProcessor.h"
-#include "midi/MPESplit.h"
 #include <BinaryData.h>
 #include <juce_dsp/juce_dsp.h>
 #include "Resonator.h"
@@ -191,14 +189,14 @@ namespace dsp
 			// samplesSrc, samplesDest, midi, numChannels, numSamples
 			void operator()(const double**, double**, const MidiBuffer&, int, int) noexcept;
 
+			// sleepy, samplesDest, numChannels, numSamples
+			void detectSleepy(bool&, double**, int, int) noexcept;
+
 			Resonator filter;
 			Envelope env;
 			std::array<double, BlockSize2x> envBuffer;
 			double gain;
-			bool sleepy;
 		protected:
-			// samplesSrc, samplesDest, midi, numChannels, numSamples
-			void processBlock(const double**, double**, const MidiBuffer&, int, int) noexcept;
 
 			// midi, numSamples
 			void synthesizeEnvelope(const MidiBuffer&, int) noexcept;
@@ -210,9 +208,6 @@ namespace dsp
 			void processEnvelope(const double**, double**, int, int) noexcept;
 
 			// samplesDest, numChannels, numSamples
-			void detectSleepy(double**, int, int) noexcept;
-
-			// samplesDest, numChannels, numSamples
 			bool bufferSilent(double* const*, int, int) const noexcept;
 		};
 
@@ -222,11 +217,11 @@ namespace dsp
 
 			void prepare(double);
 
-			// samplesSrc, voiceSplit, parallelProcessor,
-			// modalMix[0,1], modalHarmonize[-1,1], modalSaturate[0,1], reso[0,1],
-			// numChannels, numSamples
-			void operator()(const double**, const MPESplit&, PPMIDIBand&,
-				double, double, double, double, int, int) noexcept;
+			// modalMix[0,1], modalHarmonize[0,1], modalSaturate[-1,1], reso[0,1]
+			void updateParameters(double, double, double, double) noexcept;
+
+			// samplesSrc, samplesDest, midi, numChannels, numSamples, voiceIdx
+			void operator()(const double**, double**, const MidiBuffer&, int, int, int) noexcept;
 
 			AutoGain5 autoGainReso;
 			DualMaterial material;
@@ -238,10 +233,6 @@ namespace dsp
 
 			void updateReso(double) noexcept;
 
-			// samplesSrc, parallelProcessor, voiceSplit, v, numChannels, numSamples
-			void processVoice(const double**, PPMIDIBand&, const MPESplit&,
-				int, int, int) noexcept;
-
 			void initAutoGainReso();
 		};
 	}
@@ -251,9 +242,6 @@ namespace dsp
 /*
 
 todo:
-
-bugs:
-	low reso break out since i added comb filter
 
 performance:
 	filter performance

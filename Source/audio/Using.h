@@ -9,6 +9,7 @@ namespace dsp
 {
 	static constexpr double Pi = 3.1415926535897932384626433832795;
 	static constexpr double Tau = Pi * 2.;
+	static constexpr double PiHalf = Pi * .5;
 	static constexpr double E = 2.7182818284590452353602874713527;
 	static constexpr double TauInv = 1. / Tau;
 

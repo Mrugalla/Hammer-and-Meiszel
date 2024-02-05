@@ -1282,7 +1282,7 @@ namespace param
 		params.push_back(makeParam(PID::ModalMix, 0.f));
 		params.push_back(makeParam(PID::ModalHarmonize, 0.f));
 		params.push_back(makeParam(PID::ModalSaturate, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::CombFeedback, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombFeedback, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::Resonance, .6f));
 		// LOW LEVEL PARAMS END

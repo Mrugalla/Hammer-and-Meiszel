@@ -598,8 +598,7 @@ namespace dsp
 			filter(xen, material),
 			env(),
 			envBuffer(),
-			gain(1.),
-			sleepy(true)
+			gain(1.)
 		{}
 
 		void Voice::prepare(double sampleRate)
@@ -617,19 +616,10 @@ namespace dsp
 		void Voice::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
 			int numChannels, int numSamples) noexcept
 		{
-			if (midi.isEmpty() && sleepy)
-				return;
-			processBlock(samplesSrc, samplesDest, midi, numChannels, numSamples);
-			detectSleepy(samplesDest, numChannels, numSamples);
-		}
-
-		void Voice::processBlock(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
-			int numChannels, int numSamples) noexcept
-		{
 			synthesizeEnvelope(midi, numSamples);
 			processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
 			filter(samplesDest, midi, numChannels, numSamples);
-			for(auto ch = 0; ch < numChannels; ++ch)
+			for (auto ch = 0; ch < numChannels; ++ch)
 				SIMD::multiply(samplesDest[ch], gain, numSamples);
 		}
 
@@ -679,7 +669,8 @@ namespace dsp
 			}
 		}
 
-		void Voice::detectSleepy(double** samplesDest, int numChannels, int numSamples) noexcept
+		void Voice::detectSleepy(bool& sleepy, double** samplesDest,
+			int numChannels, int numSamples) noexcept
 		{
 			if (env.state != Envelope::State::Release)
 			{
@@ -742,16 +733,17 @@ namespace dsp
 			sampleRateInv = 1. / sampleRate;
 		}
 
-		void Filter::operator()(const double** samplesSrc, const MPESplit& voiceSplit,
-			PPMIDIBand& parallelProcessor, double _modalMix, double _modalHarmonize,
-			double _modalSaturate, double _reso,
-			int numChannels, int numSamples) noexcept
+		void Filter::updateParameters(double _modalMix, double _modalHarmonize,
+			double _modalSaturate, double _reso) noexcept
 		{
 			updateModalMix(_modalMix, _modalHarmonize, _modalSaturate);
 			updateReso(_reso);
+		}
 
-			for (auto v = 0; v < dsp::NumMPEChannels; ++v)
-				processVoice(samplesSrc, parallelProcessor, voiceSplit, v, numChannels, numSamples);
+		void Filter::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
+			int numChannels, int numSamples, int v) noexcept
+		{
+			voices[v](samplesSrc, samplesDest, midi, numChannels, numSamples);
 		}
 
 		void Filter::updateModalMix(double _modalMix, double _modalHarmonize, double _modalSaturate) noexcept
@@ -778,16 +770,6 @@ namespace dsp
 				voice.setBandwidth(bwFc);
 				voice.gain = autoGainReso();
 			}
-		}
-
-		void Filter::processVoice(const double** samplesSrc, PPMIDIBand& parallelProcessor, const MPESplit& voiceSplit, int v,
-			int numChannels, int numSamples) noexcept
-		{
-			const auto vVoice = v + 2;
-			const auto& vMIDI = voiceSplit[vVoice];
-			auto band = parallelProcessor[v];
-			double* vSamples[] = { band.l, band.r };
-			voices[v](samplesSrc, vSamples, vMIDI, numChannels, numSamples);
 		}
 
 		void Filter::initAutoGainReso()

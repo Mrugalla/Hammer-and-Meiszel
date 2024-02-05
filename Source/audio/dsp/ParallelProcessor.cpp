@@ -4,8 +4,12 @@ namespace dsp
 {
 	template<size_t NumBands>
 	ParallelProcessor<NumBands>::ParallelProcessor() :
-		bands()
-	{}
+		bands(),
+		sleepy()
+	{
+		for (auto& s : sleepy)
+			s = true;
+	}
 
 	template<size_t NumBands>
 	void ParallelProcessor<NumBands>::split(double* const* samples, int numChannels, int numSamples) noexcept
@@ -153,6 +157,18 @@ namespace dsp
 				smpls[s] = gain * delta;
 			}
 		}
+	}
+
+	template<size_t NumBands>
+	bool ParallelProcessor<NumBands>::isSleepy(int idx) const noexcept
+	{
+		return sleepy[idx];
+	}
+	
+	template<size_t NumBands>
+	void ParallelProcessor<NumBands>::setSleepy(bool e, int idx) noexcept
+	{
+		sleepy[idx] = e;
 	}
 
 	template struct ParallelProcessor<2>;
