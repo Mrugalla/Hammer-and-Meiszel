@@ -19,7 +19,7 @@ namespace arch
 		Float noteToFreqHzWithWrap(Float, Float = static_cast<Float>(0), Float = static_cast<Float>(22049)) const noexcept;
 
 		template<typename Float>
-		Float freqHzToNote(Float) noexcept;
+		Float freqHzToNote(Float) const noexcept;
 
 		double getXen() const noexcept;
 

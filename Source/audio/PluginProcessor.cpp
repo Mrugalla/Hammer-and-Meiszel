@@ -43,8 +43,8 @@ namespace audio
 		const auto& modalSaturateParam = params(PID::ModalSaturate);
 		const auto modalSaturate = static_cast<double>(modalSaturateParam.getValModDenorm());
 
-		const auto& resoParam = params(PID::Resonance);
-		const auto reso = static_cast<double>(resoParam.getValMod());
+		const auto& modalResoParam = params(PID::ModalResonance);
+		const auto modalReso = static_cast<double>(modalResoParam.getValMod());
 
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
@@ -55,7 +55,7 @@ namespace audio
 		if (combOct > 0.)
 			combFeedback *= -1.;
 
-		modalFilter.updateParameters(modalMix, modalHarmonize, modalSaturate, reso);
+		modalFilter.updateParameters(modalMix, modalHarmonize, modalSaturate, modalReso);
 		combFilter.synthesizeWHead(numSamples);
 		combFilter.updateParameters(combFeedback);
 

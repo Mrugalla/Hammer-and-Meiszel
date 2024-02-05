@@ -159,6 +159,7 @@ namespace dsp
 			// samples, midi, numChannels, numSamples
 			void operator()(double**, const MidiBuffer&, int, int) noexcept;
 
+			// freqHz
 			void setFrequencyHz(double) noexcept;
 
 			void updateFreqRatios() noexcept;

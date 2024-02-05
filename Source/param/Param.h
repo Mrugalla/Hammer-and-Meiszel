@@ -49,9 +49,9 @@ namespace param
 		ModalMix,
 		ModalHarmonize,
 		ModalSaturate,
+		ModalResonance,
 		CombFeedback,
 		CombOct,
-		Resonance,
 		//
 		
 		NumParams

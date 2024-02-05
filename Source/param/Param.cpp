@@ -62,9 +62,9 @@ namespace param
 		case PID::ModalMix: return "Modal Mix";
 		case PID::ModalHarmonize: return "Modal Harmonize";
 		case PID::ModalSaturate: return "Modal Saturate";
+		case PID::ModalResonance: return "Resonance";
 		case PID::CombFeedback: return "Comb Feedback";
 		case PID::CombOct: return "Comb Oct";
-		case PID::Resonance: return "Resonance";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -134,9 +134,9 @@ namespace param
 		case PID::ModalMix: return "Mixes between the 2 modal filters.";
 		case PID::ModalHarmonize: return "Shifts the resonators towards the harmonic series.";
 		case PID::ModalSaturate: return "Saturates the resonators magnitude values.";
+		case PID::ModalResonance: return "Higher resonance causes sharper ringing.";
 		case PID::CombFeedback: return "Stronger feedback causes the comb filter to ring sharper.";
 		case PID::CombOct: return "Transposes the comb filter.";
-		case PID::Resonance: return "Higher resonance causes sharper ringing.";
 
 		default: return "Invalid Tooltip.";
 		}
@@ -1282,9 +1282,9 @@ namespace param
 		params.push_back(makeParam(PID::ModalMix, 0.f));
 		params.push_back(makeParam(PID::ModalHarmonize, 0.f));
 		params.push_back(makeParam(PID::ModalSaturate, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalResonance, .6f));
 		params.push_back(makeParam(PID::CombFeedback, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
-		params.push_back(makeParam(PID::Resonance, .6f));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

@@ -45,7 +45,7 @@ namespace arch
 	}
 
 	template<typename Float>
-	Float XenManager::freqHzToNote(Float hz) noexcept
+	Float XenManager::freqHzToNote(Float hz) const noexcept
 	{
 		return math::freqHzToNote
 		(
@@ -67,6 +67,6 @@ namespace arch
 	template float XenManager::noteToFreqHzWithWrap<float>(float note, float lowestFreq, float highestFreq) const noexcept;
 	template double XenManager::noteToFreqHzWithWrap<double>(double note, double lowestFreq, double highestFreq) const noexcept;
 
-	template float XenManager::freqHzToNote<float>(float hz) noexcept;
-	template double XenManager::freqHzToNote<double>(double hz) noexcept;
+	template float XenManager::freqHzToNote<float>(float hz) const noexcept;
+	template double XenManager::freqHzToNote<double>(double hz) const noexcept;
 }

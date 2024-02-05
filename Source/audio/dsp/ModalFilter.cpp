@@ -495,7 +495,6 @@ namespace dsp
 			setFrequencyHz(1000.);
 		}
 
-		/* samples, midi, numChannels, numSamples */
 		void Resonator::operator()(double** samples, const MidiBuffer& midi,
 			int numChannels, int numSamples) noexcept
 		{
