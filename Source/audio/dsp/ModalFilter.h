@@ -190,8 +190,8 @@ namespace dsp
 
 			void prepare(double);
 
-			// samples, midi, numChannels, numSamples
-			void operator()(double**, const MidiBuffer&, int, int) noexcept;
+			// samples, midi, transposeSemi, numChannels, numSamples
+			void operator()(double**, const MidiBuffer&, double, int, int) noexcept;
 
 			// freqHz
 			void setFrequencyHz(double) noexcept;
@@ -222,8 +222,8 @@ namespace dsp
 			// bw
 			void setBandwidth(double) noexcept;
 
-			// samplesSrc, samplesDest, midi, numChannels, numSamples
-			void operator()(const double**, double**, const MidiBuffer&, int, int) noexcept;
+			// samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples
+			void operator()(const double**, double**, const MidiBuffer&, double, int, int) noexcept;
 
 			// sleepy, samplesDest, numChannels, numSamples
 			void detectSleepy(bool&, double**, int, int) noexcept;
@@ -256,9 +256,9 @@ namespace dsp
 			// modalMix[0,1], modalHarmonize[0,1], modalSaturate[-1,1], reso[0,1]
 			void updateParameters(double, double, double, double) noexcept;
 
-			// samplesSrc, samplesDest, midi, numChannels, numSamples, voiceIdx
+			// samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples, voiceIdx
 			void operator()(const double**, double**, const MidiBuffer&,
-				int, int, int) noexcept;
+				double, int, int, int) noexcept;
 
 			AutoGain5 autoGainReso;
 			DualMaterial material;

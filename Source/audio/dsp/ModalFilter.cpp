@@ -523,7 +523,7 @@ namespace dsp
 		}
 
 		void Resonator::operator()(double** samples, const MidiBuffer& midi,
-			int numChannels, int numSamples) noexcept
+			double transposeSemi, int numChannels, int numSamples) noexcept
 		{
 			static constexpr double PB = 0x3fff;
 			static constexpr double PBInv = 1. / PB;
@@ -535,7 +535,7 @@ namespace dsp
 				if (msg.isNoteOn())
 				{
 					const auto ts = it.samplePosition;
-					val.pitch = static_cast<double>(msg.getNoteNumber());
+					val.pitch = static_cast<double>(msg.getNoteNumber()) + transposeSemi;
 					const auto freq = val.getFreq(xen);
 					setFrequencyHz(freq);
 					applyFilter(samples, numChannels, s, ts);
@@ -656,11 +656,11 @@ namespace dsp
 		}
 
 		void Voice::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
-			int numChannels, int numSamples) noexcept
+			double transposeSemi, int numChannels, int numSamples) noexcept
 		{
 			synthesizeEnvelope(midi, numSamples);
 			processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
-			filter(samplesDest, midi, numChannels, numSamples);
+			filter(samplesDest, midi, transposeSemi, numChannels, numSamples);
 			for (auto ch = 0; ch < numChannels; ++ch)
 				SIMD::multiply(samplesDest[ch], gain, numSamples);
 		}
@@ -784,9 +784,9 @@ namespace dsp
 		}
 
 		void Filter::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
-			int numChannels, int numSamples, int v) noexcept
+			double transposeSemi, int numChannels, int numSamples, int v) noexcept
 		{
-			voices[v](samplesSrc, samplesDest, midi, numChannels, numSamples);
+			voices[v](samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples);
 		}
 
 		void Filter::updateModalMix(double _modalMix, double _modalHarmonize, double _modalSaturate) noexcept

@@ -10,7 +10,6 @@ namespace audio
 		sampleRate(1.),
 		autoMPE(),
 		voiceSplit(),
-		midiTranspose(),
 		parallelProcessor(),
 		modalFilter(xen),
 		combFilter(xen)
@@ -31,11 +30,10 @@ namespace audio
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
 	{
-		const auto& modalOctParam = params(PID::Oct);
-		const auto& modalSemiParam = params(PID::Semi);
-		auto modalSemi = static_cast<int>(modalSemiParam.getValModDenorm());
-		modalSemi += static_cast<int>(modalOctParam.getValModDenorm()) * static_cast<int>(xen.getXen());
-		midiTranspose(midi, modalSemi);
+		const auto& octParam = params(PID::Oct);
+		const auto& semiParam = params(PID::Semi);
+		auto transposeSemi = static_cast<double>(semiParam.getValModDenorm());
+		transposeSemi += static_cast<double>(octParam.getValModDenorm()) * xen.getXen();
 
 		autoMPE(midi); voiceSplit(midi);
 
@@ -75,7 +73,7 @@ namespace audio
 			
 			if (!midiVoice.isEmpty() || !sleepy)
 			{
-				modalFilter(samplesInput, samplesVoice, midiVoice, numChannels, numSamples, v);
+				modalFilter(samplesInput, samplesVoice, midiVoice, transposeSemi, numChannels, numSamples, v);
 				combFilter(samplesVoice, midiVoice, combSemi, numChannels, numSamples, v);
 				modalFilter.voices[v].detectSleepy(sleepy, samplesVoice, numChannels, numSamples);
 				parallelProcessor.setSleepy(sleepy, v);
