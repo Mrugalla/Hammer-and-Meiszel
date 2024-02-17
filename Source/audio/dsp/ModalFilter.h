@@ -21,6 +21,13 @@ namespace dsp
 
 		struct Material
 		{
+			enum class UpdateState
+			{
+				Idle,
+				UpdateProcessor,
+				UpdateGUI
+			};
+
 			static constexpr int FFTOrder = 15;
 			static constexpr int FFTSize = 1 << FFTOrder;
 			static constexpr int FFTSize2 = FFTSize * 2;
@@ -42,9 +49,23 @@ namespace dsp
 
 			void load();
 
+			void updatePeakInfosFromGUI() noexcept
+			{
+				auto magMax = peakInfos[0].mag;
+				for (int i = 1; i < NumFilters; ++i)
+					magMax = std::max(magMax, peakInfos[i].mag);
+				if (magMax != 1.f)
+				{
+					auto g = 1.f / magMax;
+					for(auto &p : peakInfos)
+						p.mag *= g;
+				}
+				updateState.store(UpdateState::UpdateProcessor);
+			}
+
 			MaterialBuffer buffer;
 			std::array<PeakInfo, NumFilters> peakInfos;
-			std::atomic<bool> updated;
+			std::atomic<UpdateState> updateState;
 			float sampleRate;
 		private:
 			struct PeakIndexInfo
@@ -119,8 +140,10 @@ namespace dsp
 			// idx
 			double getRatio(int) const noexcept;
 
-		protected:
+			bool wantsUpdate() const noexcept;
+
 			std::array<Material, 2> materials;
+		protected:
 			std::array<Material::PeakInfo, NumFilters> peakInfos;
 		};
 
@@ -152,7 +175,18 @@ namespace dsp
 
 		struct Resonator
 		{
+			struct Val
+			{
+				Val();
+
+				double getFreq(const arch::XenManager&) noexcept;
+
+				double pitch, pb;
+			};
+
 			Resonator(const arch::XenManager&, const DualMaterial&);
+
+			void reset() noexcept;
 
 			void prepare(double);
 
@@ -171,6 +205,7 @@ namespace dsp
 			const arch::XenManager& xen;
 			const DualMaterial& material;
 			ResonatorArray resonators;
+			Val val;
 			double freqHz, sampleRate, nyquist;
 			int numFiltersBelowNyquist;
 
@@ -222,7 +257,8 @@ namespace dsp
 			void updateParameters(double, double, double, double) noexcept;
 
 			// samplesSrc, samplesDest, midi, numChannels, numSamples, voiceIdx
-			void operator()(const double**, double**, const MidiBuffer&, int, int, int) noexcept;
+			void operator()(const double**, double**, const MidiBuffer&,
+				int, int, int) noexcept;
 
 			AutoGain5 autoGainReso;
 			DualMaterial material;

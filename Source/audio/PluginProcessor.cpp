@@ -10,6 +10,7 @@ namespace audio
 		sampleRate(1.),
 		autoMPE(),
 		voiceSplit(),
+		midiTranspose(),
 		parallelProcessor(),
 		modalFilter(xen),
 		combFilter(xen)
@@ -30,27 +31,31 @@ namespace audio
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
 	{
-		autoMPE(midi); voiceSplit(midi);
+		const auto& modalOctParam = params(PID::Oct);
+		const auto& modalSemiParam = params(PID::Semi);
+		auto modalSemi = static_cast<int>(modalSemiParam.getValModDenorm());
+		modalSemi += static_cast<int>(modalOctParam.getValModDenorm()) * static_cast<int>(xen.getXen());
+		midiTranspose(midi, modalSemi);
 
-		const auto samplesInput = const_cast<const double**>(samples);
+		autoMPE(midi); voiceSplit(midi);
 
 		const auto& modalMixParam = params(PID::ModalMix);
 		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
 
-		const auto& modalHarmonizeParam = params(PID::ModalHarmonize);
+		const auto& modalHarmonizeParam = params(PID::ModalHarmonie);
 		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValMod());
 
-		const auto& modalSaturateParam = params(PID::ModalSaturate);
+		const auto& modalSaturateParam = params(PID::ModalTonalitaet);
 		const auto modalSaturate = static_cast<double>(modalSaturateParam.getValModDenorm());
 
-		const auto& modalResoParam = params(PID::ModalResonance);
+		const auto& modalResoParam = params(PID::ModalResonanz);
 		const auto modalReso = static_cast<double>(modalResoParam.getValMod());
 
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
 		const auto combSemi = combOct * xen.getXen();
 
-		const auto& combFeedbackParam = params(PID::CombFeedback);
+		const auto& combFeedbackParam = params(PID::CombRueckkopplung);
 		auto combFeedback = static_cast<double>(combFeedbackParam.getValMod());
 		if (combOct > 0.)
 			combFeedback *= -1.;
@@ -58,6 +63,8 @@ namespace audio
 		modalFilter.updateParameters(modalMix, modalHarmonize, modalSaturate, modalReso);
 		combFilter.synthesizeWHead(numSamples);
 		combFilter.updateParameters(combFeedback);
+		
+		const auto samplesInput = const_cast<const double**>(samples);
 
 		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
 		{
@@ -70,7 +77,6 @@ namespace audio
 			{
 				modalFilter(samplesInput, samplesVoice, midiVoice, numChannels, numSamples, v);
 				combFilter(samplesVoice, midiVoice, combSemi, numChannels, numSamples, v);
-
 				modalFilter.voices[v].detectSleepy(sleepy, samplesVoice, numChannels, numSamples);
 				parallelProcessor.setSleepy(sleepy, v);
 			}

@@ -5,6 +5,7 @@
 
 #include "dsp/midi/AutoMPE.h"
 #include "dsp/midi/MPESplit.h"
+#include "dsp/midi/MIDITranspose.h"
 #include "dsp/ParallelProcessor.h"
 #include "dsp/ModalFilter.h"
 #include "dsp/DelayVoices.h"
@@ -43,6 +44,7 @@ namespace audio
 
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;
+		dsp::MidiTranspose midiTranspose;
 		dsp::PPMIDIBand parallelProcessor;
 		dsp::modal::Filter modalFilter;
 		dsp::CombFilterVoices combFilter;

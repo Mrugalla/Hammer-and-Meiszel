@@ -2,10 +2,10 @@
 
 namespace dsp
 {
-	AutoMPE::Voice::Voice() :
-		note(-1),
-		channel(0),
-		noteOn(false)
+	AutoMPE::Voice::Voice(int _note, int _channel, bool _noteOn) :
+		note(_note),
+		channel(_channel),
+		noteOn(_noteOn)
 	{}
 
 	AutoMPE::AutoMPE() :
@@ -26,6 +26,8 @@ namespace dsp
 				processNoteOn(msg, it.samplePosition);
 			else if (msg.isNoteOff())
 				processNoteOff(msg);
+			else if (msg.isPitchWheel())
+				processPitchWheel(msg, it.samplePosition);
 			else
 				msg.setChannel(1);
 
@@ -84,5 +86,15 @@ namespace dsp
 		msg.setChannel(voice.channel);
 		voice.note = 0;
 		voice.noteOn = false;
+	}
+
+	void AutoMPE::processPitchWheel(MidiMessage& msg, int ts) noexcept
+	{
+		for (auto ch = 0; ch < VoicesSize; ++ch)
+		{
+			auto& voice = voices[ch];
+			msg.setChannel(voice.channel);
+			buffer.addEvent(msg, ts);
+		}
 	}
 }

@@ -29,10 +29,11 @@ namespace gui
         enum { kTitle, kDev, kNumLabels };
         std::array<Label, kNumLabels> labels;
 
-        KnobPainterBasic painterMacro;
-        KnobParam macroKnob;
+        enum { kMacro, kOct, kSemi, kModalReso, kModalHarm, kModalTon, kModalMix, kCombFeedback, kGainDry, kGainWet, kGainOut, kNumKnobs };
+        std::array<KnobParam, kNumKnobs> knobs;
+        std::array<KnobPainterBasic, kNumKnobs> painters;
 
-        //ModalFilterMaterialView materialView;
+        std::array<ModalMaterialView, 2> materialViews;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

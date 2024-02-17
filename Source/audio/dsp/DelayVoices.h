@@ -33,7 +33,6 @@ namespace dsp
 			if(feedback == _feedback)
 				return;
 			feedback = math::sinApprox(_feedback * PiHalf);
-			//feedback = std::sin(_feedback * PiHalf);
 		}
 
 		// samples, midi, retune, numChannels, numSamples, voiceIdx

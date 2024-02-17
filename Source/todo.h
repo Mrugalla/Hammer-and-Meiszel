@@ -6,14 +6,7 @@ ToThink
     -
 
 Hammer & Meiﬂel
-    modal synth
-        polyphony
-        make waveform audio object
-            buffer
-            size
-            updated
-        make waveform gui object
-		    if updated or resized, repaint
+    -
 
 GUI
     reintroduce custom mousecursor

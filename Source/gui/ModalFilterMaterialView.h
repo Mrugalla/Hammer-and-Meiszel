@@ -1,113 +1,237 @@
 #pragma once
-#include "Comp.h"
+#include "Label.h"
 #include "../audio/dsp/ModalFilter.h"
 
 namespace gui
 {
-	struct ModalFilterMaterialView :
+	struct ModalMaterialView :
 		public Comp
 	{
+		static constexpr float KnotHitBoxSens = 6.f;
+
 		using Material = dsp::modal::Material;
+		using UpdateState = Material::UpdateState;
+		using PeakInfo = Material::PeakInfo;
+		static constexpr int NumFilters = dsp::modal::NumFilters;
 
-		static constexpr int StepSize = 2;
-		static constexpr float StepSizeF = static_cast<float>(StepSize);
-		using SampleBuffer = std::vector<float>;
-
-		enum { kWaveformUpdatedCB, kNumCallbacks };
-
-		ModalFilterMaterialView(Utils& u, Material& _material) :
-			Comp(u),
-			material(_material),
-			buffer(),
-			drawBipolar(false)
+		struct Partial
 		{
+			Partial() :
+				x(0.f), y(0.f)
+			{
+			}
+
+			float x, y;
+		};
+
+		enum
+		{
+			kMaterialUpdatedCB = 0,
+			kStrumCB = 1,
+			kNumStrumsCB = kStrumCB + NumFilters,
+			kNumCallbacks
+		};
+
+		ModalMaterialView(Utils& u, Material& _material) :
+			Comp(u),
+			infoLabel(u, true),
+			material(_material),
+			partials(),
+			dragXY(),
+			selected(-1)
+		{
+			layout.init
+			(
+				{ 1 },
+				{ 1, 5 }
+			);
+
+			addAndMakeVisible(infoLabel);
+			makeTextLabel(infoLabel, "", font::nel(), Just::topRight, CID::Hover);
+
 			add(Callback([&]()
 			{
-				if (material.updated.load())
+				if (material.updateState.load() == UpdateState::UpdateGUI)
 				{
 					update();
 					repaint();
 				}
-			}, kWaveformUpdatedCB, cbFPS::k3_75, true));
+			}, kMaterialUpdatedCB, cbFPS::k30, true));
+
+			const auto fps = cbFPS::k30;
+			const auto speed = msToInc(AniLengthMs, fps);
+
+			for(auto i = 0; i < NumFilters; ++i)
+				add(Callback([&, speed, i]()
+				{
+					auto& phase = callbacks[kStrumCB + i].phase;
+					phase -= speed;
+					if (phase <= 0.f)
+					{
+						phase = 0.f;
+						callbacks[kStrumCB + i].active = false;
+					}
+					repaint();
+				}, kStrumCB + i, fps, false));
 		}
 
 		void paint(Graphics& g) override
 		{
-			if (buffer.empty())
-				return;
-			
-			const auto h = static_cast<float>(getHeight());
-			paintWaveform(g, getColour(CID::Txt), h);
+			auto const h = static_cast<float>(getHeight());
+
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				const auto strumPhase = callbacks[kStrumCB + i].phase;
+				const auto knotW = utils.thicc
+					* (selected == i ? 2.f : 1.f)
+					+ utils.thicc * strumPhase * 2.f;
+				const auto knotWHalf = knotW * .5f;
+
+				const auto x = partials[i].x;
+				const auto y = partials[i].y;
+
+				if(selected == i)
+					g.setColour(Colours::c(CID::Interact));
+				else
+					g.setColour(Colours::c(CID::Txt));
+				g.fillRect(x - knotWHalf, y, knotW, h);
+
+				g.setColour(Colours::c(CID::Interact));
+				g.fillRect(x - knotWHalf, y - knotWHalf, knotW, knotW);
+			}
 		}
 
 		void resized() override
 		{
-			buffer.resize(getWidth() / StepSize, 0.f);
+			layout.resized(getLocalBounds().toFloat());
+			layout.place(infoLabel, 0, 0, 1, 1);
 			update();
 		}
 
+		Label infoLabel;
 		Material& material;
-		SampleBuffer buffer;
-		bool drawBipolar;
+		std::array<Partial, NumFilters> partials;
+		PointF dragXY;
+		int selected;
 	private:
 		void update()
 		{
-			updateSampleBuffer();
-			material.updated.store(false);
+			auto const w = static_cast<float>(getWidth());
+			auto const h = static_cast<float>(getHeight());
+
+			auto maxRatio = 0.f;
+			for (auto& peakInfo : material.peakInfos)
+				maxRatio = std::max(maxRatio, static_cast<float>(peakInfo.ratio));
+			maxRatio -= 1.f;
+			const auto maxRatioInv = 1.f / maxRatio;
+
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				auto& peakInfo = material.peakInfos[i];
+
+				auto const x = ((static_cast<float>(peakInfo.ratio) - 1.f)) * maxRatioInv * w;
+				auto const y = h - static_cast<float>(peakInfo.mag) * h;
+
+				partials[i].x = x;
+				partials[i].y = y;
+			}
+
+			material.updateState.store(UpdateState::Idle);
 		}
 
-		void updateSampleBuffer()
+		void mouseExit(const Mouse&) override
 		{
-			auto numSamples = static_cast<double>(material.buffer.size());
-			auto samples = material.buffer.data();
+			selected = -1;
+			infoLabel.setText("");
+			repaint();
+		}
 
-			for (auto i = 0; i < buffer.size(); ++i)
+		void mouseMove(const Mouse& mouse) override
+		{
+			const auto hitboxDist = utils.thicc * KnotHitBoxSens;
+
+			auto minDist = static_cast<float>(getWidth());
+			auto minDistIdx = -1;
+			for (auto i = 0; i < NumFilters; ++i)
 			{
-				const auto iD = static_cast<double>(i);
-				const auto iRatio = iD / static_cast<double>(buffer.size());
-				const auto iSample = static_cast<int>(std::round(iRatio * numSamples));
-				buffer[i] = static_cast<float>(samples[iSample]);
+				auto const x = static_cast<float>(partials[i].x);
+				const auto xDist = std::abs(mouse.x - x);
+				if (xDist < hitboxDist && xDist < minDist)
+				{
+					minDist = xDist;
+					minDistIdx = i;
+				}
+			}
+
+			if (minDistIdx == -1)
+			{
+				selected = -1;
+				infoLabel.setText("");
+				return repaint();
+			}
+
+			if (selected != minDistIdx)
+			{
+				selected = minDistIdx;
+				callbacks[kStrumCB + selected].start(1.f);
+				updateInfoLabel();
 			}
 		}
 
-		void paintWaveform(Graphics& g, Colour c, float h)
+		void mouseDown(const Mouse& mouse) override
 		{
-			g.setColour(c);
-			BoundsF rect(0.f, 0.f, StepSizeF, 0.f);
-			if (drawBipolar)
+			if (selected == -1)
+				return;
+
+			dragXY = { static_cast<float>(mouse.x), static_cast<float>(mouse.y) };
+		}
+
+		void mouseDrag(const Mouse& mouse) override
+		{
+			if (selected == -1)
+				return;
+			
+			hideCursor();
+
+			const auto minDimen = static_cast<float>(std::min(getWidth(), getHeight()));
+			const auto speed = 3.f * utils.thicc / minDimen;
+			const auto dragDist = ((mouse.position - dragXY) * speed).toDouble();
+
+			if(material.updateState.load() == UpdateState::Idle)
 			{
-				const auto centreY = h * .5f;
-				for (auto i = 0; i < buffer.size(); ++i)
-				{
-					const auto x = rect.getX();
-					const auto smpl = buffer[i];
-					auto y = centreY - smpl * centreY;
-					auto hgt = centreY - y;
-					if (hgt < 0.f)
-					{
-						hgt = -hgt;
-						y = centreY;
-					}
-					rect.setY(y);
-					rect.setHeight(hgt);
-					g.fillRect(rect);
-					rect.setX(x + StepSizeF);
-				}
+				auto& peakInfo = material.peakInfos[selected];
+				peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y);
+				peakInfo.ratio = juce::jlimit(1., 100., peakInfo.ratio + dragDist.x);
+				material.updatePeakInfosFromGUI();
+				updateInfoLabel();
 			}
-			else
-			{
-				for (auto i = 0; i < buffer.size(); ++i)
-				{
-					const auto x = rect.getX();
-					const auto smpl = std::abs(buffer[i]);
-					const auto y = h - smpl * h;
-					const auto hgt = h - y;
-					rect.setY(y);
-					rect.setHeight(hgt);
-					g.fillRect(rect);
-					rect.setX(x + StepSizeF);
-				}
-			}
+
+			dragXY = mouse.position;
+		}
+
+		void mouseUp(const Mouse& mouse) override
+		{
+			if (selected == -1)
+				return;
+
+			mouseDrag(mouse);
+
+			PointF pos
+			(
+					static_cast<float>(partials[selected].x),
+					static_cast<float>(partials[selected].y)
+			);
+
+			PointF screenPos = localPointToGlobal(pos);
+
+			showCursor(screenPos);
+		}
+
+		void updateInfoLabel()
+		{
+			const auto mag = material.peakInfos[selected].mag;
+			const auto rat = material.peakInfos[selected].ratio;
+			infoLabel.setText("mag: " + String(mag, 2) + ", rat : " + String(rat, 2));
 		}
 	};
 }

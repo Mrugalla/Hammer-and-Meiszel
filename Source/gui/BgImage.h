@@ -19,5 +19,6 @@ namespace gui
 
 		Image img;
 		Button refreshButton;
+		std::function<void(Image&)> createImageFunc;
 	};
 }

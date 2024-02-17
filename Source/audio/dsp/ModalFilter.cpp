@@ -9,7 +9,7 @@ namespace dsp
 		Material::Material() :
 			buffer(),
 			peakInfos(),
-			updated(false),
+			updateState(UpdateState::Idle),
 			sampleRate(0.f)
 		{
 		}
@@ -41,7 +41,7 @@ namespace dsp
 			peakIndexes.resize(NumFilters);
 			generatePeakIndexes(peakIndexes, bins, peakGroups);
 			generatePeakInfos(bins, peakIndexes.data(), static_cast<float>(harm0Idx));
-			updated.store(true);
+			updateState.store(UpdateState::UpdateGUI);
 		}
 
 		void Material::fillBuffer(const char* data, int size)
@@ -410,7 +410,11 @@ namespace dsp
 					const auto y = p * x / ((1. - p) - x + 2. * p * x);
 					peakInfos[i].mag = y;
 				}
-			}	
+			}
+
+			for(auto i = 0; i < 2; ++i)
+				if(materials[i].updateState.load() == Material::UpdateState::UpdateProcessor)
+					materials[i].updateState.store(Material::UpdateState::UpdateGUI);
 		}
 
 		double DualMaterial::getMag(int i) const noexcept
@@ -421,6 +425,12 @@ namespace dsp
 		double DualMaterial::getRatio(int i) const noexcept
 		{
 			return peakInfos[i].ratio;
+		}
+
+		bool DualMaterial::wantsUpdate() const noexcept
+		{
+			return materials[0].updateState.load() == Material::UpdateState::UpdateProcessor ||
+				materials[1].updateState.load() == Material::UpdateState::UpdateProcessor;
 		}
 
 		// Envelope
@@ -477,15 +487,32 @@ namespace dsp
 
 		// Resonator
 
+		Resonator::Val::Val() :
+			pitch(0.),
+			pb(0.)
+		{}
+
+		double Resonator::Val::getFreq(const arch::XenManager& xen) noexcept
+		{
+			return xen.noteToFreqHzWithWrap(pitch + pb);
+		}
+
 		Resonator::Resonator(const arch::XenManager& _xen, const DualMaterial& _material) :
 			xen(_xen),
 			material(_material),
 			resonators(),
+			val(),
 			freqHz(1000.),
 			sampleRate(1.),
 			nyquist(.5),
 			numFiltersBelowNyquist(0)
 		{
+		}
+
+		void Resonator::reset() noexcept
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+				resonators[i].reset();
 		}
 
 		void Resonator::prepare(double _sampleRate)
@@ -498,6 +525,9 @@ namespace dsp
 		void Resonator::operator()(double** samples, const MidiBuffer& midi,
 			int numChannels, int numSamples) noexcept
 		{
+			static constexpr double PB = 0x3fff;
+			static constexpr double PBInv = 1. / PB;
+
 			auto s = 0;
 			for (const auto it : midi)
 			{
@@ -505,11 +535,24 @@ namespace dsp
 				if (msg.isNoteOn())
 				{
 					const auto ts = it.samplePosition;
-					const auto pitch = static_cast<double>(msg.getNoteNumber());
-					const auto freq = xen.noteToFreqHzWithWrap(pitch);
+					val.pitch = static_cast<double>(msg.getNoteNumber());
+					const auto freq = val.getFreq(xen);
 					setFrequencyHz(freq);
 					applyFilter(samples, numChannels, s, ts);
 					s = ts;
+				}
+				else if (msg.isPitchWheel())
+				{
+					const auto ts = it.samplePosition;
+					const auto pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xen.getPitchbendRange() * 2.;
+					if (val.pb != pb)
+					{
+						val.pb = pb;
+						const auto freq = val.getFreq(xen);
+						setFrequencyHz(freq);
+						applyFilter(samples, numChannels, s, ts);
+						s = ts;
+					}
 				}
 			}
 
@@ -530,7 +573,7 @@ namespace dsp
 					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
 					auto& resonator = resonators[i];
 					resonator.setCutoffFc(fc);
-					resonator.reset();
+					//resonator.reset();
 					resonator.update();
 				}
 				else
@@ -634,7 +677,7 @@ namespace dsp
 					s = synthesizeEnvelope(s, ts);
 					env.noteOn = true;
 				}
-				else if (msg.isNoteOff())
+				else if (msg.isNoteOff() || msg.isAllNotesOff())
 				{
 					s = synthesizeEnvelope(s, ts);
 					env.noteOn = false;
@@ -685,6 +728,7 @@ namespace dsp
 			if (!sleepy)
 				return;
 
+			filter.reset();
 			for (auto ch = 0; ch < numChannels; ++ch)
 				SIMD::clear(samplesDest[ch], numSamples);
 		}
@@ -747,7 +791,8 @@ namespace dsp
 
 		void Filter::updateModalMix(double _modalMix, double _modalHarmonize, double _modalSaturate) noexcept
 		{
-			if (modalMix == _modalMix && modalHarmonize == _modalHarmonize && modalSaturate == _modalSaturate)
+			bool wantsUpdate = material.wantsUpdate();
+			if (modalMix == _modalMix && modalHarmonize == _modalHarmonize && modalSaturate == _modalSaturate && !wantsUpdate)
 				return;
 			modalMix = _modalMix;
 			modalHarmonize = _modalHarmonize;

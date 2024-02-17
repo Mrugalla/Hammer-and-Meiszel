@@ -7,6 +7,8 @@ namespace gui
 
 	void showCursor(const Component&);
 
+	void showCursor(const PointF);
+
 	void centreCursor(const Component&, juce::MouseInputSource&);
 
 	/* text, randomizer, length, legalChars*/
@@ -104,6 +106,89 @@ namespace gui
 
 	/* graphics, bounds, text */
 	void drawHeadLine(Graphics&, const BoundsF&, const String&);
+
+	inline void visualizeGroupNEL(Graphics& g, BoundsF bounds, float thicc)
+	{
+		Stroke stroke(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
+
+		{
+			const auto x = bounds.getX();
+			const auto y = bounds.getY();
+			const auto w = bounds.getWidth();
+			const auto h = bounds.getHeight();
+
+			const auto midDimen = std::min(w, h);
+
+			const auto x0 = x;
+			const auto x125 = x + .125f * midDimen;
+			const auto x25 = x + .25f * midDimen;
+			const auto x75 = x + w - .25f * midDimen;
+			const auto x875 = x + w - .125f * midDimen;
+			const auto x1 = x + w;
+
+			const auto y0 = y;
+			const auto y125 = y + .125f * midDimen;
+			const auto y25 = y + .25f * midDimen;
+			const auto y75 = y + h - .25f * midDimen;
+			const auto y875 = y + h - .125f * midDimen;
+			const auto y1 = y + h;
+
+			Path p;
+			p.startNewSubPath(x0, y25);
+			p.lineTo(x0, y125);
+			p.lineTo(x125, y0);
+			p.lineTo(x25, y0);
+			for (auto i = 1; i < 3; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto n = iF / 3.f;
+
+				const auto nY = y0 + n * (y125 - y0);
+				const auto nX = x0 + n * (x125 - x0);
+
+				p.startNewSubPath(x0, nY);
+				p.lineTo(nX, y0);
+			}
+
+			p.startNewSubPath(x875, y0);
+			p.lineTo(x1, y0);
+			p.lineTo(x1, y125);
+
+			p.startNewSubPath(x1, y75);
+			p.lineTo(x1, y875);
+			p.lineTo(x875, y1);
+			p.lineTo(x75, y1);
+			for (auto i = 1; i < 3; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto n = iF / 3.f;
+
+				const auto nY = y1 + n * (y875 - y1);
+				const auto nX = x1 + n * (x875 - x1);
+
+				p.startNewSubPath(x1, nY);
+				p.lineTo(nX, y1);
+			}
+
+			for (auto i = 1; i <= 3; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto n = iF / 3.f;
+
+				const auto nY = y1 + n * (y875 - y1);
+				const auto nX = x0 + n * (x125 - x0);
+
+				p.startNewSubPath(x0, nY);
+				p.lineTo(nX, y1);
+			}
+
+			g.strokePath(p, stroke);
+		}
+	}
+
+	// graphics, text, bounds, colour, thicc
+	void visualizeGroupNEL(Graphics&, String&&,
+		BoundsF, Colour, float);
 
 	template<class ArrayCompPtr>
 	inline void distributeVertically(const Component& parent, ArrayCompPtr& compArray)

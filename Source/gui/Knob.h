@@ -39,16 +39,16 @@ namespace gui
             }, kEnterExitCB, fps, false));
 
             add(Callback([&, speed]()
-                {
-                    auto& phase = callbacks[kDownUpCB].phase;
-                    const auto pol = isMouseButtonDown() ? 1.f : -1.f;
-                    phase += speed * pol;
-                    if (phase >= 1.f)
-                        phase = 1.f;
-                    else if (phase < 0.f)
-                        callbacks[kDownUpCB].stop(0.f);
-                    repaint();
-                }, kDownUpCB, fps, false));
+            {
+                auto& phase = callbacks[kDownUpCB].phase;
+                const auto pol = isMouseButtonDown() ? 1.f : -1.f;
+                phase += speed * pol;
+                if (phase >= 1.f)
+                    phase = 1.f;
+                else if (phase < 0.f)
+                    callbacks[kDownUpCB].stop(0.f);
+                repaint();
+            }, kDownUpCB, fps, false));
         }
 
         void mouseEnter(const Mouse& mouse) override
@@ -471,7 +471,8 @@ namespace gui
         public KnobParam::Painter
     {
         KnobPainterBasic(bool isMacro) :
-            knobBounds()
+            knobBounds(),
+            thicc2(0.f), thicc3(0.f), thicc4(0.f), thicc5(0.f)
         {
             onLayout = [](Layout& layout)
             {

@@ -59,11 +59,13 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
+		case PID::Oct: return "Oct";
+		case PID::Semi: return "Semi";
 		case PID::ModalMix: return "Modal Mix";
-		case PID::ModalHarmonize: return "Modal Harmonize";
-		case PID::ModalSaturate: return "Modal Saturate";
-		case PID::ModalResonance: return "Resonance";
-		case PID::CombFeedback: return "Comb Feedback";
+		case PID::ModalHarmonie: return "Modal Harmonie";
+		case PID::ModalTonalitaet: return juce::CharPointer_UTF8("Modal Tonalit\xc3\xa4""t");
+		case PID::ModalResonanz: return "Modal Resonanz";
+		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Modal R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
 
 		default: return "Invalid Parameter Name";
@@ -131,11 +133,13 @@ namespace param
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
+		case PID::Oct: return "Transposes all effects in octaves.";
+		case PID::Semi: return "Transposes all effects in semitones.";
 		case PID::ModalMix: return "Mixes between the 2 modal filters.";
-		case PID::ModalHarmonize: return "Shifts the resonators towards the harmonic series.";
-		case PID::ModalSaturate: return "Saturates the resonators magnitude values.";
-		case PID::ModalResonance: return "Higher resonance causes sharper ringing.";
-		case PID::CombFeedback: return "Stronger feedback causes the comb filter to ring sharper.";
+		case PID::ModalHarmonie: return "Shifts the resonators towards the harmonic series.";
+		case PID::ModalTonalitaet: return "Saturates the resonators magnitude values.";
+		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
+		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
 		case PID::CombOct: return "Transposes the comb filter.";
 
 		default: return "Invalid Tooltip.";
@@ -155,7 +159,7 @@ namespace param
 		case Unit::Degree: return CharPtr("\xc2\xb0");
 		case Unit::Octaves: return "oct";
 		case Unit::Semi: return "semi";
-		case Unit::Fine: return "fine";
+		case Unit::Fine: return "ct";
 		case Unit::Ms: return "ms";
 		case Unit::Decibel: return "db";
 		case Unit::Ratio: return "ratio";
@@ -1248,7 +1252,7 @@ namespace param
 			const auto gainRangeCentre = -20.f;
 			const auto gainDryRange = makeRange::withCentre(PPDGainDryMin, PPDGainDryMax, gainRangeCentre);
 			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, gainRangeCentre);
-			params.push_back(makeParam(PID::GainDry, 0.f, gainDryRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainDry, PPDGainDryMin, gainDryRange, Unit::Decibel));
 			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
 #elif PPDIO == PPDIOWetMix
 			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f);
@@ -1273,17 +1277,19 @@ namespace param
 			params.push_back(makeParam(PID::Xen, 12.f, makeRange::withCentre(3.f, maxXen, 12.f), Unit::Xen));
 			params.push_back(makeParam(PID::MasterTune, 440.f, makeRange::withCentre(420.f, 460.f, 440.f), Unit::Hz));
 			params.push_back(makeParam(PID::ReferencePitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
-			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(0.f, 48.f), Unit::Semi));
+			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(1.f, 48.f), Unit::Semi));
 #endif
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
 		}
 
 		// LOW LEVEL PARAMS:
+		params.push_back(makeParam(PID::Oct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
+		params.push_back(makeParam(PID::Semi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::ModalMix, 0.f));
-		params.push_back(makeParam(PID::ModalHarmonize, 0.f));
-		params.push_back(makeParam(PID::ModalSaturate, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalResonance, .6f));
-		params.push_back(makeParam(PID::CombFeedback, 0.f));
+		params.push_back(makeParam(PID::ModalHarmonie, 0.f));
+		params.push_back(makeParam(PID::ModalTonalitaet, .5f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalResonanz, .6f));
+		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		// LOW LEVEL PARAMS END
 

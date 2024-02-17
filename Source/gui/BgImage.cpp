@@ -164,7 +164,8 @@ namespace gui
     BgImage::BgImage(Utils& u) :
         Comp(u),
         img(),
-        refreshButton(u)
+        refreshButton(u),
+        createImageFunc([](Image&) {})
     {
         setInterceptsMouseClicks(false, true);
 
@@ -214,7 +215,8 @@ namespace gui
 
         if (componentOk(*this))
         {
-            create::pulsar(img, utils.thicc, getWidth(), getHeight());
+            img = Image(Image::ARGB, getWidth(), getHeight(), true);
+            createImageFunc(img);
             saveImage(file, img);
         }
     }

@@ -1,11 +1,21 @@
 #pragma once
 #include "../../arch/XenManager.h"
+#include "PRM.h"
 #include "WHead.h"
 
 namespace dsp
 {
 	class CombFilter
 	{
+		struct Val
+		{
+			Val();
+
+			double getDelaySamples(const arch::XenManager& xen, double Fs) noexcept;
+
+			double pitch, pb;
+		};
+
 		struct DelayFeedback
 		{
 			//using Lowpass = smooth::Lowpass<float>;
@@ -37,8 +47,10 @@ namespace dsp
 
 	protected:
 		const arch::XenManager& xenManager;
+		PRMD smooth;
 		std::array<double, BlockSize2x> readHead;
 		DelayFeedback delay;
+		Val val;
 		double Fs, sizeF, curDelay;
 	public:
 		int size;

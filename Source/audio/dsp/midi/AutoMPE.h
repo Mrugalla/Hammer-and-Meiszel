@@ -7,7 +7,7 @@ namespace dsp
 	{
 		struct Voice
 		{
-			Voice();
+			Voice(int = -1, int = 1, bool = false);
 
 			int note, channel;
 			bool noteOn;
@@ -35,6 +35,8 @@ namespace dsp
 		void processNoteOff(MidiMessage&) noexcept;
 
 		void processNoteOff(Voice&, MidiMessage&) noexcept;
+
+		void processPitchWheel(MidiMessage&, int) noexcept;
 
 	};
 }

@@ -46,11 +46,13 @@ namespace param
 		Power,
 
 		// low level parameters
+		Oct,
+		Semi,
 		ModalMix,
-		ModalHarmonize,
-		ModalSaturate,
-		ModalResonance,
-		CombFeedback,
+		ModalHarmonie,
+		ModalTonalitaet,
+		ModalResonanz,
+		CombRueckkopplung,
 		CombOct,
 		//
 		

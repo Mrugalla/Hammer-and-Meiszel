@@ -3,6 +3,17 @@
 
 namespace dsp
 {
+	CombFilter::Val::Val() :
+		pitch(0.),
+		pb(0.)
+	{}
+
+	double CombFilter::Val::getDelaySamples(const arch::XenManager& xen, double Fs) noexcept
+	{
+		const auto freqHz = xen.noteToFreqHzWithWrap(pitch + pb, LowestFrequencyHz);
+		return math::freqHzToSamples(freqHz, Fs);
+	}
+
 	CombFilter::DelayFeedback::DelayFeedback() :
 		ringBuffer(),
 		//lowpass{ 0.f, 0.f },
@@ -51,8 +62,10 @@ namespace dsp
 
 	CombFilter::CombFilter(const arch::XenManager& _xenManager) :
 		xenManager(_xenManager),
+		smooth(0.),
 		readHead(),
 		delay(),
+		val(),
 		Fs(0.), sizeF(0.), curDelay(0.),
 		size(0)
 	{}
@@ -63,23 +76,34 @@ namespace dsp
 		sizeF = std::ceil(math::freqHzToSamples(LowestFrequencyHz, Fs));
 		size = static_cast<int>(sizeF);
 		delay.prepare(size);
+		smooth.prepare(Fs, 20.);
 		curDelay = 0.;
 	}
 
 	void CombFilter::operator()(double** samples, const MidiBuffer& midi, const int* wHead,
 		double feedback, double retune, int numChannels, int numSamples) noexcept
 	{
+		static constexpr double PB = 0x3fff;
+		static constexpr double PBInv = 1. / PB;
+
 		auto s = 0;
 		for (const auto it : midi)
 		{
 			const auto msg = it.getMessage();
-			const auto ts = it.samplePosition;
 			if (msg.isNoteOn())
 			{
+				const auto ts = it.samplePosition;
 				const auto note = msg.getNoteNumber();
-				const auto curNote = static_cast<double>(note) + retune;
-				const auto freqHz = xenManager.noteToFreqHzWithWrap(curNote, LowestFrequencyHz);
-				curDelay = math::freqHzToSamples(freqHz, Fs);
+				val.pitch = static_cast<double>(note) + retune;
+				curDelay = val.getDelaySamples(xenManager, Fs);
+				processDelay(samples, wHead, feedback, numChannels, s, ts);
+				s = ts;
+			}
+			else if (msg.isPitchWheel())
+			{
+				const auto ts = it.samplePosition;
+				val.pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xenManager.getPitchbendRange() * 2.;
+				curDelay = val.getDelaySamples(xenManager, Fs);
 				processDelay(samples, wHead, feedback, numChannels, s, ts);
 				s = ts;
 			}
@@ -89,14 +113,25 @@ namespace dsp
 
 	void CombFilter::processDelay(double** samples, const int* wHead, double feedback, int numChannels, int startIdx, int endIdx) noexcept
 	{
-		for (auto s = startIdx; s < endIdx; ++s)
-		{
-			const auto w = static_cast<float>(wHead[s]);
-			auto r = w - curDelay;
-			if (r < 0.f)
-				r += sizeF;
-			readHead[s] = r;
-		}
+		const auto smoothInfo = smooth(curDelay, endIdx - startIdx);
+		if(smoothInfo.smoothing)
+			for (auto s = startIdx; s < endIdx; ++s)
+			{
+				const auto w = static_cast<float>(wHead[s]);
+				auto r = w - smoothInfo[s - startIdx];
+				if (r < 0.f)
+					r += sizeF;
+				readHead[s] = r;
+			}
+		else
+			for (auto s = startIdx; s < endIdx; ++s)
+			{
+				const auto w = static_cast<float>(wHead[s]);
+				auto r = w - smoothInfo.val;
+				if (r < 0.f)
+					r += sizeF;
+				readHead[s] = r;
+			}
 
 		delay
 		(

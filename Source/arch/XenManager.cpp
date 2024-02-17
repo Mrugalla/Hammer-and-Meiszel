@@ -61,6 +61,11 @@ namespace arch
 		return xen;
 	}
 
+	double XenManager::getPitchbendRange() const noexcept
+	{
+		return pitchbendRange;
+	}
+
 	template float XenManager::noteToFreqHz<float>(float note) const noexcept;
 	template double XenManager::noteToFreqHz<double>(double note) const noexcept;
 

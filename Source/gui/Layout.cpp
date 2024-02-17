@@ -15,6 +15,13 @@ namespace gui
 		mms.enableUnboundedMouseMovement(false, true);
 	}
 
+	void showCursor(const PointF pt)
+	{
+		auto mms = juce::Desktop::getInstance().getMainMouseSource();
+		mms.setScreenPosition(pt);
+		mms.enableUnboundedMouseMovement(false, true);
+	}
+
 	void centreCursor(const Component& comp, juce::MouseInputSource& mms)
 	{
 		const Point centre(comp.getWidth() / 2, comp.getHeight() / 2);
@@ -394,6 +401,101 @@ namespace gui
 	void drawHeadLine(Graphics& g, const BoundsF& bounds, const String& txt)
 	{
 		g.drawFittedText(txt, bounds.toNearestInt(), Just::centredTop, 1);
+	}
+
+	void visualizeGroupNEL(Graphics& g, String&& txt,
+		BoundsF bounds, Colour col, float thicc)
+	{
+		Stroke stroke(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
+		g.setColour(col);
+		{
+			const auto x = bounds.getX();
+			const auto y = bounds.getY();
+			const auto w = bounds.getWidth();
+			const auto h = bounds.getHeight();
+
+			const auto midDimen = std::min(w, h);
+
+			const auto x0 = x;
+			const auto x125 = x + .125f * midDimen;
+			const auto x25 = x + .25f * midDimen;
+			const auto x75 = x + w - .25f * midDimen;
+			const auto x875 = x + w - .125f * midDimen;
+			const auto x1 = x + w;
+
+			const auto y0 = y;
+			const auto y125 = y + .125f * midDimen;
+			const auto y25 = y + .25f * midDimen;
+			const auto y75 = y + h - .25f * midDimen;
+			const auto y875 = y + h - .125f * midDimen;
+			const auto y1 = y + h;
+
+			Path p;
+			p.startNewSubPath(x0, y25);
+			p.lineTo(x0, y125);
+			p.lineTo(x125, y0);
+			p.lineTo(x25, y0);
+			for (auto i = 1; i < 3; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto n = iF / 3.f;
+
+				const auto nY = y0 + n * (y125 - y0);
+				const auto nX = x0 + n * (x125 - x0);
+
+				p.startNewSubPath(x0, nY);
+				p.lineTo(nX, y0);
+			}
+
+			p.startNewSubPath(x875, y0);
+			p.lineTo(x1, y0);
+			p.lineTo(x1, y125);
+
+			p.startNewSubPath(x1, y75);
+			p.lineTo(x1, y875);
+			p.lineTo(x875, y1);
+			p.lineTo(x75, y1);
+			for (auto i = 1; i < 3; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto n = iF / 3.f;
+
+				const auto nY = y1 + n * (y875 - y1);
+				const auto nX = x1 + n * (x875 - x1);
+
+				p.startNewSubPath(x1, nY);
+				p.lineTo(nX, y1);
+			}
+
+			for (auto i = 1; i <= 3; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto n = iF / 3.f;
+
+				const auto nY = y1 + n * (y875 - y1);
+				const auto nX = x0 + n * (x125 - x0);
+
+				p.startNewSubPath(x0, nY);
+				p.lineTo(nX, y1);
+			}
+
+			g.strokePath(p, stroke);
+
+			if (txt.isNotEmpty())
+			{
+				auto tFont = font::nel();
+				BoundsF area
+				(
+					x75, y0,
+					x1 - x75,
+					y25 - y0
+				);
+				auto maxHeight = findMaxHeight(tFont, txt, area.getWidth(), area.getHeight());
+				tFont.setHeight(maxHeight);
+				g.setFont(tFont);
+				g.drawFittedText(txt, area.toNearestInt(), juce::Justification::centred, 1);
+			}
+		}
 	}
 
 	PointF boundsOf(const Font& font, const String& text) noexcept

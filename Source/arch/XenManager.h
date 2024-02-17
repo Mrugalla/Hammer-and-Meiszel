@@ -23,6 +23,8 @@ namespace arch
 
 		double getXen() const noexcept;
 
+		double getPitchbendRange() const noexcept;
+
 	protected:
 		double xen, masterTune, referencePitch, pitchbendRange;
 	};

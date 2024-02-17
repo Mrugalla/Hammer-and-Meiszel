@@ -194,7 +194,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return false;
+        return true;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()
@@ -432,7 +432,7 @@ namespace audio
         {
             auto smpls = samplesMain[ch];
             for (auto s = 0; s < numSamplesMain; ++s)
-                smpls[s] = dsp::hardclip(smpls[s], 1.);
+                smpls[s] = dsp::hardclip(smpls[s], 2.);
         }
 #endif
     }
