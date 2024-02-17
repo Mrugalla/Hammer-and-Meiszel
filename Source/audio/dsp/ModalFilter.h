@@ -288,6 +288,6 @@ performance:
 			freq
 
 features:
-	interpret pitchbend msgs
+	-
 
 */
