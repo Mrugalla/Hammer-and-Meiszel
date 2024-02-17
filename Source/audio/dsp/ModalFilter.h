@@ -181,7 +181,7 @@ namespace dsp
 
 				double getFreq(const arch::XenManager&) noexcept;
 
-				double pitch, pb;
+				double pitch, transpose, pb, pbRange, xen;
 			};
 
 			Resonator(const arch::XenManager&, const DualMaterial&);
@@ -190,7 +190,7 @@ namespace dsp
 
 			void prepare(double);
 
-			// samples, midi, transposeSemi, numChannels, numSamples
+			// samples, midi, _transposeSemi, numChannels, numSamples
 			void operator()(double**, const MidiBuffer&, double, int, int) noexcept;
 
 			// freqHz
@@ -208,6 +208,9 @@ namespace dsp
 			Val val;
 			double freqHz, sampleRate, nyquist;
 			int numFiltersBelowNyquist;
+
+			/* samples, midi, numChannels, numSamples */
+			void process(double**, const MidiBuffer&, int, int) noexcept;
 
 			// samples, numChannels, startIdx, endIdx
 			void applyFilter(double**, int, int, int) noexcept;

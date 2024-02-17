@@ -32,8 +32,8 @@ namespace audio
 	{
 		const auto& octParam = params(PID::Oct);
 		const auto& semiParam = params(PID::Semi);
-		auto transposeSemi = static_cast<double>(semiParam.getValModDenorm());
-		transposeSemi += static_cast<double>(octParam.getValModDenorm()) * xen.getXen();
+		auto transposeSemi = static_cast<double>(std::round(semiParam.getValModDenorm()));
+		transposeSemi += static_cast<double>(std::round(octParam.getValModDenorm())) * xen.getXen();
 
 		autoMPE(midi); voiceSplit(midi);
 

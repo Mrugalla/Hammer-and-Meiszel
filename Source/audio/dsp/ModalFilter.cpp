@@ -489,12 +489,15 @@ namespace dsp
 
 		Resonator::Val::Val() :
 			pitch(0.),
-			pb(0.)
+			transpose(0.),
+			pb(0.),
+			pbRange(2.),
+			xen(12.)
 		{}
 
 		double Resonator::Val::getFreq(const arch::XenManager& xen) noexcept
 		{
-			return xen.noteToFreqHzWithWrap(pitch + pb);
+			return xen.noteToFreqHzWithWrap(pitch + transpose + pb * pbRange * 2.);
 		}
 
 		Resonator::Resonator(const arch::XenManager& _xen, const DualMaterial& _material) :
@@ -525,38 +528,18 @@ namespace dsp
 		void Resonator::operator()(double** samples, const MidiBuffer& midi,
 			double transposeSemi, int numChannels, int numSamples) noexcept
 		{
-			static constexpr double PB = 0x3fff;
-			static constexpr double PBInv = 1. / PB;
-
-			auto s = 0;
-			for (const auto it : midi)
+			if (val.transpose != transposeSemi ||
+				val.pbRange != xen.getPitchbendRange() ||
+				val.xen != xen.getXen())
 			{
-				const auto msg = it.getMessage();
-				if (msg.isNoteOn())
-				{
-					const auto ts = it.samplePosition;
-					val.pitch = static_cast<double>(msg.getNoteNumber()) + transposeSemi;
-					const auto freq = val.getFreq(xen);
-					setFrequencyHz(freq);
-					applyFilter(samples, numChannels, s, ts);
-					s = ts;
-				}
-				else if (msg.isPitchWheel())
-				{
-					const auto ts = it.samplePosition;
-					const auto pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xen.getPitchbendRange() * 2.;
-					if (val.pb != pb)
-					{
-						val.pb = pb;
-						const auto freq = val.getFreq(xen);
-						setFrequencyHz(freq);
-						applyFilter(samples, numChannels, s, ts);
-						s = ts;
-					}
-				}
+				val.transpose = transposeSemi;
+				val.pbRange = xen.getPitchbendRange();
+				val.xen = xen.getXen();
+				const auto freq = val.getFreq(xen);
+				setFrequencyHz(freq);
 			}
 
-			applyFilter(samples, numChannels, s, numSamples);
+			process(samples, midi, numChannels, numSamples);
 		}
 
 		void Resonator::setFrequencyHz(double freq) noexcept
@@ -615,6 +598,42 @@ namespace dsp
 				resonator.setBandwidth(bw);
 				resonator.update();
 			}
+		}
+
+		void Resonator::process(double** samples, const MidiBuffer& midi, int numChannels, int numSamples) noexcept
+		{
+			static constexpr double PB = 0x3fff;
+			static constexpr double PBInv = 1. / PB;
+
+			auto s = 0;
+			for (const auto it : midi)
+			{
+				const auto msg = it.getMessage();
+				if (msg.isNoteOn())
+				{
+					const auto ts = it.samplePosition;
+					val.pitch = static_cast<double>(msg.getNoteNumber());
+					const auto freq = val.getFreq(xen);
+					setFrequencyHz(freq);
+					applyFilter(samples, numChannels, s, ts);
+					s = ts;
+				}
+				else if (msg.isPitchWheel())
+				{
+					const auto ts = it.samplePosition;
+					const auto pb = static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5;
+					if (val.pb != pb)
+					{
+						val.pb = pb;
+						const auto freq = val.getFreq(xen);
+						setFrequencyHz(freq);
+						applyFilter(samples, numChannels, s, ts);
+						s = ts;
+					}
+				}
+			}
+
+			applyFilter(samples, numChannels, s, numSamples);
 		}
 
 		void Resonator::applyFilter(double** samples, int numChannels,
