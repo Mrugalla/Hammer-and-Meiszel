@@ -1,0 +1,46 @@
+#pragma once
+#include "Resonatr.h"
+#include "../EnvelopeGenerator.h"
+
+namespace dsp
+{
+	namespace modal
+	{
+		struct Voice
+		{
+			Voice(const arch::XenManager&, const DualMaterial&);
+
+			void prepare(double);
+
+			// atk, dcy, sus, rls
+			void updateParameters(double, double, double, double) noexcept;
+
+			// bwFc
+			void setBandwidth(double) noexcept;
+
+			// samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples
+			void operator()(const double**, double**, const MidiBuffer&, double, int, int) noexcept;
+
+			// sleepy, samplesDest, numChannels, numSamples
+			void detectSleepy(bool&, double**, int, int) noexcept;
+
+			Resonatr filter;
+			EnvelopeGenerator env;
+			std::array<double, BlockSize2x> envBuffer;
+			double gain;
+		protected:
+
+			// midi, numSamples
+			void synthesizeEnvelope(const MidiBuffer&, int) noexcept;
+
+			// s, ts
+			int synthesizeEnvelope(int, int) noexcept;
+
+			// samplesSrc, samplesDest, numChannels, numSamples
+			void processEnvelope(const double**, double**, int, int) noexcept;
+
+			// samplesDest, numChannels, numSamples
+			bool bufferSilent(double* const*, int, int) const noexcept;
+		};
+	}
+}

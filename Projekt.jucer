@@ -135,6 +135,12 @@
             <FILE id="xC1Qb1" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/modal/Axiom.h"/>
             <FILE id="L1gynm" name="Material.cpp" compile="1" resource="0" file="Source/audio/dsp/modal/Material.cpp"/>
             <FILE id="P70xYg" name="Material.h" compile="0" resource="0" file="Source/audio/dsp/modal/Material.h"/>
+            <FILE id="f4SGjJ" name="Resonatr.cpp" compile="1" resource="0" file="Source/audio/dsp/modal/Resonatr.cpp"/>
+            <FILE id="gvnESX" name="Resonatr.h" compile="0" resource="0" file="Source/audio/dsp/modal/Resonatr.h"/>
+            <FILE id="Xs6UGE" name="Voice.cpp" compile="1" resource="0" file="Source/audio/dsp/modal/Voice.cpp"/>
+            <FILE id="pjsILf" name="Voice.h" compile="0" resource="0" file="Source/audio/dsp/modal/Voice.h"/>
+            <FILE id="thxOQv" name="Filtr.cpp" compile="1" resource="0" file="Source/audio/dsp/modal/Filtr.cpp"/>
+            <FILE id="NTNWBg" name="Filtr.h" compile="0" resource="0" file="Source/audio/dsp/modal/Filtr.h"/>
           </GROUP>
           <FILE id="AG7iE0" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
           <FILE id="Vqq7T8" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
