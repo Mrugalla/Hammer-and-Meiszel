@@ -292,6 +292,13 @@ namespace dsp
 
 		// Filter
 
+		double calcBandwidthFc(double reso, double sampleRateInv) noexcept
+		{
+			const auto bw = 20. - math::tanhApprox(3. * reso) * 19.;
+			const auto bwFc = bw * sampleRateInv;
+			return bwFc;
+		}
+
 		Filter::Filter(const arch::XenManager& xen) :
 			autoGainReso(),
 			material(),

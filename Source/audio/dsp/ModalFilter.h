@@ -1,10 +1,6 @@
 #pragma once
 #include "../../arch/XenManager.h"
-//#include "../../libs/MoogLadders-master/src/Filters.h"
-#include "../../arch/Math.h"
-//#include "Convolver.h"
 #include <BinaryData.h>
-//#include <juce_dsp/juce_dsp.h>
 #include "modal/Material.h"
 #include "Resonator.h"
 #include "AutoGain.h"
@@ -14,12 +10,6 @@ namespace dsp
 {
 	namespace modal
 	{
-#if JUCE_DEBUG
-		static constexpr int NumFilters = 12;
-#else
-		static constexpr int NumFilters = 12;
-#endif
-
 		using ResonatorArray = std::array<ResonatorStereo2, NumFilters>;
 
 		struct Resonator

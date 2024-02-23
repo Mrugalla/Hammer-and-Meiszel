@@ -131,6 +131,8 @@
             <FILE id="taFAps" name="XenRescaler.h" compile="0" resource="0" file="Source/audio/dsp/midi/XenRescaler.h"/>
           </GROUP>
           <GROUP id="{B68841BA-9245-6C59-C6CD-6C766C5FECF8}" name="modal">
+            <FILE id="A62fgH" name="Axiom.cpp" compile="1" resource="0" file="Source/audio/dsp/modal/Axiom.cpp"/>
+            <FILE id="xC1Qb1" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/modal/Axiom.h"/>
             <FILE id="L1gynm" name="Material.cpp" compile="1" resource="0" file="Source/audio/dsp/modal/Material.cpp"/>
             <FILE id="P70xYg" name="Material.h" compile="0" resource="0" file="Source/audio/dsp/modal/Material.h"/>
           </GROUP>
