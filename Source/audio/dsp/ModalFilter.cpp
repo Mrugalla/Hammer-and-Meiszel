@@ -256,7 +256,7 @@ namespace dsp
 		void Voice::detectSleepy(bool& sleepy, double** samplesDest,
 			int numChannels, int numSamples) noexcept
 		{
-			if (env.state != Envelope::State::Release)
+			if (env.state != EnvelopeGenerator::State::Release)
 			{
 				sleepy = false;
 				return;

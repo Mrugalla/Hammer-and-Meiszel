@@ -342,6 +342,44 @@ namespace dsp
 
 		// DUALMATERIAL
 
+		void generateSine(Material& material)
+		{
+			material.sampleRate = static_cast<float>(material.buffer.size());
+			for (auto s = 0; s < material.buffer.size(); ++s)
+			{
+				const auto sF = static_cast<float>(s);
+				const auto x = sF / material.sampleRate;
+				material.buffer[s] = std::cos(x * static_cast<float>(Pi));
+			}
+			material.load();
+		}
+
+		void generateSaw(Material& material)
+		{
+			material.sampleRate = static_cast<float>(material.buffer.size());
+			for (auto s = 0; s < material.buffer.size(); ++s)
+			{
+				const auto sF = static_cast<float>(s);
+				auto x = static_cast<float>(2 * NumFilters) * sF / material.sampleRate;
+				x = x - std::floor(x);
+				material.buffer[s] = 2.f * x - 1.f;
+			}
+			material.load();
+		}
+
+		void generateSquare(Material& material)
+		{
+			material.sampleRate = static_cast<float>(material.buffer.size());
+			for (auto s = 0; s < material.buffer.size(); ++s)
+			{
+				const auto sF = static_cast<float>(s);
+				auto x = static_cast<float>(2 * NumFilters) * sF / material.sampleRate;
+				x = x - std::floor(x);
+				material.buffer[s] = x < .5f ? 1.f : -1.f;
+			}
+			material.load();
+		}
+
 		DualMaterial::DualMaterial() :
 			materials(),
 			peakInfos()
