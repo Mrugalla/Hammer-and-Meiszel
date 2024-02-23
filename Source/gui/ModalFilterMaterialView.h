@@ -1,6 +1,6 @@
 #pragma once
 #include "Label.h"
-#include "../audio/dsp/ModalFilter.h"
+#include "../audio/dsp/modal/Material.h"
 
 namespace gui
 {

@@ -156,8 +156,6 @@
                 file="Source/audio/dsp/EnvelopeGenerator.cpp"/>
           <FILE id="SE37u0" name="EnvelopeGenerator.h" compile="0" resource="0"
                 file="Source/audio/dsp/EnvelopeGenerator.h"/>
-          <FILE id="SpcdEn" name="ModalFilter.cpp" compile="1" resource="0" file="Source/audio/dsp/ModalFilter.cpp"/>
-          <FILE id="Z7vI0J" name="ModalFilter.h" compile="0" resource="0" file="Source/audio/dsp/ModalFilter.h"/>
           <FILE id="u7s2sw" name="Filter.cpp" compile="1" resource="0" file="Source/audio/dsp/Filter.cpp"/>
           <FILE id="Q6j13B" name="Filter.h" compile="0" resource="0" file="Source/audio/dsp/Filter.h"/>
           <FILE id="geDg2S" name="SlewLimiter.cpp" compile="1" resource="0" file="Source/audio/dsp/SlewLimiter.cpp"/>

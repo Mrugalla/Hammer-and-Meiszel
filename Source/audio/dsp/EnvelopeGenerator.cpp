@@ -30,7 +30,7 @@ namespace dsp
 		if (atkP != _atk)
 		{
 			atkP = _atk;
-			if (atkP == 0.)
+			if (atkP < .1)
 				atk = 1.;
 			else
 				atk = math::msToInc(atkP, sampleRate);
@@ -38,7 +38,7 @@ namespace dsp
 		if (dcyP != _dcy)
 		{
 			dcyP = _dcy;
-			if (dcyP == 0.)
+			if (dcyP < .1)
 				dcy = 1.;
 			else
 				dcy = math::msToInc(dcyP, sampleRate);
@@ -46,7 +46,7 @@ namespace dsp
 		if (rlsP != _rls)
 		{
 			rlsP = _rls;
-			if (rlsP == 0.)
+			if (rlsP < .1)
 				rls = 1.;
 			else
 				rls = math::msToInc(rlsP, sampleRate);
@@ -66,7 +66,8 @@ namespace dsp
 		case State::Attack: processAttack(); break;
 		case State::Decay: processDecay(); break;
 		case State::Sustain: processSustain(); break;
-		case State::Release: processRelease(); break;
+		case State::Release:
+		default: processRelease(); break;
 		}
 
 		return smooth(env * env);
@@ -77,7 +78,7 @@ namespace dsp
 		if (noteOn)
 		{
 			env += atk * (1. - env);
-			if (1. - env < 1e-6)
+			if (env > 1. - 1e-6)
 			{
 				env = 1.;
 				state = State::Decay;
@@ -96,7 +97,6 @@ namespace dsp
 			env += dcy * (sus - env);
 			if (std::abs(sus - env) < 1e-6)
 			{
-				env = sus;
 				state = State::Sustain;
 				processSustain();
 			}

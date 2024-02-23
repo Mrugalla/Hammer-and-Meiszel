@@ -9,10 +9,7 @@
 #include "dsp/modal/Filtr.h"
 #include "dsp/DelayVoices.h"
 
-/*
-This is where dsp custom to each individual plugin will be written
-*/
-
+//This is where this plugin's custom dsp is implemented
 namespace audio
 {
 	struct PluginProcessor
@@ -38,8 +35,6 @@ namespace audio
 		Params& params;
 		const arch::XenManager& xen;
 		double sampleRate;
-
-		test::MIDIRandomMelodyGenerator randomMelodyGenerator;
 
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;

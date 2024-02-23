@@ -76,7 +76,7 @@ namespace dsp
 		sizeF = std::ceil(math::freqHzToSamples(LowestFrequencyHz, Fs));
 		size = static_cast<int>(sizeF);
 		delay.prepare(size);
-		smooth.prepare(Fs, 20.);
+		smooth.prepare(Fs, 1.);
 		curDelay = 0.;
 	}
 

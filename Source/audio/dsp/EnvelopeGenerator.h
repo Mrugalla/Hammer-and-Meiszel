@@ -18,7 +18,7 @@ namespace dsp
 		// sampleRate
 		void prepare(double) noexcept;
 
-		// atk, dcy, sus, rls
+		// atkMs, dcyMs, sus, rlsMs
 		void updateParameters(double, double, double, double) noexcept;
 
 		double operator()(bool) noexcept;

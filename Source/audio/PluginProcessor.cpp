@@ -62,7 +62,7 @@ namespace audio
 		const auto& voiceDecayParam = params(PID::VoiceDecay);
 		const auto voiceDecay = static_cast<double>(voiceDecayParam.getValModDenorm());
 		const auto& voiceSustainParam = params(PID::VoiceSustain);
-		const auto voiceSustain = static_cast<double>(voiceSustainParam.getValModDenorm());
+		const auto voiceSustain = static_cast<double>(voiceSustainParam.getValMod());
 		const auto& voiceReleaseParam = params(PID::VoiceRelease);
 		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
 
