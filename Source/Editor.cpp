@@ -104,8 +104,8 @@ namespace gui
         for(auto& knob: knobs)
             addAndMakeVisible(knob);
         knobs[kMacro].attachParameter("Macro", PID::Macro, &painters[0]);
-        knobs[kOct].attachParameter("Res", PID::Oct, &painters[1]);
-        knobs[kSemi].attachParameter("Semi", PID::Semi, &painters[2]);
+        knobs[kModalOct].attachParameter("Res", PID::ModalOct, &painters[1]);
+        knobs[kModalSemi].attachParameter("Semi", PID::ModalSemi, &painters[2]);
         knobs[kModalReso].attachParameter("Resonanz", PID::ModalResonanz, &painters[3]);
         knobs[kModalHarm].attachParameter("Harmonie", PID::ModalHarmonie, &painters[4]);
         knobs[kModalTon].attachParameter("Tonalitaet", PID::ModalTonalitaet, &painters[5]);
@@ -155,8 +155,8 @@ namespace gui
         labels[kTitle].setMaxHeight();
         labels[kDev].setMaxHeight();
 
-        layout.place(knobs[kOct], 2, 3, 1, 1);
-        layout.place(knobs[kSemi], 3, 3, 1, 1);
+        layout.place(knobs[kModalOct], 2, 3, 1, 1);
+        layout.place(knobs[kModalSemi], 3, 3, 1, 1);
 
         layout.place(materialViews[0], 1, 4, 1, 1);
         layout.place(materialViews[1], 5, 4, 1, 1);

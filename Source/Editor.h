@@ -29,7 +29,7 @@ namespace gui
         enum { kTitle, kDev, kNumLabels };
         std::array<Label, kNumLabels> labels;
 
-        enum { kMacro, kOct, kSemi, kModalReso, kModalHarm, kModalTon, kModalMix, kCombFeedback, kGainDry, kGainWet, kGainOut, kNumKnobs };
+        enum { kMacro, kModalOct, kModalSemi, kModalReso, kModalHarm, kModalTon, kModalMix, kCombFeedback, kGainDry, kGainWet, kGainOut, kNumKnobs };
         std::array<KnobParam, kNumKnobs> knobs;
         std::array<KnobPainterBasic, kNumKnobs> painters;
 

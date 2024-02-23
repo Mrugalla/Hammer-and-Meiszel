@@ -6,9 +6,11 @@ ToThink
     -
 
 Hammer & Meiﬂel
-    -
+    Envelope
+        outsource parameter updates so it's not per voice
 
 GUI
+    Ms based valToString should write secs above 1000ms
     reintroduce custom mousecursor
     ModalFilterSampleView
         make n use local maxima array for drawing

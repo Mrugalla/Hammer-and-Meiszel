@@ -59,8 +59,12 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::Oct: return "Oct";
-		case PID::Semi: return "Semi";
+		case PID::VoiceAttack: return "Voice Attack";
+		case PID::VoiceDecay: return "Voice Decay";
+		case PID::VoiceSustain: return "Voice Sustain";
+		case PID::VoiceRelease: return "Voice Release";
+		case PID::ModalOct: return "Modal Oct";
+		case PID::ModalSemi: return "Modal Semi";
 		case PID::ModalMix: return "Modal Mix";
 		case PID::ModalHarmonie: return "Modal Harmonie";
 		case PID::ModalTonalitaet: return juce::CharPointer_UTF8("Modal Tonalit\xc3\xa4""t");
@@ -133,8 +137,12 @@ namespace param
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
-		case PID::Oct: return "Transposes all effects in octaves.";
-		case PID::Semi: return "Transposes all effects in semitones.";
+		case PID::VoiceAttack: return "The amplitude envelope generator's attack time.";
+		case PID::VoiceDecay: return "The amplitude envelope generator's decay time.";
+		case PID::VoiceSustain: return "The amplitude envelope generator's sustain level.";
+		case PID::VoiceRelease: return "The amplitude envelope generator's release time.";
+		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
+		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
 		case PID::ModalMix: return "Mixes between the 2 modal filters.";
 		case PID::ModalHarmonie: return "Shifts the resonators towards the harmonic series.";
 		case PID::ModalTonalitaet: return "Saturates the resonators magnitude values.";
@@ -616,9 +624,19 @@ namespace param::strToVal
 	{
 		return[p = parse()](const String& txt)
 		{
-			const auto text = txt.trimCharactersAtEnd(toString(Unit::Ms));
+			auto iStr = 0;
+			for(auto i = 0; i < txt.length(); ++i)
+				if (txt[i] >= 'a' && txt[i] <= 'z' || txt[i] >= 'A' && txt[i] <= 'Z')
+				{
+					iStr = i;
+					i = txt.length();
+				}
+			const auto text = txt.substring(0, iStr);
 			const auto val = p(text, 0.f);
-			return val;
+			if(txt.endsWith("sec") || txt.endsWith("sek"))
+				return val * 1000.f;
+			else
+				return val;
 		};
 	}
 
@@ -929,7 +947,24 @@ namespace param::valToStr
 
 	ValToStrFunc ms()
 	{
-		return [](float v) { return String(std::round(v * 10.f) * .1f) + " " + toString(Unit::Ms); };
+		return [](float v)
+		{
+			if (v < 100.f)
+			{
+				v = std::round(v * 100.f) * .01f;
+				return String(v) + " ms";
+			}
+			else if (v < 1000.f)
+			{
+				v = std::round(v * 10.f) * .1f;
+				return String(v) + " ms";
+			}
+			else
+			{
+				v = std::round(v * .1f) * .01f;
+				return String(v) + " sec";
+			}
+		};
 	}
 
 	ValToStrFunc db()
@@ -1283,8 +1318,12 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::Oct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
-		params.push_back(makeParam(PID::Semi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
+		params.push_back(makeParam(PID::VoiceAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::VoiceDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::VoiceSustain, 1.f, makeRange::lin(0.f, 1.f), Unit::Percent));
+		params.push_back(makeParam(PID::VoiceRelease, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
+		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::ModalMix, 0.f));
 		params.push_back(makeParam(PID::ModalHarmonie, 0.f));
 		params.push_back(makeParam(PID::ModalTonalitaet, .5f, makeRange::lin(-1.f, 1.f)));

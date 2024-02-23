@@ -46,8 +46,12 @@ namespace param
 		Power,
 
 		// low level parameters
-		Oct,
-		Semi,
+		VoiceAttack,
+		VoiceDecay,
+		VoiceSustain,
+		VoiceRelease,
+		ModalOct,
+		ModalSemi,
 		ModalMix,
 		ModalHarmonie,
 		ModalTonalitaet,

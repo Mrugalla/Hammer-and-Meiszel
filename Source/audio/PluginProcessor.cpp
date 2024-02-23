@@ -30,12 +30,12 @@ namespace audio
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
 	{
-		const auto& octParam = params(PID::Oct);
-		const auto& semiParam = params(PID::Semi);
-		auto transposeSemi = static_cast<double>(std::round(semiParam.getValModDenorm()));
-		transposeSemi += static_cast<double>(std::round(octParam.getValModDenorm())) * xen.getXen();
-
 		autoMPE(midi); voiceSplit(midi);
+
+		const auto& modalOctParam = params(PID::ModalOct);
+		const auto& modalSemiParam = params(PID::ModalSemi);
+		auto modalSemi = static_cast<double>(std::round(modalSemiParam.getValModDenorm()));
+		modalSemi += static_cast<double>(std::round(modalOctParam.getValModDenorm())) * xen.getXen();
 
 		const auto& modalMixParam = params(PID::ModalMix);
 		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
@@ -58,6 +58,15 @@ namespace audio
 		if (combOct > 0.)
 			combFeedback *= -1.;
 
+		const auto& voiceAttaeckParam = params(PID::VoiceAttack);
+		const auto voiceAttack = static_cast<double>(voiceAttaeckParam.getValModDenorm());
+		const auto& voiceDecayParam = params(PID::VoiceDecay);
+		const auto voiceDecay = static_cast<double>(voiceDecayParam.getValModDenorm());
+		const auto& voiceSustainParam = params(PID::VoiceSustain);
+		const auto voiceSustain = static_cast<double>(voiceSustainParam.getValModDenorm());
+		const auto& voiceReleaseParam = params(PID::VoiceRelease);
+		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
+
 		modalFilter.updateParameters(modalMix, modalHarmonize, modalSaturate, modalReso);
 		combFilter.synthesizeWHead(numSamples);
 		combFilter.updateParameters(combFeedback);
@@ -73,7 +82,8 @@ namespace audio
 			
 			if (!midiVoice.isEmpty() || !sleepy)
 			{
-				modalFilter(samplesInput, samplesVoice, midiVoice, transposeSemi, numChannels, numSamples, v);
+				modalFilter.voices[v].updateParameters(voiceAttack, voiceDecay, voiceSustain, voiceRelease);
+				modalFilter(samplesInput, samplesVoice, midiVoice, modalSemi, numChannels, numSamples, v);
 				combFilter(samplesVoice, midiVoice, combSemi, numChannels, numSamples, v);
 				modalFilter.voices[v].detectSleepy(sleepy, samplesVoice, numChannels, numSamples);
 				parallelProcessor.setSleepy(sleepy, v);

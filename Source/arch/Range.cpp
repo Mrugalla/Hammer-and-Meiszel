@@ -38,6 +38,31 @@ namespace makeRange
 		else return { start, end };
 	}
 
+	Range biasedSatisfy(float start, float end, float bias) noexcept
+	{
+		// https://www.desmos.com/calculator/nevb75ufdw
+		const auto p = (bias + 1.f) * .5f;
+		const auto f1k = std::log(.5f) / std::log(p);
+		const auto k1f = std::log(.5f) / std::log(1.f - p);
+
+		return
+		{
+			start, end,
+			[b = f1k, bInv = 1.f / f1k, r = start - end](float min, float max, float x)
+			{
+				return max + r * std::powf(1.f - std::powf(x, b), bInv);
+			},
+			[b = k1f, bInv = 1.f / k1f, rInv = 1.f / (end - start)](float min, float max, float x)
+			{
+				return 1.f - std::powf(1.f - std::powf((x - min) * rInv, b), bInv);
+			},
+			[](float min, float max, float x)
+			{
+				return x < min ? min : x > max ? max : x;
+			}
+		};
+	}
+
 	Range stepped(float start, float end, float steps) noexcept
 	{
 		return { start, end, steps };
