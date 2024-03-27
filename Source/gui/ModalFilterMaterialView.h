@@ -134,8 +134,8 @@ namespace gui
 
 			void addLength(Partials& partials, float valRel) noexcept
 			{
-				lenRel = juce::jlimit(.01f, 2.f, lenRel + valRel);
-				lenAbs = lenRel * width;
+				lenAbs = juce::jlimit(1.f, width, (lenRel + valRel) * width);
+				lenRel = lenAbs / width;
 				lenAbsHalf = lenAbs * .5f;
 				updateSelection(partials);
 			}
@@ -199,7 +199,8 @@ namespace gui
 			partials(),
 			dragAniComp(u),
 			draggerfall(),
-			dragXY()
+			dragXY(),
+			freqRatioRange(1.f)
 		{
 			layout.init
 			(
@@ -289,6 +290,7 @@ namespace gui
 		DragAnimationComp dragAniComp;
 		Draggerfall draggerfall;
 		PointF dragXY;
+		float freqRatioRange;
 	private:
 
 		void updatePartials()
@@ -314,6 +316,14 @@ namespace gui
 			}
 
 			material.status.store(Status::Processing);
+
+			auto freqRatioMin = 44100.f;
+			for (auto& peakInfo : material.peakInfos)
+				freqRatioMin = std::min(freqRatioMin, static_cast<float>(peakInfo.ratio));
+			auto freqRatioMax = 0.f;
+			for (auto& peakInfo : material.peakInfos)
+				freqRatioMax = std::max(freqRatioMax, static_cast<float>(peakInfo.ratio));
+			freqRatioRange = freqRatioMax - freqRatioMin;
 		}
 
 		void mouseExit(const Mouse&) override
@@ -359,7 +369,9 @@ namespace gui
 
 			const auto status = material.status.load();
 			const auto sensitive = mouse.mods.isShiftDown();
-			const auto depth = sensitive ? Sensitive : 1.f;
+			const auto yDepth = .4f * (sensitive ? Sensitive : 1.f);
+			const auto xDepth = yDepth * freqRatioRange;
+
 			if(status == Status::Processing)
 			{
 				for (auto i = 0; i < NumFilters; ++i)
@@ -368,8 +380,8 @@ namespace gui
 					if (selected)
 					{
 						auto& peakInfo = material.peakInfos[i];
-						peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * depth);
-						peakInfo.ratio = juce::jlimit(1., 100., peakInfo.ratio + dragDist.x * depth);
+						peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
+						peakInfo.ratio = juce::jlimit(1., 100., peakInfo.ratio + dragDist.x * xDepth);
 					}
 				}
 				material.updatePeakInfosFromGUI();
