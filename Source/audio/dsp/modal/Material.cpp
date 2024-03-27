@@ -12,7 +12,7 @@ namespace dsp
 		Material::Material() :
 			buffer(),
 			peakInfos(),
-			updateState(UpdateState::Idle),
+			status(Status::Processing),
 			sampleRate(0.f)
 		{
 		}
@@ -28,7 +28,7 @@ namespace dsp
 				for (auto& p : peakInfos)
 					p.mag *= g;
 			}
-			updateState.store(UpdateState::UpdateProcessor);
+			status.store(Status::UpdatedMaterial);
 		}
 
 		void Material::load(const char* data, int size)
@@ -39,41 +39,48 @@ namespace dsp
 
 		void Material::load()
 		{
-			std::vector<float> fifo, binsNorm;
-			fifo.resize(FFTSize2);
-			applyFFT(fifo.data());
+			std::vector<float> fifo;//, binsNorm;
+			fifo.resize(FFTSize2, 0.f);
 			auto bins = fifo.data();
-			{
-				std::vector<float> binsLP;
-				binsLP.resize(FFTSize2);
-				applyLowpassIIR(binsLP.data(), bins, 50.f, .2f, 3);
-				binsNorm.resize(FFTSize2);
-				divide(binsNorm.data(), bins, binsLP.data());
-				normalize(binsNorm.data());
-			}
-			const auto harm0Idx = getMaxMagnitudeIdx(binsNorm.data(), 0, FFTSizeHalf);
+			applyFFT(bins);
+			//{
+				//std::vector<float> binsLP;
+				//binsLP.resize(FFTSize2, 0.f);
+				//applyLowpassIIR(binsLP.data(), bins, 50.f, .2f, 3);
+				//binsNorm.resize(FFTSize2, 0.f);
+				//SIMD::copy(binsNorm.data(), bins, FFTSize);
+				//divide(binsNorm.data(), bins, binsLP.data(), 0.f);
+				//normalize(binsNorm.data());
+			//}
 			std::vector<PeakIndexInfo> peakGroups;
-			generatePeakGroups(peakGroups, binsNorm.data(), harm0Idx);
+			//const auto harm0Idx = getMaxMagnitudeIdx(binsNorm.data(), 0, FFTSizeHalf);
+			//generatePeakGroups(peakGroups, binsNorm.data(), harm0Idx);
+			const auto harm0Idx = getMaxMagnitudeIdx(bins, 0, FFTSizeHalf);
+			generatePeakGroups(peakGroups, bins, harm0Idx);
 			std::vector<int> peakIndexes;
 			peakIndexes.resize(NumFilters);
 			generatePeakIndexes(peakIndexes, bins, peakGroups);
 			generatePeakInfos(bins, peakIndexes.data(), static_cast<float>(harm0Idx));
-			updateState.store(UpdateState::UpdateGUI);
+			status.store(Status::UpdatedMaterial);
 		}
 
 		void Material::fillBuffer(const char* data, int size)
 		{
 			AudioBufferF tmpBuffer;
-			sampleRate = static_cast<float>(loadFromMemory(tmpBuffer, data, size));
+			const auto _sampleRate = static_cast<float>(loadFromMemory(tmpBuffer, data, size));
 			const auto samples = tmpBuffer.getArrayOfReadPointers();
 			const auto numChannels = tmpBuffer.getNumChannels();
 			const auto numSamples = tmpBuffer.getNumSamples();
+			fillBuffer(_sampleRate, samples, numChannels, numSamples);
+		}
+
+		void Material::fillBuffer(float _sampleRate, const float* const* samples, int numChannels, int numSamples)
+		{
+			sampleRate = _sampleRate;
 			for (auto& b : buffer)
 				b = 0.f;
 			auto len = numSamples < FFTSize ? numSamples : FFTSize;
-			for (auto s = 0; s < len; ++s)
-				buffer[s] = samples[0][s];
-			for (auto ch = 1; ch < numChannels; ++ch)
+			for (auto ch = 0; ch < numChannels; ++ch)
 				for (auto s = 0; s < len; ++s)
 					buffer[s] += samples[ch][s];
 			const auto gain = 1.f / static_cast<float>(numChannels);
@@ -82,18 +89,20 @@ namespace dsp
 
 		void Material::applyFFT(float* fifo)
 		{
-			FFT fft(FFTOrder);
+			
 			const auto windowFunc = [&](float x)
-				{
-					auto w = .5f - .5f * std::cos(TauF * x);
-					return w;
-				};
+			{
+				auto w = .5f - .5f * std::cos(TauF * x);
+				return w;
+			};
 			for (auto i = 0; i < FFTSize; ++i)
 			{
 				const auto x = static_cast<float>(i) * FFTSizeInv;
 				const auto wndw = windowFunc(x);
-				fifo[i] = buffer[i] * wndw;
+				const auto smpl = buffer[i];
+				fifo[i] = smpl * wndw;
 			}
+			FFT fft(FFTOrder);
 			fft.performRealOnlyForwardTransform(fifo, true);
 			generateMagnitudes(fifo);
 			normalize(fifo);
@@ -168,13 +177,16 @@ namespace dsp
 				bins[s] = bins[(s + offset) % FFTSize];
 		}
 
-		void Material::divide(float* dest, const float* a, const float* b) noexcept
+		void Material::divide(float* dest, const float* a, const float* b, float mixA) noexcept
 		{
 			for (auto i = 0; i < FFTSize; ++i)
 				if (b[i] != 0.f)
-					dest[i] = a[i] / b[i];
+				{
+					const auto ab = a[i] / b[i];
+					dest[i] = ab + mixA * (a[i] - ab);
+				}
 				else
-					dest[i] = 0.f;
+					dest[i] = mixA * a[i];
 		}
 
 		int Material::getMaxMagnitudeIdx(const float* bins, int lowerLimitIdx, int upperLimitIdx) const noexcept
@@ -329,14 +341,15 @@ namespace dsp
 			}
 		}
 
-		void Material::drawSpectrum(String&& name, const float* buf, float thresholdDb,
+		void Material::drawSpectrum(const String& name, const float* buf, float thresholdDb,
 			const int* peakIndexes, bool isLog)
 		{
 			auto numFilters = 0;
-			for (auto i = 0; i < NumFilters; ++i)
-				numFilters += peakIndexes[i] != -1 ? 1 : 0;
+			if(peakIndexes != nullptr)
+				for (auto i = 0; i < NumFilters; ++i)
+					numFilters += peakIndexes[i] != -1 ? 1 : 0;
 
-			makeSpectrumImage(std::move(name), buf, FFTSize, thresholdDb - 6.f, false,
+			makeSpectrumImage(name, buf, FFTSize, thresholdDb - 6.f, false,
 				peakIndexes, numFilters, true, isLog, sampleRate);
 		}
 
@@ -384,9 +397,7 @@ namespace dsp
 			materials(),
 			peakInfos()
 		{
-			materials[0].load(BinaryData::Eiskaffee_wav, BinaryData::Eiskaffee_wavSize);
-			//generateSine(materials[1]);
-			//generateSquare(materials[0]);
+			generateSquare(materials[0]);
 			generateSaw(materials[1]);
 			peakInfos = materials[0].peakInfos;
 		}
@@ -413,7 +424,7 @@ namespace dsp
 
 			if (saturate != 0.)
 			{
-				const auto p = (.999 * saturate + 1.) * .5;
+				const auto p = (math::tanhApprox(4. * saturate) + 1.) * .5;
 				for (auto i = 0; i < NumFilters; ++i)
 				{
 					const auto x = peakInfos[i].mag;
@@ -421,10 +432,6 @@ namespace dsp
 					peakInfos[i].mag = y;
 				}
 			}
-
-			for (auto i = 0; i < 2; ++i)
-				if (materials[i].updateState.load() == Material::UpdateState::UpdateProcessor)
-					materials[i].updateState.store(Material::UpdateState::UpdateGUI);
 		}
 
 		double DualMaterial::getMag(int i) const noexcept
@@ -437,10 +444,10 @@ namespace dsp
 			return peakInfos[i].ratio;
 		}
 
-		bool DualMaterial::wantsUpdate() const noexcept
+		bool DualMaterial::hasUpdated() const noexcept
 		{
-			return materials[0].updateState.load() == Material::UpdateState::UpdateProcessor ||
-				materials[1].updateState.load() == Material::UpdateState::UpdateProcessor;
+			return materials[0].status.load() == Status::UpdatedMaterial ||
+				materials[1].status.load() == Status::UpdatedMaterial;
 		}
 	}
 }

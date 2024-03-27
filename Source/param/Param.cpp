@@ -1288,7 +1288,7 @@ namespace param
 			const auto gainDryRange = makeRange::withCentre(PPDGainDryMin, PPDGainDryMax, gainRangeCentre);
 			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, gainRangeCentre);
 			params.push_back(makeParam(PID::GainDry, PPDGainDryMin, gainDryRange, Unit::Decibel));
-			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainWet, -18.f, gainWetRange, Unit::Decibel));
 #elif PPDIO == PPDIOWetMix
 			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f);
 			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));

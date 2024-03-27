@@ -58,6 +58,10 @@ namespace gui
     using PNGImageFormat = juce::PNGImageFormat;
     using FileOutputStream = juce::FileOutputStream;
     using Var = juce::var;
+    using FileDragAndDropTarget = juce::FileDragAndDropTarget;
+    using StringArray = juce::StringArray;
+    using AudioFormatManager = juce::AudioFormatManager;
+    using AudioBufferF = juce::AudioBuffer<float>;
 
     using Processor = audio::Processor;
 

@@ -206,7 +206,7 @@ namespace dsp
 	}
 
 	template<typename Float>
-	inline void makeSpectrumImage(String&& name, const Float* bins, int fftSize,
+	inline void makeSpectrumImage(const String& name, const Float* bins, int fftSize,
 		float lowDb = -60.f, bool downsample = false, const int* peakIndexes = nullptr, int numPeaks = 0,
 		bool drawDebugText = true, bool logScaled = true, float sampleRate = 44100.f)
 	{

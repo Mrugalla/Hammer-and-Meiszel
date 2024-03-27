@@ -11,13 +11,16 @@ namespace audio
 		voiceSplit(),
 		parallelProcessor(),
 		modalFilter(xen),
-		combFilter(xen)
+		combFilter(xen),
+		editorExists(false)
 	{
 		//test::SpeedTestPB([&](double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples)
 		//{
 		//	prepare(44100.);
 		//	operator()(samples, midi, 2, dsp::BlockSize2x);
 		//}, 10, "i am speed");
+
+		startTimerHz(2);
 	}
 
 	void PluginProcessor::prepare(double _sampleRate)
@@ -100,4 +103,18 @@ namespace audio
 
 	void PluginProcessor::loadPatch()
 	{}
+
+	void PluginProcessor::timerCallback()
+	{
+		const auto noEditor = !editorExists.load();
+		if (noEditor)
+		{
+			for (auto i = 0; i < 2; ++i)
+			{
+				auto& status = modalFilter.material.materials[i].status;
+				status.store(dsp::modal::Status::Processing);
+			}
+		}
+		
+	}
 }

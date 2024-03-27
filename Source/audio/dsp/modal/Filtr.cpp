@@ -40,6 +40,24 @@ namespace dsp
 		void Filtr::updateParameters(double _modalMix, double _modalHarmonize,
 			double _modalSaturate, double _reso) noexcept
 		{
+			const bool materialHasUpdated = material.hasUpdated();
+			if (materialHasUpdated)
+			{
+				initAutoGainReso();
+				material.setMix(modalMix, modalHarmonize, modalSaturate);
+				for (auto& voice : voices)
+					voice.filter.updateFreqRatios();
+				autoGainReso.updateParameterValue(reso);
+				const auto bwFc = calcBandwidthFc(reso, sampleRateInv);
+				for (auto& voice : voices)
+				{
+					voice.setBandwidth(bwFc);
+					voice.gain = autoGainReso();
+				}
+				for(auto i = 0; i < 2; ++i)
+					if(material.materials[i].status.load() == Status::UpdatedMaterial)
+						material.materials[i].status.store(Status::UpdatedDualMaterial);
+			}
 			updateModalMix(_modalMix, _modalHarmonize, _modalSaturate);
 			updateReso(_reso);
 		}
@@ -52,8 +70,7 @@ namespace dsp
 
 		void Filtr::updateModalMix(double _modalMix, double _modalHarmonize, double _modalSaturate) noexcept
 		{
-			bool wantsUpdate = material.wantsUpdate();
-			if (modalMix == _modalMix && modalHarmonize == _modalHarmonize && modalSaturate == _modalSaturate && !wantsUpdate)
+			if (modalMix == _modalMix && modalHarmonize == _modalHarmonize && modalSaturate == _modalSaturate)
 				return;
 			modalMix = _modalMix;
 			modalHarmonize = _modalHarmonize;

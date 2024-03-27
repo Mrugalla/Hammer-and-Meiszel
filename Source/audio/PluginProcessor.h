@@ -1,4 +1,6 @@
 #pragma once
+#include <juce_events/juce_events.h>
+
 #include "../param/Param.h"
 
 #include "../HammerUndMeiszelTests.h"
@@ -12,7 +14,10 @@
 //This is where this plugin's custom dsp is implemented
 namespace audio
 {
-	struct PluginProcessor
+	using Timer = juce::Timer;
+
+	struct PluginProcessor :
+		public Timer
 	{
 		using Params = param::Params;
 		using PID = param::PID;
@@ -32,6 +37,8 @@ namespace audio
 		
 		void loadPatch();
 
+		void timerCallback() override;
+
 		Params& params;
 		const arch::XenManager& xen;
 		double sampleRate;
@@ -41,5 +48,6 @@ namespace audio
 		dsp::PPMIDIBand parallelProcessor;
 		dsp::modal::Filtr modalFilter;
 		dsp::CombFilterVoices combFilter;
+		std::atomic<bool> editorExists;
 	};
 }

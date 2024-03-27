@@ -9,13 +9,6 @@ namespace dsp
 	{
 		struct Material
 		{
-			enum class UpdateState
-			{
-				Idle,
-				UpdateProcessor,
-				UpdateGUI
-			};
-
 			static constexpr int FFTOrder = 15;
 			static constexpr int FFTSize = 1 << FFTOrder;
 			static constexpr int FFTSize2 = FFTSize * 2;
@@ -39,9 +32,12 @@ namespace dsp
 
 			void updatePeakInfosFromGUI() noexcept;
 
+			// sampleRate, samples, numChannels, numSamples
+			void fillBuffer(float, const float* const*, int, int);
+
 			MaterialBuffer buffer;
 			std::array<PeakInfo, NumFilters> peakInfos;
-			std::atomic<UpdateState> updateState;
+			std::atomic<Status> status;
 			float sampleRate;
 		private:
 			struct PeakIndexInfo
@@ -70,8 +66,8 @@ namespace dsp
 			// bins offset
 			void applyNegativeDelay(float*, int) noexcept;
 
-			// dest, a, b
-			void divide(float*, const float*, const float*) noexcept;
+			// dest, a, b, mixA
+			void divide(float*, const float*, const float*, float) noexcept;
 
 			// bins, lowerLimitIdx, upperLimitidx
 			int getMaxMagnitudeIdx(const float*, int, int) const noexcept;
@@ -99,7 +95,7 @@ namespace dsp
 			void generatePeakInfos(const float*, const int*, float) noexcept;
 
 			// name, buf, thresholdDb, peakIndexes, isLog
-			void drawSpectrum(String&&, const float*, float,
+			void drawSpectrum(const String&, const float*, float,
 				const int*, bool);
 		};
 
@@ -116,7 +112,7 @@ namespace dsp
 			// idx
 			double getRatio(int) const noexcept;
 
-			bool wantsUpdate() const noexcept;
+			bool hasUpdated() const noexcept;
 
 			std::array<Material, 2> materials;
 		protected:

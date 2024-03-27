@@ -13,6 +13,8 @@ namespace gui
     {
         Editor(Processor&);
 
+        ~Editor() override;
+
         void paintOverChildren(Graphics&) override;
         void resized() override;
         void mouseEnter(const Mouse&) override;

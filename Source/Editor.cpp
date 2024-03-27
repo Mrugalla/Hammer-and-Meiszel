@@ -128,6 +128,13 @@ namespace gui
             static_cast<int>(editorWidth),
             static_cast<int>(editorHeight)
         );
+
+        utils.audioProcessor.pluginProcessor.editorExists.store(true);
+    }
+
+    Editor::~Editor()
+    {
+        utils.audioProcessor.pluginProcessor.editorExists.store(false);
     }
     
     void Editor::paintOverChildren(Graphics& g)
