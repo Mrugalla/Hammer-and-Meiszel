@@ -9,7 +9,7 @@
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
 #include "dsp/modal/Filtr.h"
-#include "dsp/DelayVoices.h"
+#include "dsp/flanger/flanger.h"
 
 //This is where this plugin's custom dsp is implemented
 namespace audio
@@ -47,7 +47,7 @@ namespace audio
 		dsp::MPESplit voiceSplit;
 		dsp::PPMIDIBand parallelProcessor;
 		dsp::modal::Filtr modalFilter;
-		dsp::CombFilterVoices combFilter;
+		dsp::flanger::Flanger flanger;
 		std::atomic<bool> editorExists;
 	};
 }

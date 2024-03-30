@@ -32,7 +32,17 @@ namespace moog
 		: public LadderFilterBase
 	{
 		HuovilainenMoog() :
-			thermal(0.000025)
+			thermal(0.000025),
+			tune(0.),
+			acr(0.),
+			resQuad(0.)
+		{
+			memset(stage, 0, sizeof(stage));
+			memset(delay, 0, sizeof(delay));
+			memset(stageTanh, 0, sizeof(stageTanh));
+		}
+
+		void clear() noexcept
 		{
 			memset(stage, 0, sizeof(stage));
 			memset(delay, 0, sizeof(delay));

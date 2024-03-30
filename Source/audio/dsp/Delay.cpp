@@ -4,28 +4,43 @@
 namespace dsp
 {
 	CombFilter::Val::Val() :
-		pitch(0.),
+		freqHz(0.),
+		pitchNote(0.),
+		pitchParam(0.),
 		pb(0.)
 	{}
 
 	double CombFilter::Val::getDelaySamples(const arch::XenManager& xen, double Fs) noexcept
 	{
-		const auto freqHz = xen.noteToFreqHzWithWrap(pitch + pb, LowestFrequencyHz);
+		freqHz = xen.noteToFreqHzWithWrap(pitchNote + pitchParam + pb, LowestFrequencyHz);
 		return math::freqHzToSamples(freqHz, Fs);
 	}
 
 	CombFilter::DelayFeedback::DelayFeedback() :
 		ringBuffer(),
-		//lowpass{ 0.f, 0.f },
+		lowpass(),
 		size(0)
 	{}
 
-	void CombFilter::DelayFeedback::prepare(int _size)
+	void CombFilter::DelayFeedback::prepare(double sampleRate, int _size)
 	{
 		size = _size;
 		ringBuffer.setSize(2, size, false, true, false);
-		//for (auto& lp : lowpass)
-		//	lp.makeFromDecayInHz(1000.f, Fs);
+		for (auto& lp : lowpass)
+		{
+			lp.prepare(sampleRate);
+			lp.setResonance(2000.);
+		}
+			
+	}
+
+	void CombFilter::DelayFeedback::setDampFreqHz(double dampFreqHz, int numChannels) noexcept
+	{
+		for (auto ch = 0; ch < numChannels; ++ch)
+		{
+			auto& lp = lowpass[ch];
+			lp.setCutoff(dampFreqHz);
+		}
 	}
 
 	void CombFilter::DelayFeedback::operator()(double** samples,
@@ -38,18 +53,18 @@ namespace dsp
 		{
 			auto smpls = samples[ch];
 			auto ring = ringBuf[ch];
-			//auto& lp = lowpass[ch];
+			auto& lp = lowpass[ch];
 
 			for (auto s = startIdx; s < endIdx; ++s)
 			{
-				//lp.setX(dampBuf[s]);
-
 				const auto w = wHead[s];
 				const auto r = rHead[s];
-				//const auto fb = fbBuf[s];
 
-				//const auto sOut = lp(interpolate::cubicHermiteSpline(ring, r, size)) * fb + smpls[s];
-				const auto sOut = math::cubicHermiteSpline(ring, r, size) * fb + smpls[s];
+				const auto smplPresent = smpls[s];
+				const auto smplDelayed = math::cubicHermiteSpline(ring, r, size);
+
+				const auto sOut = lp(smplDelayed) * fb + smplPresent;
+				//const auto sOut = smplDelayed * fb + smplPresent;
 				const auto sIn = sOut;
 
 				ring[w] = sIn;
@@ -75,7 +90,7 @@ namespace dsp
 		Fs = sampleRate;
 		sizeF = std::ceil(math::freqHzToSamples(LowestFrequencyHz, Fs));
 		size = static_cast<int>(sizeF);
-		delay.prepare(size);
+		delay.prepare(Fs, size);
 		smooth.prepare(Fs, 1.);
 		curDelay = 0.;
 	}
@@ -83,10 +98,19 @@ namespace dsp
 	void CombFilter::operator()(double** samples, const MidiBuffer& midi, const int* wHead,
 		double feedback, double retune, int numChannels, int numSamples) noexcept
 	{
-		static constexpr double PB = 0x3fff;
-		static constexpr double PBInv = 1. / PB;
+		if (val.pitchParam != retune)
+		{
+			val.pitchParam = retune;
+			updatePitch(numChannels);
+		}
 
 		auto s = 0;
+		processMIDI(samples, midi, wHead, feedback, numChannels, s);
+		processDelay(samples, wHead, feedback, numChannels, s, numSamples);
+	}
+
+	void CombFilter::processMIDI(double** samples, const MidiBuffer& midi, const int* wHead, double feedback, int numChannels, int& s) noexcept
+	{
 		for (const auto it : midi)
 		{
 			const auto msg = it.getMessage();
@@ -94,8 +118,8 @@ namespace dsp
 			{
 				const auto ts = it.samplePosition;
 				const auto note = msg.getNoteNumber();
-				val.pitch = static_cast<double>(note) + retune;
-				curDelay = val.getDelaySamples(xenManager, Fs);
+				val.pitchNote = static_cast<double>(note);
+				updatePitch(numChannels);
 				processDelay(samples, wHead, feedback, numChannels, s, ts);
 				s = ts;
 			}
@@ -103,18 +127,18 @@ namespace dsp
 			{
 				const auto ts = it.samplePosition;
 				val.pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xenManager.getPitchbendRange() * 2.;
-				curDelay = val.getDelaySamples(xenManager, Fs);
+				updatePitch(numChannels);
 				processDelay(samples, wHead, feedback, numChannels, s, ts);
 				s = ts;
 			}
 		}
-		processDelay(samples, wHead, feedback, numChannels, s, numSamples);
 	}
 
 	void CombFilter::processDelay(double** samples, const int* wHead, double feedback, int numChannels, int startIdx, int endIdx) noexcept
 	{
-		const auto smoothInfo = smooth(curDelay, endIdx - startIdx);
-		if(smoothInfo.smoothing)
+		const auto numSamples = endIdx - startIdx;
+		const auto smoothInfo = smooth(curDelay, numSamples);
+		if (smoothInfo.smoothing)
 			for (auto s = startIdx; s < endIdx; ++s)
 			{
 				const auto w = static_cast<float>(wHead[s]);
@@ -140,5 +164,11 @@ namespace dsp
 			feedback,
 			numChannels, startIdx, endIdx
 		);
+	}
+
+	void CombFilter::updatePitch(int numChannels) noexcept
+	{
+		curDelay = val.getDelaySamples(xenManager, Fs);
+		delay.setDampFreqHz(val.freqHz, numChannels);
 	}
 }

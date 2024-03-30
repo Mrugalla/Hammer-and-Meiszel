@@ -58,6 +58,7 @@ namespace param
 		ModalResonanz,
 		CombRueckkopplung,
 		CombOct,
+		CombSemi,
 		//
 		
 		NumParams

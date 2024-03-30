@@ -41,7 +41,7 @@ namespace moog
 			return processSample(sample);
 		}
 
-		/* fc = hz / sampleRate */
+		// fc = freqHz / sampleRate
 		void setCutoffFc(double fc) noexcept
 		{
 			omega = MOOG_PI_2 * fc;

@@ -142,6 +142,10 @@
             <FILE id="thxOQv" name="Filtr.cpp" compile="1" resource="0" file="Source/audio/dsp/modal/Filtr.cpp"/>
             <FILE id="NTNWBg" name="Filtr.h" compile="0" resource="0" file="Source/audio/dsp/modal/Filtr.h"/>
           </GROUP>
+          <GROUP id="{34169043-55F3-04E0-A744-09A1E55779C2}" name="flanger">
+            <FILE id="AbgITi" name="flanger.cpp" compile="1" resource="0" file="Source/audio/dsp/flanger/flanger.cpp"/>
+            <FILE id="rG8yVj" name="flanger.h" compile="0" resource="0" file="Source/audio/dsp/flanger/flanger.h"/>
+          </GROUP>
           <FILE id="AG7iE0" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
           <FILE id="Vqq7T8" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
           <FILE id="yCB0ii" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>

@@ -69,8 +69,9 @@ namespace param
 		case PID::ModalHarmonie: return "Modal Harmonie";
 		case PID::ModalTonalitaet: return juce::CharPointer_UTF8("Modal Tonalit\xc3\xa4""t");
 		case PID::ModalResonanz: return "Modal Resonanz";
-		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Modal R\xc3\xbc""ckkopplung");
+		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Comb R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
+		case PID::CombSemi: return "Comb Semi";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -148,7 +149,8 @@ namespace param
 		case PID::ModalTonalitaet: return "Saturates the resonators magnitude values.";
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
 		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
-		case PID::CombOct: return "Transposes the comb filter.";
+		case PID::CombOct: return "Transposes the comb filter in octaves.";
+		case PID::CombSemi: return "Transposes the comb filter in semitones.";
 
 		default: return "Invalid Tooltip.";
 		}
@@ -1330,6 +1332,7 @@ namespace param
 		params.push_back(makeParam(PID::ModalResonanz, .6f));
 		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
+		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

@@ -24,7 +24,12 @@ namespace moog
 	struct KrajeskiMoog :
 		public LadderFilterBase
 	{
-		KrajeskiMoog()
+		KrajeskiMoog() :
+			wc(0.),
+			g(0.),
+			gRes(0.),
+			gComp(0.),
+			drive(0.)
 		{
 			memset(state, 0, sizeof(state));
 			memset(delay, 0, sizeof(delay));

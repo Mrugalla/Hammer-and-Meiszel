@@ -36,13 +36,27 @@ namespace moog
 	struct ImprovedMoog :
 		public LadderFilterBase
 	{
-		ImprovedMoog()
+		ImprovedMoog() :
+			x(0.),
+			g(0.),
+			drive(0.),
+			dV0(0.),
+			dV1(0.),
+			dV2(0.),
+			dV3(0.)
 		{
 			memset(V, 0, sizeof(V));
 			memset(dV, 0, sizeof(dV));
 			memset(tV, 0, sizeof(tV));
 
 			drive = 1.f;
+		}
+
+		void clear() noexcept
+		{
+			memset(V, 0, sizeof(V));
+			memset(dV, 0, sizeof(dV));
+			memset(tV, 0, sizeof(tV));
 		}
 
 		double operator()(double sample) noexcept override
