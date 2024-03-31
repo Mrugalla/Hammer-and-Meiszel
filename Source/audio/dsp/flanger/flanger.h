@@ -63,13 +63,14 @@ namespace dsp
 // 
 //Flanger
 	//params
-		//damp[20, 20k]
+		//damp[0, 100% keytracked]
 		//LFO rate[0, 40]
 		//LFO depth[0, 1]
 		//chord type[+5, +7, +12, +17, +19, +24]
 		//chord depth[0, 1]
 		//dry gain[-inf, 0]
 		//wet gain[-inf, 0]
+		//flanger/phaser switch
 // finished
 //
 //Flanger
