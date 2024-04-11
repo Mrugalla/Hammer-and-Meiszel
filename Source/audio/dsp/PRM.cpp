@@ -25,6 +25,8 @@ namespace dsp
 	template struct PRMInfo<float>;
 	template struct PRMInfo<double>;
 
+	//
+
 	template<typename Float>
 	PRM<Float>::PRM(Float startVal) :
 		buf(),
@@ -72,4 +74,6 @@ namespace dsp
 
 	template struct PRM<float>;
 	template struct PRM<double>;
+
+	//
 }

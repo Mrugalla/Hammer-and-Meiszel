@@ -20,12 +20,12 @@ namespace dsp
 				Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material),
 				Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material)
 			},
-			modalMix(-1.),
-			modalSpreizung(0.),
-			modalHarmonize(-1.),
-			modalSaturate(-1.),
-			reso(-1.),
-			sampleRateInv(1.)
+			sampleRateInv(1.),
+			blendPRM(0.),
+			spreizungPRM(0.),
+			harmoniePRM(0.),
+			tonalitaetPRM(0.),
+			resoPRM(0.)
 		{
 			initAutoGainReso();
 		}
@@ -34,18 +34,24 @@ namespace dsp
 		{
 			for (auto& voice : voices)
 				voice.prepare(sampleRate);
-			reso = -1.;
 			sampleRateInv = 1. / sampleRate;
+
+			const auto smoothLenMs = 4.;
+			blendPRM.prepare(sampleRate, smoothLenMs);
+			spreizungPRM.prepare(sampleRate, smoothLenMs);
+			harmoniePRM.prepare(sampleRate, smoothLenMs);
+			tonalitaetPRM.prepare(sampleRate, smoothLenMs);
+			resoPRM.prepare(sampleRate, smoothLenMs);
 		}
 
-		void Filtr::updateParameters(double _modalMix, double _modalSpreizung, double _modalHarmonize,
-			double _modalSaturate, double _reso) noexcept
+		void Filtr::updateParameters(double blend, double spreizung, double harmonie,
+			double tonalitaet, double reso) noexcept
 		{
 			const bool materialHasUpdated = material.hasUpdated();
 			if (materialHasUpdated)
 			{
 				initAutoGainReso();
-				material.setMix(modalMix, modalSpreizung, modalHarmonize, modalSaturate);
+				material.setMix(blendPRM, spreizungPRM, harmoniePRM, tonalitaetPRM);
 				for (auto& voice : voices)
 					voice.filter.updateFreqRatios();
 				autoGainReso.updateParameterValue(reso);
@@ -59,8 +65,8 @@ namespace dsp
 					if(material.materials[i].status.load() == Status::UpdatedMaterial)
 						material.materials[i].status.store(Status::UpdatedDualMaterial);
 			}
-			updateModalMix(_modalMix, _modalSpreizung, _modalHarmonize, _modalSaturate);
-			updateReso(_reso);
+			updateModalMix(blend, spreizung, harmonie, tonalitaet);
+			updateReso(reso);
 		}
 
 		void Filtr::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
@@ -69,29 +75,28 @@ namespace dsp
 			voices[v](samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples);
 		}
 
-		void Filtr::updateModalMix(double _modalMix, double _modalSpreizung, double _modalHarmonize, double _modalSaturate) noexcept
+		void Filtr::updateModalMix(double blend, double spreizung, double harmonie, double tonalitaet) noexcept
 		{
-			if (modalMix == _modalMix
-				&& modalSpreizung == _modalSpreizung
-				&& modalHarmonize == _modalHarmonize
-				&& modalSaturate == _modalSaturate)
-				return;
-			modalMix = _modalMix;
-			modalSpreizung = _modalSpreizung;
-			modalHarmonize = _modalHarmonize;
-			modalSaturate = _modalSaturate;
-			material.setMix(modalMix, modalSpreizung, modalHarmonize, modalSaturate);
-			for (auto& voice : voices)
-				voice.filter.updateFreqRatios();
+			const auto blendInfo = blendPRM(blend);
+			const auto spreizungInfo = spreizungPRM(spreizung);
+			const auto harmonieInfo = harmoniePRM(harmonie);
+			const auto tonalitaetInfo = tonalitaetPRM(tonalitaet);
+
+			if (blendInfo.smoothing || spreizungInfo.smoothing || harmonieInfo.smoothing || tonalitaetInfo.smoothing)
+			{
+				material.setMix(blendPRM, spreizungPRM, harmoniePRM, tonalitaetPRM);
+				for (auto& voice : voices)
+					voice.filter.updateFreqRatios();
+			}
 		}
 
-		void Filtr::updateReso(double _reso) noexcept
+		void Filtr::updateReso(double reso) noexcept
 		{
-			if (reso == _reso)
+			auto resoInfo = resoPRM(reso);
+			if (!resoInfo.smoothing)
 				return;
-			reso = _reso;
-			autoGainReso.updateParameterValue(reso);
-			const auto bwFc = calcBandwidthFc(reso, sampleRateInv);
+			autoGainReso.updateParameterValue(resoPRM);
+			const auto bwFc = calcBandwidthFc(resoPRM, sampleRateInv);
 			for (auto& voice : voices)
 			{
 				voice.setBandwidth(bwFc);
@@ -106,9 +111,8 @@ namespace dsp
 
 			autoGainReso.prepareGains
 			(
-				[&](double* smpls, double _reso, int numSamples)
+				[&](double* smpls, double reso, int numSamples)
 				{
-					reso = _reso;
 					const auto bwFc = calcBandwidthFc(reso, 1. / 44100.);
 					resonator.setBandwidth(bwFc);
 					resonator.update();

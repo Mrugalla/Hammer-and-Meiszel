@@ -1,6 +1,7 @@
 #pragma once
 #include "Voice.h"
 #include "../AutoGain.h"
+#include "../PRM.h"
 
 namespace dsp
 {
@@ -22,7 +23,8 @@ namespace dsp
 			AutoGain5 autoGainReso;
 			DualMaterial material;
 			std::array<Voice, NumMPEChannels> voices;
-			double modalMix, modalSpreizung, modalHarmonize, modalSaturate, reso, sampleRateInv;
+			double sampleRateInv;
+			PRMBlockD blendPRM, spreizungPRM, harmoniePRM, tonalitaetPRM, resoPRM;
 		private:
 			// modalMix, modalSpreizung, modalHarmonize, modalSaturate
 			void updateModalMix(double, double, double, double) noexcept;
