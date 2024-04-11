@@ -292,6 +292,8 @@ namespace dsp
 				else
 					peakIndexes[i] = -1;
 			}
+
+			std::sort(peakIndexes.begin(), peakIndexes.end());
 		}
 
 		float Material::getHarm0Idx(const float* fifo, const int* peakIndexes) const noexcept

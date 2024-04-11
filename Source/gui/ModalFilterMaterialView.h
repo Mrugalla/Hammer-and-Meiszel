@@ -121,7 +121,9 @@ namespace gui
 				width = w;
 				height = h;
 				updateX(partials, xAbs, false);
-				lenAbs = lenRel * width;
+				lenAbs = juce::jlimit(1.f, width, (lenRel + 0.f) * width);
+				lenRel = lenAbs / width;
+				lenAbsHalf = lenAbs * .5f;
 			}
 
 			void updateX(Partials& partials, float x, bool doUpdateSelection) noexcept
