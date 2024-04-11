@@ -413,7 +413,7 @@ namespace dsp
 			peakInfos = materials[0].peakInfos;
 		}
 
-		void DualMaterial::setMix(double mix, double harmonize, double saturate) noexcept
+		void DualMaterial::setMix(double mix, double spreizung, double harmonize, double saturate) noexcept
 		{
 			for (auto i = 0; i < NumFilters; ++i)
 			{
@@ -427,6 +427,13 @@ namespace dsp
 				const auto ratio = ratio0 + mix * (ratio1 - ratio0);
 
 				peakInfos[i].ratio = ratio;
+			}
+
+			if (spreizung != 0.)
+			{
+				const auto sprezi = std::exp(spreizung);
+				for (auto i = 0; i < NumFilters; ++i)
+					peakInfos[i].ratio *= sprezi;
 			}
 
 			if (harmonize != 0.)

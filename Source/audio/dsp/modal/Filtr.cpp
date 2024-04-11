@@ -21,6 +21,7 @@ namespace dsp
 				Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material)
 			},
 			modalMix(-1.),
+			modalSpreizung(0.),
 			modalHarmonize(-1.),
 			modalSaturate(-1.),
 			reso(-1.),
@@ -37,14 +38,14 @@ namespace dsp
 			sampleRateInv = 1. / sampleRate;
 		}
 
-		void Filtr::updateParameters(double _modalMix, double _modalHarmonize,
+		void Filtr::updateParameters(double _modalMix, double _modalSpreizung, double _modalHarmonize,
 			double _modalSaturate, double _reso) noexcept
 		{
 			const bool materialHasUpdated = material.hasUpdated();
 			if (materialHasUpdated)
 			{
 				initAutoGainReso();
-				material.setMix(modalMix, modalHarmonize, modalSaturate);
+				material.setMix(modalMix, modalSpreizung, modalHarmonize, modalSaturate);
 				for (auto& voice : voices)
 					voice.filter.updateFreqRatios();
 				autoGainReso.updateParameterValue(reso);
@@ -58,7 +59,7 @@ namespace dsp
 					if(material.materials[i].status.load() == Status::UpdatedMaterial)
 						material.materials[i].status.store(Status::UpdatedDualMaterial);
 			}
-			updateModalMix(_modalMix, _modalHarmonize, _modalSaturate);
+			updateModalMix(_modalMix, _modalSpreizung, _modalHarmonize, _modalSaturate);
 			updateReso(_reso);
 		}
 
@@ -68,14 +69,18 @@ namespace dsp
 			voices[v](samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples);
 		}
 
-		void Filtr::updateModalMix(double _modalMix, double _modalHarmonize, double _modalSaturate) noexcept
+		void Filtr::updateModalMix(double _modalMix, double _modalSpreizung, double _modalHarmonize, double _modalSaturate) noexcept
 		{
-			if (modalMix == _modalMix && modalHarmonize == _modalHarmonize && modalSaturate == _modalSaturate)
+			if (modalMix == _modalMix
+				&& modalSpreizung == _modalSpreizung
+				&& modalHarmonize == _modalHarmonize
+				&& modalSaturate == _modalSaturate)
 				return;
 			modalMix = _modalMix;
+			modalSpreizung = _modalSpreizung;
 			modalHarmonize = _modalHarmonize;
 			modalSaturate = _modalSaturate;
-			material.setMix(modalMix, modalHarmonize, modalSaturate);
+			material.setMix(modalMix, modalSpreizung, modalHarmonize, modalSaturate);
 			for (auto& voice : voices)
 				voice.filter.updateFreqRatios();
 		}

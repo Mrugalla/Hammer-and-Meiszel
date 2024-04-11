@@ -53,6 +53,7 @@ namespace param
 		ModalOct,
 		ModalSemi,
 		ModalMix,
+		ModalSpreizung,
 		ModalHarmonie,
 		ModalTonalitaet,
 		ModalResonanz,

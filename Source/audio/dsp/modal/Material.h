@@ -105,8 +105,8 @@ namespace dsp
 		{
 			DualMaterial();
 
-			// mix, harmonize, saturate
-			void setMix(double, double, double) noexcept;
+			// mix, spreizung, harmonize, saturate
+			void setMix(double, double, double, double) noexcept;
 
 			// idx
 			double getMag(int) const noexcept;

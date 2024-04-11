@@ -66,6 +66,7 @@ namespace param
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
 		case PID::ModalMix: return "Modal Mix";
+		case PID::ModalSpreizung: return "Modal Spreizung";
 		case PID::ModalHarmonie: return "Modal Harmonie";
 		case PID::ModalTonalitaet: return juce::CharPointer_UTF8("Modal Tonalit\xc3\xa4""t");
 		case PID::ModalResonanz: return "Modal Resonanz";
@@ -147,8 +148,9 @@ namespace param
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
 		case PID::ModalMix: return "Mixes between the 2 modal filters.";
-		case PID::ModalHarmonie: return "Shifts the resonators towards the harmonic series.";
-		case PID::ModalTonalitaet: return "Saturates the resonators magnitude values.";
+		case PID::ModalSpreizung: return "Spreads or shrinks the resonators' frequency ratios.";
+		case PID::ModalHarmonie: return "Harmonizes the resonators' frequency ratios towards the harmonic series.";
+		case PID::ModalTonalitaet: return "Saturates the resonators' magnitude values.";
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
 		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
@@ -1331,6 +1333,7 @@ namespace param
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::ModalMix, 0.f));
+		params.push_back(makeParam(PID::ModalSpreizung, 0.f, makeRange::lin(-2.f, 2.f), Unit::Percent));
 		params.push_back(makeParam(PID::ModalHarmonie, 0.f));
 		params.push_back(makeParam(PID::ModalTonalitaet, .5f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResonanz, .6f));

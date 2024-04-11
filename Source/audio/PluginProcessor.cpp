@@ -42,6 +42,9 @@ namespace audio
 		const auto& modalMixParam = params(PID::ModalMix);
 		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
 
+		const auto& modalSpreizungParam = params(PID::ModalSpreizung);
+		const auto modalSpreizung = static_cast<double>(modalSpreizungParam.getValModDenorm());
+
 		const auto& modalHarmonizeParam = params(PID::ModalHarmonie);
 		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValMod());
 
@@ -78,7 +81,7 @@ namespace audio
 		const auto& voiceReleaseParam = params(PID::VoiceRelease);
 		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
 
-		modalFilter.updateParameters(modalMix, modalHarmonize, modalSaturate, modalReso);
+		modalFilter.updateParameters(modalMix, modalSpreizung, modalHarmonize, modalSaturate, modalReso);
 		flanger.synthesizeWHead(numSamples);
 		flanger.updateParameters(combFeedback, combAPShape, numChannels);
 		
