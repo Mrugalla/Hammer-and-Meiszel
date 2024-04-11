@@ -63,6 +63,12 @@ namespace audio
 		if (combSemi > 0.)
 			combFeedback *= -1.;
 
+		const auto& combAPResonanzParam = params(PID::CombAPResonanz);
+		const auto combAPResonanz = static_cast<double>(combAPResonanzParam.getValModDenorm());
+
+		const auto& combAPShapeParam = params(PID::CombAPShape);
+		const auto combAPShape = static_cast<double>(combAPShapeParam.getValMod());
+
 		const auto& voiceAttaeckParam = params(PID::VoiceAttack);
 		const auto voiceAttack = static_cast<double>(voiceAttaeckParam.getValModDenorm());
 		const auto& voiceDecayParam = params(PID::VoiceDecay);
@@ -74,7 +80,7 @@ namespace audio
 
 		modalFilter.updateParameters(modalMix, modalHarmonize, modalSaturate, modalReso);
 		flanger.synthesizeWHead(numSamples);
-		flanger.updateParameters(combFeedback);
+		flanger.updateParameters(combFeedback, combAPShape, numChannels);
 		
 		const auto samplesInput = const_cast<const double**>(samples);
 
@@ -89,7 +95,7 @@ namespace audio
 			{
 				modalFilter.voices[v].updateParameters(voiceAttack, voiceDecay, voiceSustain, voiceRelease);
 				modalFilter(samplesInput, samplesVoice, midiVoice, modalSemi, numChannels, numSamples, v);
-				flanger(samplesVoice, midiVoice, combSemi, numChannels, numSamples, v);
+				flanger(samplesVoice, midiVoice, combSemi, combAPResonanz, numChannels, numSamples, v);
 				modalFilter.voices[v].detectSleepy(sleepy, samplesVoice, numChannels, numSamples);
 				parallelProcessor.setSleepy(sleepy, v);
 			}

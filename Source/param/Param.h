@@ -59,6 +59,8 @@ namespace param
 		CombRueckkopplung,
 		CombOct,
 		CombSemi,
+		CombAPResonanz,
+		CombAPShape,
 		//
 		
 		NumParams

@@ -57,10 +57,16 @@ namespace moog
 			type = _type;
 		}
 
+		void reset() noexcept
+		{
+			w[0] = 0.;
+			w[1] = 0.;
+		}
+
 		void update() noexcept
 		{
-			cosOmega = cos(omega);
-			sinOmega = sin(omega);
+			cosOmega = std::cos(omega);
+			sinOmega = std::sin(omega);
 
 			switch (type)
 			{
@@ -83,7 +89,7 @@ namespace moog
 				a[2] = 1. - alpha;
 				break;
 			case BP:
-				alpha = sinOmega * sinh(log(2.) / 2. * Q * omega / sinOmega);
+				alpha = sinOmega * std::sinh(std::log(2.) / 2. * Q * omega / sinOmega);
 				b[0] = sinOmega / 2.;
 				b[1] = 0.;
 				b[2] = -b[0];
@@ -101,7 +107,7 @@ namespace moog
 				a[2] = b[0];
 				break;
 			case NOTCH:
-				alpha = sinOmega * sinh(log(2.) / 2. * Q * omega / sinOmega);
+				alpha = sinOmega * std::sinh(std::log(2.) / 2. * Q * omega / sinOmega);
 				b[0] = 1.;
 				b[1] = -2. * cosOmega;
 				b[2] = 1.;
@@ -110,7 +116,7 @@ namespace moog
 				a[2] = 1. - alpha;
 				break;
 			case PEAK:
-				alpha = sinOmega * sinh(log(2.) / 2. * Q * omega / sinOmega);
+				alpha = sinOmega * std::sinh(std::log(2.) / 2. * Q * omega / sinOmega);
 				b[0] = 1. + (alpha * A);
 				b[1] = -2. * cosOmega;
 				b[2] = 1. - (alpha * A);
@@ -119,22 +125,22 @@ namespace moog
 				a[2] = 1. - (alpha / A);
 				break;
 			case LS:
-				alpha = sinOmega / 2. * sqrt((A + 1. / A) * (1. / Q - 1.) + 2.);
-				b[0] = A * ((A + 1.) - ((A - 1.) * cosOmega) + (2. * sqrt(A) * alpha));
+				alpha = sinOmega / 2. * std::sqrt((A + 1. / A) * (1. / Q - 1.) + 2.);
+				b[0] = A * ((A + 1.) - ((A - 1.) * cosOmega) + (2. * std::sqrt(A) * alpha));
 				b[1] = 2. * A * ((A - 1.) - ((A + 1.) * cosOmega));
-				b[2] = A * ((A + 1.) - ((A - 1.) * cosOmega) - (2. * sqrt(A) * alpha));
-				a[0] = ((A + 1.) + ((A - 1.) * cosOmega) + (2. * sqrt(A) * alpha));
+				b[2] = A * ((A + 1.) - ((A - 1.) * cosOmega) - (2. * std::sqrt(A) * alpha));
+				a[0] = ((A + 1.) + ((A - 1.) * cosOmega) + (2. * std::sqrt(A) * alpha));
 				a[1] = -2. * ((A - 1.) + ((A + 1.) * cosOmega));
-				a[2] = ((A + 1.) + ((A - 1.) * cosOmega) - (2. * sqrt(A) * alpha));
+				a[2] = ((A + 1.) + ((A - 1.) * cosOmega) - (2. * std::sqrt(A) * alpha));
 				break;
 			case HS:
-				alpha = sinOmega / 2. * sqrt((A + 1. / A) * (1. / Q - 1.) + 2.);
-				b[0] = A * ((A + 1.) + ((A - 1.) * cosOmega) + (2. * sqrt(A) * alpha));
+				alpha = sinOmega / 2. * std::sqrt((A + 1. / A) * (1. / Q - 1.) + 2.);
+				b[0] = A * ((A + 1.) + ((A - 1.) * cosOmega) + (2. * std::sqrt(A) * alpha));
 				b[1] = -2. * A * ((A - 1.) + ((A + 1.) * cosOmega));
-				b[2] = A * ((A + 1.) + ((A - 1.) * cosOmega) - (2. * sqrt(A) * alpha));
-				a[0] = ((A + 1.) - ((A - 1.) * cosOmega) + (2. * sqrt(A) * alpha));
+				b[2] = A * ((A + 1.) + ((A - 1.) * cosOmega) - (2. * std::sqrt(A) * alpha));
+				a[0] = ((A + 1.) - ((A - 1.) * cosOmega) + (2. * std::sqrt(A) * alpha));
 				a[1] = 2. * ((A - 1.) - ((A + 1.) * cosOmega));
-				a[2] = ((A + 1.) - ((A - 1.) * cosOmega) - (2. * sqrt(A) * alpha));
+				a[2] = ((A + 1.) - ((A - 1.) * cosOmega) - (2. * std::sqrt(A) * alpha));
 				break;
 			}
 
@@ -246,6 +252,12 @@ namespace moog
 			filters[0].update();
 			for(auto i = 0; i < slope; ++i)
 				filters[i].copyFrom(filters[0]);
+		}
+
+		void reset() noexcept
+		{
+			for (auto& filter : filters)
+				filter.reset();
 		}
 
 		void copyFrom(const BiquadFilterSlope<MaxSlope>& other) noexcept

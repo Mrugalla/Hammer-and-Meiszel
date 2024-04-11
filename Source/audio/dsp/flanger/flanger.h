@@ -14,7 +14,8 @@ namespace dsp
 				wHead(),
 				combFilters{ xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen },
 				feedback(0.),
-				fbRemapped(0.)
+				fbRemapped(0.),
+				sequencesPos(-1.)
 			{}
 
 			// Fs
@@ -31,22 +32,30 @@ namespace dsp
 				wHead(numSamples);
 			}
 
-			void updateParameters(double _feedback) noexcept
+			void updateParameters(double _feedback, double _sequencesPos, int numChannels) noexcept
 			{
-				if (feedback == _feedback)
-					return;
-				feedback = _feedback;
-				fbRemapped = math::sinApprox(_feedback * PiHalf);
+				if (feedback != _feedback)
+				{
+					feedback = _feedback;
+					fbRemapped = math::sinApprox(_feedback * PiHalf);
+				}
+				if(sequencesPos != _sequencesPos)
+				{
+					sequencesPos = _sequencesPos;
+					for (auto i = 0; i < combFilters.size(); ++i)
+						combFilters[i].updateParameters(sequencesPos, numChannels);
+				}
 			}
 
 			// samples, midi, retune, numChannels, numSamples, voiceIdx
 			void operator()(double** samples, const MidiBuffer& midi,
-				double retune, int numChannels, int numSamples, int v) noexcept
+				double retune, double apReso,
+				int numChannels, int numSamples, int v) noexcept
 			{
 				combFilters[v]
 				(
 					samples, midi, wHead.data(),
-					fbRemapped, retune,
+					fbRemapped, retune, apReso,
 					numChannels, numSamples
 				);
 			}
@@ -54,7 +63,7 @@ namespace dsp
 		protected:
 			WHead2x wHead;
 			std::array<CombFilter, NumMPEChannels> combFilters;
-			double feedback, fbRemapped;
+			double feedback, fbRemapped, sequencesPos;
 		};
 	}
 }
@@ -63,7 +72,7 @@ namespace dsp
 // 
 //Flanger
 	//params
-		//damp[0, 100% keytracked]
+		//damp[20, 20k]
 		//LFO rate[0, 40]
 		//LFO depth[0, 1]
 		//chord type[+5, +7, +12, +17, +19, +24]

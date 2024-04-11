@@ -42,7 +42,7 @@ namespace dsp
 			combFilters[v]
 			(
 				samples, midi, wHead.data(),
-				feedback, retune,
+				feedback, retune, 2.,
 				numChannels, numSamples
 			);
 		}

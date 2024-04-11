@@ -32,6 +32,8 @@ namespace dsp
 
 			void updatePeakInfosFromGUI() noexcept;
 
+			void reportEndGesture() noexcept;
+
 			// sampleRate, samples, numChannels, numSamples
 			void fillBuffer(float, const float* const*, int, int);
 

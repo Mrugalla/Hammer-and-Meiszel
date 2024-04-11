@@ -18,34 +18,35 @@ namespace dsp
 
 	CombFilter::DelayFeedback::DelayFeedback() :
 		ringBuffer(),
-		lowpass(),
+		allpassSeries(),
+		sampleRateInv(1.),
 		size(0)
-	{}
+	{
+		allpassSeries.addSequence({ 1,2,3,4,5,6 }, 0);
+		allpassSeries.addSequence({ 1,2,3,5,8,13 }, 1);
+		allpassSeries.addSequence({ 1,2,4,8,16,32 }, 2);
+	}
 
 	void CombFilter::DelayFeedback::prepare(double sampleRate, int _size)
 	{
+		sampleRateInv = 1. / sampleRate;
 		size = _size;
 		ringBuffer.setSize(2, size, false, true, false);
-		for (auto& lp : lowpass)
-		{
-			lp.prepare(sampleRate);
-			lp.setResonance(2000.);
-		}
-			
+		allpassSeries.prepare(sampleRateInv);
 	}
 
-	void CombFilter::DelayFeedback::setDampFreqHz(double dampFreqHz, int numChannels) noexcept
+	void CombFilter::DelayFeedback::setDampFreqHz(double dampFreqHz, double sequencesPos, int numChannels) noexcept
 	{
-		for (auto ch = 0; ch < numChannels; ++ch)
-		{
-			auto& lp = lowpass[ch];
-			lp.setCutoff(dampFreqHz);
-		}
+		allpassSeries.setDampFreqHz(dampFreqHz, sequencesPos, numChannels);
+	}
+
+	void CombFilter::DelayFeedback::setAPReso(double apReso, int numChannels) noexcept
+	{
+		allpassSeries.setAPReso(apReso, numChannels);
 	}
 
 	void CombFilter::DelayFeedback::operator()(double** samples,
-		const int* wHead, const double* rHead, double fb,
-		int numChannels, int startIdx, int endIdx) noexcept
+		const int* wHead, const double* rHead, double fb, int numChannels, int startIdx, int endIdx) noexcept
 	{
 		auto ringBuf = ringBuffer.getArrayOfWritePointers();
 
@@ -53,7 +54,6 @@ namespace dsp
 		{
 			auto smpls = samples[ch];
 			auto ring = ringBuf[ch];
-			auto& lp = lowpass[ch];
 
 			for (auto s = startIdx; s < endIdx; ++s)
 			{
@@ -63,8 +63,7 @@ namespace dsp
 				const auto smplPresent = smpls[s];
 				const auto smplDelayed = math::cubicHermiteSpline(ring, r, size);
 
-				const auto sOut = lp(smplDelayed) * fb + smplPresent;
-				//const auto sOut = smplDelayed * fb + smplPresent;
+				const auto sOut = allpassSeries(smplDelayed, ch) * fb + smplPresent;
 				const auto sIn = sOut;
 
 				ring[w] = sIn;
@@ -83,7 +82,8 @@ namespace dsp
 		val(),
 		Fs(0.), sizeF(0.), curDelay(0.),
 		size(0)
-	{}
+	{
+	}
 
 	void CombFilter::prepare(double sampleRate)
 	{
@@ -96,8 +96,15 @@ namespace dsp
 	}
 
 	void CombFilter::operator()(double** samples, const MidiBuffer& midi, const int* wHead,
-		double feedback, double retune, int numChannels, int numSamples) noexcept
+		double feedback, double retune, double _apReso,
+		int numChannels, int numSamples) noexcept
 	{
+		if(apReso != _apReso)
+		{
+			apReso = _apReso;
+			delay.setAPReso(apReso, numChannels);
+		}
+
 		if (val.pitchParam != retune)
 		{
 			val.pitchParam = retune;
@@ -109,7 +116,8 @@ namespace dsp
 		processDelay(samples, wHead, feedback, numChannels, s, numSamples);
 	}
 
-	void CombFilter::processMIDI(double** samples, const MidiBuffer& midi, const int* wHead, double feedback, int numChannels, int& s) noexcept
+	void CombFilter::processMIDI(double** samples, const MidiBuffer& midi, const int* wHead, double feedback,
+		int numChannels, int& s) noexcept
 	{
 		for (const auto it : midi)
 		{
@@ -134,7 +142,8 @@ namespace dsp
 		}
 	}
 
-	void CombFilter::processDelay(double** samples, const int* wHead, double feedback, int numChannels, int startIdx, int endIdx) noexcept
+	void CombFilter::processDelay(double** samples, const int* wHead, double feedback,
+		int numChannels, int startIdx, int endIdx) noexcept
 	{
 		const auto numSamples = endIdx - startIdx;
 		const auto smoothInfo = smooth(curDelay, numSamples);
@@ -169,6 +178,6 @@ namespace dsp
 	void CombFilter::updatePitch(int numChannels) noexcept
 	{
 		curDelay = val.getDelaySamples(xenManager, Fs);
-		delay.setDampFreqHz(val.freqHz, numChannels);
+		delay.setDampFreqHz(val.freqHz, sequencesPos, numChannels);
 	}
 }

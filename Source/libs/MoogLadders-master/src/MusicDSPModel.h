@@ -12,6 +12,10 @@ namespace moog
 		public LadderFilterBase
 	{
 		MusicDSPMoog() :
+			p(0.),
+			k(0.),
+			t1(0.),
+			t2(0.),
 			reso(.1)
 		{
 			memset(stage, 0, sizeof(stage));

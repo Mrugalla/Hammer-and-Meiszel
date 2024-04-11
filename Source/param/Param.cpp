@@ -72,6 +72,8 @@ namespace param
 		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Comb R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
 		case PID::CombSemi: return "Comb Semi";
+		case PID::CombAPResonanz: return "Comb AP Resonanz";
+		case PID::CombAPShape: return "Comb AP Shape";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -151,6 +153,8 @@ namespace param
 		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
 		case PID::CombSemi: return "Transposes the comb filter in semitones.";
+		case PID::CombAPResonanz: return "I feel like more resonance sorta straightens out the signal.";
+		case PID::CombAPShape: return "Shape the relationship between the allpass filters for textures.";
 
 		default: return "Invalid Tooltip.";
 		}
@@ -1333,6 +1337,8 @@ namespace param
 		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
+		params.push_back(makeParam(PID::CombAPResonanz, 2.f, makeRange::withCentre(1., 16., 2.), Unit::Q));
+		params.push_back(makeParam(PID::CombAPShape, 0.f, makeRange::lin(0.f, 1.f), Unit::Percent));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

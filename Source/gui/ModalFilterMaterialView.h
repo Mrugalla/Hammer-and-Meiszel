@@ -396,6 +396,7 @@ namespace gui
 				return;
 
 			mouseDrag(mouse);
+			material.reportEndGesture();
 
 			for (auto i = 0; i < NumFilters; ++i)
 			{

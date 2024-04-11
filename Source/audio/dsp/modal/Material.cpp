@@ -31,6 +31,15 @@ namespace dsp
 			status.store(Status::UpdatedMaterial);
 		}
 
+		void Material::reportEndGesture() noexcept
+		{
+			for (int i = 0; i < NumFilters - 1; ++i)
+				for (int j = i + 1; j < NumFilters; ++j)
+					if (peakInfos[i].ratio > peakInfos[j].ratio)
+						std::swap(peakInfos[i], peakInfos[j]);
+			status.store(Status::UpdatedMaterial);
+		}
+
 		void Material::load(const char* data, int size)
 		{
 			fillBuffer(data, size);
