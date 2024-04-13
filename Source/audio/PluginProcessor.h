@@ -2,9 +2,6 @@
 #include <juce_events/juce_events.h>
 
 #include "../param/Param.h"
-
-#include "../HammerUndMeiszelTests.h"
-
 #include "dsp/midi/AutoMPE.h"
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
@@ -33,9 +30,9 @@ namespace audio
 		/* samples, midiBuffer, numChannels, numSamples */
 		void processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept;
 
-		void savePatch();
+		void savePatch(arch::State&);
 		
-		void loadPatch();
+		void loadPatch(const arch::State&);
 
 		void timerCallback() override;
 

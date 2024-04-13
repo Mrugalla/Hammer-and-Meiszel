@@ -79,14 +79,14 @@ namespace gui
 
 	ValueTree Utils::savePatch()
 	{
-		audioProcessor.pluginProcessor.savePatch();
+		audioProcessor.pluginProcessor.savePatch(audioProcessor.state);
 		return audioProcessor.state.state;
 	}
 
 	void Utils::loadPatch(const ValueTree& vt)
 	{
 		audioProcessor.state.loadPatch(vt);
-		audioProcessor.pluginProcessor.loadPatch();
+		audioProcessor.pluginProcessor.loadPatch(audioProcessor.state);
 	}
 
 	Props& Utils::getProps() noexcept

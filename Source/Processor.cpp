@@ -194,7 +194,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return false;
+        return true;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()
@@ -204,7 +204,7 @@ namespace audio
 
     void Processor::getStateInformation(juce::MemoryBlock& destData)
     {
-        pluginProcessor.savePatch();
+        pluginProcessor.savePatch(state);
         params.savePatch(state);
         state.savePatch(*this, destData);
     }
@@ -213,7 +213,7 @@ namespace audio
     {
         state.loadPatch(*this, data, sizeInBytes);
         params.loadPatch(state);
-        pluginProcessor.loadPatch();
+        pluginProcessor.loadPatch(state);
     }
 
     void Processor::processBlockBypassed(AudioBufferD& buffer, MidiBuffer& midiMessages)

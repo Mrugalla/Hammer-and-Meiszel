@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include <juce_core/juce_core.h>
 //#include "../HammerUndMeiszelTests.h"
 
 namespace audio
@@ -110,11 +111,42 @@ namespace audio
 	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept
 	{}
 
-	void PluginProcessor::savePatch()
-	{}
+	void PluginProcessor::savePatch(arch::State& state)
+	{
+		for(auto i = 0; i < 2; ++i)
+		{
+			const auto& material = modalFilter.material.materials[i];
+			const auto matStr = "mat" + juce::String(i);
+			for (auto j = 0; j < dsp::modal::NumFilters; ++j)
+			{
+				const auto& peakInfo = material.peakInfos[j];
+				const auto peakStr = matStr + "pk" + juce::String(j);
+				state.set(peakStr + "mg", peakInfo.mag);
+				state.set(peakStr + "rt", peakInfo.ratio);
+			}
+		}
+	}
 
-	void PluginProcessor::loadPatch()
-	{}
+	void PluginProcessor::loadPatch(const arch::State& state)
+	{
+		for (auto i = 0; i < 2; ++i)
+		{
+			auto& material = modalFilter.material.materials[i];
+			const auto matStr = "mat" + juce::String(i);
+			for (auto j = 0; j < dsp::modal::NumFilters; ++j)
+			{
+				auto& peakInfo = material.peakInfos[j];
+				const auto peakStr = matStr + "pk" + juce::String(j);
+				const auto magVal = state.get(peakStr + "mg");
+				if (magVal != nullptr)
+					peakInfo.mag = static_cast<double>(*magVal);
+				const auto ratioVal = state.get(peakStr + "rt");
+				if (ratioVal != nullptr)
+					peakInfo.ratio = static_cast<double>(*ratioVal);
+			}
+			material.status.store(dsp::modal::Status::UpdatedMaterial);
+		}
+	}
 
 	void PluginProcessor::timerCallback()
 	{
