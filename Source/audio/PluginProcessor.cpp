@@ -81,7 +81,7 @@ namespace audio
 		const auto& voiceReleaseParam = params(PID::VoiceRelease);
 		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
 
-		modalFilter.updateParameters(modalMix, modalSpreizung, modalHarmonize, modalSaturate, modalReso);
+		modalFilter.updateParameters(modalMix, modalSpreizung, modalHarmonize, modalSaturate, modalReso, modalSemi);
 		flanger.synthesizeWHead(numSamples);
 		flanger.updateParameters(combFeedback, combAPShape, numChannels);
 		
@@ -97,7 +97,7 @@ namespace audio
 			if (!midiVoice.isEmpty() || !sleepy)
 			{
 				modalFilter.voices[v].updateParameters(voiceAttack, voiceDecay, voiceSustain, voiceRelease);
-				modalFilter(samplesInput, samplesVoice, midiVoice, modalSemi, numChannels, numSamples, v);
+				modalFilter(samplesInput, samplesVoice, midiVoice, numChannels, numSamples, v);
 				flanger(samplesVoice, midiVoice, combSemi, combAPResonanz, numChannels, numSamples, v);
 				modalFilter.voices[v].detectSleepy(sleepy, samplesVoice, numChannels, numSamples);
 				parallelProcessor.setSleepy(sleepy, v);

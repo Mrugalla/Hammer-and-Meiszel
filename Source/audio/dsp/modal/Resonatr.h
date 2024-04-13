@@ -26,11 +26,21 @@ namespace dsp
 
 			void prepare(double);
 
-			// samples, midi, _transposeSemi, numChannels, numSamples
-			void operator()(double**, const MidiBuffer&, double, int, int) noexcept;
+			// samples, midi, numChannels, numSamples
+			void operator()(double**, const MidiBuffer&, int, int) noexcept;
 
 			// freqHz
 			void setFrequencyHz(double) noexcept;
+
+			// transposeSemi, pbRange, xen
+			void updateVal(double transposeSemi, double pbRange, double _xen) noexcept
+			{
+				val.transpose = transposeSemi;
+				val.pbRange = pbRange;
+				val.xen = _xen;
+				const auto freq = val.getFreq(xen);
+				setFrequencyHz(freq);
+			}
 
 			void updateFreqRatios() noexcept;
 

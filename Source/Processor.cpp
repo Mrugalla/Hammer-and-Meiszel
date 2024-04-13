@@ -323,10 +323,10 @@ namespace audio
         midiOutBuffer.clear();
 
 #if PPDHasTuningEditor
-        auto xen = params(PID::Xen).getValModDenorm();
-        auto masterTune = params(PID::MasterTune).getValModDenorm();
-        auto referencePitch = params(PID::ReferencePitch).getValModDenorm();
-        auto pitchbendRange = params(PID::PitchbendRange).getValModDenorm();
+        const auto xen = std::round(params(PID::Xen).getValModDenorm());
+        const auto masterTune = std::round(params(PID::MasterTune).getValModDenorm());
+        const auto referencePitch = std::round(params(PID::ReferencePitch).getValModDenorm());
+        const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
         xenManager(xen, masterTune, referencePitch, pitchbendRange);
 #endif
 

@@ -11,7 +11,8 @@ namespace dsp
 			return bwFc;
 		}
 
-		Filtr::Filtr(const arch::XenManager& xen) :
+		Filtr::Filtr(const arch::XenManager& _xen) :
+			xen(_xen),
 			autoGainReso(),
 			material(),
 			voices
@@ -21,11 +22,14 @@ namespace dsp
 				Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material), Voice(xen, material)
 			},
 			sampleRateInv(1.),
+			pbRangeP(2.),
+			xenP(12.),
 			blendPRM(0.),
 			spreizungPRM(0.),
 			harmoniePRM(0.),
 			tonalitaetPRM(0.),
-			resoPRM(0.)
+			resoPRM(0.),
+			transposeSemiPRM(0.)
 		{
 			initAutoGainReso();
 		}
@@ -42,10 +46,11 @@ namespace dsp
 			harmoniePRM.prepare(sampleRate, smoothLenMs);
 			tonalitaetPRM.prepare(sampleRate, smoothLenMs);
 			resoPRM.prepare(sampleRate, smoothLenMs);
+			transposeSemiPRM.prepare(sampleRate, smoothLenMs);
 		}
 
 		void Filtr::updateParameters(double blend, double spreizung, double harmonie,
-			double tonalitaet, double reso) noexcept
+			double tonalitaet, double reso, double transposeSemi) noexcept
 		{
 			const bool materialHasUpdated = material.hasUpdated();
 			if (materialHasUpdated)
@@ -67,12 +72,21 @@ namespace dsp
 			}
 			updateModalMix(blend, spreizung, harmonie, tonalitaet);
 			updateReso(reso);
+
+			const auto transposeSemiInfo = transposeSemiPRM(transposeSemi);
+			if (transposeSemiInfo.smoothing || pbRangeP != xen.getPitchbendRange() || xenP != xen.getXen())
+			{
+				pbRangeP = xen.getPitchbendRange();
+				xenP = xen.getXen();
+				for (auto& voice : voices)
+					voice.updateResonatorVal(transposeSemi, pbRangeP, xenP);
+			}
 		}
 
 		void Filtr::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
-			double transposeSemi, int numChannels, int numSamples, int v) noexcept
+			int numChannels, int numSamples, int v) noexcept
 		{
-			voices[v](samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples);
+			voices[v](samplesSrc, samplesDest, midi, numChannels, numSamples);
 		}
 
 		void Filtr::updateModalMix(double blend, double spreizung, double harmonie, double tonalitaet) noexcept

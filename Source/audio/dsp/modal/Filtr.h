@@ -13,18 +13,20 @@ namespace dsp
 
 			void prepare(double);
 
-			// modalMix[0,1], modalSpreizung[-2,2], modalHarmonize[0,1], modalSaturate[-1,1], reso[0,1]
-			void updateParameters(double, double, double, double, double) noexcept;
+			// modalMix[0,1], modalSpreizung[-2,2], modalHarmonize[0,1], modalSaturate[-1,1], reso[0,1],
+			// transposeSemi[-n,n]
+			void updateParameters(double, double, double, double, double, double) noexcept;
 
-			// samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples, voiceIdx
+			// samplesSrc, samplesDest, midi, numChannels, numSamples, voiceIdx
 			void operator()(const double**, double**, const MidiBuffer&,
-				double, int, int, int) noexcept;
+				int, int, int) noexcept;
 
+			const arch::XenManager& xen;
 			AutoGain5 autoGainReso;
 			DualMaterial material;
 			std::array<Voice, NumMPEChannels> voices;
-			double sampleRateInv;
-			PRMBlockD blendPRM, spreizungPRM, harmoniePRM, tonalitaetPRM, resoPRM;
+			double sampleRateInv, pbRangeP, xenP;
+			PRMBlockD blendPRM, spreizungPRM, harmoniePRM, tonalitaetPRM, resoPRM, transposeSemiPRM;
 		private:
 			// modalMix, modalSpreizung, modalHarmonize, modalSaturate
 			void updateModalMix(double, double, double, double) noexcept;

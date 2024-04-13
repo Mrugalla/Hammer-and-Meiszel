@@ -18,8 +18,14 @@ namespace dsp
 			// bwFc
 			void setBandwidth(double) noexcept;
 
-			// samplesSrc, samplesDest, midi, transposeSemi, numChannels, numSamples
-			void operator()(const double**, double**, const MidiBuffer&, double, int, int) noexcept;
+			// transposeSemi, pbRange, xen
+			void updateResonatorVal(double transposeSemi, double pbRange, double xen) noexcept
+			{
+				filter.updateVal(transposeSemi, pbRange, xen);
+			}
+
+			// samplesSrc, samplesDest, midi, numChannels, numSamples
+			void operator()(const double**, double**, const MidiBuffer&, int, int) noexcept;
 
 			// sleepy, samplesDest, numChannels, numSamples
 			void detectSleepy(bool&, double**, int, int) noexcept;

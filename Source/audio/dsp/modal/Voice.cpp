@@ -28,11 +28,11 @@ namespace dsp
 		}
 
 		void Voice::operator()(const double** samplesSrc, double** samplesDest, const MidiBuffer& midi,
-			double transposeSemi, int numChannels, int numSamples) noexcept
+			int numChannels, int numSamples) noexcept
 		{
 			synthesizeEnvelope(midi, numSamples);
 			processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
-			filter(samplesDest, midi, transposeSemi, numChannels, numSamples);
+			filter(samplesDest, midi, numChannels, numSamples);
 			for (auto ch = 0; ch < numChannels; ++ch)
 				SIMD::multiply(samplesDest[ch], gain, numSamples);
 		}

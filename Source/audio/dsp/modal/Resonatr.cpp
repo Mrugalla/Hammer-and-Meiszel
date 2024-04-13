@@ -43,19 +43,8 @@ namespace dsp
 		}
 
 		void Resonatr::operator()(double** samples, const MidiBuffer& midi,
-			double transposeSemi, int numChannels, int numSamples) noexcept
+			int numChannels, int numSamples) noexcept
 		{
-			if (val.transpose != transposeSemi ||
-				val.pbRange != xen.getPitchbendRange() ||
-				val.xen != xen.getXen())
-			{
-				val.transpose = transposeSemi;
-				val.pbRange = xen.getPitchbendRange();
-				val.xen = xen.getXen();
-				const auto freq = val.getFreq(xen);
-				setFrequencyHz(freq);
-			}
-
 			process(samples, midi, numChannels, numSamples);
 		}
 
