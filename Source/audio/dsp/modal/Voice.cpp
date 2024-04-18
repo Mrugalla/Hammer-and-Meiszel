@@ -4,22 +4,19 @@ namespace dsp
 {
     namespace modal
     {
-		Voice::Voice(const arch::XenManager& xen, const DualMaterial& material) :
-			filter(xen, material),
-			env(),
+		Voice::Voice(const arch::XenManager& xen, const EnvelopeGenerator::Parameters& envGenParams) :
+			peaks(),
+			filter(xen, peaks),
+			env(envGenParams),
 			envBuffer(),
 			gain(1.)
-		{}
+		{
+		}
 
 		void Voice::prepare(double sampleRate)
 		{
 			filter.prepare(sampleRate);
 			env.prepare(sampleRate);
-		}
-
-		void Voice::updateParameters(double atk, double dcy, double sus, double rls) noexcept
-		{
-			env.updateParameters(atk, dcy, sus, rls);
 		}
 
 		void Voice::setBandwidth(double bw) noexcept

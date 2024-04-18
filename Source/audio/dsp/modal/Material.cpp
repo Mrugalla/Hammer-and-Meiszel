@@ -425,7 +425,6 @@ namespace dsp
 				const auto ratio0 = materials[0].peakInfos[i].ratio;
 				const auto ratio1 = materials[1].peakInfos[i].ratio;
 				const auto ratio = ratio0 + mix * (ratio1 - ratio0);
-
 				peakInfos[i].ratio = ratio;
 			}
 

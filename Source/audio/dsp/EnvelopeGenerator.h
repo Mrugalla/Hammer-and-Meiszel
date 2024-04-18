@@ -13,20 +13,33 @@ namespace dsp
 			Release
 		};
 
-		EnvelopeGenerator();
+		struct Parameters
+		{
+			Parameters();
+
+			// sampleRate
+			void prepare(double) noexcept;
+
+			// atkMs, dcyMs, sus, rlsMs
+			void updateParameters(double, double, double, double) noexcept;
+
+		private:
+			double sampleRate, atkP, dcyP, rlsP;
+		public:
+			double atk, dcy, sus, rls;
+		};
+
+		EnvelopeGenerator(const Parameters&);
 
 		// sampleRate
 		void prepare(double) noexcept;
-
-		// atkMs, dcyMs, sus, rlsMs
-		void updateParameters(double, double, double, double) noexcept;
 
 		double operator()(bool) noexcept;
 
 		double operator()() noexcept;
 
-		double atkP, dcyP, rlsP, sampleRate;
-		double env, atk, dcy, sus, rls;
+		const Parameters& parameters;
+		double env, sampleRate;
 		State state;
 		bool noteOn;
 	protected:

@@ -17,9 +17,9 @@ namespace dsp
 			return _xen.noteToFreqHzWithWrap(pitch + transpose + pb * pbRange * 2.);
 		}
 
-		Resonatr::Resonatr(const arch::XenManager& _xen, const DualMaterial& _material) :
+		Resonatr::Resonatr(const arch::XenManager& _xen, const PeakArray& _peaks) :
 			xen(_xen),
-			material(_material),
+			peaks(_peaks),
 			resonators(),
 			val(),
 			freqHz(1000.),
@@ -39,6 +39,7 @@ namespace dsp
 		{
 			sampleRate = _sampleRate;
 			nyquist = sampleRate * .5;
+			reset();
 			setFrequencyHz(1000.);
 		}
 
@@ -55,7 +56,8 @@ namespace dsp
 			freqHz = freq;
 			for (auto i = 0; i < NumFilters; ++i)
 			{
-				const auto freqRatio = material.getRatio(i);
+				//const auto freqRatio = material.getRatio(i);
+				const auto freqRatio = peaks[i].ratio;
 				const auto freqFilter = freqHz * freqRatio;
 				if (freqFilter < nyquist)
 				{
@@ -78,7 +80,8 @@ namespace dsp
 		{
 			for (auto i = 0; i < NumFilters; ++i)
 			{
-				const auto freqRatio = material.getRatio(i);
+				//const auto freqRatio = material.getRatio(i);
+				const auto freqRatio = peaks[i].ratio;
 				const auto freqFilter = freqHz * freqRatio;
 				if (freqFilter < nyquist)
 				{
@@ -106,7 +109,8 @@ namespace dsp
 			}
 		}
 
-		void Resonatr::process(double** samples, const MidiBuffer& midi, int numChannels, int numSamples) noexcept
+		void Resonatr::process(double** samples, const MidiBuffer& midi,
+			int numChannels, int numSamples) noexcept
 		{
 			static constexpr double PB = 0x3fff;
 			static constexpr double PBInv = 1. / PB;
@@ -153,7 +157,8 @@ namespace dsp
 					const auto dry = smpls[i];
 					auto wet = 0.;
 					for (auto f = 0; f < numFiltersBelowNyquist; ++f)
-						wet += resonators[f](dry, ch) * material.getMag(f);
+						wet += resonators[f](dry, ch) * peaks[f].mag;
+						//wet += resonators[f](dry, ch) * material.getMag(f);
 					smpls[i] = wet;
 				}
 			}

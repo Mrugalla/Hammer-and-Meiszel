@@ -82,9 +82,16 @@ namespace audio
 		const auto& voiceReleaseParam = params(PID::VoiceRelease);
 		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
 
-		modalFilter.updateParameters(modalMix, modalSpreizung, modalHarmonize, modalSaturate, modalReso, modalSemi);
+		modalFilter.updateParameters
+		(
+			voiceAttack, voiceDecay, voiceSustain, voiceRelease,
+			modalMix, modalSpreizung, modalHarmonize, modalSaturate, modalReso, modalSemi
+		);
 		flanger.synthesizeWHead(numSamples);
-		flanger.updateParameters(combFeedback, combAPShape, numChannels);
+		flanger.updateParameters
+		(
+			combFeedback, combAPShape, numChannels
+		);
 		
 		const auto samplesInput = const_cast<const double**>(samples);
 
@@ -97,7 +104,6 @@ namespace audio
 			
 			if (!midiVoice.isEmpty() || !sleepy)
 			{
-				modalFilter.voices[v].updateParameters(voiceAttack, voiceDecay, voiceSustain, voiceRelease);
 				modalFilter(samplesInput, samplesVoice, midiVoice, numChannels, numSamples, v);
 				flanger(samplesVoice, midiVoice, combSemi, combAPResonanz, numChannels, numSamples, v);
 				modalFilter.voices[v].detectSleepy(sleepy, samplesVoice, numChannels, numSamples);

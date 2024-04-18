@@ -20,7 +20,7 @@ namespace dsp
 				double pitch, transpose, pb, pbRange, xen;
 			};
 
-			Resonatr(const arch::XenManager&, const DualMaterial&);
+			Resonatr(const arch::XenManager&, const PeakArray&);
 
 			void reset() noexcept;
 
@@ -49,7 +49,8 @@ namespace dsp
 
 		private:
 			const arch::XenManager& xen;
-			const DualMaterial& material;
+			//const DualMaterial& material;
+			const PeakArray& peaks;
 			ResonatorArray resonators;
 			Val val;
 			double freqHz, sampleRate, nyquist;

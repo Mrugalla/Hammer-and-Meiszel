@@ -23,6 +23,8 @@ namespace dsp
 				double mag, ratio;
 			};
 
+			using PeakArray = std::array<PeakInfo, NumFilters>;
+
 			Material();
 
 			// data, size
@@ -38,7 +40,7 @@ namespace dsp
 			void fillBuffer(float, const float* const*, int, int);
 
 			MaterialBuffer buffer;
-			std::array<PeakInfo, NumFilters> peakInfos;
+			PeakArray peakInfos;
 			std::atomic<Status> status;
 			float sampleRate;
 		private:
@@ -101,6 +103,12 @@ namespace dsp
 				const int*, bool);
 		};
 
+		using PeakArray = Material::PeakArray;
+
+		void generateSine(Material&);
+		void generateSaw(Material&);
+		void generateSquare(Material&);
+
 		struct DualMaterial
 		{
 			DualMaterial();
@@ -117,8 +125,7 @@ namespace dsp
 			bool hasUpdated() const noexcept;
 
 			std::array<Material, 2> materials;
-		protected:
-			std::array<Material::PeakInfo, NumFilters> peakInfos;
+			PeakArray peakInfos;
 		};
 	}
 }

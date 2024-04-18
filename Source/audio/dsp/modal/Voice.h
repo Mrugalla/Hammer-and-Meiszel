@@ -8,12 +8,9 @@ namespace dsp
 	{
 		struct Voice
 		{
-			Voice(const arch::XenManager&, const DualMaterial&);
+			Voice(const arch::XenManager&, const EnvelopeGenerator::Parameters&);
 
 			void prepare(double);
-
-			// atk, dcy, sus, rls
-			void updateParameters(double, double, double, double) noexcept;
 
 			// bwFc
 			void setBandwidth(double) noexcept;
@@ -30,9 +27,10 @@ namespace dsp
 			// sleepy, samplesDest, numChannels, numSamples
 			void detectSleepy(bool&, double**, int, int) noexcept;
 
+			PeakArray peaks;
 			Resonatr filter;
 			EnvelopeGenerator env;
-			std::array<double, BlockSize2x> envBuffer;
+			std::array<double, BlockSize> envBuffer;
 			double gain;
 		protected:
 

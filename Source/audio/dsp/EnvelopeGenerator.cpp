@@ -4,26 +4,27 @@
 
 namespace dsp
 {
-	EnvelopeGenerator::EnvelopeGenerator() :
-		env(0.),
-		atkP(2.), dcyP(20.), rlsP(10.), sampleRate(44100.),
+	EnvelopeGenerator::Parameters::Parameters() :
+		sampleRate(44100.),
+		atkP(2.), dcyP(20.), rlsP(10.),
 		atk(math::msToInc(atkP, sampleRate)),
 		dcy(math::msToInc(dcyP, sampleRate)),
 		sus(.8),
-		rls(math::msToInc(rlsP, sampleRate)),
-		state(State::Release),
-		noteOn(false),
-		smooth(0.)
+		rls(math::msToInc(rlsP, sampleRate))
 	{
 	}
 
-	void EnvelopeGenerator::prepare(double _sampleRate) noexcept
+	void EnvelopeGenerator::Parameters::prepare(double _sampleRate) noexcept
 	{
-		sampleRate = _sampleRate;
-		smooth.makeFromDecayInMs(20., sampleRate);
+		sampleRate = sampleRate;
+		atk = atkP;
+		dcy = dcyP;
+		rls = rlsP;
+		atkP = dcyP = rlsP = -1.;
+		updateParameters(atk, dcy, sus, rls);
 	}
 
-	void EnvelopeGenerator::updateParameters(double _atk, double _dcy,
+	void EnvelopeGenerator::Parameters::updateParameters(double _atk, double _dcy,
 		double _sus, double _rls) noexcept
 	{
 		sus = _sus;
@@ -53,6 +54,21 @@ namespace dsp
 		}
 	}
 
+	EnvelopeGenerator::EnvelopeGenerator(const Parameters& p) :
+		parameters(p),
+		env(0.), sampleRate(44100.),
+		state(State::Release),
+		noteOn(false),
+		smooth(0.)
+	{
+	}
+
+	void EnvelopeGenerator::prepare(double _sampleRate) noexcept
+	{
+		sampleRate = _sampleRate;
+		smooth.makeFromDecayInMs(20., sampleRate);
+	}
+
 	double EnvelopeGenerator::operator()(bool _noteOn) noexcept
 	{
 		noteOn = _noteOn;
@@ -77,7 +93,7 @@ namespace dsp
 	{
 		if (noteOn)
 		{
-			env += atk * (1. - env);
+			env += parameters.atk * (1. - env);
 			if (env > 1. - 1e-6)
 			{
 				env = 1.;
@@ -94,8 +110,8 @@ namespace dsp
 	{
 		if (noteOn)
 		{
-			env += dcy * (sus - env);
-			if (std::abs(sus - env) < 1e-6)
+			env += parameters.dcy * (parameters.sus - env);
+			if (std::abs(parameters.sus - env) < 1e-6)
 			{
 				state = State::Sustain;
 				processSustain();
@@ -110,7 +126,7 @@ namespace dsp
 	{
 		if (noteOn)
 		{
-			env = sus;
+			env = parameters.sus;
 			return;
 		}
 		state = State::Release;
@@ -124,7 +140,7 @@ namespace dsp
 			state = State::Attack;
 			return processAttack();
 		}
-		env += rls * (0. - env);
+		env += parameters.rls * (0. - env);
 		if (env < 1e-6)
 			env = 0.;
 	}
