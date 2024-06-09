@@ -59,8 +59,8 @@ namespace gui
         },
         materialViews
         {
-            ModalMaterialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.material.materials[0]),
-            ModalMaterialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.material.materials[1]),
+            ModalMaterialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(0)),
+            ModalMaterialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(1)),
         }
     {
         layout.init
@@ -108,8 +108,8 @@ namespace gui
         knobs[kModalSemi].attachParameter("Semi", PID::ModalSemi, &painters[2]);
         knobs[kModalReso].attachParameter("Resonanz", PID::ModalResonanz, &painters[3]);
         knobs[kModalHarm].attachParameter("Harmonie", PID::ModalHarmonie, &painters[4]);
-        knobs[kModalTon].attachParameter("Tonalitaet", PID::ModalTonalitaet, &painters[5]);
-        knobs[kModalMix].attachParameter("Mix", PID::ModalMix, &painters[6]);
+        knobs[kModalTon].attachParameter("Kraft", PID::ModalKraft, &painters[5]);
+        knobs[kModalMix].attachParameter("Blend", PID::ModalBlend, &painters[6]);
         knobs[kCombFeedback].attachParameter("Rueckkopplung", PID::CombRueckkopplung, &painters[7]);
         knobs[kGainDry].attachParameter("Dry", PID::GainDry, &painters[8]);
         knobs[kGainWet].attachParameter("Wet", PID::GainWet, &painters[9]);

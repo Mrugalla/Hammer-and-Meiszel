@@ -1,6 +1,6 @@
 #pragma once
 #include "Label.h"
-#include "../audio/dsp/modal/Material.h"
+#include "../audio/dsp/modal2/Material.h"
 
 namespace gui
 {
@@ -10,10 +10,10 @@ namespace gui
 	{
 		static constexpr float Sensitive = .1f;
 
-		using Status = dsp::modal::Status;
-		using Material = dsp::modal::Material;
-		using PeakInfo = Material::PeakInfo;
-		static constexpr int NumFilters = dsp::modal::NumFilters;
+		using Status = dsp::modal2::Status;
+		using Material = dsp::modal2::Material;
+		using PeakInfo = dsp::modal2::PeakInfo;
+		static constexpr int NumFilters = dsp::modal2::NumFilters;
 		
 		struct Partial
 		{

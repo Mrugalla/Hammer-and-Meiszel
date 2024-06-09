@@ -5,7 +5,8 @@
 #include "dsp/midi/AutoMPE.h"
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
-#include "dsp/modal/Filtr.h"
+//#include "dsp/modal/Filtr.h"
+#include "dsp/modal2/ModalFilter.h"
 #include "dsp/flanger/flanger.h"
 
 //This is where this plugin's custom dsp is implemented
@@ -43,7 +44,8 @@ namespace audio
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;
 		dsp::PPMIDIBand parallelProcessor;
-		dsp::modal::Filtr modalFilter;
+		//dsp::modal::Filtr modalFilter;
+		dsp::modal2::ModalFilter modalFilter;
 		dsp::flanger::Flanger flanger;
 		std::atomic<bool> editorExists;
 	};

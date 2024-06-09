@@ -4,12 +4,12 @@
 
 namespace dsp
 {
-	EnvelopeGenerator::Parameters::Parameters() :
+	EnvelopeGenerator::Parameters::Parameters(double _atk, double _dcy, double _sus, double _rls) :
 		sampleRate(44100.),
-		atkP(2.), dcyP(20.), rlsP(10.),
+		atkP(_atk), dcyP(_dcy), rlsP(_rls),
 		atk(math::msToInc(atkP, sampleRate)),
 		dcy(math::msToInc(dcyP, sampleRate)),
-		sus(.8),
+		sus(_sus),
 		rls(math::msToInc(rlsP, sampleRate))
 	{
 	}
@@ -54,12 +54,18 @@ namespace dsp
 		}
 	}
 
+	void EnvelopeGenerator::Parameters::updateParameters(const Parameters& other) noexcept
+	{
+		updateParameters(other.atkP, other.dcyP, other.sus, other.rlsP);
+	}
+
 	EnvelopeGenerator::EnvelopeGenerator(const Parameters& p) :
 		parameters(p),
 		env(0.), sampleRate(44100.),
 		state(State::Release),
 		noteOn(false),
-		smooth(0.)
+		smooth(0.),
+		curEnv(0.)
 	{
 	}
 
@@ -86,7 +92,14 @@ namespace dsp
 		default: processRelease(); break;
 		}
 
-		return smooth(env * env);
+		curEnv =  smooth(env * env);
+		return curEnv;
+	}
+
+	double EnvelopeGenerator::getEnvNoSustain() const noexcept
+	{
+		const auto val = curEnv * (1. + parameters.sus) - parameters.sus;
+		return val < 0. ? 0. : val;
 	}
 
 	void EnvelopeGenerator::processAttack() noexcept

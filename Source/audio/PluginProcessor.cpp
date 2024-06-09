@@ -11,7 +11,8 @@ namespace audio
 		autoMPE(),
 		voiceSplit(),
 		parallelProcessor(),
-		modalFilter(xen),
+		//modalFilter(xen),
+		modalFilter(),
 		flanger(xen),
 		editorExists(false)
 	{
@@ -40,17 +41,20 @@ namespace audio
 		auto modalSemi = static_cast<double>(std::round(modalSemiParam.getValModDenorm()));
 		modalSemi += static_cast<double>(std::round(modalOctParam.getValModDenorm())) * xen.getXen();
 
-		const auto& modalMixParam = params(PID::ModalMix);
-		const auto modalMix = static_cast<double>(modalMixParam.getValMod());
+		const auto& modalBlendParam = params(PID::ModalBlend);
+		const auto modalBlend = static_cast<double>(modalBlendParam.getValMod());
+
+		const auto& modalBlendEnvParam = params(PID::ModalBlendEnv);
+		const auto modalBlendEnv = static_cast<double>(modalBlendEnvParam.getValModDenorm());
 
 		const auto& modalSpreizungParam = params(PID::ModalSpreizung);
 		const auto modalSpreizung = static_cast<double>(modalSpreizungParam.getValModDenorm());
 
-		const auto& modalHarmonizeParam = params(PID::ModalHarmonie);
-		const auto modalHarmonize = static_cast<double>(modalHarmonizeParam.getValMod());
+		const auto& modalHarmonieParam = params(PID::ModalHarmonie);
+		const auto modalHarmonie = static_cast<double>(modalHarmonieParam.getValMod());
 
-		const auto& modalSaturateParam = params(PID::ModalTonalitaet);
-		const auto modalSaturate = static_cast<double>(modalSaturateParam.getValModDenorm());
+		const auto& modalKraftParam = params(PID::ModalKraft);
+		const auto modalKraft = static_cast<double>(modalKraftParam.getValModDenorm());
 
 		const auto& modalResoParam = params(PID::ModalResonanz);
 		const auto modalReso = static_cast<double>(modalResoParam.getValMod());
@@ -82,10 +86,9 @@ namespace audio
 		const auto& voiceReleaseParam = params(PID::VoiceRelease);
 		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
 
-		modalFilter.updateParameters
+		modalFilter
 		(
-			voiceAttack, voiceDecay, voiceSustain, voiceRelease,
-			modalMix, modalSpreizung, modalHarmonize, modalSaturate, modalReso, modalSemi
+			{ voiceAttack, voiceDecay, voiceSustain, voiceRelease }
 		);
 		flanger.synthesizeWHead(numSamples);
 		flanger.updateParameters
@@ -101,12 +104,30 @@ namespace audio
 			auto bandVoice = parallelProcessor[v];
 			double* samplesVoice[] = { bandVoice.l, bandVoice.r };
 			bool sleepy = parallelProcessor.isSleepy(v);
+			const bool awake = !sleepy;
+			const bool atLeastOneNewNote = !midiVoice.isEmpty();
 			
-			if (!midiVoice.isEmpty() || !sleepy)
+			if (awake || atLeastOneNewNote)
 			{
-				modalFilter(samplesInput, samplesVoice, midiVoice, numChannels, numSamples, v);
-				flanger(samplesVoice, midiVoice, combSemi, combAPResonanz, numChannels, numSamples, v);
-				modalFilter.voices[v].detectSleepy(sleepy, samplesVoice, numChannels, numSamples);
+				modalFilter
+				(
+					samplesInput, samplesVoice, midiVoice, xen,
+					{
+						modalBlend, modalSpreizung, modalHarmonie, modalKraft,
+						modalBlendEnv
+					},
+					modalReso, modalSemi,
+					numChannels, numSamples,
+					v
+				);
+				flanger
+				(
+					samplesVoice, midiVoice, combSemi,
+					combAPResonanz,
+					numChannels, numSamples,
+					v
+				);
+				sleepy = modalFilter.isSleepy(sleepy, samplesVoice, numChannels, numSamples, v);
 				parallelProcessor.setSleepy(sleepy, v);
 			}
 		}
@@ -121,9 +142,9 @@ namespace audio
 	{
 		for(auto i = 0; i < 2; ++i)
 		{
-			const auto& material = modalFilter.material.materials[i];
+			const auto& material = modalFilter.getMaterial(i);
 			const auto matStr = "mat" + juce::String(i);
-			for (auto j = 0; j < dsp::modal::NumFilters; ++j)
+			for (auto j = 0; j < dsp::modal2::NumFilters; ++j)
 			{
 				const auto& peakInfo = material.peakInfos[j];
 				const auto peakStr = matStr + "pk" + juce::String(j);
@@ -137,9 +158,9 @@ namespace audio
 	{
 		for (auto i = 0; i < 2; ++i)
 		{
-			auto& material = modalFilter.material.materials[i];
+			auto& material = modalFilter.getMaterial(i);
 			const auto matStr = "mat" + juce::String(i);
-			for (auto j = 0; j < dsp::modal::NumFilters; ++j)
+			for (auto j = 0; j < dsp::modal2::NumFilters; ++j)
 			{
 				auto& peakInfo = material.peakInfos[j];
 				const auto peakStr = matStr + "pk" + juce::String(j);
@@ -150,21 +171,20 @@ namespace audio
 				if (ratioVal != nullptr)
 					peakInfo.ratio = static_cast<double>(*ratioVal);
 			}
-			material.status.store(dsp::modal::Status::UpdatedMaterial);
+			material.status.store(dsp::modal2::Status::UpdatedMaterial);
 		}
 	}
 
 	void PluginProcessor::timerCallback()
 	{
-		const auto noEditor = !editorExists.load();
-		if (noEditor)
+		const auto edtrExists = !editorExists.load();
+		if (edtrExists)
+			return;
+		for (auto i = 0; i < 2; ++i)
 		{
-			for (auto i = 0; i < 2; ++i)
-			{
-				auto& status = modalFilter.material.materials[i].status;
-				status.store(dsp::modal::Status::Processing);
-			}
+			auto& material = modalFilter.getMaterial(i);
+			auto& status = material.status;
+			status.store(dsp::modal2::Status::Processing);
 		}
-		
 	}
 }

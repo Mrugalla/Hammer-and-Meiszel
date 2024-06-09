@@ -172,29 +172,29 @@ namespace gui
 		makeTextLabel(infoLabel, "", font::nel(), Just::topRight, CID::Hover);
 
 		add(Callback([&]()
+		{
+			if (material.status.load() == Status::UpdatedProcessor)
 			{
-				if (material.status.load() == Status::UpdatedDualMaterial)
-				{
-					updatePartials();
-					repaint();
-				}
-			}, kMaterialUpdatedCB, cbFPS::k30, true));
+				updatePartials();
+				repaint();
+			}
+		}, kMaterialUpdatedCB, cbFPS::k30, true));
 
 		const auto fps = cbFPS::k30;
 		const auto speed = msToInc(AniLengthMs, fps);
 
 		for (auto i = 0; i < NumFilters; ++i)
 			add(Callback([&, speed, i]()
+			{
+				auto& phase = callbacks[kStrumCB + i].phase;
+				phase -= speed;
+				if (phase <= 0.f)
 				{
-					auto& phase = callbacks[kStrumCB + i].phase;
-					phase -= speed;
-					if (phase <= 0.f)
-					{
-						phase = 0.f;
-						callbacks[kStrumCB + i].active = false;
-					}
-					repaint();
-				}, kStrumCB + i, fps, false));
+					phase = 0.f;
+					callbacks[kStrumCB + i].active = false;
+				}
+				repaint();
+			}, kStrumCB + i, fps, false));
 
 		addChildComponent(dragAniComp);
 	}
@@ -250,8 +250,12 @@ namespace gui
 		auto const h = static_cast<float>(getHeight());
 
 		auto maxRatio = 0.f;
-		for (auto& peakInfo : material.peakInfos)
-			maxRatio = std::max(maxRatio, static_cast<float>(peakInfo.ratio));
+		for (auto p = 0; p < NumFilters; ++p)
+		{
+			const auto& peakInfo = material.peakInfos[p];
+			const auto ratio = static_cast<float>(peakInfo.ratio);
+			maxRatio = std::max(maxRatio, ratio);
+		}
 		maxRatio -= 1.f;
 		const auto maxRatioInv = 1.f / maxRatio;
 
@@ -269,11 +273,15 @@ namespace gui
 		material.status.store(Status::Processing);
 
 		auto freqRatioMin = 44100.f;
-		for (auto& peakInfo : material.peakInfos)
-			freqRatioMin = std::min(freqRatioMin, static_cast<float>(peakInfo.ratio));
 		auto freqRatioMax = 0.f;
-		for (auto& peakInfo : material.peakInfos)
-			freqRatioMax = std::max(freqRatioMax, static_cast<float>(peakInfo.ratio));
+		for (auto p = 0; p < NumFilters; ++p)
+		{
+			const auto& peakInfo = material.peakInfos[p];
+			const auto ratio = static_cast<float>(peakInfo.ratio);
+			freqRatioMin = std::min(freqRatioMin, ratio);
+			freqRatioMax = std::max(freqRatioMax, ratio);
+		}
+			
 		freqRatioRange = freqRatioMax - freqRatioMin;
 	}
 

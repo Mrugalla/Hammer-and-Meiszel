@@ -16,7 +16,8 @@ namespace dsp
 			// attack, decay, sustain, release,
 			// modalMix[0,1], modalSpreizung[-2,2], modalHarmonize[0,1], modalSaturate[-1,1], reso[0,1],
 			// transposeSemi[-n,n]
-			void updateParameters(double, double, double, double, double, double, double, double, double, double) noexcept;
+			void updateParameters(double, double, double, double,
+				double, double, double, double, double, double) noexcept;
 
 			// samplesSrc, samplesDest, midi, numChannels, numSamples, voiceIdx
 			void operator()(const double**, double**, const MidiBuffer&,

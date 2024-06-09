@@ -15,6 +15,12 @@ namespace math
     static constexpr float PiHalf = Pi * .5f;
     static constexpr float PiHalfInv = 1.f / PiHalf;
 
+    template<typename Float>
+    inline Float limit(Float min, Float max, Float x) noexcept
+    {
+		return x < min ? min : x > max ? max : x;
+    }
+
     template <typename Float>
     inline Float sinApprox(Float x) noexcept
     {
