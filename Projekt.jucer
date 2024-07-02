@@ -8,7 +8,7 @@
               pluginDesc="Harvests energy from unexpected sources" pluginManufacturer="Mrugalla"
               pluginManufacturerCode="Bbbb" pluginCode="Hmmz" pluginVST3Category="Filter,Fx,Tools"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIODryWet&#10;&#10;PPDHasStereoConfig=false&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=0.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=96"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=false&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=0.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=96"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
@@ -210,6 +210,15 @@
         <FILE id="BThon6" name="Using.h" compile="0" resource="0" file="Source/audio/Using.h"/>
       </GROUP>
       <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui">
+        <FILE id="bpI4zK" name="DropDownMenu.cpp" compile="1" resource="0"
+              file="Source/gui/DropDownMenu.cpp"/>
+        <FILE id="z6stJN" name="DropDownMenu.h" compile="0" resource="0" file="Source/gui/DropDownMenu.h"/>
+        <FILE id="TCxx59" name="EnvelopeGeneratorEditor.cpp" compile="1" resource="0"
+              file="Source/gui/EnvelopeGeneratorEditor.cpp"/>
+        <FILE id="PrUoy5" name="EnvelopeGeneratorEditor.h" compile="0" resource="0"
+              file="Source/gui/EnvelopeGeneratorEditor.h"/>
+        <FILE id="yT0rky" name="GenAniComp.cpp" compile="1" resource="0" file="Source/gui/GenAniComp.cpp"/>
+        <FILE id="s6kdAh" name="GenAniComp.h" compile="0" resource="0" file="Source/gui/GenAniComp.h"/>
         <FILE id="rYjSBg" name="BgImage.cpp" compile="1" resource="0" file="Source/gui/BgImage.cpp"/>
         <FILE id="XnUFHl" name="BgImage.h" compile="0" resource="0" file="Source/gui/BgImage.h"/>
         <FILE id="kKaRcj" name="Button.cpp" compile="1" resource="0" file="Source/gui/Button.cpp"/>

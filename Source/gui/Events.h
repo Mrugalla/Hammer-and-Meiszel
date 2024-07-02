@@ -11,6 +11,10 @@ namespace gui
             ColourSchemeChanged,
             TooltipUpdated,
             ClickedEmpty,
+            ToastShowUp,
+            ToastUpdateMessage,
+            ToastVanish,
+            ToastColour,
             NumTypes
         };
 

@@ -12,14 +12,18 @@ namespace gui
 		using Func = std::function<void()>;
 		using OnDrag = std::function<void(const PointF&, const Mouse&)>;
 		using OnMouse = std::function<void(const Mouse&)>;
+		using OnPaint = std::function<void(Graphics&, Knob&)>;
 
-        enum { kEnterExitCB, kDownUpCB, kNumCallbacks };
+        enum kCBs { kEnterExitCB, kDownUpCB, kUpdateParameterCB, kNumCallbacks };
+        enum kVals { Value, ValMod, ModDepth, ModBias, NumValTypes };
 
         Knob(Utils& u) :
             Comp(u),
+            values(),
             onEnter([]() {}), onExit([]() {}), onDown([]() {}), onDoubleClick([]() {}),
             onDrag([](const PointF&, const Mouse&) {}),
             onUp([](const Mouse&) {}), onWheel([](const Mouse&) {}),
+            onPaint([](Graphics& g, Knob&) { g.fillAll(juce::Colours::red); }),
             dragXY(), lastPos(),
             hidesCursor(true)
 		{
@@ -54,7 +58,8 @@ namespace gui
         void mouseEnter(const Mouse& mouse) override
         {
             Comp::mouseEnter(mouse);
-            callbacks[kEnterExitCB].start(0.f);
+            if(!callbacks[kEnterExitCB].active)
+                callbacks[kEnterExitCB].start(0.f);
             onEnter();
         }
 
@@ -140,34 +145,87 @@ namespace gui
             onDoubleClick();
         }
 
+		void paint(Graphics& g) override
+		{
+			onPaint(g, *this);
+		}
+
+        std::vector<float> values;
         Func onEnter, onExit, onDown, onDoubleClick;
         OnDrag onDrag;
         OnMouse onUp, onWheel;
+        OnPaint onPaint;
         PointF dragXY, lastPos;
         bool hidesCursor;
 	};
 
-    struct ModDial :
+    class ModDial :
         public Knob
     {
+        void updateToast()
+        {
+            String msg;
+            auto& macro = utils.getParam(PID::Macro);
+			const auto macroVal = macro.getValue();
+            const auto& paramMain = *prms[0];
+			const auto valMain = paramMain.getValue();
+            const auto valMod = paramMain.calcValModOf(macroVal);
+			const auto valModNorm = juce::jlimit(0.f, 1.f, valMain + valMod);
+            msg += paramMain.getText(valModNorm, 1);
+            notify(evt::Type::ToastUpdateMessage, &msg);
+        }
+
+    public:
         ModDial(Utils& u) :
             Knob(u),
             prms(),
             biasBounds(),
             path(),
-            wOff(0.f)
+            wOff(0.f),
+            showBias(false),
+            verticalDrag(true)
         {
+            onEnter = [&]()
+            {
+                const auto cID = CID::Mod;
+                notify(evt::Type::ToastColour, &cID);
+				const auto bounds = getBounds();
+                notify(evt::Type::ToastShowUp, &bounds);
+                updateToast();
+            };
+
+            onExit = [&]()
+			{
+				notify(evt::Type::ToastVanish);
+			};
+
             onDrag = [&](const PointF& dragOffset, const Mouse& mouse)
             {
+               
+                auto dragXY = verticalDrag ? -dragOffset.y : dragOffset.x;
                 const auto speed = 1.f / utils.getDragSpeed();
-                const auto dragXY = dragOffset * speed;
+				dragXY *= speed;
 
                 if (mouse.mods.isRightButtonDown())
-                    for (auto prm : prms)
-                        prm->setModBias(prm->getModBias() - dragXY.y);
+                {
+					for (auto prm : prms)
+                    {
+                        const auto md = prm->getModDepth();
+						const auto pol = md > 0.f ? 1.f : -1.f;
+						const auto bias = prm->getModBias();
+                        prm->setModBias(bias + dragXY * pol);
+                    }
+                        
+                    showBias = true;
+                    updateToast();
+                }
                 else
+                {
                     for (auto prm : prms)
-                        prm->setModDepth(prm->getModDepth() - dragXY.y);
+                        prm->setModDepth(prm->getModDepth() + dragXY);
+                    showBias = false;
+                    updateToast();
+                }
             };
 
             onUp = [&](const Mouse& mouse)
@@ -204,12 +262,17 @@ namespace gui
             };
         }
 
-        void attachParameters(PID* pIDs, int numPIDs)
+        void attach(PID* pIDs, int numPIDs)
         {
             prms.clear();
             prms.reserve(numPIDs);
             for (auto i = 0; i < numPIDs; ++i)
                 prms.emplace_back(&utils.getParam(pIDs[i]));
+        }
+
+        void attach(PID pID)
+        {
+			attach(&pID, 1);
         }
 
         void resized() override
@@ -254,11 +317,389 @@ namespace gui
             g.strokePath(path, stroke);
         }
 
+    private:
         std::vector<Param*> prms;
         BoundsF biasBounds;
         Path path;
         float wOff;
+        bool showBias;
+    public:
+        bool verticalDrag;
     };
+
+    inline void makeParameters(const std::vector<PID>& pIDs, Knob& knob, bool verticalDrag = true)
+    {
+        knob.setTooltip(toTooltip(pIDs[0]));
+
+        std::vector<Param*> prms;
+        prms.reserve(pIDs.size());
+        for (auto i = 0; i < pIDs.size(); ++i)
+            prms.emplace_back(&knob.utils.getParam(pIDs[i]));
+
+		knob.onEnter = [&k = knob, prm = prms[0]]()
+		{
+            const auto cID = CID::Interact;
+            k.notify(evt::Type::ToastColour, &cID);
+            const auto bounds = k.getBounds();
+            k.notify(evt::Type::ToastShowUp, &bounds);
+            const String message(prm->getCurrentValueAsText());
+            k.notify(evt::Type::ToastUpdateMessage, &message);
+		};
+
+		knob.onExit = [&k = knob]()
+		{
+			k.notify(evt::Type::ToastVanish);
+		};
+
+        knob.onDown = [&k = knob, prms]()
+        {
+            for (auto prm : prms)
+                if (!prm->isInGesture())
+                    prm->beginGesture();
+            
+            const String message(prms[0]->getCurrentValueAsText());
+            k.notify(evt::Type::ToastUpdateMessage, &message);
+        };
+
+        knob.onDrag = [&k = knob, prms, verticalDrag](const PointF& dragOffset, const Mouse&)
+        {
+            auto dragVal = verticalDrag ? -dragOffset.y : dragOffset.x;
+            const auto speed = 1.f / k.utils.getDragSpeed();
+            dragVal *= speed;
+
+            for (auto prm : prms)
+            {
+                const auto newValue = juce::jlimit(0.f, 1.f, prm->getValue() + dragVal);
+                prm->setValueFromEditor(newValue);
+            }
+
+            const String message(prms[0]->getCurrentValueAsText());
+			k.notify(evt::Type::ToastUpdateMessage, &message);
+        };
+
+        knob.onUp = [&k = knob, prms](const Mouse& mouse)
+        {
+            if (!mouse.mouseWasDraggedSinceMouseDown())
+                if (mouse.mods.isAltDown())
+                    for (auto prm : prms)
+                        prm->setValueFromEditor(prm->getDefaultValue());
+
+            for (auto prm : prms)
+                prm->endGesture();
+
+            const String message(prms[0]->getCurrentValueAsText());
+            k.notify(evt::Type::ToastUpdateMessage, &message);
+        };
+
+        knob.onWheel = [&k = knob, prms](const Mouse&)
+        {
+            for (auto prm : prms)
+            {
+                const auto& range = prm->range;
+                const auto interval = range.interval;
+
+                if (interval > 0.f)
+                {
+                    const auto nStep = interval / range.getRange().getLength();
+                    k.dragXY.setY(k.dragXY.y > 0.f ? nStep : -nStep);
+                    auto newValue = juce::jlimit(0.f, 1.f, prm->getValue() + k.dragXY.y);
+                    newValue = range.convertTo0to1(range.snapToLegalValue(range.convertFrom0to1(newValue)));
+                    prm->setValueWithGesture(newValue);
+                }
+                else
+                {
+                    const auto newValue = juce::jlimit(0.f, 1.f, prm->getValue() + k.dragXY.y);
+                    prm->setValueWithGesture(newValue);
+                }
+            }
+
+            const String message(prms[0]->getCurrentValueAsText());
+            k.notify(evt::Type::ToastUpdateMessage, &message);
+        };
+
+        knob.onDoubleClick = [&k = knob, prms]()
+        {
+            for (auto prm : prms)
+                if (!prm->isInGesture())
+                    prm->setValueWithGesture(prm->getDefaultValue());
+
+            const String message(prms[0]->getCurrentValueAsText());
+            k.notify(evt::Type::ToastUpdateMessage, &message);
+        };
+
+	    knob.values.resize(Knob::kVals::NumValTypes, 0.f);
+
+        knob.add(Callback([&k = knob, &prm = *prms[0]]()
+            {
+                bool shallRepaint = false;
+
+                k.setLocked(prm.isLocked());
+
+                const auto vn = prm.getValue();
+                const auto md = prm.getModDepth();
+                const auto vm = prm.getValMod();
+                const auto mb = prm.getModBias();
+
+                auto& vals = k.values;
+
+                if (vals[Knob::kVals::Value] != vn || vals[Knob::kVals::ModDepth] != md ||
+                    vals[Knob::kVals::ValMod] != vm || vals[Knob::kVals::ModBias] != mb)
+                {
+                    vals[Knob::kVals::Value] = vn;
+                    vals[Knob::kVals::ModDepth] = md;
+                    vals[Knob::kVals::ValMod] = vm;
+                    vals[Knob::kVals::ModBias] = mb;
+                    shallRepaint = true;
+                }
+
+                if (shallRepaint)
+                    k.repaint();
+            }, Knob::kCBs::kUpdateParameterCB, cbFPS::k60, true));
+
+       // still to do:
+       // label behaviour
+    }
+
+    inline void makeParameter(PID pID, Knob& knob, bool verticalDrag = true)
+    {
+		makeParameters({ pID }, knob, verticalDrag);
+    }
+
+    inline void makeKnob(Knob& knob, bool showModulation = true)
+    {
+        knob.onPaint = [showModulation](Graphics& g, Knob& k)
+        {
+            static constexpr float AngleWidth = PiQuart * 3.f;
+            static constexpr float AngleRange = AngleWidth * 2.f;
+
+            const auto& vals = k.values;
+
+            const auto enterExitPhase = k.callbacks[Knob::kEnterExitCB].phase;
+            const auto downUpPhase = k.callbacks[Knob::kDownUpCB].phase;
+                
+            const auto thicc = k.utils.thicc;
+            const auto thicc2 = thicc * 2.f;
+            const auto thicc3 = thicc * 3.f;
+            const auto thicc4 = thicc * 4.f;
+            const auto thicc5 = thicc * 5.f;
+            const auto knobBounds = maxQuadIn(k.getLocalBounds().toFloat()).reduced(thicc3);
+
+            const auto radius = knobBounds.getWidth() * .5f;
+            const auto radiusInner = radius * (.8f - enterExitPhase * .1f);
+            const auto radDif = (radius - radiusInner) * (.7f + downUpPhase * .3f);
+            Stroke strokeType(radDif * .5f, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
+
+            PointF centre
+            (
+                radius + knobBounds.getX(),
+                radius + knobBounds.getY()
+            );
+
+            auto col = getColour(CID::Txt);
+
+            { // paint lines
+
+                Path arcOutline;
+                arcOutline.addCentredArc
+                (
+                    centre.x, centre.y,
+                    radius, radius,
+                    0.f,
+                    -AngleWidth, AngleWidth,
+                    true
+                );
+                g.setColour(col);
+                g.strokePath(arcOutline, strokeType);
+
+                Path arcInline;
+                arcInline.addCentredArc
+                (
+                    centre.x, centre.y,
+                    radiusInner, radiusInner,
+                    0.f,
+                    -AngleWidth, AngleWidth,
+                    true
+                );
+                Stroke stroke2 = strokeType;
+                stroke2.setStrokeThickness(radDif);
+                g.strokePath(arcInline, stroke2);
+            };
+
+            const auto valNormAngle = vals[Knob::Value] * AngleRange;
+            const auto valAngle = -AngleWidth + valNormAngle;
+            const auto radiusExt = radius + thicc;
+
+            // paint modulation
+            if(showModulation)
+            {
+                const auto valModAngle = vals[Knob::ValMod] * AngleRange;
+                const auto modAngle = -AngleWidth + valModAngle;
+                const auto modTick = LineF::fromStartAndAngle(centre, radiusExt, modAngle);
+                const auto shortenedModTick = modTick.withShortenedStart(radiusInner - thicc);
+
+                g.setColour(Colours::c(CID::Bg));
+                g.drawLine(shortenedModTick, thicc4);
+
+                const auto maxModDepthAngle = juce::jlimit(-AngleWidth, AngleWidth, valNormAngle + vals[Knob::ModDepth] * AngleRange - AngleWidth);
+
+                g.setColour(Colours::c(CID::Mod));
+                g.drawLine(modTick.withShortenedStart(radiusInner), thicc2);
+                {
+                    Path modPath;
+                    modPath.addCentredArc
+                    (
+                        centre.x, centre.y,
+                        radius, radius,
+                        0.f,
+                        maxModDepthAngle, valAngle,
+                        true
+                    );
+                    g.strokePath(modPath, strokeType);
+                }
+            };
+
+            col = Colours::c(CID::Interact);
+
+            { // paint tick
+                const auto tickLine = LineF::fromStartAndAngle(centre, radius, valAngle);
+                const auto shortened = tickLine.withShortenedStart(radiusInner - thicc);
+                g.setColour(Colours::c(CID::Bg));
+                g.drawLine(shortened, thicc5);
+                g.setColour(col);
+                g.drawLine(shortened, thicc3);
+            }
+        };
+    }
+
+    inline void makeSlider(Knob& knob, bool showModulation = true)
+    {
+        knob.onPaint = [showModulation](Graphics& g, Knob& k)
+        {
+            const auto& vals = k.values;
+			const auto valNorm = vals[Knob::Value];
+
+            const auto enterExitPhase = k.callbacks[Knob::kEnterExitCB].phase;
+            const auto downUpPhase = k.callbacks[Knob::kDownUpCB].phase;
+
+            const auto thicc = k.utils.thicc;
+			const auto thicc2 = thicc * 2.f;
+			const auto thicc3 = thicc * 3.f;
+			const auto thicc3Half = thicc3 * .5f;
+			const auto thicc4 = thicc * 4.f;
+
+			BoundsF bounds = k.getLocalBounds().toFloat().reduced(thicc3);
+            const auto tickX = bounds.getX() + bounds.getWidth() * valNorm;
+
+			{ // paint lines
+                auto x = bounds.getX();
+                auto y = bounds.getY() + thicc2 + enterExitPhase * thicc;
+                auto w = bounds.getWidth();
+                auto h = thicc2 - enterExitPhase * thicc;
+
+                BoundsF line(x, y, w, h);
+
+                setCol(g, CID::Txt);
+                g.fillRoundedRectangle(line, thicc4);
+
+				if (downUpPhase != 0.f)
+				{
+					const auto dupFast = math::tanhApprox(downUpPhase * 2.f);
+					const auto centreX = line.getX() + line.getWidth() * .5f;
+
+                    y = line.getBottom() + thicc;
+					h = line.getHeight() + thicc;
+                    x = centreX + dupFast * (line.getX() - centreX);
+					w = 1.f + dupFast * (line.getWidth() - 1.f);
+                    line = BoundsF(x, y, w, h);
+					g.fillRoundedRectangle(line, thicc);
+				}
+			}
+
+            if (showModulation)
+            {
+				const auto modDepth = vals[Knob::ModDepth];
+
+                auto mdStart = tickX;
+                auto mdRange = bounds.getWidth() * modDepth;
+                if (mdRange < 0.f)
+                {
+					mdStart += mdRange;
+					mdRange = -mdRange;
+                }
+
+				auto x = mdStart;
+				auto y = bounds.getBottom() - thicc2;
+				auto w = mdRange;
+				auto h = thicc2;
+
+                const BoundsF modDepthArea(x, y, w, h);
+                setCol(g, CID::Mod);
+                g.fillRoundedRectangle(modDepthArea, thicc);
+
+				const auto valMod = vals[Knob::ValMod];
+
+                x = bounds.getX() + bounds.getWidth() * valMod - thicc;
+                y = bounds.getY() + thicc2;
+                w = thicc2;
+                h = bounds.getHeight();
+                const BoundsF modTick(x, y, w, h);
+                setCol(g, CID::Bg);
+                g.fillRoundedRectangle(modTick.expanded(thicc), thicc);
+                setCol(g, CID::Mod);
+                g.fillRoundedRectangle(modTick, thicc);
+            };
+
+            { // paint tick
+                const auto x = tickX - thicc3Half - enterExitPhase * thicc;
+                const auto y = bounds.getY();
+				const auto w = thicc3 + enterExitPhase * thicc2;
+				const auto h = bounds.getHeight() + thicc3;
+                const BoundsF tick(x, y, w, h);
+                const auto roundness = thicc2 + enterExitPhase * thicc;
+                if (downUpPhase != 0.f)
+                {
+                    setCol(g, CID::Bg);
+                    g.fillRoundedRectangle(tick.expanded(downUpPhase * thicc2), roundness);
+                }
+                setCol(g, CID::Interact);
+                g.fillRoundedRectangle(tick, roundness);
+            }
+        };
+    }
+
+    inline void makeKnob(PID pID, Knob& knob, bool showModulation = true)
+    {
+		makeParameter(pID, knob, true);
+		makeKnob(knob, showModulation);
+    }
+
+    inline void makeSlider(PID pID, Knob& knob, bool showModulation = true)
+    {
+        makeParameter(pID, knob, false);
+        makeSlider(knob, showModulation);
+    }
+
+    inline void locateAtKnob(ModDial& modDial, const Knob& knob)
+    {
+		const auto w0 = static_cast<float>(knob.getWidth());
+        const auto w = w0 * .25f;
+		const auto x = static_cast<float>(knob.getX()) + (w0 - w) * .5f;
+        const auto h = static_cast<float>(knob.getHeight()) / Pi;
+        const auto y = static_cast<float>(knob.getBottom()) - h;
+        const auto nBounds = maxQuadIn(BoundsF(x, y, w, h)).toNearestInt();
+		modDial.setBounds(nBounds);
+    }
+
+    inline void locateAtSlider(ModDial& modDial, const Knob& sliderHorizontal)
+    {
+        const auto thicc = modDial.utils.thicc;
+        const auto x = static_cast<float>(sliderHorizontal.getRight());
+        const auto y = static_cast<float>(sliderHorizontal.getY());
+        const auto w = thicc * 8.f;
+		const auto h = static_cast<float>(sliderHorizontal.getHeight());
+        const BoundsF bounds(x, y, w, h);
+        modDial.setBounds(maxQuadIn(bounds).toNearestInt());
+    }
 
     struct KnobParam :
         public Knob
@@ -410,7 +851,7 @@ namespace gui
             if (!isMacro)
             {
                 addAndMakeVisible(modDial);
-                modDial.attachParameters(pIDs, numPIDs);
+                modDial.attach(pIDs, numPIDs);
             }
 
             add(Callback([&, &prm = mainParam]()
@@ -478,8 +919,8 @@ namespace gui
             {
                 layout.init
                 (
-                    { 1, 1, 1 },
-                    { 13, 5, 5 }
+                    { 1, },
+                    { 13, 5, 3 }
                 );
             };
 
@@ -491,13 +932,13 @@ namespace gui
                 thicc4 = thicc * 4.f;
                 thicc5 = thicc * 5.f;
 
-                knobBounds = k.layout(0, 0, 3, 2, true).reduced(thicc3);
+                knobBounds = k.layout(0, 0, 1, 2, true).reduced(thicc3);
 
-                k.layout.place(k.label, 0, 2, 3, 1, false);
+                k.layout.place(k.label, 0, 2, 1, 1, false);
 
                 if (k.modDial.isVisible())
-                    k.layout.place(k.modDial, 1, 1, 1, 1, true);
-                k.layout.place(k.lockButton, 1.5f, 1.5f, 1.5f, 1.5f, true);
+                    k.layout.place(k.modDial, 0, 1, 1, 1, true);
+                //k.layout.place(k.lockButton, 1.5f, 1.5f, 1.5f, 1.5f, true);
 			};
 
             const auto angleWidth = PiQuart * 3.f;

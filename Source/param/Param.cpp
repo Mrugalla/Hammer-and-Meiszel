@@ -2,6 +2,7 @@
 #include "../arch/FormulaParser.h"
 #include "../arch/Math.h"
 #include "../arch/Range.h"
+#include "../audio/dsp/modal2/Axiom.h"
 
 namespace param
 {
@@ -68,8 +69,11 @@ namespace param
 		case PID::ModalBlend: return "Modal Blend";
 		case PID::ModalBlendEnv: return "Modal Blend Env";
 		case PID::ModalSpreizung: return "Modal Spreizung";
+		case PID::ModalSpreizungEnv: return "Modal Spreizung Env";
 		case PID::ModalHarmonie: return "Modal Harmonie";
+		case PID::ModalHarmonieEnv: return "Modal Harmonie Env";
 		case PID::ModalKraft: return juce::CharPointer_UTF8("Modal Kraft");
+		case PID::ModalKraftEnv: return "Modal Kraft Env";
 		case PID::ModalResonanz: return "Modal Resonanz";
 		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Comb R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
@@ -151,8 +155,11 @@ namespace param
 		case PID::ModalBlend: return "Blends between the 2 modal filters.";
 		case PID::ModalBlendEnv: return "The envelope generator's depth on the modal blend.";
 		case PID::ModalSpreizung: return "Spreads or shrinks the resonators' frequency ratios.";
+		case PID::ModalSpreizungEnv: return "The envelope generator's depth on the modal spreizung.";
 		case PID::ModalHarmonie: return "Harmonizes the resonators' frequency ratios towards the harmonic series.";
+		case PID::ModalHarmonieEnv: return "The envelope generator's depth on the modal harmonie.";
 		case PID::ModalKraft: return "Saturates the resonators' magnitude values.";
+		case PID::ModalKraftEnv: return "The envelope generator's depth on the modal kraft.";
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
 		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
@@ -1327,18 +1334,24 @@ namespace param
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
 		}
 
+		const auto SpreizungMin = dsp::modal2::SpreizungMin;
+		const auto SpreizungMax = dsp::modal2::SpreizungMax;
+
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::VoiceAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::VoiceDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
-		params.push_back(makeParam(PID::VoiceSustain, 1.f, makeRange::lin(0.f, 1.f), Unit::Percent));
+		params.push_back(makeParam(PID::VoiceSustain, .999f, makeRange::lin(0.f, .999f)));
 		params.push_back(makeParam(PID::VoiceRelease, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::ModalBlend, 0.f));
 		params.push_back(makeParam(PID::ModalBlendEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalSpreizung, 0.f, makeRange::lin(-2.f, 2.f), Unit::Percent));
+		params.push_back(makeParam(PID::ModalSpreizung, 0.f, makeRange::lin(SpreizungMin, SpreizungMax)));
+		params.push_back(makeParam(PID::ModalSpreizungEnv, 0.f, makeRange::lin(SpreizungMin * 2., SpreizungMax * 2.)));
 		params.push_back(makeParam(PID::ModalHarmonie, 0.f));
+		params.push_back(makeParam(PID::ModalHarmonieEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalKraft, .5f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalKraftEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::ModalResonanz, .6f));
 		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));

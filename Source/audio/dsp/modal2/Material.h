@@ -78,6 +78,7 @@ namespace dsp
 			MaterialBuffer buffer;
 			MaterialData peakInfos;
 			std::atomic<Status> status;
+			String name;
 			float sampleRate;
 		private:
 			struct PeakIndexInfo

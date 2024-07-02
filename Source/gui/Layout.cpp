@@ -124,7 +124,7 @@ namespace gui
 		rY = rYRaw;
 	}
 
-	void Layout::fromStrings(const String& xStr, const String& yStr)
+	void Layout::initFromStrings(const String& xStr, const String& yStr)
 	{
 		std::vector<int> xDist, yDist;
 
@@ -152,6 +152,15 @@ namespace gui
 		yDist.push_back(yStr.substring(sIdx).getIntValue());
 
 		init(xDist, yDist);
+	}
+
+	void Layout::initGrid(int numX, int numY)
+	{
+		init
+		(
+			std::vector<int>(numX, 1),
+			std::vector<int>(numY, 1)
+		);
 	}
 
 	void Layout::resized(Bounds bounds) noexcept
@@ -188,8 +197,10 @@ namespace gui
 	{
 		const auto x0 = getX(x);
 		const auto y0 = getY(y);
+		const auto w0 = getX(x + width) - x0;
+		const auto h0 = getY(y + height) - y0;
 
-		BoundsF nBounds(x0, y0, getX(x + width) - x0, getY(y + height) - y0);
+		BoundsF nBounds(x0, y0, w0, h0);
 		return isQuad ? maxQuadIn(nBounds) : nBounds;
 	}
 
@@ -245,12 +256,18 @@ namespace gui
 
 	float Layout::getX(int i) const noexcept
 	{
-		return rX[i];
+		if(i >= 0)
+			return rX[i];
+		else
+			return rX[rX.size() + i - 1];
 	}
 
 	float Layout::getY(int i) const noexcept
 	{
-		return rY[i];
+		if (i >= 0)
+			return rY[i];
+		else
+			return rY[rY.size() + i - 1];
 	}
 
 	float Layout::getX(float i) const noexcept
@@ -294,11 +311,8 @@ namespace gui
 	template<typename X, typename Y>
 	void Layout::place(Component& childComp, X x, Y y, X width, Y height, bool isQuad) const noexcept
 	{
-		const auto cBounds = this->operator()(x, y, width, height);
-		if (!isQuad)
-			childComp.setBounds(cBounds.toNearestInt());
-		else
-			childComp.setBounds(maxQuadIn(cBounds).toNearestInt());
+		const auto cBounds = operator()(x, y, width, height, isQuad);
+		childComp.setBounds(cBounds.toNearestInt());
 	}
 
 	template<typename X, typename Y>

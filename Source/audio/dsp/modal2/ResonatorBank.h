@@ -89,7 +89,6 @@ namespace dsp
 						const auto fc = math::freqHzToFc(freqFilter, sampleRate);
 						auto& resonator = resonators[i];
 						resonator.setCutoffFc(fc);
-						//resonator.reset();
 						resonator.update();
 					}
 					else
@@ -127,7 +126,7 @@ namespace dsp
 			void setReso(double reso) noexcept
 			{
 				const auto bw = calcBandwidthFc(reso, sampleRateInv);
-				gain = std::pow(4., reso);
+				gain = 1. + Tau * reso * reso;
 				for (auto i = 0; i < NumFilters; ++i)
 				{
 					auto& resonator = resonators[i];

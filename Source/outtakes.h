@@ -120,6 +120,28 @@ namespace gui
 /////////////////////////////////////
 /////////////////////////////////////
 
+some code where a component follows the cursor:
+
+const auto fpsToast = cbFPS::k30;
+			add(Callback([&]()
+			{
+				if (!followingCursor || !isShowing())
+					return;
+				const auto screenBounds = utils.pluginTop.getScreenBounds().toFloat();
+				const auto mouse = juce::Desktop::getInstance().getMainMouseSource();
+				const auto mouseScreenPos = mouse.getScreenPosition();
+				auto mousePos = mouseScreenPos - screenBounds.getPosition();
+				if (mousePos.x < 0.f || mousePos.y < 0.f || mousePos.x > screenBounds.getWidth() || mousePos.y > screenBounds.getHeight())
+					return setVisible(false);
+				const auto width = static_cast<float>(getWidth());
+				if (mousePos.x > width)
+					mousePos.x -= width;
+				else
+					mousePos.x += width * .5f;
+				setTopLeftPosition(mousePos.toInt());
+			}, kCBFollowCursor, fpsToast, true));
+
+
 /////////////////////////////////////
 /////////////////////////////////////
 /////////////////////////////////////

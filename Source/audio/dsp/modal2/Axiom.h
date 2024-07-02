@@ -12,5 +12,8 @@ namespace dsp
 			UpdatedMaterial,
 			UpdatedProcessor
 		};
+
+		static constexpr double SpreizungMin = -2.;
+		static constexpr double SpreizungMax = 2.;
 	}
 }

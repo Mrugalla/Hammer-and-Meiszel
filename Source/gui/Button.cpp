@@ -19,11 +19,18 @@ namespace gui
 		add(Callback([&, speed]()
 		{
 			auto& phase = callbacks[kHoverAniCB].phase;
-			phase -= speed;
-			if (phase <= 0.f)
+			const auto hovering = isMouseOverOrDragging();
+			if (hovering)
 			{
-				phase = 0.f;
-				callbacks[kHoverAniCB].active = false;
+				phase += speed;
+				if (phase >= 1.f)
+					callbacks[kHoverAniCB].stop(1.f);
+			}
+			else
+			{
+				phase -= speed;
+				if (phase <= 0.f)
+					callbacks[kHoverAniCB].stop(0.f);
 			}
 			repaint();
 		}, kHoverAniCB, fps, false));
@@ -39,6 +46,8 @@ namespace gui
 			}
 			repaint();
 		}, kClickAniCB, fps, false));
+
+		callbacks[kHoverAniCB].phase = 0.f;
 	}
 
 	void Button::paint(Graphics& g)
@@ -66,15 +75,14 @@ namespace gui
 	void Button::mouseEnter(const Mouse& mouse)
 	{
 		Comp::mouseEnter(mouse);
-		callbacks[kHoverAniCB].phase = 1.f;
-		callbacks[kHoverAniCB].active = false;
+		callbacks[kHoverAniCB].start(callbacks[kHoverAniCB].phase);
 		repaint();
 	}
 
 	void Button::mouseExit(const Mouse& mouse)
 	{
 		Comp::mouseExit(mouse);
-		callbacks[kHoverAniCB].active = true;
+		callbacks[kHoverAniCB].start(callbacks[kHoverAniCB].phase);
 	}
 
 	void Button::mouseDown(const Mouse& mouse)
@@ -90,9 +98,7 @@ namespace gui
 		if (mouse.mouseWasDraggedSinceMouseDown())
 			return;
 
-		callbacks[kClickAniCB].phase = 1.f;
-		callbacks[kClickAniCB].active = true;
-
+		callbacks[kClickAniCB].start(1.f);
 		onClick(mouse);
 		repaint();
 	}
@@ -128,7 +134,7 @@ namespace gui
 
 	Button::OnPaint makeButtonOnPaint(Button::Type type) noexcept
 	{
-		const auto valAlphaMax = .5f;
+		const auto valAlphaMax = .4f;
 		
 		return [valAlphaFunc = makeValAlphaFunc(type, valAlphaMax), alphaGain = valAlphaMax * .5f]
 		(Graphics& g, const Button& b)
@@ -143,16 +149,30 @@ namespace gui
 			clickAniPhase = clickAniPhase * clickAniPhase;
 
 			const auto valueAlpha = valAlphaFunc(b.value);
-			const auto alpha = hoverAniPhase * alphaGain + clickAniPhase * alphaGain + valueAlpha;
+			const auto alpha = hoverAniPhase * alphaGain + clickAniPhase * alphaGain * .5f + valueAlpha;
 			const auto aniCol = getColour(CID::Interact).withAlpha(alpha);
 			g.setColour(aniCol);
-			g.fillRoundedRectangle(bounds, thicc * .5f);
+			
+			const auto stripesWeightState = 6.f + b.value * (2.f - 6.f);
+			const auto numStripes = 1.f + hoverAniPhase * stripesWeightState + clickAniPhase * stripesWeightState;
+			const auto numStripesInv = 1.f / numStripes;
+			const auto stripeHeight = bounds.getHeight();
+			const auto stripeY = bounds.getY();
+			const auto stripeWidth = bounds.getWidth() * numStripesInv;
+			const auto stripeMargin = thicc * hoverAniPhase;
+			auto x = 0.f;
+			for (auto i = 0.f; i < numStripes; ++i)
+			{
+				BoundsF stripe(x, stripeY, stripeWidth, stripeHeight);
+				g.fillRoundedRectangle(stripe.reduced(stripeMargin), thicc + thicc * 3.f);
+				x += stripeWidth;
+			}
 		};
 	}
 
 	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID)
 	{
-		makeTextLabel(btn.label, txt, font::nel(), Just::centred, cID);
+		makeTextLabel(btn.label, txt, font::dosisBold(), Just::centred, cID);
 		btn.tooltip = tooltip;
 		btn.onPaint = makeButtonOnPaint(btn.type);
 	}

@@ -43,18 +43,23 @@ namespace audio
 
 		const auto& modalBlendParam = params(PID::ModalBlend);
 		const auto modalBlend = static_cast<double>(modalBlendParam.getValMod());
-
 		const auto& modalBlendEnvParam = params(PID::ModalBlendEnv);
 		const auto modalBlendEnv = static_cast<double>(modalBlendEnvParam.getValModDenorm());
 
 		const auto& modalSpreizungParam = params(PID::ModalSpreizung);
 		const auto modalSpreizung = static_cast<double>(modalSpreizungParam.getValModDenorm());
+		const auto& modalSpreizungEnvParam = params(PID::ModalSpreizungEnv);
+		const auto modalSpreizungEnv = static_cast<double>(modalSpreizungEnvParam.getValModDenorm());
 
 		const auto& modalHarmonieParam = params(PID::ModalHarmonie);
 		const auto modalHarmonie = static_cast<double>(modalHarmonieParam.getValMod());
+		const auto& modalHarmonieEnvParam = params(PID::ModalHarmonieEnv);
+		const auto modalHarmonieEnv = static_cast<double>(modalHarmonieEnvParam.getValModDenorm());
 
 		const auto& modalKraftParam = params(PID::ModalKraft);
 		const auto modalKraft = static_cast<double>(modalKraftParam.getValModDenorm());
+		const auto& modalKraftEnvParam = params(PID::ModalKraftEnv);
+		const auto modalKraftEnv = static_cast<double>(modalKraftEnvParam.getValModDenorm());
 
 		const auto& modalResoParam = params(PID::ModalResonanz);
 		const auto modalReso = static_cast<double>(modalResoParam.getValMod());
@@ -82,7 +87,7 @@ namespace audio
 		const auto& voiceDecayParam = params(PID::VoiceDecay);
 		const auto voiceDecay = static_cast<double>(voiceDecayParam.getValModDenorm());
 		const auto& voiceSustainParam = params(PID::VoiceSustain);
-		const auto voiceSustain = static_cast<double>(voiceSustainParam.getValMod());
+		const auto voiceSustain = static_cast<double>(voiceSustainParam.getValModDenorm());
 		const auto& voiceReleaseParam = params(PID::VoiceRelease);
 		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
 
@@ -114,19 +119,19 @@ namespace audio
 					samplesInput, samplesVoice, midiVoice, xen,
 					{
 						modalBlend, modalSpreizung, modalHarmonie, modalKraft,
-						modalBlendEnv
+						modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv
 					},
 					modalReso, modalSemi,
 					numChannels, numSamples,
 					v
 				);
-				flanger
-				(
-					samplesVoice, midiVoice, combSemi,
-					combAPResonanz,
-					numChannels, numSamples,
-					v
-				);
+				//flanger
+				//(
+				//	samplesVoice, midiVoice, combSemi,
+				//	combAPResonanz,
+				//	numChannels, numSamples,
+				//	v
+				//);
 				sleepy = modalFilter.isSleepy(sleepy, samplesVoice, numChannels, numSamples, v);
 				parallelProcessor.setSleepy(sleepy, v);
 			}

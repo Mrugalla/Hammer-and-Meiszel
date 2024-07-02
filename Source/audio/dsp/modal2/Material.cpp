@@ -13,6 +13,7 @@ namespace dsp
 			buffer(),
 			peakInfos(),
 			status(Status::Processing),
+			name("init material"),
 			sampleRate(0.f)
 		{
 		}

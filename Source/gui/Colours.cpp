@@ -1,4 +1,5 @@
 #include "Colours.h"
+#define DisregardState true
 
 namespace gui
 {
@@ -14,7 +15,7 @@ namespace gui
         case Colours::ID::Inactive: return "ColInactive";
         case Colours::ID::Hover: return "ColHover";
         case Colours::ID::Mod: return "ColMod";
-        case Colours::ID::Bias: return "ColBias";
+        case Colours::ID::Darken: return "ColDarken";
         default: return "ColInvalid";
         }
     }
@@ -29,26 +30,40 @@ namespace gui
         case Colours::ID::Inactive: return Colour(0xffc1c1c1);
         case Colours::ID::Hover: return Colour(0x77ffffff);
         case Colours::ID::Mod: return Colour(0xffb6153d);
-        case Colours::ID::Bias: return Colour(0xffe7a11d);
+        case Colours::ID::Darken: return Colour(0x88000000);
         default: return Colour(0xff000000);
         }
     }
 
-    void setColour(Colours::Array& cols, Colours::ID cID, Colour col, Props* props)
+    void setColour(Colours::Array& cols, Colours::ID cID, Colour col, Props*
+#if !DisregardState
+        props
+#endif
+    )
     {
         cols[static_cast<int>(cID)] = col;
+#if !DisregardState
         props->setValue(toString(cID), col.toString());
         props->save();
         props->sendChangeMessage();
+#endif
     }
 
-    void loadColour(Colours::Array& cols, Colours::ID cID, Props* props)
+    void loadColour(Colours::Array& cols, Colours::ID cID, Props*
+#if !DisregardState
+        props
+#endif
+    )
     {
         const auto idx = static_cast<int>(cID);
+#if DisregardState
+		cols[idx] = toDefault(cID);
+#else
         const auto cIDStr = toString(cID);
         const auto str = props->getValue(cIDStr, toDefault(cID).toString());
         cols[idx] = Colour::fromString(str);
         props->setValue(cIDStr, str);
+#endif
     }
 
     Colours::Colours() :
@@ -63,8 +78,10 @@ namespace gui
 
         for(auto i = 0; i < NumColours; ++i)
             loadColour(cols, static_cast<ID>(i), props);
+#if !DisregardState
         props->save();
         props->sendChangeMessage();
+#endif
     }
 
     void Colours::set(Colour col, ID cID)
@@ -91,4 +108,11 @@ namespace gui
     {
         return Colours::c(cID);
     }
+
+    void setCol(Graphics& g, CID cID)
+	{
+		g.setColour(getColour(cID));
+	}
 }
+
+#undef DisregardState

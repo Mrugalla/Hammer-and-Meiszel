@@ -5,15 +5,14 @@
 ToThink
     -
 
+GenAniComp
+    freezt manchmal plugin direkt am anfang
+
 Hammer & Meiﬂel
-    Envelope
-        outsource parameter updates so it's not per voice
+    -
 
 GUI
-    Ms based valToString should write secs above 1000ms
     reintroduce custom mousecursor
-    ModalFilterSampleView
-        make n use local maxima array for drawing
     BuildDate
         draw automatic normal version number
         build date in the tooltip tho
@@ -29,10 +28,8 @@ GUI
             lacks lock feature
     TextEditor
         button that edits its label
-    Editor
-        makeToast (firstTimeUwU)
     Knob
-        find better place for parameter lock
+        find better place for parameter lock (right now it's not visible)
         make more painters
 AUDIO
     FFT

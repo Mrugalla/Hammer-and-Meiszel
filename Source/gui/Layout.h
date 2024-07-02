@@ -29,9 +29,14 @@ namespace gui
 	{
 		Layout();
 
-		void init(const std::vector<int>& /*xDist*/, const std::vector<int>& /*yDist*/);
+		// xDist, yDist
+		void init(const std::vector<int>&, const std::vector<int>&);
 
-		void fromStrings(const String& /*xDist*/, const String& /*yDist*/);
+		// xDist, yDist
+		void initFromStrings(const String&, const String&);
+
+		// numStepsX, numStepsY
+		void initGrid(int, int);
 
 		void resized(Bounds) noexcept;
 
@@ -230,6 +235,30 @@ namespace gui
 	PointF boundsOf(const Font&, const String&) noexcept;
 
 	float findMaxHeight(const Font&, const String&, float, float) noexcept;
+
+	// lrud = left, right, up, down [0, 1, 2, 3]
+	inline void closePathOverBounds(Path& p, const BoundsF& bounds, const PointF& endPos, float thicc, int lrud0, int lrud1, int lrud2, int lrud3)
+	{
+		const auto startPos = p.getCurrentPosition();
+		auto x = lrud0 == 0 ? -thicc : lrud0 == 1 ? bounds.getWidth() + thicc : startPos.x;
+		auto y = lrud0 <= 1 ? startPos.y : lrud0 == 2 ? -thicc : bounds.getHeight() + thicc;
+		p.lineTo(x, y);
+		x = lrud1 == 0 ? -thicc : lrud1 == 1 ? bounds.getWidth() + thicc : x;
+		y = lrud1 <= 1 ? y : lrud1 == 2 ? -thicc : bounds.getHeight() + thicc;
+		p.lineTo(x, y);
+		x = lrud2 == 0 ? -thicc : lrud2 == 1 ? bounds.getWidth() + thicc : x;
+		y = lrud2 <= 1 ? y : lrud2 == 2 ? -thicc : bounds.getHeight() + thicc;
+		p.lineTo(x, y);
+		x = lrud3 == 0 ? -thicc : lrud3 == 1 ? bounds.getWidth() + thicc : x;
+		y = lrud3 <= 1 ? y : lrud3 == 2 ? -thicc : bounds.getHeight() + thicc;
+		p.lineTo(x, y);
+		if (endPos.x < 1.f || endPos.x >= bounds.getWidth() - 1.f)
+			y = endPos.y;
+		else if (endPos.y < 1.f || endPos.y >= bounds.getHeight() - 1.f)
+			x = endPos.x;
+		p.lineTo(x, y);
+		p.closeSubPath();
+	}
 
 	namespace imgPP
 	{

@@ -28,6 +28,8 @@ namespace gui
 
 		void addEvt(const evt::Evt&);
 
+		void notify(const evt::Type, const void* = nullptr);
+
 		void mouseEnter(const Mouse&) override;
 
 		void mouseUp(const Mouse&) override;

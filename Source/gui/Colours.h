@@ -8,12 +8,12 @@ namespace gui
         enum class ID
         {
             Bg,
+            Darken,
             Txt,
             Interact,
             Inactive,
             Hover,
             Mod,
-            Bias,
             NumCols
         };
 
@@ -42,4 +42,6 @@ namespace gui
     using CID = Colours::ID;
 
     Colour getColour(CID) noexcept;
+
+    void setCol(Graphics&, CID);
 }

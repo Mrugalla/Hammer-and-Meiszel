@@ -80,7 +80,6 @@ namespace gui
 
 		void resized() override;
 
-		Label infoLabel;
 		Material& material;
 		Partials partials;
 		DragAnimationComp dragAniComp;
@@ -90,6 +89,8 @@ namespace gui
 	private:
 
 		void updatePartials();
+
+		void mouseEnter(const Mouse&) override;
 
 		void mouseExit(const Mouse&) override;
 
@@ -115,6 +116,6 @@ namespace gui
 
 		bool isInterestedInFileDrag(const StringArray&) override;
 
-		void updateInfoLabel();
+		void updateInfoLabel(const String& = "abcabcabc");
 	};
 }

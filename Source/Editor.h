@@ -1,6 +1,7 @@
 #pragma once
+#include "gui/GenAniComp.h"
 #include "gui/Tooltip.h"
-#include "gui/BgImage.h"
+#include "gui/DropDownMenu.h"
 #include "gui/Knob.h"
 #include "gui/ModalFilterMaterialView.h"
 
@@ -15,6 +16,7 @@ namespace gui
 
         ~Editor() override;
 
+        void paint(Graphics&) override;
         void paintOverChildren(Graphics&) override;
         void resized() override;
         void mouseEnter(const Mouse&) override;
@@ -24,19 +26,41 @@ namespace gui
         Utils utils;
         Layout layout;
         evt::Member evtMember;
-        
-        BgImage bgImage;
         Tooltip tooltip;
+        GenAniGrowTrees genAni;
+        Toast toast;
 
-        enum { kTitle, kDev, kNumLabels };
-        std::array<Label, kNumLabels> labels;
-
-        enum { kMacro, kModalOct, kModalSemi, kModalReso, kModalHarm, kModalTon, kModalMix, kCombFeedback, kGainDry, kGainWet, kGainOut, kNumKnobs };
-        std::array<KnobParam, kNumKnobs> knobs;
-        std::array<KnobPainterBasic, kNumKnobs> painters;
-
+        enum class kLabels
+        {
+            kTitle, kDev, kTitleModal, kTitleFlanger, kTitleMacro,
+            kEnvAmpAtk, kEnvAmpDcy, kEnvAmpSus, kEnvAmpRls,
+            kModalBlend, kModalSpreizung, kModalHarmonie, kModalKraft, kModalReso,
+            kNumLabels
+        };
+		static constexpr int NumLabels = static_cast<int>(kLabels::kNumLabels);
+        std::array<Label, NumLabels> labels;
+        enum class kKnobs
+        {
+            kMacro, kEnvAmpAttack, kEnvAmpDecay, kEnvAmpSustain, kEnvAmpRelease,
+			kModalBlend, kModalSpreizung, kModalHarmonie, kModalKraft, kModalReso,
+            kModalBlendEnv, kModalSpreizungEnv, kModalHarmonieEnv, kModalKraftEnv,
+            kNumKnobs
+        };
+		static constexpr int NumKnobs = static_cast<int>(kKnobs::kNumKnobs);
+        std::array<Knob, NumKnobs> knobs;
+        std::array<ModDial, NumKnobs> modDials;
+        enum class kButtons { kMacroRel, kMacroSwap, kMaterialDropDown, kMaterialA, kMaterialB, kNumButtons };
+		static constexpr int NumButtons = static_cast<int>(kButtons::kNumButtons);
+		std::array<Button, NumButtons> buttons;
+		
         std::array<ModalMaterialView, 2> materialViews;
+        DropDownMenu materialDropDown;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
+
+        Label& get(kLabels) noexcept;
+		Knob& get(kKnobs) noexcept;
+		ModDial& getModDial(kKnobs) noexcept;
+		Button& get(kButtons) noexcept;
     };
 }

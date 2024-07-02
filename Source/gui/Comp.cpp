@@ -44,12 +44,17 @@ namespace gui
 
 	void Comp::initLayout(const String& xL, const String& yL)
 	{
-		layout.fromStrings(xL, yL);
+		layout.initFromStrings(xL, yL);
 	}
 
 	void Comp::addEvt(const evt::Evt& evt)
 	{
 		members.push_back({ utils.eventSystem, evt });
+	}
+
+	void Comp::notify(const evt::Type type, const void* stuff)
+	{
+		utils.eventSystem.notify(type, stuff);
 	}
 
 	void Comp::mouseEnter(const Mouse&)

@@ -11,12 +11,15 @@ namespace dsp
 			struct Parameters
 			{
 				Parameters(double _blend = 0., double _spreizung = 0., double _harmonie = 0., double _kraft = 0.,
-					double _blendEnv = 0.) :
+					double _blendEnv = 0., double _spreizungEnv = 0., double _harmonieEnv = 0., double _kraftEnv = 0.) :
 					blend(_blend),
 					spreizung(_spreizung),
 					harmonie(_harmonie),
 					kraft(_kraft),
-					blendEnv(_blendEnv)
+					blendEnv(_blendEnv),
+					spreizungEnv(_spreizungEnv),
+					harmonieEnv(_harmonieEnv),
+					kraftEnv(_kraftEnv)
 				{}
 
 				const bool operator!=(const Parameters& other) const noexcept
@@ -28,7 +31,7 @@ namespace dsp
 				}
 
 				double blend, spreizung, harmonie, kraft;
-				double blendEnv;
+				double blendEnv, spreizungEnv, harmonieEnv, kraftEnv;
 			};
 
 			Voice(const EnvelopeGenerator::Parameters& envGenParams) :
@@ -146,13 +149,17 @@ namespace dsp
 
 			void updateParameters(const DualMaterial& dualMaterial, const Parameters& _parameters) noexcept
 			{
-				const auto envGenValue = env.getEnvNoSustain();
+				auto envGenValue = env.getEnvNoSustain();
+				envGenValue *= envGenValue;
 				const auto blendEnv = _parameters.blendEnv * envGenValue;
+				const auto spreizungEnv = _parameters.spreizungEnv * envGenValue;
+				const auto harmonieEnv = _parameters.harmonieEnv * envGenValue;
+				const auto kraftEnv = _parameters.kraftEnv * envGenValue;
 
 				const auto blend = math::limit(0., 1., _parameters.blend + blendEnv);
-				const auto spreizung = _parameters.spreizung;
-				const auto harmonie = _parameters.harmonie;
-				const auto kraft = _parameters.kraft;
+				const auto spreizung = math::limit(SpreizungMin, SpreizungMax, _parameters.spreizung + spreizungEnv);
+				const auto harmonie = math::limit(0., 1., _parameters.harmonie + harmonieEnv);
+				const auto kraft = math::limit(-1., 1., _parameters.kraft + kraftEnv);
 
 				if(parameters.blend == blend &&
 					parameters.spreizung == spreizung &&

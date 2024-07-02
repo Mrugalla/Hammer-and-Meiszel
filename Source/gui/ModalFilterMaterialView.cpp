@@ -115,9 +115,9 @@ namespace gui
 
 	void ModalMaterialView::Draggerfall::paint(Graphics& g)
 	{
-		g.setColour(Colours::c(CID::Hover));
-		auto x = xAbs - lenAbsHalf;
-		auto w = lenAbs;
+		const auto x = xAbs - lenAbsHalf;
+		const auto w = lenAbs;
+		setCol(g, CID::Hover);
 		g.fillRect(x, 0.f, w, height);
 	}
 
@@ -154,7 +154,6 @@ namespace gui
 	ModalMaterialView::ModalMaterialView(Utils& u, Material& _material) :
 		Comp(u),
 		FileDragAndDropTarget(),
-		infoLabel(u, true),
 		material(_material),
 		partials(),
 		dragAniComp(u),
@@ -167,9 +166,6 @@ namespace gui
 			{ 1 },
 			{ 1, 5 }
 		);
-
-		addAndMakeVisible(infoLabel);
-		makeTextLabel(infoLabel, "", font::nel(), Just::topRight, CID::Hover);
 
 		add(Callback([&]()
 		{
@@ -201,10 +197,32 @@ namespace gui
 
 	void ModalMaterialView::paint(Graphics& g)
 	{
-		auto const h = static_cast<float>(getHeight());
+		const auto hInt = getHeight();
+
+		const auto w = static_cast<float>(getWidth());
+		auto const h = static_cast<float>(hInt);
+		const auto thiccInt = static_cast<int>(utils.thicc);
 
 		if (isMouseOver() && !isMouseButtonDownAnywhere())
 			draggerfall.paint(g);
+
+		{
+			const auto& peakInfos = material.peakInfos;
+			const auto minFc = 1.f;
+			const auto maxFc = peakInfos[NumFilters - 1].ratio;
+			const auto fcRange = maxFc - minFc;
+			const auto inc = fcRange < 1.f ? .1f : fcRange < 15.f ? 1.f : fcRange < 30.f ? 2.f : fcRange < 50.f ? 5.f : 10.f;
+			setCol(g, CID::Hover);
+			auto i = 0.f;
+			auto x = 0;
+			do
+			{
+				g.drawVerticalLine(x, 0, hInt);
+				g.drawFittedText(String(i), { x + thiccInt,0,20,20 }, Just::centred, 1);
+				i += inc;
+				x = static_cast<int>(i / fcRange * w);
+			} while (x < w);
+		}
 
 		for (auto i = 0; i < NumFilters; ++i)
 		{
@@ -239,7 +257,6 @@ namespace gui
 		);
 
 		layout.resized(getLocalBounds().toFloat());
-		layout.place(infoLabel, 0, 0, 1, 1);
 		dragAniComp.setBounds(getLocalBounds());
 		updatePartials();
 	}
@@ -285,11 +302,22 @@ namespace gui
 		freqRatioRange = freqRatioMax - freqRatioMin;
 	}
 
+	void ModalMaterialView::mouseEnter(const Mouse&)
+	{
+		const auto cID = CID::Interact;
+		notify(evt::Type::ToastColour, &cID);
+		const auto bounds = getBounds();
+		notify(evt::Type::ToastShowUp, &bounds);
+		updateInfoLabel();
+	}
+
 	void ModalMaterialView::mouseExit(const Mouse&)
 	{
 		draggerfall.clearSelection();
-		infoLabel.setText("");
+		updateInfoLabel("");
 		repaint();
+
+		notify(evt::Type::ToastVanish);
 	}
 
 	void ModalMaterialView::mouseMove(const Mouse& mouse)
@@ -329,11 +357,16 @@ namespace gui
 		const auto status = material.status.load();
 		const auto sensitive = mouse.mods.isShiftDown();
 		const auto yDepth = .4f * (sensitive ? Sensitive : 1.f);
-		const auto xDepth = yDepth * freqRatioRange;
+		const auto xDepth = yDepth * freqRatioRange * .5f;
 
 		if (status == Status::Processing)
 		{
-			for (auto i = 0; i < NumFilters; ++i)
+			if (draggerfall.isSelected(0))
+			{
+				auto& peakInfo = material.peakInfos[0];
+				peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
+			}
+			for (auto i = 1; i < NumFilters; ++i)
 			{
 				const bool selected = draggerfall.isSelected(i);
 				if (selected)
@@ -447,32 +480,31 @@ namespace gui
 		return isInterested;
 	}
 
-	void ModalMaterialView::updateInfoLabel()
+	void ModalMaterialView::updateInfoLabel(const String& nMessage)
 	{
+		if (nMessage != "abcabcabc")
+		{
+			notify(evt::Type::ToastUpdateMessage, &nMessage);
+			return;
+		}
+
 		if (draggerfall.selectionEmpty())
 		{
-			infoLabel.setText("");
+			String empty("");
+			notify(evt::Type::ToastUpdateMessage, &empty);
 			return;
 		}
 
 		String txt("");
-		auto count = 0;
-		for (auto i = 0; i < NumFilters; ++i)
-		{
+		for(auto i = 0; i < NumFilters; ++i)
 			if (draggerfall.isSelected(i))
 			{
 				const auto mag = material.peakInfos[i].mag;
 				const auto rat = material.peakInfos[i].ratio;
-				txt += "mag: " + String(mag, 2) + ", rat : " + String(rat, 2) + "\n";
-				++count;
-			}
-			if (count >= 3)
-			{
-				txt += "...";
+				txt += "MG: " + String(mag, 1) + "\nFC : " + String(rat, 1) + "\n";
 				break;
 			}
-		}
 
-		infoLabel.setText(txt);
+		notify(evt::Type::ToastUpdateMessage, &txt);
 	}
 }

@@ -40,7 +40,8 @@ namespace dsp
 		double operator()(bool) noexcept;
 
 		double operator()() noexcept;
-
+		
+		// don't use this if sustain can equal 1
 		double getEnvNoSustain() const noexcept;
 
 		const Parameters& parameters;

@@ -72,7 +72,7 @@ namespace dsp
 	void EnvelopeGenerator::prepare(double _sampleRate) noexcept
 	{
 		sampleRate = _sampleRate;
-		smooth.makeFromDecayInMs(20., sampleRate);
+		smooth.makeFromDecayInMs(.5, sampleRate);
 	}
 
 	double EnvelopeGenerator::operator()(bool _noteOn) noexcept
@@ -98,8 +98,12 @@ namespace dsp
 
 	double EnvelopeGenerator::getEnvNoSustain() const noexcept
 	{
-		const auto val = curEnv * (1. + parameters.sus) - parameters.sus;
-		return val < 0. ? 0. : val;
+		if (env < parameters.sus)
+			return 0.;
+		const auto a = env - parameters.sus;
+		const auto b = 1. - parameters.sus;
+		const auto y = a / b;
+		return y * y;
 	}
 
 	void EnvelopeGenerator::processAttack() noexcept

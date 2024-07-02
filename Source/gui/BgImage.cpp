@@ -44,7 +44,7 @@ namespace gui
 
             img = Image(Image::ARGB, w, h, true);
 			Graphics g(img);
-			g.setColour(getColour(CID::Bias));
+			g.setColour(getColour(CID::Txt));
 			
             const auto wF = static_cast<float>(w);
             const auto hF = static_cast<float>(h);
