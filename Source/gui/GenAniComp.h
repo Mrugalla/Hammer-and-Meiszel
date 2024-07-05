@@ -149,10 +149,29 @@ namespace gui
 
 		void mutate(float width, float height)
 		{
+			for(auto i = 0; i < 64; ++i)
+				makePoroes(width, height);
 			darken(.6f);
 			genNewCol(.7f, 3);
 			startNewBranch(width, height, 12.f, .7f);
 			alphaDownCount = 0;
+		}
+
+		void makePoroes(float width, float height)
+		{
+			const auto darkenPos = PointF(rand.nextFloat() * width, rand.nextFloat() * height).toInt();
+			Point mat[] =
+			{
+				{1, 0}, {0, 1}, {1, 1},
+				{2, 0}, {0, 2}, {2, 2}, {2, 1}, {1, 2},
+				{3, 1}, {3, 2}, {1, 3}, {2, 3}
+			};
+			for (auto j = 0; j < 12; ++j)
+			{
+				auto xx = darkenPos.x + mat[j].x;
+				auto yy = darkenPos.y + mat[j].y;
+				img.setPixelAt(xx, yy, Colour(0xff000000));
+			}
 		}
 	};
 }
