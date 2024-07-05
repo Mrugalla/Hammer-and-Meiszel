@@ -4,6 +4,10 @@
 
 ~~~ todo ~~~
 
+GenAniComp on laptop freezes plugin during darkening image
+
+Knob on laptop has inverted mousewheel behaviour
+
 H&M Imagepflege
     sollten alle tooltips deutsch sein?
 

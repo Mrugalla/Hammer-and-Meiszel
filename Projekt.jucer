@@ -130,18 +130,6 @@
             <FILE id="cZnebq" name="XenRescaler.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/XenRescaler.cpp"/>
             <FILE id="taFAps" name="XenRescaler.h" compile="0" resource="0" file="Source/audio/dsp/midi/XenRescaler.h"/>
           </GROUP>
-          <GROUP id="{B68841BA-9245-6C59-C6CD-6C766C5FECF8}" name="modal">
-            <FILE id="A62fgH" name="Axiom.cpp" compile="0" resource="0" file="Source/audio/dsp/modal/Axiom.cpp"/>
-            <FILE id="xC1Qb1" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/modal/Axiom.h"/>
-            <FILE id="L1gynm" name="Material.cpp" compile="0" resource="0" file="Source/audio/dsp/modal/Material.cpp"/>
-            <FILE id="P70xYg" name="Material.h" compile="0" resource="0" file="Source/audio/dsp/modal/Material.h"/>
-            <FILE id="f4SGjJ" name="Resonatr.cpp" compile="0" resource="0" file="Source/audio/dsp/modal/Resonatr.cpp"/>
-            <FILE id="gvnESX" name="Resonatr.h" compile="0" resource="0" file="Source/audio/dsp/modal/Resonatr.h"/>
-            <FILE id="Xs6UGE" name="Voice.cpp" compile="0" resource="0" file="Source/audio/dsp/modal/Voice.cpp"/>
-            <FILE id="pjsILf" name="Voice.h" compile="0" resource="0" file="Source/audio/dsp/modal/Voice.h"/>
-            <FILE id="thxOQv" name="Filtr.cpp" compile="0" resource="0" file="Source/audio/dsp/modal/Filtr.cpp"/>
-            <FILE id="NTNWBg" name="Filtr.h" compile="0" resource="0" file="Source/audio/dsp/modal/Filtr.h"/>
-          </GROUP>
           <GROUP id="{E9F4FD62-32A8-21CF-CE2B-D5ACC9DD08A7}" name="modal2">
             <FILE id="Pzh3KQ" name="Axiom.cpp" compile="1" resource="0" file="Source/audio/dsp/modal2/Axiom.cpp"/>
             <FILE id="mWWPYJ" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/modal2/Axiom.h"/>
