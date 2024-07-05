@@ -35,6 +35,7 @@ namespace gui
             kTitle, kDev, kTitleModal, kTitleFlanger, kTitleMacro,
             kEnvAmpAtk, kEnvAmpDcy, kEnvAmpSus, kEnvAmpRls,
             kModalBlend, kModalSpreizung, kModalHarmonie, kModalKraft, kModalReso,
+            kModalBlendBreite, kModalHarmonieBreite, kModalKraftBreite,
             kNumLabels
         };
 		static constexpr int NumLabels = static_cast<int>(kLabels::kNumLabels);
@@ -44,6 +45,7 @@ namespace gui
             kMacro, kEnvAmpAttack, kEnvAmpDecay, kEnvAmpSustain, kEnvAmpRelease,
 			kModalBlend, kModalSpreizung, kModalHarmonie, kModalKraft, kModalReso,
             kModalBlendEnv, kModalSpreizungEnv, kModalHarmonieEnv, kModalKraftEnv,
+            kModalBlendBreite, kModalHarmonieBreite, kModalKraftBreite,
             kNumKnobs
         };
 		static constexpr int NumKnobs = static_cast<int>(kKnobs::kNumKnobs);

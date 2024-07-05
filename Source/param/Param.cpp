@@ -68,13 +68,16 @@ namespace param
 		case PID::ModalSemi: return "Modal Semi";
 		case PID::ModalBlend: return "Modal Blend";
 		case PID::ModalBlendEnv: return "Modal Blend Env";
+		case PID::ModalBlendBreite: return "Modal Blend Breite";
 		case PID::ModalSpreizung: return "Modal Spreizung";
 		case PID::ModalSpreizungEnv: return "Modal Spreizung Env";
 		case PID::ModalHarmonie: return "Modal Harmonie";
 		case PID::ModalHarmonieEnv: return "Modal Harmonie Env";
+		case PID::ModalHarmonieBreite: return "Modal Harmonie Breite";
 		case PID::ModalKraft: return juce::CharPointer_UTF8("Modal Kraft");
 		case PID::ModalKraftEnv: return "Modal Kraft Env";
 		case PID::ModalResonanz: return "Modal Resonanz";
+		case PID::ModalKraftBreite: return "Modal Kraft Breite";
 		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Comb R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
 		case PID::CombSemi: return "Comb Semi";
@@ -154,13 +157,16 @@ namespace param
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
 		case PID::ModalBlend: return "Blends between the 2 modal filters.";
 		case PID::ModalBlendEnv: return "The envelope generator's depth on the modal blend.";
+		case PID::ModalBlendBreite: return "The stereo width of the modal breite.";
 		case PID::ModalSpreizung: return "Spreads or shrinks the resonators' frequency ratios.";
 		case PID::ModalSpreizungEnv: return "The envelope generator's depth on the modal spreizung.";
 		case PID::ModalHarmonie: return "Harmonizes the resonators' frequency ratios towards the harmonic series.";
 		case PID::ModalHarmonieEnv: return "The envelope generator's depth on the modal harmonie.";
+		case PID::ModalHarmonieBreite: return "The stereo width of the modal harmonie.";
 		case PID::ModalKraft: return "Saturates the resonators' magnitude values.";
 		case PID::ModalKraftEnv: return "The envelope generator's depth on the modal kraft.";
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
+		case PID::ModalKraftBreite: return "The stereo width of the modal kraft.";
 		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
 		case PID::CombSemi: return "Transposes the comb filter in semitones.";
@@ -986,7 +992,7 @@ namespace param::valToStr
 
 	ValToStrFunc db()
 	{
-		return [](float v) { return String(std::round(v * 100.f) * .01f) + " " + toString(Unit::Decibel); };
+		return [](float v) { return String(v, 1) + " " + toString(Unit::Decibel); };
 	}
 
 	ValToStrFunc empty()
@@ -1307,12 +1313,12 @@ namespace param
 			params.push_back(makeParam(PID::GainDry, PPDGainDryMin, gainDryRange, Unit::Decibel));
 			params.push_back(makeParam(PID::GainWet, -18.f, gainWetRange, Unit::Decibel));
 #elif PPDIO == PPDIOWetMix
-			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f);
+			const auto gainWetRange = makeRange::lin(PPDGainWetMin, PPDGainWetMax);
 			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
 			params.push_back(makeParam(PID::Mix, 1.f));
 			params.push_back(makeParam(PID::Delta, 0.f, makeRange::toggle(), Unit::Power));
 #endif
-			const auto gainOutRange = makeRange::withCentre(PPDGainOutMin, PPDGainOutMax, 0.f);
+			const auto gainOutRange = makeRange::lin(PPDGainOutMin, PPDGainOutMax);
 			params.push_back(makeParam(PID::GainOut, 0.f, gainOutRange, Unit::Decibel));
 #if PPDHasStereoConfig
 			params.push_back(makeParam(PID::StereoConfig, 1.f, makeRange::toggle(), Unit::StereoConfig));
@@ -1346,13 +1352,16 @@ namespace param
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::ModalBlend, 0.f));
 		params.push_back(makeParam(PID::ModalBlendEnv, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalBlendBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalSpreizung, 0.f, makeRange::lin(SpreizungMin, SpreizungMax)));
 		params.push_back(makeParam(PID::ModalSpreizungEnv, 0.f, makeRange::lin(SpreizungMin * 2., SpreizungMax * 2.)));
 		params.push_back(makeParam(PID::ModalHarmonie, 0.f));
 		params.push_back(makeParam(PID::ModalHarmonieEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalKraft, .5f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalHarmonieBreite, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalKraft, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalKraftEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::ModalResonanz, .6f));
+		params.push_back(makeParam(PID::ModalKraftBreite, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));

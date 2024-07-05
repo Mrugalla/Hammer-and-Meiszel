@@ -50,6 +50,52 @@ namespace dsp
 			std::array<PeakInfo, NumFilters> data;
 		};
 
+		struct MaterialDataStereo
+		{
+			MaterialDataStereo() :
+				data()
+			{}
+
+			MaterialData& operator[](int ch) noexcept
+			{
+				return data[ch];
+			}
+
+			const MaterialData& operator[](int ch) const noexcept
+			{
+				return data[ch];
+			}
+
+			PeakInfo& operator()(int ch, int i) noexcept
+			{
+				return data[ch][i];
+			}
+
+			const PeakInfo& operator()(int ch, int i) const noexcept
+			{
+				return data[ch][i];
+			}
+
+			double getMag(int ch, int i) const noexcept
+			{
+				return data[ch][i].mag;
+			}
+
+			double getRatio(int ch, int i) const noexcept
+			{
+				return data[ch][i].ratio;
+			}
+
+			void copy(const MaterialDataStereo& m, int numChannels) noexcept
+			{
+				data[0].copy(m.data[0]);
+				if(numChannels == 2)
+					data[1].copy(m.data[1]);
+			}
+		private:
+			std::array<MaterialData, 2> data;
+		};
+
 		struct Material
 		{
 			static constexpr int FFTOrder = 15;
@@ -85,6 +131,8 @@ namespace dsp
 			{
 				std::vector<int> indexes;
 			};
+
+			void sortPeaks() noexcept;
 
 			// data, size
 			void fillBuffer(const char*, int);

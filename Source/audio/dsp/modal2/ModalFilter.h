@@ -42,6 +42,8 @@ namespace dsp
 					auto& status = material.status;
 					if (status == Status::UpdatedMaterial)
 					{
+						for (auto& voice : voices)
+							voice.reportMaterialUpdate();
 						status = Status::UpdatedProcessor;
 					}
 				}

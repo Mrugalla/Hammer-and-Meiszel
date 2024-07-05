@@ -1,21 +1,20 @@
 /*
 -----------------------------------------------------------------------------------------
+~~~ concepts ~~~
+
 ~~~ todo ~~~
 
-ToThink
-    -
+H&M Imagepflege
+    sollten alle tooltips deutsch sein?
 
-GenAniComp
-    freezt manchmal plugin direkt am anfang
+Material
+    import von samples erzeugt oft keine geilen magnitudes
 
-Hammer & Meiﬂel
-    -
+Param db valToStr can be -inf (gain wet [-inf, 0])
+    but it can also be not (gain out [-12,12])
 
 GUI
     reintroduce custom mousecursor
-    BuildDate
-        draw automatic normal version number
-        build date in the tooltip tho
     SharedPluginState (customizable state)
         sensitivity
             drag, wheel, key
@@ -23,14 +22,9 @@ GUI
             doubleclick, key
         colourscheme
             bias not needed anymore
-    Button
-        makeParameter
-            lacks lock feature
+    all parameters currently lack visible lock feature
     TextEditor
         button that edits its label
-    Knob
-        find better place for parameter lock (right now it's not visible)
-        make more painters
 AUDIO
     FFT
         replace by 3rd party lib for performance (kiss fft or pffft)

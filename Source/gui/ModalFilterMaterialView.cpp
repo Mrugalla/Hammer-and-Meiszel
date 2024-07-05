@@ -217,7 +217,7 @@ namespace gui
 			auto x = 0;
 			do
 			{
-				g.drawVerticalLine(x, 0, hInt);
+				g.drawVerticalLine(x, 0, h);
 				g.drawFittedText(String(i), { x + thiccInt,0,20,20 }, Just::centred, 1);
 				i += inc;
 				x = static_cast<int>(i / fcRange * w);

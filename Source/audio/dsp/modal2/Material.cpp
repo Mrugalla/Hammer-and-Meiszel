@@ -34,11 +34,16 @@ namespace dsp
 
 		void Material::reportEndGesture() noexcept
 		{
+			sortPeaks();
+			status.store(Status::UpdatedMaterial);
+		}
+
+		void Material::sortPeaks() noexcept
+		{
 			for (int i = 0; i < NumFilters - 1; ++i)
 				for (int j = i + 1; j < NumFilters; ++j)
 					if (peakInfos[i].ratio > peakInfos[j].ratio)
 						std::swap(peakInfos[i], peakInfos[j]);
-			status.store(Status::UpdatedMaterial);
 		}
 
 		void Material::load(const char* data, int size)
@@ -54,13 +59,13 @@ namespace dsp
 			auto bins = fifo.data();
 			applyFFT(bins);
 			//{
-				//std::vector<float> binsLP;
-				//binsLP.resize(FFTSize2, 0.f);
-				//applyLowpassIIR(binsLP.data(), bins, 50.f, .2f, 3);
-				//binsNorm.resize(FFTSize2, 0.f);
-				//SIMD::copy(binsNorm.data(), bins, FFTSize);
-				//divide(binsNorm.data(), bins, binsLP.data(), 0.f);
-				//normalize(binsNorm.data());
+			//	std::vector<float> binsLP;
+			//	binsLP.resize(FFTSize2, 0.f);
+			//	applyLowpassIIR(binsLP.data(), bins, 50.f, .2f, 3);
+			//	binsNorm.resize(FFTSize2, 0.f);
+			//	SIMD::copy(binsNorm.data(), bins, FFTSize);
+			//	divide(binsNorm.data(), bins, binsLP.data(), 0.f);
+			//	normalize(binsNorm.data());
 			//}
 			std::vector<PeakIndexInfo> peakGroups;
 			//const auto harm0Idx = getMaxMagnitudeIdx(binsNorm.data(), 0, FFTSizeHalf);
@@ -71,6 +76,14 @@ namespace dsp
 			peakIndexes.resize(NumFilters);
 			generatePeakIndexes(peakIndexes, bins, peakGroups);
 			generatePeakInfos(bins, peakIndexes.data(), static_cast<float>(harm0Idx));
+			sortPeaks();
+			auto maxMag = peakInfos[0].mag;
+			for (auto i = 1; i < NumFilters; ++i)
+				if (maxMag < peakInfos[i].mag)
+					maxMag = peakInfos[i].mag;
+			const auto gain = 1.f / maxMag;
+			for (auto i = 0; i < NumFilters; ++i)
+				peakInfos[i].mag *= gain;
 			status.store(Status::UpdatedMaterial);
 		}
 
@@ -99,18 +112,27 @@ namespace dsp
 
 		void Material::applyFFT(float* fifo)
 		{
-
 			const auto windowFunc = [&](float x)
-				{
-					auto w = .5f - .5f * std::cos(TauF * x);
-					return w;
-				};
+			{
+				auto w = .5f - .5f * std::cos(TauF * x);
+				return math::tanhApprox(2.f * w);
+			};
 			for (auto i = 0; i < FFTSize; ++i)
 			{
 				const auto x = static_cast<float>(i) * FFTSizeInv;
 				const auto wndw = windowFunc(x);
 				const auto smpl = buffer[i];
 				fifo[i] = smpl * wndw;
+			}
+			for(auto i = 0; i < 3; ++i)
+			{ // dc offset filter!
+				moog::BiquadFilter hp;
+				hp.setType(moog::BiquadFilter::Type::HP);
+				hp.setCutoffFc(20.f / 44100.f);
+				hp.setResonance(.2f);
+				hp.update();
+				for (auto i = 0; i < FFTSize; ++i)
+					fifo[i] = hp(fifo[i]);
 			}
 			FFT fft(FFTOrder);
 			fft.performRealOnlyForwardTransform(fifo, true);
@@ -204,11 +226,15 @@ namespace dsp
 			auto idx = lowerLimitIdx;
 			auto max = bins[lowerLimitIdx];
 			for (auto b = lowerLimitIdx; b < upperLimitIdx; ++b)
-				if (max < bins[b])
+			{
+				const auto bin = bins[b];
+				if (max < bin)
 				{
-					max = bins[b];
+					max = bin;
 					idx = b;
 				}
+			}
+				
 			return idx;
 		}
 
@@ -342,8 +368,10 @@ namespace dsp
 				const auto peakIdx = peakIndexes[i];
 				if (peakIdx != -1)
 				{
-					peakInfos[i].ratio = static_cast<double>(peakIdx) / static_cast<double>(harm0Idx);
-					peakInfos[i].mag = static_cast<double>(bins[peakIdx]);
+					const auto ratio = static_cast<double>(peakIdx) / static_cast<double>(harm0Idx);
+					const auto mag = static_cast<double>(bins[peakIdx]);
+					peakInfos[i].ratio = ratio;
+					peakInfos[i].mag = mag;
 				}
 				else
 				{
@@ -353,7 +381,7 @@ namespace dsp
 			}
 		}
 
-		void Material::drawSpectrum(const String& name, const float* buf, float thresholdDb,
+		void Material::drawSpectrum(const String& text, const float* buf, float thresholdDb,
 			const int* peakIndexes, bool isLog)
 		{
 			auto numFilters = 0;
@@ -361,7 +389,7 @@ namespace dsp
 				for (auto i = 0; i < NumFilters; ++i)
 					numFilters += peakIndexes[i] != -1 ? 1 : 0;
 
-			makeSpectrumImage(name, buf, FFTSize, thresholdDb - 6.f, false,
+			makeSpectrumImage(text, buf, FFTSize, thresholdDb - 6.f, false,
 				peakIndexes, numFilters, true, isLog, sampleRate);
 		}
 

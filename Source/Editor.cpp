@@ -60,6 +60,9 @@ namespace gui
             Label(utils),
             Label(utils),
 			Label(utils),
+            Label(utils),
+            Label(utils),
+            Label(utils),
 			Label(utils)
         },
         knobs
@@ -69,6 +72,9 @@ namespace gui
             Knob(utils),
             Knob(utils),
 			Knob(utils),
+            Knob(utils),
+            Knob(utils),
+            Knob(utils),
             Knob(utils),
             Knob(utils),
             Knob(utils),
@@ -90,6 +96,9 @@ namespace gui
             ModDial(utils),
             ModDial(utils),
 			ModDial(utils),
+            ModDial(utils),
+            ModDial(utils),
+            ModDial(utils),
             ModDial(utils),
             ModDial(utils),
             ModDial(utils),
@@ -367,6 +376,30 @@ namespace gui
 		resoModDial.attach(PID::ModalResonanz);
 		resoModDial.verticalDrag = false;
 
+        auto& blendBreiteLabel = get(kLabels::kModalBlendBreite);
+        makeTextLabel(blendBreiteLabel, "Blend Breite", fontKnobs, justModalSliders, CID::Txt);
+        auto& blendBreiteKnob = get(kKnobs::kModalBlendBreite);
+        makeSlider(PID::ModalBlendBreite, blendBreiteKnob);
+        auto& blendBreiteModDial = getModDial(kKnobs::kModalBlendBreite);
+        blendBreiteModDial.attach(PID::ModalBlendBreite);
+        blendBreiteModDial.verticalDrag = false;
+
+        auto& harmonieBreiteLabel = get(kLabels::kModalHarmonieBreite);
+        makeTextLabel(harmonieBreiteLabel, "Harmonie Breite", fontKnobs, justModalSliders, CID::Txt);
+        auto& harmonieBreiteKnob = get(kKnobs::kModalHarmonieBreite);
+        makeSlider(PID::ModalHarmonieBreite, harmonieBreiteKnob);
+        auto& harmonieBreiteModDial = getModDial(kKnobs::kModalHarmonieBreite);
+        harmonieBreiteModDial.attach(PID::ModalHarmonieBreite);
+        harmonieBreiteModDial.verticalDrag = false;
+
+		auto& kraftBreiteLabel = get(kLabels::kModalKraftBreite);
+		makeTextLabel(kraftBreiteLabel, "Kraft Breite", fontKnobs, justModalSliders, CID::Txt);
+		auto& kraftBreiteKnob = get(kKnobs::kModalKraftBreite);
+		makeSlider(PID::ModalKraftBreite, kraftBreiteKnob);
+		auto& kraftBreiteModDial = getModDial(kKnobs::kModalKraftBreite);
+		kraftBreiteModDial.attach(PID::ModalKraftBreite);
+		kraftBreiteModDial.verticalDrag = false;
+
         const auto& user = *audioProcessor.state.props.getUserSettings();
         addChildComponent(toast);
 		
@@ -573,6 +606,21 @@ namespace gui
 
         ++modalY;
 
+        layout.place(get(kLabels::kModalBlendBreite), modalX, modalY, modalLabelWidth, 1);
+        layout.place(get(kKnobs::kModalBlendBreite), modalKnobX, modalY, modalKnobWidth, 1);
+
+        ++modalY;
+
+        layout.place(get(kLabels::kModalHarmonieBreite), modalX, modalY, modalLabelWidth, 1);
+        layout.place(get(kKnobs::kModalHarmonieBreite), modalKnobX, modalY, modalKnobWidth, 1);
+
+        ++modalY;
+
+		layout.place(get(kLabels::kModalKraftBreite), modalX, modalY, modalLabelWidth, 1);
+		layout.place(get(kKnobs::kModalKraftBreite), modalKnobX, modalY, modalKnobWidth, 1);
+
+        ++modalY;
+
         LabelGroup envAmpLabels;
         envAmpLabels.add(get(kLabels::kEnvAmpAtk));
         envAmpLabels.add(get(kLabels::kEnvAmpDcy));
@@ -586,6 +634,9 @@ namespace gui
 		modalKnobLabels.add(get(kLabels::kModalHarmonie));
 		modalKnobLabels.add(get(kLabels::kModalKraft));
 		modalKnobLabels.add(get(kLabels::kModalReso));
+        modalKnobLabels.add(get(kLabels::kModalBlendBreite));
+        modalKnobLabels.add(get(kLabels::kModalHarmonieBreite));
+		modalKnobLabels.add(get(kLabels::kModalKraftBreite));
         modalKnobLabels.setMaxHeight();
 
         locateAtKnob(getModDial(kKnobs::kEnvAmpAttack), get(kKnobs::kEnvAmpAttack));
@@ -601,6 +652,9 @@ namespace gui
 		locateAtSlider(getModDial(kKnobs::kModalSpreizungEnv), get(kKnobs::kModalSpreizungEnv));
 		locateAtSlider(getModDial(kKnobs::kModalHarmonieEnv), get(kKnobs::kModalHarmonieEnv));
 		locateAtSlider(getModDial(kKnobs::kModalKraftEnv), get(kKnobs::kModalKraftEnv));
+        locateAtSlider(getModDial(kKnobs::kModalBlendBreite), get(kKnobs::kModalBlendBreite));
+        locateAtSlider(getModDial(kKnobs::kModalHarmonieBreite), get(kKnobs::kModalHarmonieBreite));
+		locateAtSlider(getModDial(kKnobs::kModalKraftBreite), get(kKnobs::kModalKraftBreite));
 
         layout.place(genAni, -6, 8, 5, 9);
         layout.place(tooltip, 0, -2, 31, 1);
