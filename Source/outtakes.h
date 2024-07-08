@@ -146,6 +146,211 @@ const auto fpsToast = cbFPS::k30;
 /////////////////////////////////////
 /////////////////////////////////////
 
+spirograph knob:
+
+KnobPainterSpirograph(int numArms = 2,
+            float startAngle = .5f, float angleLength = 1.f,
+            float lengthBias = .4f, float lengthBiasAni = .3f,
+            float armsAlpha = .4f, float armsAlphaAni = -.2f,
+            int numRings = 1, int numSteps = 7) :
+            bounds(),
+            spirograph(),
+            pathModDepth(),
+            arms(startAngle, numArms),
+            knots()
+        {
+            onLayout = [](Layout& layout)
+            {
+                layout.init
+                (
+                    { 1, 1 },
+                    { 5, 1 }
+                );
+            };
+
+            onResize = [&](KnobParam& k)
+            {
+                const auto thicc = k.utils.thicc;
+                bounds = k.layout(0, 0, 2, 1, true).reduced(thicc);
+
+                if (k.modDial.isVisible())
+                    k.layout.place(k.modDial, 0, 1, 1, 1, true);
+                k.layout.place(k.lockButton, 1, 1, 1, 1, true);
+            };
+
+            onPaint = [&, lengthBias, lengthBiasAni, numArms, angleLength, armsAlpha, armsAlphaAni, numRings, numSteps](KnobParam& k, Graphics& g)
+            {
+                spirograph.clear();
+                pathModDepth.clear();
+
+                const auto thicc = k.utils.thicc;
+
+                const auto& vals = k.values;
+                const auto enterExitPhase = k.callbacks[KnobParam::kEnterExitCB].phase;
+                const auto downUpPhase = k.callbacks[KnobParam::kDownUpCB].phase;
+
+                const auto width = bounds.getWidth();
+                const auto rad = width * .5f;
+                PointF centre
+                (
+                    rad + bounds.getX(),
+                    rad + bounds.getY()
+                );
+                const auto numStepsF = static_cast<float>(numSteps);
+                const auto numStepsInv = 1.f / numStepsF;
+                const auto angleMain = angleLength * Tau * numStepsInv;
+
+                auto biasWithAni = lengthBias + lengthBiasAni * enterExitPhase + lengthBiasAni * downUpPhase * .5f;
+                if(biasWithAni >= 1.f)
+                    --biasWithAni;
+                arms.makeLengthRels(biasWithAni);
+                arms.prepareArms(angleMain, static_cast<float>(numRings), rad);
+                const bool drawArms = armsAlpha != 0.f;
+
+                auto& knotVal = knots[KnobParam::Value];
+                auto& knotValMod = knots[KnobParam::ValMod];
+                auto& knotModDepth = knots[KnobParam::ModDepth];
+
+                knotVal.saveVal(vals[KnobParam::Value], numStepsF);
+                knotValMod.saveVal(vals[KnobParam::ValMod], numStepsF);
+                knotModDepth.saveModDepth(vals[KnobParam::ModDepth], numStepsF, knotVal.step);
+                const bool modDepthPositive = vals[KnobParam::ModDepth] > 0.f;
+                auto mdState = MDState::Waiting;
+
+                arms.makeArms(centre);
+                auto curPt = arms.getEnd();
+                spirograph.startNewSubPath(curPt);
+                if (drawArms)
+                {
+                    const auto alphaWithAni = juce::jlimit(0.f, 1.f, armsAlpha + armsAlphaAni * downUpPhase);
+                    g.setColour(getColour(CID::Txt).withAlpha(alphaWithAni));
+                    arms.drawArms(g, thicc);
+                }
+
+
+                if (knotVal.step == 0.f)
+                {
+                    knotVal.x = curPt.x;
+                    knotVal.y = curPt.y;
+
+                    if (modDepthPositive)
+                    {
+                        pathModDepth.startNewSubPath(curPt);
+                        mdState = MDState::Processing;
+                    }
+                }
+                if (knotValMod.step == 0.f)
+                {
+                    knotValMod.x = curPt.x;
+                    knotValMod.y = curPt.y;
+
+                    if (!modDepthPositive)
+                    {
+                        pathModDepth.startNewSubPath(curPt);
+                        mdState = MDState::Processing;
+                    }
+                }
+
+    for (auto i = 1; i < numSteps; ++i)
+    {
+        const auto lastPt = arms.getEnd();
+        arms.incAngles();
+        arms.makeArms(centre);
+        curPt = arms.getEnd();
+
+        LineF curLine(lastPt, curPt);
+        knotVal.processModDepthVal(pathModDepth, curLine, i, mdState, modDepthPositive);
+        if (knotValMod.processModDepthMod(pathModDepth, curLine, i, mdState, modDepthPositive))
+        {
+            if (knotVal.isOnValue)
+            {
+                pathModDepth.lineTo(knotVal.x, knotVal.y);
+                mdState = MDState::Finished;
+            }
+        }
+
+        spirograph.lineTo(curPt);
+        if (mdState == MDState::Processing)
+            pathModDepth.lineTo(curPt);
+
+        if (drawArms)
+            arms.drawArms(g, thicc);
+
+        if (i == mainValStepCeil)
+        {
+            //const LineF armsLine(lastPt, curPt);
+            //const PointF interpolatedPt = armsLine.getPointAlongLine(mainValStepFrac * armsLine.getLength());
+
+            valPoints[KnobParam::Value] = curPt;
+            if (modDepthPositive)
+            {
+                pathModDepth.startNewSubPath(curPt);
+                shallDrawModDepth = true;
+            }
+            else
+                shallDrawModDepth = false;
+        }
+
+        if (i == (int)valModStep)
+            valPoints[KnobParam::ValMod] = curPt;
+
+        if (i == (int)modDepthStep)
+        {
+            valPoints[KnobParam::ModDepth] = curPt;
+            if (modDepthPositive)
+                shallDrawModDepth = false;
+            else
+            {
+                pathModDepth.startNewSubPath(curPt);
+                shallDrawModDepth = true;
+            }
+        }
+    }
+    const auto lastPt = arms.getEnd();
+    spirograph.closeSubPath();
+    curPt = spirograph.getCurrentPosition();
+
+    knotVal.processModDepthVal(pathModDepth, LineF(lastPt, curPt), numSteps, mdState, modDepthPositive);
+    if (knotValMod.processModDepthMod(pathModDepth, LineF(lastPt, curPt), numSteps, mdState, modDepthPositive))
+    {
+        pathModDepth.lineTo(knotVal.x, knotVal.y);
+        mdState = MDState::Finished;
+    }
+
+    if (mdState == MDState::Processing)
+        pathModDepth.lineTo(curPt);
+
+    Stroke stroke(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
+    g.setColour(getColour(CID::Txt));
+    g.strokePath(spirograph, stroke);
+
+    const auto knotSize = thicc * 1.5f + downUpPhase * thicc * 1.5f;
+
+    knotVal.makeBounds(knotSize);
+    knotValMod.makeBounds(knotSize);
+
+    g.setColour(getColour(CID::Mod));
+    stroke.setStrokeThickness(knotSize);
+    g.strokePath(pathModDepth, stroke);
+    stroke.setStrokeThickness(thicc);
+
+    g.setColour(getColour(CID::Bg));
+    g.fillEllipse(knotVal.bounds);
+    g.fillEllipse(knotValMod.bounds);
+
+    g.setColour(getColour(CID::Interact));
+    g.drawEllipse(knotVal.bounds, thicc);
+    g.setColour(getColour(CID::Mod));
+    g.drawEllipse(knotValMod.bounds, thicc);
+            };
+        }
+
+        BoundsF bounds;
+        Path spirograph, pathModDepth;
+        Arms arms;
+        std::array<Knot, KnobParam::NumValTypes> knots;
+    };
+
 /////////////////////////////////////
 /////////////////////////////////////
 /////////////////////////////////////

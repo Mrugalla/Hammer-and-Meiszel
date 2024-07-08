@@ -4,9 +4,9 @@
 
 ~~~ todo ~~~
 
-GenAniComp on laptop freezes plugin during darkening image
+laptop- plugin lags on start
 
-Knob on laptop has inverted mousewheel behaviour
+GenAniComp on laptop freezes plugin during darkening image
 
 H&M Imagepflege
     sollten alle tooltips deutsch sein?
