@@ -4,10 +4,6 @@
 
 ~~~ todo ~~~
 
-laptop- plugin lags on start
-
-GenAniComp on laptop freezes plugin during darkening image
-
 H&M Imagepflege
     sollten alle tooltips deutsch sein?
 

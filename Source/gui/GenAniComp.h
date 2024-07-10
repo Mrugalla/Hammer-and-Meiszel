@@ -7,11 +7,18 @@ namespace gui
 		public Comp
 	{
 		GenAniComp(Utils& u) :
-			Comp(u),
+			Comp(u, "If this thing makes the plugin lag, click on it to disable it globally for this user!"),
 			img(),
 			onResize([](){})
 		{
 			setOpaque(true);
+		}
+
+		void init()
+		{
+			const auto& user = utils.getProps();
+			const auto active = user.getBoolValue("genanicomp");
+			callbacks[0].active = active;
 		}
 
 		void paint(Graphics& g) override
@@ -26,6 +33,17 @@ namespace gui
 			else
 				img = Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
 			onResize();
+		}
+
+		void mouseUp(const Mouse& mouse) override
+		{
+			if (mouse.mouseWasDraggedSinceMouseDown())
+				return;
+
+			auto& active = callbacks[0].active;
+			active = !active;
+			auto& user = utils.getProps();
+			user.setValue("genanicomp", active);
 		}
 
 	protected:
@@ -57,6 +75,7 @@ namespace gui
 
 			const auto fps = cbFPS::k15;
 			const auto speed = msToInc(AniLengthMs, fps);
+
 			add(Callback([&, speed]()
 			{
 				auto& phase = callbacks[0].phase;
@@ -89,7 +108,9 @@ namespace gui
 					mutate(width, height);
 
 				repaint();
-			}, 0, fps, true));
+			}, 0, fps, false));
+
+			init();
 		}
 
 	private:
