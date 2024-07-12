@@ -32,6 +32,7 @@ namespace gui
 				img = img.rescaled(getWidth(), getHeight(), Graphics::lowResamplingQuality);
 			else
 				img = Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+			fixStupidJUCEImageThingie(img);
 			onResize();
 		}
 

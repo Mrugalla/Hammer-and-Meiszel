@@ -3,6 +3,8 @@
 
 namespace gui
 {
+	void fixStupidJUCEImageThingie(Image&);
+
 	void hideCursor();
 
 	void showCursor(const Component&);

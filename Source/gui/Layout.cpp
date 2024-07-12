@@ -2,6 +2,11 @@
 
 namespace gui
 {
+	void fixStupidJUCEImageThingie(Image& img)
+	{
+		img = juce::SoftwareImageType().convert(img);
+	}
+
 	void hideCursor()
 	{
 		auto mms = juce::Desktop::getInstance().getMainMouseSource();
