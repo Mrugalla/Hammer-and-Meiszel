@@ -119,24 +119,27 @@ namespace dsp
 	}
 
 	template<class ResoClass>
-	void ResonatorStereo<ResoClass>::setCutoffFc(double _fc) noexcept
+	void ResonatorStereo<ResoClass>::setCutoffFc(double _fc, int ch) noexcept
 	{
-		for (auto& reso : resonators)
-			reso.setCutoffFc(_fc);
+		resonators[ch].setCutoffFc(_fc);
 	}
 
 	template<class ResoClass>
-	void ResonatorStereo<ResoClass>::setBandwidth(double _bw) noexcept
+	void ResonatorStereo<ResoClass>::setBandwidth(double _bw, int ch) noexcept
 	{
-		for (auto& reso : resonators)
-			reso.setBandwidth(_bw);
+		resonators[ch].setBandwidth(_bw);
 	}
 
 	template<class ResoClass>
-	void ResonatorStereo<ResoClass>::setGain(double _gain) noexcept
+	void ResonatorStereo<ResoClass>::setGain(double _gain, int ch) noexcept
 	{
-		for (auto& reso : resonators)
-			reso.setGain(_gain);
+		resonators[ch].setGain(_gain);
+	}
+
+	template<class ResoClass>
+	void ResonatorStereo<ResoClass>::update(int ch) noexcept
+	{
+		resonators[ch].update();
 	}
 
 	template<class ResoClass>

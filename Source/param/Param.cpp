@@ -74,7 +74,7 @@ namespace param
 		case PID::ModalHarmonie: return "Modal Harmonie";
 		case PID::ModalHarmonieEnv: return "Modal Harmonie Env";
 		case PID::ModalHarmonieBreite: return "Modal Harmonie Breite";
-		case PID::ModalKraft: return juce::CharPointer_UTF8("Modal Kraft");
+		case PID::ModalKraft: return "Modal Kraft";
 		case PID::ModalKraftEnv: return "Modal Kraft Env";
 		case PID::ModalResonanz: return "Modal Resonanz";
 		case PID::ModalKraftBreite: return "Modal Kraft Breite";
@@ -1362,6 +1362,7 @@ namespace param
 		params.push_back(makeParam(PID::ModalKraftEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::ModalResonanz, .6f));
 		params.push_back(makeParam(PID::ModalKraftBreite, 0.f, makeRange::lin(-2.f, 2.f)));
+
 		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));

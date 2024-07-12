@@ -73,11 +73,17 @@ namespace dsp
 
 		void reset() noexcept;
 
-		void setCutoffFc(double) noexcept;
+		// fc [0, .5], ch
+		void setCutoffFc(double, int) noexcept;
 
-		void setBandwidth(double) noexcept;
+		// fc [0, .5], ch
+		void setBandwidth(double, int) noexcept;
 
-		void setGain(double) noexcept;
+		// gain [0, 1], ch
+		void setGain(double, int) noexcept;
+
+		// ch
+		void update(int) noexcept;
 
 		void update() noexcept;
 

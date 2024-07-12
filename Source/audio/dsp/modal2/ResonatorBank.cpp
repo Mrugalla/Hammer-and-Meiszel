@@ -49,14 +49,14 @@ namespace dsp
 			nyquist = sampleRate * .5;
 			reset();
 			setFrequencyHz(materialStereo, 1000., 2);
-			setReso(.25);
+			setReso(.25, 2);
 		}
 
 		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo, double** samples, const MidiBuffer& midi,
 			const arch::XenManager& xen, double reso, double transposeSemi,
 			int numChannels, int numSamples) noexcept
 		{
-			setReso(reso);
+			setReso(reso, numChannels);
 			process
 			(
 				materialStereo, samples, midi, xen,
@@ -82,8 +82,8 @@ namespace dsp
 					{
 						const auto fc = math::freqHzToFc(freqFilter, sampleRate);
 						auto& resonator = resonators[i];
-						resonator.setCutoffFc(fc);
-						resonator.update();
+						resonator.setCutoffFc(fc, ch);
+						resonator.update(ch);
 					}
 					else
 					{
@@ -97,22 +97,23 @@ namespace dsp
 		void ResonatorBank::updateFreqRatios(const MaterialDataStereo& materialStereo, int numChannels) noexcept
 		{
 			for (auto ch = 0; ch < numChannels; ++ch)
-				updateFreqRatios(materialStereo[ch], numFiltersBelowNyquist[ch]);
+				updateFreqRatios(materialStereo[ch], numFiltersBelowNyquist[ch], ch);
 		}
 
-		void ResonatorBank::setReso(double reso) noexcept
+		void ResonatorBank::setReso(double reso, int numChannels) noexcept
 		{
 			const auto bw = calcBandwidthFc(reso, sampleRateInv);
 			gain = 1. + Tau * reso * reso;
-			for (auto i = 0; i < NumFilters; ++i)
-			{
-				auto& resonator = resonators[i];
-				resonator.setBandwidth(bw);
-				resonator.update();
-			}
+			for(auto ch = 0; ch < numChannels; ++ch)
+				for (auto i = 0; i < NumFilters; ++i)
+				{
+					auto& resonator = resonators[i];
+					resonator.setBandwidth(bw, ch);
+					resonator.update(ch);
+				}
 		}
 
-		void ResonatorBank::updateFreqRatios(const MaterialData& material, int& nfbn) noexcept
+		void ResonatorBank::updateFreqRatios(const MaterialData& material, int& nfbn, int ch) noexcept
 		{
 			for (auto i = 0; i < NumFilters; ++i)
 			{
@@ -122,8 +123,8 @@ namespace dsp
 				{
 					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
 					auto& resonator = resonators[i];
-					resonator.setCutoffFc(fc);
-					resonator.update();
+					resonator.setCutoffFc(fc, ch);
+					resonator.update(ch);
 				}
 				else
 				{
@@ -134,8 +135,8 @@ namespace dsp
 			nfbn = NumFilters;
 		}
 
-		void ResonatorBank::process(const MaterialDataStereo& materialStereo, double** samples, const MidiBuffer& midi,
-			const arch::XenManager& xen, double transposeSemi,
+		void ResonatorBank::process(const MaterialDataStereo& materialStereo, double** samples,
+			const MidiBuffer& midi, const arch::XenManager& xen, double transposeSemi,
 			int numChannels, int numSamples) noexcept
 		{
 			static constexpr double PB = 0x3fff;
@@ -200,7 +201,11 @@ namespace dsp
 					const auto dry = smpls[i];
 					auto wet = 0.;
 					for (auto f = 0; f < nfbn; ++f)
-						wet += resonators[f](dry, ch) * material.getMag(f) * gain;
+					{
+						auto& resonator = resonators[f];
+						const auto bpY = resonator(dry, ch) * material.getMag(f) * gain;
+						wet += bpY;
+					}
 					smpls[i] = wet;
 				}
 			}

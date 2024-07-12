@@ -147,6 +147,8 @@
             <FILE id="AbgITi" name="flanger.cpp" compile="1" resource="0" file="Source/audio/dsp/flanger/flanger.cpp"/>
             <FILE id="rG8yVj" name="flanger.h" compile="0" resource="0" file="Source/audio/dsp/flanger/flanger.h"/>
           </GROUP>
+          <FILE id="lvOupd" name="Allpass.cpp" compile="1" resource="0" file="Source/audio/dsp/Allpass.cpp"/>
+          <FILE id="t6mcvM" name="Allpass.h" compile="0" resource="0" file="Source/audio/dsp/Allpass.h"/>
           <FILE id="AG7iE0" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
           <FILE id="Vqq7T8" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
           <FILE id="yCB0ii" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>

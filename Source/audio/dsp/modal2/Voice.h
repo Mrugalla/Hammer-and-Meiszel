@@ -245,7 +245,7 @@ namespace dsp
 							const auto ratioRange = ratio1 - ratio0;
 							const auto ratio = ratio0 + blendVal * ratioRange;
 							material[i].ratio = ratio;
-							/*
+
 							// SPREIZUNG
 							material[i].ratio *= sprezi;
 
@@ -255,12 +255,10 @@ namespace dsp
 								const auto frac = std::floor(r) - r;
 								material[i].ratio += harmVal * frac;
 							}
-							*/
 						}
 					}
 				}
 				
-				/*
 				if (kraftBreite == 0.)
 					kraftVals[0] = kraftVals[1] = math::limit(-1., 1., kraft);
 				else
@@ -285,7 +283,6 @@ namespace dsp
 						}
 					}
 				}
-				*/
 				
 				resonatorBank.updateFreqRatios(materialStereo, numChannels);
 				wantsMaterialUpdate = false;
@@ -301,5 +298,9 @@ todo:
 implement material parameter smoothing
 optimize kraft, weil der braucht kein update von den frequency ratios
 alle breite parameter genauer betrachten
+	machen sie bereits das richtige?
+mach spreizungbreite statt harmoniebreite
+	weil wenn man harmonie will, will mans eh überall
+	aber spreizung könnte unterschiedlich das licht verteilen
 
 */

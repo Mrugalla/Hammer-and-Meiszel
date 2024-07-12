@@ -9,11 +9,11 @@ namespace math
 	using Point = juce::Point<int>;
 	using PointF = juce::Point<float>;
 	
-    static constexpr float Tau = 6.28318530718f;
-    static constexpr float Pi = 3.14159265359f;
-    static constexpr float PiInv = 1.f / Pi;
-    static constexpr float PiHalf = Pi * .5f;
-    static constexpr float PiHalfInv = 1.f / PiHalf;
+    static constexpr double Tau = 6.28318530718;
+    static constexpr double Pi = 3.14159265359;
+    static constexpr double PiInv = 1. / Pi;
+    static constexpr double PiHalf = Pi * .5;
+    static constexpr double PiHalfInv = 1. / PiHalf;
 
     template<typename Float>
     inline Float limit(Float min, Float max, Float x) noexcept

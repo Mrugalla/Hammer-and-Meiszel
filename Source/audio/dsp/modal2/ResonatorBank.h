@@ -38,8 +38,8 @@ namespace dsp
 			// materialStereo, numChannels
 			void updateFreqRatios(const MaterialDataStereo&, int) noexcept;
 
-			// bw
-			void setReso(double) noexcept;
+			// bw, numChannels
+			void setReso(double, int) noexcept;
 
 		private:
 			ResonatorArray resonators;
@@ -47,8 +47,8 @@ namespace dsp
 			double freqHz, sampleRate, sampleRateInv, nyquist, gain;
 			std::array<int, 2> numFiltersBelowNyquist;
 
-			// material, numFiltersBelowNyquist
-			void updateFreqRatios(const MaterialData&, int&) noexcept;
+			// material, numFiltersBelowNyquist, ch
+			void updateFreqRatios(const MaterialData&, int&, int) noexcept;
 
 			/* materialStereo, samples, midi, xen, transposeSemi, numChannels, numSamples */
 			void process(const MaterialDataStereo&, double**, const MidiBuffer&,
