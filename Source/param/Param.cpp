@@ -71,9 +71,9 @@ namespace param
 		case PID::ModalBlendBreite: return "Modal Blend Breite";
 		case PID::ModalSpreizung: return "Modal Spreizung";
 		case PID::ModalSpreizungEnv: return "Modal Spreizung Env";
+		case PID::ModalSpreizungBreite: return "Modal Spreizung Breite";
 		case PID::ModalHarmonie: return "Modal Harmonie";
 		case PID::ModalHarmonieEnv: return "Modal Harmonie Env";
-		case PID::ModalHarmonieBreite: return "Modal Harmonie Breite";
 		case PID::ModalKraft: return "Modal Kraft";
 		case PID::ModalKraftEnv: return "Modal Kraft Env";
 		case PID::ModalResonanz: return "Modal Resonanz";
@@ -160,9 +160,9 @@ namespace param
 		case PID::ModalBlendBreite: return "The stereo width of the modal breite.";
 		case PID::ModalSpreizung: return "Spreads or shrinks the resonators' frequency ratios.";
 		case PID::ModalSpreizungEnv: return "The envelope generator's depth on the modal spreizung.";
+		case PID::ModalSpreizungBreite: return "The stereo width of the modal spreizung.";
 		case PID::ModalHarmonie: return "Harmonizes the resonators' frequency ratios towards the harmonic series.";
 		case PID::ModalHarmonieEnv: return "The envelope generator's depth on the modal harmonie.";
-		case PID::ModalHarmonieBreite: return "The stereo width of the modal harmonie.";
 		case PID::ModalKraft: return "Saturates the resonators' magnitude values.";
 		case PID::ModalKraftEnv: return "The envelope generator's depth on the modal kraft.";
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
@@ -1355,9 +1355,9 @@ namespace param
 		params.push_back(makeParam(PID::ModalBlendBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalSpreizung, 0.f, makeRange::lin(SpreizungMin, SpreizungMax)));
 		params.push_back(makeParam(PID::ModalSpreizungEnv, 0.f, makeRange::lin(SpreizungMin * 2., SpreizungMax * 2.)));
+		params.push_back(makeParam(PID::ModalSpreizungBreite, 0.f, makeRange::lin(SpreizungMin * 2., SpreizungMax * 2.)));
 		params.push_back(makeParam(PID::ModalHarmonie, 0.f));
 		params.push_back(makeParam(PID::ModalHarmonieEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalHarmonieBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalKraft, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalKraftEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::ModalResonanz, .6f));

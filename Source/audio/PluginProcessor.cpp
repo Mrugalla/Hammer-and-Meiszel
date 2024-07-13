@@ -11,7 +11,6 @@ namespace audio
 		autoMPE(),
 		voiceSplit(),
 		parallelProcessor(),
-		//modalFilter(xen),
 		modalFilter(),
 		flanger(xen),
 		editorExists(false)
@@ -67,8 +66,8 @@ namespace audio
 		const auto& modalBlendBreiteParam = params(PID::ModalBlendBreite);
 		const auto modalBlendBreite = static_cast<double>(modalBlendBreiteParam.getValModDenorm());
 
-		const auto& modalHarmonieBreiteParam = params(PID::ModalHarmonieBreite);
-		const auto modalHarmonieBreite = static_cast<double>(modalHarmonieBreiteParam.getValModDenorm());
+		const auto& modalSpreizungBreiteParam = params(PID::ModalSpreizungBreite);
+		const auto modalSpreizungBreite = static_cast<double>(modalSpreizungBreiteParam.getValModDenorm());
 
 		const auto& modalKraftBreiteParam = params(PID::ModalKraftBreite);
 		const auto modalKraftBreite = static_cast<double>(modalKraftBreiteParam.getValModDenorm());
@@ -129,7 +128,7 @@ namespace audio
 					{
 						modalBlend, modalSpreizung, modalHarmonie, modalKraft,
 						modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv,
-						modalBlendBreite, modalHarmonieBreite, modalKraftBreite
+						modalBlendBreite, modalSpreizungBreite, modalKraftBreite
 					},
 					modalReso, modalSemi,
 					numChannels, numSamples,

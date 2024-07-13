@@ -12,7 +12,7 @@ namespace dsp
 			{
 				Parameters(double _blend = -420., double _spreizung = 0., double _harmonie = 0., double _kraft = 0.,
 					double _blendEnv = 0., double _spreizungEnv = 0., double _harmonieEnv = 0., double _kraftEnv = 0.,
-					double _blendBreite = 0., double _harmonieBreite = 0., double _kraftBreite = 0.) :
+					double _blendBreite = 0., double _spreizungBreite = 0., double _kraftBreite = 0.) :
 					blend(_blend),
 					spreizung(_spreizung),
 					harmonie(_harmonie),
@@ -22,7 +22,7 @@ namespace dsp
 					harmonieEnv(_harmonieEnv),
 					kraftEnv(_kraftEnv),
 					blendBreite(_blendBreite),
-					harmonieBreite(_harmonieBreite),
+					spreizungBreite(_spreizungBreite),
 					kraftBreite(_kraftBreite)
 				{}
 
@@ -33,13 +33,13 @@ namespace dsp
 						harmonie != other.harmonie ||
 						kraft != other.kraft ||
 						blendBreite != other.blendBreite ||
-						harmonieBreite != other.harmonieBreite ||
+						spreizungBreite != other.spreizungBreite ||
 						kraftBreite != other.kraftBreite;
 				}
 
 				double blend, spreizung, harmonie, kraft;
 				double blendEnv, spreizungEnv, harmonieEnv, kraftEnv;
-				double blendBreite, harmonieBreite, kraftBreite;
+				double blendBreite, spreizungBreite, kraftBreite;
 			};
 
 			Voice(const EnvelopeGenerator::Parameters& envGenParams) :
@@ -177,7 +177,7 @@ namespace dsp
 				const auto kraft = _parameters.kraft + kraftEnv;
 
 				const auto blendBreite = _parameters.blendBreite;
-				const auto harmonieBreite = _parameters.harmonieBreite;
+				const auto spreizungBreite = _parameters.spreizungBreite;
 				const auto kraftBreite = _parameters.kraftBreite;
 
 				if(!wantsMaterialUpdate)
@@ -186,7 +186,7 @@ namespace dsp
 						parameters.harmonie == harmonie &&
 						parameters.kraft == kraft &&
 						parameters.blendBreite == blendBreite &&
-						parameters.harmonieBreite == harmonieBreite &&
+						parameters.spreizungBreite == spreizungBreite &&
 						parameters.kraftBreite == kraftBreite)
 						return;
 				
@@ -195,10 +195,10 @@ namespace dsp
 				parameters.harmonie = harmonie;
 				parameters.kraft = kraft;
 				parameters.blendBreite = blendBreite;
-				parameters.harmonieBreite = harmonieBreite;
+				parameters.spreizungBreite = spreizungBreite;
 				parameters.kraftBreite = kraftBreite;
 
-				double blendVals[2], harmVals[2], kraftVals[2];
+				double blendVals[2], spreizVals[2], kraftVals[2];
 
 				if (blendBreite == 0.)
 					blendVals[0] = blendVals[1] = math::limit(0., 1., blend);
@@ -208,14 +208,18 @@ namespace dsp
 					blendVals[1] = math::limit(0., 1., blend + blendBreite);
 				}
 
-				const auto sprezi = math::limit(SpreizungMin, SpreizungMax, std::exp(spreizung));
-
-				if (harmonieBreite == 0.)
-					harmVals[0] = harmVals[1] = math::limit(0., 1., harmonie);
+				if (spreizungBreite == 0.)
+				{
+					const auto sprezi = math::limit(SpreizungMin, SpreizungMax, std::exp(spreizung));
+					spreizVals[0] = spreizVals[1] = math::limit(0., 1., sprezi);
+				}
+					
 				else
 				{
-					harmVals[0] = math::limit(0., 1., harmonie - harmonieBreite);
-					harmVals[1] = math::limit(0., 1., harmonie + harmonieBreite);
+					const auto sprezi0 = std::exp(spreizung - spreizungBreite);
+					const auto sprezi1 = std::exp(spreizung + spreizungBreite);
+					spreizVals[0] = math::limit(SpreizungMin, SpreizungMax, sprezi0);
+					spreizVals[1] = math::limit(SpreizungMin, SpreizungMax, sprezi1);
 				}
 
 				{
@@ -226,7 +230,7 @@ namespace dsp
 					{
 						auto& material = materialStereo[ch];
 						const auto blendVal = blendVals[ch];
-						const auto harmVal = harmVals[ch];
+						const auto spreizVal = spreizVals[ch];
 
 						for (auto i = 0; i < NumFilters; ++i)
 						{
@@ -247,20 +251,23 @@ namespace dsp
 							material[i].ratio = ratio;
 
 							// SPREIZUNG
-							material[i].ratio *= sprezi;
+							material[i].ratio *= spreizVal;
 
 							// HARMONIE
 							{
 								const auto r = material[i].ratio;
 								const auto frac = std::floor(r) - r;
-								material[i].ratio += harmVal * frac;
+								material[i].ratio += harmonie * frac;
 							}
 						}
 					}
 				}
 				
 				if (kraftBreite == 0.)
-					kraftVals[0] = kraftVals[1] = math::limit(-1., 1., kraft);
+				{
+					const auto kkb = (math::tanhApprox(4. * kraft) + 1.) * .5;
+					kraftVals[0] = kraftVals[1] = math::limit(-1., 1., kkb);
+				}
 				else
 				{
 					const auto kb0 = kraft - kraftBreite;
@@ -299,8 +306,12 @@ implement material parameter smoothing
 optimize kraft, weil der braucht kein update von den frequency ratios
 alle breite parameter genauer betrachten
 	machen sie bereits das richtige?
-mach spreizungbreite statt harmoniebreite
-	weil wenn man harmonie will, will mans eh überall
-	aber spreizung könnte unterschiedlich das licht verteilen
+
+kraft is buggy af around 0% kraft
+	wird merkwürdig leise und so
+
+wenn spreizung tief liegt und harmonie hoch kann spreizung-modulation sound explodieren lassen
+	minimal frequenz anheben?
+	parameter smoothing?
 
 */
