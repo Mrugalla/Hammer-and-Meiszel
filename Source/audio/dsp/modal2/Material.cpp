@@ -393,6 +393,84 @@ namespace dsp
 				peakIndexes, numFilters, true, isLog, sampleRate);
 		}
 
+		// MATERIALDATA
+		
+		MaterialData::MaterialData() :
+			data()
+		{}
+
+		PeakInfo& MaterialData::operator[](int i) noexcept
+		{
+			return data[i];
+		}
+
+		const PeakInfo& MaterialData::operator[](int i) const noexcept
+		{
+			return data[i];
+		}
+
+		double MaterialData::getMag(int i) const noexcept
+		{
+			return data[i].mag;
+		}
+
+		double MaterialData::getRatio(int i) const noexcept
+		{
+			return data[i].ratio;
+		}
+
+		void MaterialData::copy(const MaterialData& m) noexcept
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				data[i].mag = m.data[i].mag;
+				data[i].ratio = m.data[i].ratio;
+			}
+		}
+
+		// MATERIALDATASTEREO
+		 
+		MaterialDataStereo::MaterialDataStereo() :
+			data()
+		{}
+
+		MaterialData& MaterialDataStereo::operator[](int ch) noexcept
+		{
+			return data[ch];
+		}
+
+		const MaterialData& MaterialDataStereo::operator[](int ch) const noexcept
+		{
+			return data[ch];
+		}
+
+		PeakInfo& MaterialDataStereo::operator()(int ch, int i) noexcept
+		{
+			return data[ch][i];
+		}
+
+		const PeakInfo& MaterialDataStereo::operator()(int ch, int i) const noexcept
+		{
+			return data[ch][i];
+		}
+
+		double MaterialDataStereo::getMag(int ch, int i) const noexcept
+		{
+			return data[ch][i].mag;
+		}
+
+		double MaterialDataStereo::getRatio(int ch, int i) const noexcept
+		{
+			return data[ch][i].ratio;
+		}
+
+		void MaterialDataStereo::copy(const MaterialDataStereo& m, int numChannels) noexcept
+		{
+			data[0].copy(m.data[0]);
+			if (numChannels == 2)
+				data[1].copy(m.data[1]);
+		}
+
 		// GENERATE
 
 		void generateSine(Material& material)

@@ -14,84 +14,45 @@ namespace dsp
 
 		struct MaterialData
 		{
-			MaterialData() :
-				data()
-			{}
+			MaterialData();
 
-			PeakInfo& operator[](int i) noexcept
-			{
-				return data[i];
-			}
+			PeakInfo& operator[](int) noexcept;
 
-			const PeakInfo& operator[](int i) const noexcept
-			{
-				return data[i];
-			}
+			const PeakInfo& operator[](int) const noexcept;
 
-			double getMag(int i) const noexcept
-			{
-				return data[i].mag;
-			}
+			double getMag(int) const noexcept;
 
-			double getRatio(int i) const noexcept
-			{
-				return data[i].ratio;
-			}
+			double getRatio(int) const noexcept;
 
-			void copy(const MaterialData& m) noexcept
-			{
-				for (auto i = 0; i < NumFilters; ++i)
-				{
-					data[i].mag = m.data[i].mag;
-					data[i].ratio = m.data[i].ratio;
-				}
-			}
+			void copy(const MaterialData&) noexcept;
 		private:
 			std::array<PeakInfo, NumFilters> data;
 		};
 
 		struct MaterialDataStereo
 		{
-			MaterialDataStereo() :
-				data()
-			{}
+			MaterialDataStereo();
 
-			MaterialData& operator[](int ch) noexcept
-			{
-				return data[ch];
-			}
+			// ch
+			MaterialData& operator[](int) noexcept;
 
-			const MaterialData& operator[](int ch) const noexcept
-			{
-				return data[ch];
-			}
+			// ch
+			const MaterialData& operator[](int) const noexcept;
 
-			PeakInfo& operator()(int ch, int i) noexcept
-			{
-				return data[ch][i];
-			}
+			// ch,i
+			PeakInfo& operator()(int, int) noexcept;
 
-			const PeakInfo& operator()(int ch, int i) const noexcept
-			{
-				return data[ch][i];
-			}
+			// ch,i
+			const PeakInfo& operator()(int, int) const noexcept;
 
-			double getMag(int ch, int i) const noexcept
-			{
-				return data[ch][i].mag;
-			}
+			// ch,i
+			double getMag(int, int) const noexcept;
 
-			double getRatio(int ch, int i) const noexcept
-			{
-				return data[ch][i].ratio;
-			}
+			// ch,i
+			double getRatio(int, int) const noexcept;
 
-			void copy(const MaterialDataStereo& m, int numChannels) noexcept
-			{
-				data[0].copy(m.data[0]);
-				if(numChannels == 2)
-					data[1].copy(m.data[1]);
-			}
+			// other, numChannels
+			void copy(const MaterialDataStereo&, int) noexcept;
 		private:
 			std::array<MaterialData, 2> data;
 		};
