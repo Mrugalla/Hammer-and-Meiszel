@@ -355,7 +355,7 @@ namespace gui
 		const auto dragDist = ((mouse.position - dragXY) * speed).toDouble();
 
 		const auto status = material.status.load();
-		const auto sensitive = mouse.mods.isShiftDown();
+		const auto sensitive = juce::ComponentPeer::getCurrentModifiersRealtime().isShiftDown();
 		const auto yDepth = .4f * (sensitive ? Sensitive : 1.f);
 		const auto xDepth = yDepth * freqRatioRange * .5f;
 

@@ -6,8 +6,8 @@ namespace gui
 	struct GenAniComp :
 		public Comp
 	{
-		GenAniComp(Utils& u) :
-			Comp(u, "If this thing makes the plugin lag, click on it to disable it globally for this user!"),
+		GenAniComp(Utils& u, String&& _tooltip) :
+			Comp(u, _tooltip),
 			img(),
 			onResize([](){})
 		{
@@ -60,7 +60,7 @@ namespace gui
 		static constexpr float NewBranchMinY = .6f;
 
 		GenAniGrowTrees(Utils& u) :
-			GenAniComp(u),
+			GenAniComp(u, "Get mesmerized by these beautiful growing branches!"),
 			rand(),
 			col(juce::uint8(rand.nextInt()), juce::uint8(rand.nextInt()), juce::uint8(rand.nextInt())),
 			pos(),

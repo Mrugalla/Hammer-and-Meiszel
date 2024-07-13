@@ -81,7 +81,7 @@ namespace gui
         lastPos = nPosition;
 
         dragXY -= posShift;
-        const auto shiftDown = mouse.mods.isShiftDown();
+        const auto shiftDown = juce::ComponentPeer::getCurrentModifiersRealtime().isShiftDown();
         const auto dragSpeed = shiftDown ? SensitiveDrag : 1.f;
         const auto dragOffset = (mouse.position - dragXY) * dragSpeed;
         onDrag(dragOffset, mouse);
@@ -104,8 +104,9 @@ namespace gui
         const auto deltaY = wheel.deltaY;
         const auto deltaYSqr = deltaY * deltaY;
         const bool isTrackPad = deltaYSqr < .0549316f;
+        const auto shift = juce::ComponentPeer::getCurrentModifiersRealtime().isShiftDown();
         auto speed = isTrackPad ? -deltaY : WheelSpeed * (deltaY > 0.f ? 1.f : -1.f);
-        speed *= mouse.mods.isShiftDown() ? SensitiveDrag : 1.f;
+        speed *= shift ? SensitiveDrag : 1.f;
         speed *= wheel.isReversed ? -1.f : 1.f;
         dragXY.y = speed;
 
