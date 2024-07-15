@@ -307,9 +307,6 @@ optimize kraft, weil der braucht kein update von den frequency ratios
 alle breite parameter genauer betrachten
 	machen sie bereits das richtige?
 
-kraft is buggy af around 0% kraft
-	wird merkwürdig leise und so
-
 wenn spreizung tief liegt und harmonie hoch kann spreizung-modulation sound explodieren lassen
 	minimal frequenz anheben?
 	parameter smoothing?
