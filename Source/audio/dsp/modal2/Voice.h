@@ -1,6 +1,7 @@
 #pragma once
 #include "ResonatorBank.h"
 #include "../EnvelopeGenerator.h"
+#include "../PRM.h"
 
 namespace dsp
 {
@@ -30,20 +31,6 @@ namespace dsp
 					resoBreite(_resoBreite)
 				{}
 
-				const bool operator!=(const Parameters& other) const noexcept
-				{
-					return blend != other.blend ||
-						spreizung != other.spreizung ||
-						harmonie != other.harmonie ||
-						kraft != other.kraft ||
-						reso != other.reso ||
-						blendBreite != other.blendBreite ||
-						spreizungBreite != other.spreizungBreite ||
-						harmonieBreite != other.harmonieBreite ||
-						kraftBreite != other.kraftBreite ||
-						resoBreite != other.resoBreite;
-				}
-
 				double blend, spreizung, harmonie, kraft, reso;
 				double blendEnv, spreizungEnv, harmonieEnv, kraftEnv, resoEnv;
 				double blendBreite, spreizungBreite, harmonieBreite, kraftBreite, resoBreite;
@@ -52,6 +39,7 @@ namespace dsp
 			Voice(const EnvelopeGenerator::Parameters& envGenParams) :
 				materialStereo(),
 				parameters(),
+				blendPRM(), spreizungPRM(), harmoniePRM(), kraftPRM(), resoPRM(),
 				env(envGenParams),
 				envBuffer(),
 				resonatorBank(),
@@ -62,6 +50,12 @@ namespace dsp
 			{
 				env.prepare(sampleRate);
 				resonatorBank.prepare(materialStereo, sampleRate);
+				const auto smoothLenMs = 4.;
+				blendPRM.prepare(sampleRate, smoothLenMs);
+				spreizungPRM.prepare(sampleRate, smoothLenMs);
+				harmoniePRM.prepare(sampleRate, smoothLenMs);
+				kraftPRM.prepare(sampleRate, smoothLenMs);
+				resoPRM.prepare(sampleRate, smoothLenMs);
 			}
 
 			void operator()(const DualMaterial& dualMaterial, const Parameters& _parameters,
@@ -104,6 +98,7 @@ namespace dsp
 		private:
 			MaterialDataStereo materialStereo;
 			Parameters parameters;
+			PRMBlockStereoD blendPRM, spreizungPRM, harmoniePRM, kraftPRM, resoPRM;
 			EnvelopeGenerator env;
 			std::array<double, BlockSize> envBuffer;
 			ResonatorBank resonatorBank;
@@ -192,16 +187,28 @@ namespace dsp
 				const auto resoBreite = _parameters.resoBreite;
 
 				parameters.reso = reso;
-				double resoVals[2];
-				if(resoBreite == 0.)
-					resoVals[0] = resoVals[1] = math::limit(0., 1., reso);
+				if (resoBreite == 0.)
+				{
+					const auto resi = math::limit(0., 1., reso);
+					const auto resoInfoL = resoPRM(resi, 0);
+					for (auto ch = 0; ch < numChannels; ++ch)
+						resonatorBank.setReso(resoInfoL, ch);
+				}
 				else
 				{
-					resoVals[0] = math::limit(0., 1., reso - resoBreite);
-					resoVals[1] = math::limit(0., 1., reso + resoBreite);
+					double resiVals[2] =
+					{
+						math::limit(0., 1., reso - resoBreite),
+						math::limit(0., 1., reso + resoBreite)
+					};
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						const auto resoInfo = resoPRM(resiVals[ch], ch);
+						resonatorBank.setReso(resoInfo, ch);
+					}
 				}
-				for (auto ch = 0; ch < numChannels; ++ch)
-					resonatorBank.setReso(resoVals[ch], ch);
+				
+				
 
 				if(!wantsMaterialUpdate)
 					if(parameters.blend == blend &&
@@ -334,10 +341,9 @@ namespace dsp
 
 todo:
 
-implement material parameter smoothing
+finish implement parameter smoothing
 optimize kraft, weil der braucht kein update von den frequency ratios
-alle breite parameter genauer betrachten
-	machen sie bereits das richtige?
+harmonie approached zu spät harmonisch wertvollen bereich
 
 wenn spreizung tief liegt und harmonie hoch kann spreizung-modulation sound explodieren lassen
 	minimal frequenz anheben?

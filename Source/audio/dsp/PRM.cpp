@@ -22,6 +22,12 @@ namespace dsp
 			SIMD::fill(buf, val, numSamples);
 	}
 
+	template<typename Float>
+	PRMInfo<Float>::operator Float() const noexcept
+	{
+		return val;
+	}
+
 	template struct PRMInfo<float>;
 	template struct PRMInfo<double>;
 
@@ -76,4 +82,64 @@ namespace dsp
 	template struct PRM<double>;
 
 	//
+
+	template<typename Float>
+	PRMBlock<Float>::PRMBlock(Float _startVal) :
+		startVal(_startVal),
+		lp(startVal),
+		info(nullptr, startVal, false)
+	{}
+
+	template<typename Float>
+	void PRMBlock<Float>::prepare(Float sampleRate, Float smoothLenMs) noexcept
+	{
+		const auto blockSize = static_cast<Float>(BlockSize);
+		const auto smoothLenBlock = smoothLenMs / blockSize;
+		lp.makeFromDecayInMs(smoothLenBlock, sampleRate);
+	}
+
+	template<typename Float>
+	PRMInfo<Float> PRMBlock<Float>::operator()(Float x) noexcept
+	{
+		if (info.val != x)
+		{
+			info.smoothing = true;
+			info.val = lp(x);
+			if (info.val == x)
+				info.smoothing = false;
+		}
+		return info;
+	}
+
+	template<typename Float>
+	PRMBlock<Float>::operator Float() const noexcept
+	{
+		return info;
+	}
+
+	template struct PRMBlock<float>;
+	template struct PRMBlock<double>;
+
+	//
+
+	template<typename Float>
+	PRMBlockStereo<Float>::PRMBlockStereo(Float startVal) :
+		prms{ startVal, startVal }
+	{}
+
+	template<typename Float>
+	void PRMBlockStereo<Float>::prepare(Float sampleRate, Float smoothLenMs) noexcept
+	{
+		for (auto& prm : prms)
+			prm.prepare(sampleRate, smoothLenMs);
+	}
+
+	template<typename Float>
+	PRMInfo<Float> PRMBlockStereo<Float>::operator()(Float x, int ch) noexcept
+	{
+		return prms[ch](x);
+	}
+
+	template struct PRMBlockStereo<float>;
+	template struct PRMBlockStereo<double>;
 }
