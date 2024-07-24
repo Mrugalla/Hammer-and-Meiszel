@@ -4,6 +4,12 @@
 
 ~~~ todo ~~~
 
+ResonanzEnv ist noch nicht implementiert auf audio-seite
+    ich glaub resonanzbreite auch nicht
+
+vereinheitliche viele GUI aspekte um den workflow zu verbessern
+    zögere nicht!
+
 H&M Imagepflege
     sollten alle tooltips deutsch sein?
 

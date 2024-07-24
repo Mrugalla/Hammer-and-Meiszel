@@ -55,14 +55,6 @@ namespace gui
 			Label(utils),
 			Label(utils),
 			Label(utils),
-			Label(utils),
-            Label(utils),
-            Label(utils),
-            Label(utils),
-			Label(utils),
-            Label(utils),
-            Label(utils),
-            Label(utils),
 			Label(utils)
         },
         knobs
@@ -71,19 +63,7 @@ namespace gui
             Knob(utils),
             Knob(utils),
             Knob(utils),
-			Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils)
+			Knob(utils)
         },
         modDials
 		{
@@ -91,19 +71,7 @@ namespace gui
 			ModDial(utils),
 			ModDial(utils),
 			ModDial(utils),
-			ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-			ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils)
+			ModDial(utils)
 		},
         buttons
         {
@@ -112,6 +80,14 @@ namespace gui
             Button(utils),
             Button(utils),
             Button(utils)
+        },
+        modParams
+        {
+            HnMParam(utils),
+			HnMParam(utils),
+			HnMParam(utils),
+			HnMParam(utils),
+			HnMParam(utils)
         },
         materialViews
         {
@@ -314,91 +290,11 @@ namespace gui
 			m.setVisible(!m.isVisible());
 		};
 
-        const auto justModalSliders = Just::bottomRight;
-
-        auto& modalBlendLabel = get(kLabels::kModalBlend);
-		makeTextLabel(modalBlendLabel, "Blend", fontKnobs, justModalSliders, CID::Txt);
-		auto& modalBlendKnob = get(kKnobs::kModalBlend);
-		makeSlider(PID::ModalBlend, modalBlendKnob);
-		auto& blendModDial = getModDial(kKnobs::kModalBlend);
-        blendModDial.attach(PID::ModalBlend);
-        blendModDial.verticalDrag = false;
-		auto& modalBlendEnvKnob = get(kKnobs::kModalBlendEnv);
-		makeSlider(PID::ModalBlendEnv, modalBlendEnvKnob);
-		auto& modBlendEnvModDial = getModDial(kKnobs::kModalBlendEnv);
-		modBlendEnvModDial.attach(PID::ModalBlendEnv);
-		modBlendEnvModDial.verticalDrag = false;
-
-		auto& modalSpreizungLabel = get(kLabels::kModalSpreizung);
-		makeTextLabel(modalSpreizungLabel, "Spreizung", fontKnobs, justModalSliders, CID::Txt);
-		auto& modalSpreizungKnob = get(kKnobs::kModalSpreizung);
-		makeSlider(PID::ModalSpreizung, modalSpreizungKnob);
-		auto& spreizungModDial = getModDial(kKnobs::kModalSpreizung);
-		spreizungModDial.attach(PID::ModalSpreizung);
-		spreizungModDial.verticalDrag = false;
-		auto& modalSpreizungEnvKnob = get(kKnobs::kModalSpreizungEnv);
-		makeSlider(PID::ModalSpreizungEnv, modalSpreizungEnvKnob);
-		auto& spreizungEnvModDial = getModDial(kKnobs::kModalSpreizungEnv);
-		spreizungEnvModDial.attach(PID::ModalSpreizungEnv);
-		spreizungEnvModDial.verticalDrag = false;
-
-		auto& modalHarmonieLabel = get(kLabels::kModalHarmonie);
-		makeTextLabel(modalHarmonieLabel, "Harmonie", fontKnobs, justModalSliders, CID::Txt);
-		auto& modalHarmonieKnob = get(kKnobs::kModalHarmonie);
-		makeSlider(PID::ModalHarmonie, modalHarmonieKnob);
-		auto& harmonieModDial = getModDial(kKnobs::kModalHarmonie);
-		harmonieModDial.attach(PID::ModalHarmonie);
-		harmonieModDial.verticalDrag = false;
-		auto& modalHarmonieEnvKnob = get(kKnobs::kModalHarmonieEnv);
-		makeSlider(PID::ModalHarmonieEnv, modalHarmonieEnvKnob);
-		auto& harmonieEnvModDial = getModDial(kKnobs::kModalHarmonieEnv);
-		harmonieEnvModDial.attach(PID::ModalHarmonieEnv);
-		harmonieEnvModDial.verticalDrag = false;
-
-		auto& modalKraftLabel = get(kLabels::kModalKraft);
-		makeTextLabel(modalKraftLabel, "Kraft", fontKnobs, justModalSliders, CID::Txt);
-		auto& modalKraftKnob = get(kKnobs::kModalKraft);
-		makeSlider(PID::ModalKraft, modalKraftKnob);
-		auto& kraftModDial = getModDial(kKnobs::kModalKraft);
-		kraftModDial.attach(PID::ModalKraft);
-		kraftModDial.verticalDrag = false;
-		auto& modalKraftEnvKnob = get(kKnobs::kModalKraftEnv);
-		makeSlider(PID::ModalKraftEnv, modalKraftEnvKnob);
-		auto& kraftEnvModDial = getModDial(kKnobs::kModalKraftEnv);
-		kraftEnvModDial.attach(PID::ModalKraftEnv);
-		kraftEnvModDial.verticalDrag = false;
-
-		auto& modalResoLabel = get(kLabels::kModalReso);
-		makeTextLabel(modalResoLabel, "Resonanz", fontKnobs, justModalSliders, CID::Txt);
-		auto& modalResoKnob = get(kKnobs::kModalReso);
-		makeSlider(PID::ModalResonanz, modalResoKnob);
-		auto& resoModDial = getModDial(kKnobs::kModalReso);
-		resoModDial.attach(PID::ModalResonanz);
-		resoModDial.verticalDrag = false;
-
-        auto& blendBreiteLabel = get(kLabels::kModalBlendBreite);
-        makeTextLabel(blendBreiteLabel, "Blend Breite", fontKnobs, justModalSliders, CID::Txt);
-        auto& blendBreiteKnob = get(kKnobs::kModalBlendBreite);
-        makeSlider(PID::ModalBlendBreite, blendBreiteKnob);
-        auto& blendBreiteModDial = getModDial(kKnobs::kModalBlendBreite);
-        blendBreiteModDial.attach(PID::ModalBlendBreite);
-        blendBreiteModDial.verticalDrag = false;
-
-        auto& spreizungBreiteLabel = get(kLabels::kModalSpreizungBreite);
-        makeTextLabel(spreizungBreiteLabel, "Spreizung Breite", fontKnobs, justModalSliders, CID::Txt);
-        auto& spreizungBreiteKnob = get(kKnobs::kModalSpreizungBreite);
-        makeSlider(PID::ModalSpreizungBreite, spreizungBreiteKnob);
-        auto& spreizungBreiteModDial = getModDial(kKnobs::kModalSpreizungBreite);
-        spreizungBreiteModDial.attach(PID::ModalSpreizungBreite);
-        spreizungBreiteModDial.verticalDrag = false;
-
-		auto& kraftBreiteLabel = get(kLabels::kModalKraftBreite);
-		makeTextLabel(kraftBreiteLabel, "Kraft Breite", fontKnobs, justModalSliders, CID::Txt);
-		auto& kraftBreiteKnob = get(kKnobs::kModalKraftBreite);
-		makeSlider(PID::ModalKraftBreite, kraftBreiteKnob);
-		auto& kraftBreiteModDial = getModDial(kKnobs::kModalKraftBreite);
-		kraftBreiteModDial.attach(PID::ModalKraftBreite);
-		kraftBreiteModDial.verticalDrag = false;
+		modParams[0].init(*this, "Blend", PID::ModalBlend, PID::ModalBlendBreite, PID::ModalBlendEnv);
+		modParams[1].init(*this, "Spreizung", PID::ModalSpreizung, PID::ModalSpreizungBreite, PID::ModalSpreizungEnv);
+		modParams[2].init(*this, "Harmonie", PID::ModalHarmonie, PID::ModalHarmonieBreite, PID::ModalHarmonieEnv);
+		modParams[3].init(*this, "Kraft", PID::ModalKraft, PID::ModalKraftBreite, PID::ModalKraftEnv);
+		modParams[4].init(*this, "Resonanz", PID::ModalResonanz, PID::ModalResonanzBreite, PID::ModalResonanzEnv);
 
         const auto& user = *audioProcessor.state.props.getUserSettings();
         addChildComponent(toast);
@@ -554,6 +450,27 @@ namespace gui
         for (auto i = 0; i < materialViews.size(); ++i)
             materialViews[i].setBounds(materialBounds);
 
+		const auto modalParametersBounds = layout(ModParamsX, ModParamsY, ModParamsWidth, ModParamsHeight)
+			.reduced(utils.thicc * 2.f);
+        {
+            const auto x = modalParametersBounds.getX();
+			const auto w = modalParametersBounds.getWidth();
+			const auto numParamsInv = 1.f / static_cast<float>(modParams.size());
+            const auto h = modalParametersBounds.getHeight() * numParamsInv;
+
+            auto y = modalParametersBounds.getY();
+            for (auto i = 0; i < modParams.size(); ++i)
+            {
+                auto modalParamBounds = BoundsF(x, y, w, h).reduced(utils.thicc);
+                modParams[i].setBounds(modalParamBounds);
+				y += h;
+            }
+        }
+        LabelGroup modalKnobLabels;
+        for(auto& m: modParams)
+            modalKnobLabels.add(m.label);
+        modalKnobLabels.setMaxHeight();
+
         layout.place(genAni, GenAniX, GenAniY, GenAniWidth, GenAniHeight);
         layout.place(tooltip, 0, TooltipY, GridNumX, TooltipHeight);
 
@@ -595,94 +512,6 @@ namespace gui
         ++modalY;
 
 		materialDropDown.setBounds(materialBounds);
-
-        modalY += materialHeight;
-
-        const auto modalLabelWidth = 2;
-		const auto modalKnobX = modalX + modalLabelWidth;
-		const auto modalKnobWidth = 3;
-		const auto modalEnvX = modalKnobX + modalKnobWidth + 1;
-        const auto modalEnvWidth = 2;
-
-        layout.place(get(kLabels::kModalBlend), modalX, modalY, modalLabelWidth, 1);
-        layout.place(get(kKnobs::kModalBlend), modalKnobX, modalY, modalKnobWidth, 1);
-        layout.place(get(kKnobs::kModalBlendEnv), modalEnvX, modalY, modalEnvWidth, 1);
-
-		++modalY;
-
-		layout.place(get(kLabels::kModalSpreizung), modalX, modalY, modalLabelWidth, 1);
-		layout.place(get(kKnobs::kModalSpreizung), modalKnobX, modalY, modalKnobWidth, 1);
-		layout.place(get(kKnobs::kModalSpreizungEnv), modalEnvX, modalY, modalEnvWidth, 1);
-
-		++modalY;
-
-
-		layout.place(get(kLabels::kModalHarmonie), modalX, modalY, modalLabelWidth, 1);
-		layout.place(get(kKnobs::kModalHarmonie), modalKnobX, modalY, modalKnobWidth, 1);
-		layout.place(get(kKnobs::kModalHarmonieEnv), modalEnvX, modalY, modalEnvWidth, 1);
-
-        ++modalY;
-
-		layout.place(get(kLabels::kModalKraft), modalX, modalY, modalLabelWidth, 1);
-		layout.place(get(kKnobs::kModalKraft), modalKnobX, modalY, modalKnobWidth, 1);
-		layout.place(get(kKnobs::kModalKraftEnv), modalEnvX, modalY, modalEnvWidth, 1);
-
-        ++modalY;
-
-		layout.place(get(kLabels::kModalReso), modalX, modalY, modalLabelWidth, 1);
-		layout.place(get(kKnobs::kModalReso), modalKnobX, modalY, modalKnobWidth, 1);
-
-        ++modalY;
-
-        layout.place(get(kLabels::kModalBlendBreite), modalX, modalY, modalLabelWidth, 1);
-        layout.place(get(kKnobs::kModalBlendBreite), modalKnobX, modalY, modalKnobWidth, 1);
-
-        ++modalY;
-
-        layout.place(get(kLabels::kModalSpreizungBreite), modalX, modalY, modalLabelWidth, 1);
-        layout.place(get(kKnobs::kModalSpreizungBreite), modalKnobX, modalY, modalKnobWidth, 1);
-
-        ++modalY;
-
-		layout.place(get(kLabels::kModalKraftBreite), modalX, modalY, modalLabelWidth, 1);
-		layout.place(get(kKnobs::kModalKraftBreite), modalKnobX, modalY, modalKnobWidth, 1);
-
-        ++modalY;
-
-        LabelGroup envAmpLabels;
-        envAmpLabels.add(get(kLabels::kEnvAmpAtk));
-        envAmpLabels.add(get(kLabels::kEnvAmpDcy));
-        envAmpLabels.add(get(kLabels::kEnvAmpSus));
-        envAmpLabels.add(get(kLabels::kEnvAmpRls));
-        envAmpLabels.setMaxHeight();
-
-        LabelGroup modalKnobLabels;
-        modalKnobLabels.add(get(kLabels::kModalBlend));
-		modalKnobLabels.add(get(kLabels::kModalSpreizung));
-		modalKnobLabels.add(get(kLabels::kModalHarmonie));
-		modalKnobLabels.add(get(kLabels::kModalKraft));
-		modalKnobLabels.add(get(kLabels::kModalReso));
-        modalKnobLabels.add(get(kLabels::kModalBlendBreite));
-        modalKnobLabels.add(get(kLabels::kModalSpreizungBreite));
-		modalKnobLabels.add(get(kLabels::kModalKraftBreite));
-        modalKnobLabels.setMaxHeight();
-
-        locateAtKnob(getModDial(kKnobs::kEnvAmpAttack), get(kKnobs::kEnvAmpAttack));
-        locateAtKnob(getModDial(kKnobs::kEnvAmpDecay), get(kKnobs::kEnvAmpDecay));
-        locateAtKnob(getModDial(kKnobs::kEnvAmpSustain), get(kKnobs::kEnvAmpSustain));
-        locateAtKnob(getModDial(kKnobs::kEnvAmpRelease), get(kKnobs::kEnvAmpRelease));
-        locateAtSlider(getModDial(kKnobs::kModalBlend), get(kKnobs::kModalBlend));
-		locateAtSlider(getModDial(kKnobs::kModalSpreizung), get(kKnobs::kModalSpreizung));
-		locateAtSlider(getModDial(kKnobs::kModalHarmonie), get(kKnobs::kModalHarmonie));
-        locateAtSlider(getModDial(kKnobs::kModalKraft), get(kKnobs::kModalKraft));
-		locateAtSlider(getModDial(kKnobs::kModalReso), get(kKnobs::kModalReso));
-		locateAtSlider(getModDial(kKnobs::kModalBlendEnv), get(kKnobs::kModalBlendEnv));
-		locateAtSlider(getModDial(kKnobs::kModalSpreizungEnv), get(kKnobs::kModalSpreizungEnv));
-		locateAtSlider(getModDial(kKnobs::kModalHarmonieEnv), get(kKnobs::kModalHarmonieEnv));
-		locateAtSlider(getModDial(kKnobs::kModalKraftEnv), get(kKnobs::kModalKraftEnv));
-        locateAtSlider(getModDial(kKnobs::kModalBlendBreite), get(kKnobs::kModalBlendBreite));
-        locateAtSlider(getModDial(kKnobs::kModalSpreizungBreite), get(kKnobs::kModalSpreizungBreite));
-		locateAtSlider(getModDial(kKnobs::kModalKraftBreite), get(kKnobs::kModalKraftBreite));
         */
 
         auto& user = *audioProcessor.state.props.getUserSettings();

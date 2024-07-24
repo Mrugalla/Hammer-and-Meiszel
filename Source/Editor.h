@@ -9,6 +9,69 @@ namespace gui
 {
 	using AudioProcessorEditor = juce::AudioProcessorEditor;
 
+    struct HnMParam
+    {
+        HnMParam(Utils& u) :
+            layout(),
+			label(u),
+            param(u),
+            breite(u),
+            env(u),
+            paramMod(u),
+            breiteMod(u),
+            envMod(u)
+        {
+            layout.init
+            (
+                { 1, 3, 3, 3 },
+                { 1 }
+            );
+        }
+
+        void init(AudioProcessorEditor& editor, const String& name, PID pID, PID pIDBreite, PID pIDEnv)
+        {
+            editor.addAndMakeVisible(label);
+            editor.addAndMakeVisible(param);
+			editor.addAndMakeVisible(breite);
+            editor.addAndMakeVisible(env);
+            editor.addAndMakeVisible(paramMod);
+			editor.addAndMakeVisible(breiteMod);
+            editor.addAndMakeVisible(envMod);
+
+            const auto fontKnobs = font::dosisExtraBold();
+            const auto just = Just::bottomRight;
+
+            makeTextLabel(label, name, fontKnobs, just, CID::Txt);
+            makeSlider(pID, param);
+            makeSlider(pIDBreite, breite);
+            makeSlider(pIDEnv, env);
+            paramMod.attach(pID);
+			breiteMod.attach(pIDBreite);
+            envMod.attach(pIDEnv);
+            paramMod.verticalDrag = false;
+			breiteMod.verticalDrag = false;
+            envMod.verticalDrag = false;
+        }
+
+        void setBounds(BoundsF bounds)
+        {
+            layout.resized(bounds);
+
+            layout.place(label, 0, 0, 1, 1);
+			layout.place(param, 1.f, 0, .8f, 1);
+			layout.place(paramMod, 1.8f, 0, .2f, 1);
+			layout.place(breite, 2.f, 0, .8f, 1);
+			layout.place(breiteMod, 2.8f, 0, .2f, 1);
+			layout.place(env, 3.f, 0, .8f, 1);
+			layout.place(envMod, 3.8f, 0, .2f, 1);
+        }
+
+        Layout layout;
+        Label label;
+        Knob param, breite, env;
+        ModDial paramMod, breiteMod, envMod;
+    };
+
     struct Editor :
         public AudioProcessorEditor
     {
@@ -34,6 +97,8 @@ namespace gui
         static constexpr float FXChainBottom = FXChainY + FXChainHeight;
         static constexpr float FXChainRight = FXChainX + FXChainWidth;
 
+        static constexpr float TooltipY = -1 - TooltipHeight;
+
         static constexpr float ModuleX = FXChainX;
         static constexpr float ModuleWidth = FXChainWidth;
         static constexpr float ModuleHeight = SidePanelHeight - FXChainHeight;
@@ -56,13 +121,18 @@ namespace gui
         static constexpr float ModParamsTableTopX = ModMatEditorX;
         static constexpr float ModParamsTableTopY = ModMatEditorBottom;
         static constexpr float ModParamsTableTopWidth = ModMatEditorWidth;
+		static constexpr float ModParamsTableTopBottom = ModParamsTableTopY + ModParamsTableTopHeight;
+
+		static constexpr float ModParamsX = ModParamsTableTopX;
+		static constexpr float ModParamsY = ModParamsTableTopBottom;
+		static constexpr float ModParamsWidth = ModParamsTableTopWidth;
+		static constexpr float ModParamsBottom = TooltipY;
+		static constexpr float ModParamsHeight = ModParamsBottom - ModParamsY;
 
         static constexpr float GenAniX = -1 - SidePanelWidth;
         static constexpr float GenAniY = SidePanelMidY;
         static constexpr float GenAniWidth = SidePanelWidth;
         static constexpr float GenAniHeight = SidePanelHeight * .5f;
-
-        static constexpr float TooltipY = -1 - TooltipHeight;
 
         Editor(Processor&);
 
@@ -85,20 +155,13 @@ namespace gui
         enum class kLabels
         {
             kTitle, kDev, kTitleModal, kTitleFlanger, kTitleMacro,
-            kEnvAmpAtk, kEnvAmpDcy, kEnvAmpSus, kEnvAmpRls,
-            kModalBlend, kModalSpreizung, kModalHarmonie, kModalKraft, kModalReso,
-            kModalBlendBreite, kModalSpreizungBreite, kModalKraftBreite,
-            kNumLabels
+            kEnvAmpAtk, kEnvAmpDcy, kEnvAmpSus, kEnvAmpRls, kNumLabels
         };
 		static constexpr int NumLabels = static_cast<int>(kLabels::kNumLabels);
         std::array<Label, NumLabels> labels;
         enum class kKnobs
         {
-            kMacro, kEnvAmpAttack, kEnvAmpDecay, kEnvAmpSustain, kEnvAmpRelease,
-			kModalBlend, kModalSpreizung, kModalHarmonie, kModalKraft, kModalReso,
-            kModalBlendEnv, kModalSpreizungEnv, kModalHarmonieEnv, kModalKraftEnv,
-            kModalBlendBreite, kModalSpreizungBreite, kModalKraftBreite,
-            kNumKnobs
+            kMacro, kEnvAmpAttack, kEnvAmpDecay, kEnvAmpSustain, kEnvAmpRelease, kNumKnobs
         };
 		static constexpr int NumKnobs = static_cast<int>(kKnobs::kNumKnobs);
         std::array<Knob, NumKnobs> knobs;
@@ -107,6 +170,10 @@ namespace gui
 		static constexpr int NumButtons = static_cast<int>(kButtons::kNumButtons);
 		std::array<Button, NumButtons> buttons;
 		
+        enum class kModParams { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumModParams };
+		static constexpr int NumModParams = static_cast<int>(kModParams::kNumModParams);
+		std::array<HnMParam, NumModParams> modParams;
+
         std::array<ModalMaterialView, 2> materialViews;
         DropDownMenu materialDropDown;
 

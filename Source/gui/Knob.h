@@ -6,8 +6,8 @@ namespace gui
 	struct Knob :
 		public Comp
 	{
-        static constexpr float SensitiveDrag = .2f;
-        static constexpr float WheelSpeed = .02f;
+        static constexpr float SensitiveDrag = .15f;
+        static constexpr float WheelSpeed = .018f;
 
 		using Func = std::function<void()>;
 		using OnDrag = std::function<void(const PointF&, const Mouse&)>;
@@ -55,15 +55,11 @@ namespace gui
         // pID
         void attach(PID);
 
-        void resized() override;
-
         void paint(Graphics&) override;
 
     private:
         std::vector<Param*> prms;
-        BoundsF biasBounds;
         Path path;
-        float wOff;
         bool showBias;
     public:
         bool verticalDrag;

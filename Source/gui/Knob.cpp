@@ -141,9 +141,7 @@ namespace gui
     ModDial::ModDial(Utils& u) :
         Knob(u),
         prms(),
-        biasBounds(),
         path(),
-        wOff(0.f),
         showBias(false),
         verticalDrag(true)
     {
@@ -237,29 +235,28 @@ namespace gui
         attach(&pID, 1);
     }
 
-    void ModDial::resized()
-    {
-        const auto w = static_cast<float>(getWidth());
-        wOff = w * .2f;
-        biasBounds = getLocalBounds().toFloat().reduced(wOff);
-    }
-
     void ModDial::paint(Graphics& g)
     {
         const auto enterExitPhase = callbacks[kEnterExitCB].phase;
 
+        auto bounds = maxQuadIn(getLocalBounds().toFloat());
+
         g.setColour(getColour(CID::Mod));
-        g.fillEllipse(getLocalBounds().toFloat());
+        g.fillEllipse(bounds);
+
+        const auto w = static_cast<float>(bounds.getWidth());
+        const auto wOff = w * .2f;
+        bounds = bounds.reduced(wOff);
 
         path.clear();
         const auto& mainParam = *prms[0];
         const auto bias = mainParam.getModBias();
 
-        const auto left = biasBounds.getX();
-        const auto btm = biasBounds.getBottom();
-        const auto right = biasBounds.getRight();
-        const auto top = biasBounds.getY();
-        const auto width = biasBounds.getWidth();
+        const auto left = bounds.getX();
+        const auto btm = bounds.getBottom();
+        const auto right = bounds.getRight();
+        const auto top = bounds.getY();
+        const auto width = bounds.getWidth();
         auto y = Param::biased(btm, top, bias, 0.f);
         path.startNewSubPath(left, btm);
 
