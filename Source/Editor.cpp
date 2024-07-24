@@ -120,7 +120,7 @@ namespace gui
         },
         materialDropDown(utils)
     {
-        layout.initGrid(31, 18);
+        layout.initGrid(GridNumX, GridNumY);
         
         addAndMakeVisible(genAni);
         addAndMakeVisible(tooltip);
@@ -429,81 +429,94 @@ namespace gui
         g.fillAll(bgCol);
         
         const auto bounds = getLocalBounds().toFloat();
+        const auto thicc = utils.thicc;
 		Stroke stroke(utils.thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
         Path p;
 
-        // line between the 2 resynthesis modules
+        // title area
         {
-            p.startNewSubPath(layout(17, 2));
-            p.lineTo(layout(17, -1));
-        }
-
-        // line between the main section and the tree animation
-        {
-            p.startNewSubPath(layout(-6, -10));
-            p.lineTo(layout(-6, -2));
-            g.strokePath(p, stroke);
-            p.clear();
-        }
-
-        // sorrounds modulator area
-        {
-            const auto startPos = layout(8, 0);
+            auto startPos = layout(0, TitleHeight);
             p.startNewSubPath(startPos);
-            p.lineTo(layout(8, 2));
-            p.lineTo(layout(8, 8));
-            p.quadraticTo(layout(8, 9), layout(7, 9));
-            p.quadraticTo(layout(8, 9), layout(8, 10));
-            p.lineTo(layout(8, 16));
-            p.quadraticTo(layout(8, -2), layout(9, -2));
-            p.lineTo(layout(-1, -2));
-            closePathOverBounds(p, bounds, startPos, utils.thicc, 1, 3, 0, 2);
-
-            g.setColour(modulatorAreaCol.darker(4.f).withMultipliedSaturation(.25f));
-            g.fillPath(p);
-            g.setColour(modulatorAreaCol);
+            p.lineTo(layout(-1, TitleHeight));
+            closePathOverBounds(p, bounds, startPos, thicc, 1, 2, 0, 0);
+            g.setColour(titleAreaCol);
             g.strokePath(p, stroke);
+
+            static constexpr auto ParamsX = -13;
+            static constexpr float ContentHeight = static_cast<float>(TitleHeight) - TitleContentMargin * 2.f;
+
+            g.drawEllipse(maxQuadIn(layout(ParamsX, TitleContentMargin, 1, ContentHeight)), thicc); // < prev preset
+            g.drawEllipse(maxQuadIn(layout(ParamsX + 1, TitleContentMargin, 1, ContentHeight)), thicc); // > next preset
+            g.drawEllipse(maxQuadIn(layout(ParamsX + 2, TitleContentMargin, 1, ContentHeight)), thicc); // v main menu
+            g.drawEllipse(maxQuadIn(layout(ParamsX + 3, TitleContentMargin, 1, ContentHeight)), thicc); // parameter randomizer
+            // tuning area
+            g.drawRect(layout(ParamsX + 4, TitleContentMargin, 2, ContentHeight), thicc); // xen
+            g.drawRect(layout(ParamsX + 6, TitleContentMargin, 2, ContentHeight), thicc); // tune
+            g.drawRect(layout(ParamsX + 8, TitleContentMargin, 2, ContentHeight), thicc); // ref pitch
+            g.drawRect(layout(ParamsX + 10, TitleContentMargin, 2, ContentHeight), thicc); // pb-range
+
+            // preset area
             p.clear();
+            p.startNewSubPath(layout(SidePanelWidth, TitleContentMargin));
+            p.lineTo(layout(SidePanelWidth, TitleContentMargin + ContentHeight));
+            p.lineTo(layout(ParamsX, TitleContentMargin + ContentHeight));
+            p.lineTo(layout(ParamsX, TitleContentMargin));
+            p.closeSubPath();
+            g.strokePath(p, stroke);
         }
+
+        // side panels
+        {
+            p.clear();
+            auto startPos = layout(0, TitleHeight);
+            p.startNewSubPath(startPos);
+            p.lineTo(layout(SidePanelWidth, TitleHeight));
+            p.lineTo(layout(SidePanelWidth, -1 - TooltipHeight));
+            p.lineTo(layout(0, -1 - TooltipHeight));
+            closePathOverBounds(p, bounds, startPos, thicc, 0, 2, 2, 2);
+            g.strokePath(p, stroke);
+
+            p.clear();
+            startPos = layout(-1, TitleHeight);
+            p.startNewSubPath(startPos);
+            p.lineTo(layout(- 1 - SidePanelWidth, TitleHeight));
+            p.lineTo(layout(-1 - SidePanelWidth, -1 - TooltipHeight));
+            p.lineTo(layout(-1, -1 - TooltipHeight));
+            closePathOverBounds(p, bounds, startPos, thicc, 1, 2, 2, 2);
+            g.strokePath(p, stroke);
+
+            g.drawLine(LineF(layout(0, SidePanelMidY), layout(SidePanelWidth, SidePanelMidY)), thicc);
+            g.drawLine(LineF(layout(-1 - SidePanelWidth, SidePanelMidY), layout(-1, SidePanelMidY)), thicc);
+        }
+
+        // fx chain area
+        {
+            p.clear();
+            p.startNewSubPath(layout(FXChainX, FXChainY));
+            p.lineTo(layout(FXChainX, FXChainBottom));
+            p.lineTo(layout(FXChainRight, FXChainBottom));
+            p.lineTo(layout(FXChainRight, FXChainY));
+            p.closeSubPath();
+            g.strokePath(p, stroke);
+        }
+
+        // module area
+        {
+            // modal
+            {
+                g.drawRect(layout(ModParamsTableTopX, ModParamsTableTopY, ModParamsTableTopWidth, ModParamsTableTopHeight));
+            }
+        }
+
+        // tooltip area
+        g.drawLine(layout.getLine(0, TooltipY, -1, TooltipY), thicc);
 
         // draw bg of material view
         {
             const auto modalMaterialViewArea = materialViews[0].getBounds().toFloat();
-            g.setColour(Colour(0x44000000));
-			g.fillRoundedRectangle(modalMaterialViewArea.expanded(utils.thicc), utils.thicc);
+            setCol(g, CID::Darken);
+            g.fillRoundedRectangle(modalMaterialViewArea.expanded(utils.thicc), utils.thicc);
         }
-
-        // sorrounds title and i/o section
-        {
-            auto startPos = layout(0, 0);
-            p.startNewSubPath(startPos);
-            p.quadraticTo(layout(4, 0), layout(4, 2));
-            p.lineTo(layout(23, 2));
-            p.quadraticTo(layout(25, 2), layout(25, 4));
-            p.lineTo(layout(25, 9));
-            p.quadraticTo(layout(31, 9), layout(31, 17));
-            closePathOverBounds(p, bounds, startPos, utils.thicc, 1, 2, 0, 0);
-
-            g.setColour(titleAreaCol.darker(4.f).withMultipliedSaturation(.2f));
-            g.fillPath(p);
-            g.setColour(titleAreaCol);
-            g.strokePath(p, stroke);
-            p.clear();
-        }
-
-        // arc above the tree animation
-        {
-            p.startNewSubPath(layout(25, 8));
-            p.quadraticTo(layout(31, 8), layout(31, 17));
-        }
-
-        // arc that seperates title from i/o section
-        {
-            p.startNewSubPath(layout(23, 2));
-            p.quadraticTo(layout(23, 0), layout(25, 0));
-        }
-
-        g.strokePath(p, stroke);
     }
 
     void Editor::paintOverChildren(Graphics& g)
@@ -520,12 +533,35 @@ namespace gui
 
         utils.resized();
         layout.resized(getLocalBounds());
+        
+        const auto titleHeightHalf = static_cast<float>(TitleHeight) * .5f;
 
-        layout.place(get(kLabels::kTitle), 4, 0.f, 8, 1.3f);
+        layout.place(get(kLabels::kTitle), 0.f, 0.f, SidePanelWidth, titleHeightHalf);
         get(kLabels::kTitle).setMaxHeight();
-		layout.place(get(kLabels::kDev), 4, 1.2f, 8, .7f);
+        layout.place(get(kLabels::kDev), 0.f, titleHeightHalf, SidePanelWidth, titleHeightHalf);
         get(kLabels::kDev).setMaxHeight();
+        
+        auto& titleModal = get(kLabels::kTitleModal);
+        layout.place(titleModal, ModuleTitleX, ModuleTitleY, ModuleTitleWidth, ModuleTitleHeight);
+        titleModal.setMaxHeight();
+        //auto& titleComb = get(kLabels::kTitleFlanger);
+        //remove commenting out when tabbed window implemented
+        //layout.place(titleComb, ModuleTitleX, ModuleTitleY, ModuleTitleWidth, ModuleTitleHeight);
+        //titleComb.setMaxHeight();
 
+        const auto materialBounds = layout(ModMatEditorX, ModMatEditorY, ModMatEditorWidth, ModMatEditorHeight)
+            .reduced(utils.thicc * 2.f).toNearestInt();
+        for (auto i = 0; i < materialViews.size(); ++i)
+            materialViews[i].setBounds(materialBounds);
+
+        layout.place(genAni, GenAniX, GenAniY, GenAniWidth, GenAniHeight);
+        layout.place(tooltip, 0, TooltipY, GridNumX, TooltipHeight);
+
+        const auto toastWidth = static_cast<int>(utils.thicc * 28.f);
+        const auto toastHeight = toastWidth * 3 / 4;
+        toast.setSize(toastWidth, toastHeight);
+
+        /*
         auto& titleMacro = get(kLabels::kTitleMacro);
         layout.place(titleMacro, -5, 0, 4, 1);
         titleMacro.setMaxHeight();
@@ -541,9 +577,6 @@ namespace gui
 		layout.place(get(kLabels::kEnvAmpDcy), 2, 8, 2, 1);
 		layout.place(get(kLabels::kEnvAmpSus), 4, 8, 2, 1);
 		layout.place(get(kLabels::kEnvAmpRls), 6, 8, 2, 1);
-
-        layout.place(get(kLabels::kTitleModal), 9, 2, 7, 1);
-        layout.place(get(kLabels::kTitleFlanger), 18, 2, 7, 1);
 
         auto modalY = 4;
         auto modalX = 8;
@@ -561,11 +594,6 @@ namespace gui
         const auto materialHeight = 4;
         ++modalY;
 
-		const auto materialBounds = layout(modalX, modalY, moduleWidth, materialHeight)
-            .reduced(utils.thicc * 2.f).toNearestInt();
-
-        for (auto i = 0; i < materialViews.size(); ++i)
-            materialViews[i].setBounds(materialBounds);
 		materialDropDown.setBounds(materialBounds);
 
         modalY += materialHeight;
@@ -655,20 +683,7 @@ namespace gui
         locateAtSlider(getModDial(kKnobs::kModalBlendBreite), get(kKnobs::kModalBlendBreite));
         locateAtSlider(getModDial(kKnobs::kModalSpreizungBreite), get(kKnobs::kModalSpreizungBreite));
 		locateAtSlider(getModDial(kKnobs::kModalKraftBreite), get(kKnobs::kModalKraftBreite));
-
-        layout.place(genAni, -6, 8, 5, 9);
-        layout.place(tooltip, 0, -2, 31, 1);
-
-		const auto toastWidth = static_cast<int>(utils.thicc * 28.f);
-        const auto toastHeight = toastWidth * 3 / 4;
-		toast.setSize(toastWidth, toastHeight);
-
-        {
-            LabelGroup titlesGroup;
-            titlesGroup.add(get(kLabels::kTitleModal));
-            titlesGroup.add(get(kLabels::kTitleFlanger));
-            titlesGroup.setMaxHeight();
-        }
+        */
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

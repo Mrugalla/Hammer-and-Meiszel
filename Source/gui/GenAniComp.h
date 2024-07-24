@@ -17,7 +17,7 @@ namespace gui
 		void init()
 		{
 			const auto& user = utils.getProps();
-			const auto active = user.getBoolValue("genanicomp");
+			const auto active = user.getBoolValue("genanicomp", true);
 			callbacks[0].active = active;
 		}
 

@@ -12,6 +12,58 @@ namespace gui
     struct Editor :
         public AudioProcessorEditor
     {
+        static constexpr int GridNumX = 25, GridNumY = 18;
+        static constexpr float TitleHeight = 2.f;
+        static constexpr float TitleContentMargin = .4f;
+        static constexpr float TooltipHeight = 1.f;
+        static constexpr float SidePanelWidth = 5.5f;
+        static constexpr float FXChainHeight = 1.f;
+        static constexpr float ModuleTitleHeight = 2.f;
+        static constexpr float ModMatEditorMargin = .5f;
+        static constexpr float ModMatABWidth = 2.f;
+        static constexpr float ModMatABHeight = 1.f;
+        static constexpr float ModParamsTableTopHeight = 1.f;
+
+        static constexpr float GridNumXF = static_cast<float>(GridNumX);
+        static constexpr float GridNumYF = static_cast<float>(GridNumY);
+        static constexpr float SidePanelHeight = (GridNumYF - TooltipHeight - TitleHeight);
+        static constexpr float SidePanelMidY = TitleHeight + SidePanelHeight * .5f;
+        static constexpr float FXChainX = SidePanelWidth;
+        static constexpr float FXChainY = TitleHeight;
+        static constexpr float FXChainWidth = GridNumXF - SidePanelWidth * 2.f;
+        static constexpr float FXChainBottom = FXChainY + FXChainHeight;
+        static constexpr float FXChainRight = FXChainX + FXChainWidth;
+
+        static constexpr float ModuleX = FXChainX;
+        static constexpr float ModuleWidth = FXChainWidth;
+        static constexpr float ModuleHeight = SidePanelHeight - FXChainHeight;
+        static constexpr float ModuleWidthHalf = ModuleWidth * .5f;
+
+        static constexpr float ModuleTitleX = ModuleX;
+        static constexpr float ModuleTitleY = FXChainBottom;
+        static constexpr float ModuleTitleWidth = ModuleWidthHalf;
+        static constexpr float ModuleTitleBottom = ModuleTitleY + ModuleTitleHeight;
+
+        static constexpr float ModMatABX = ModuleX + ModMatEditorMargin;
+        static constexpr float ModMatABY = ModuleTitleBottom;
+
+        static constexpr float ModMatEditorX = ModMatABX;
+        static constexpr float ModMatEditorY = ModMatABY + ModMatABHeight;
+        static constexpr float ModMatEditorWidth = ModuleWidth - ModMatEditorMargin * 2.f;
+        static constexpr float ModMatEditorHeight = ModuleHeight - ModuleTitleHeight - 5.f - ModMatABHeight - ModParamsTableTopHeight;
+        static constexpr float ModMatEditorBottom = ModMatEditorY + ModMatEditorHeight;
+
+        static constexpr float ModParamsTableTopX = ModMatEditorX;
+        static constexpr float ModParamsTableTopY = ModMatEditorBottom;
+        static constexpr float ModParamsTableTopWidth = ModMatEditorWidth;
+
+        static constexpr float GenAniX = -1 - SidePanelWidth;
+        static constexpr float GenAniY = SidePanelMidY;
+        static constexpr float GenAniWidth = SidePanelWidth;
+        static constexpr float GenAniHeight = SidePanelHeight * .5f;
+
+        static constexpr float TooltipY = -1 - TooltipHeight;
+
         Editor(Processor&);
 
         ~Editor() override;
