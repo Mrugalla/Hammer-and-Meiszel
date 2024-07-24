@@ -51,8 +51,7 @@ namespace dsp
 
 			void operator()(const double** samplesSrc, double** samplesDest,
 				const MidiBuffer& midi, const arch::XenManager& xen,
-				const Voice::Parameters& voiceParams,
-				double reso, double transposeSemi,
+				const Voice::Parameters& voiceParams, double transposeSemi,
 				int numChannels, int numSamples, int v) noexcept
 			{
 				auto& voice = voices[v];
@@ -60,7 +59,7 @@ namespace dsp
 				(
 					materials, voiceParams,
 					samplesSrc, samplesDest,
-					midi, xen, reso, transposeSemi,
+					midi, xen, transposeSemi,
 					numChannels, numSamples
 				);
 			}

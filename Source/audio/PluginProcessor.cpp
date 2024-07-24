@@ -44,33 +44,36 @@ namespace audio
 		const auto modalBlend = static_cast<double>(modalBlendParam.getValMod());
 		const auto& modalBlendEnvParam = params(PID::ModalBlendEnv);
 		const auto modalBlendEnv = static_cast<double>(modalBlendEnvParam.getValModDenorm());
+		const auto& modalBlendBreiteParam = params(PID::ModalBlendBreite);
+		const auto modalBlendBreite = static_cast<double>(modalBlendBreiteParam.getValModDenorm());
 
 		const auto& modalSpreizungParam = params(PID::ModalSpreizung);
 		const auto modalSpreizung = static_cast<double>(modalSpreizungParam.getValModDenorm());
 		const auto& modalSpreizungEnvParam = params(PID::ModalSpreizungEnv);
 		const auto modalSpreizungEnv = static_cast<double>(modalSpreizungEnvParam.getValModDenorm());
+		const auto& modalSpreizungBreiteParam = params(PID::ModalSpreizungBreite);
+		const auto modalSpreizungBreite = static_cast<double>(modalSpreizungBreiteParam.getValModDenorm());
 
 		const auto& modalHarmonieParam = params(PID::ModalHarmonie);
 		const auto modalHarmonie = static_cast<double>(modalHarmonieParam.getValMod());
 		const auto& modalHarmonieEnvParam = params(PID::ModalHarmonieEnv);
 		const auto modalHarmonieEnv = static_cast<double>(modalHarmonieEnvParam.getValModDenorm());
+		const auto& modalHarmonieBreiteParam = params(PID::ModalHarmonieBreite);
+		const auto modalHarmonieBreite = static_cast<double>(modalHarmonieBreiteParam.getValModDenorm());
 
 		const auto& modalKraftParam = params(PID::ModalKraft);
 		const auto modalKraft = static_cast<double>(modalKraftParam.getValModDenorm());
 		const auto& modalKraftEnvParam = params(PID::ModalKraftEnv);
 		const auto modalKraftEnv = static_cast<double>(modalKraftEnvParam.getValModDenorm());
+		const auto& modalKraftBreiteParam = params(PID::ModalKraftBreite);
+		const auto modalKraftBreite = static_cast<double>(modalKraftBreiteParam.getValModDenorm());
 
 		const auto& modalResoParam = params(PID::ModalResonanz);
 		const auto modalReso = static_cast<double>(modalResoParam.getValMod());
-
-		const auto& modalBlendBreiteParam = params(PID::ModalBlendBreite);
-		const auto modalBlendBreite = static_cast<double>(modalBlendBreiteParam.getValModDenorm());
-
-		const auto& modalSpreizungBreiteParam = params(PID::ModalSpreizungBreite);
-		const auto modalSpreizungBreite = static_cast<double>(modalSpreizungBreiteParam.getValModDenorm());
-
-		const auto& modalKraftBreiteParam = params(PID::ModalKraftBreite);
-		const auto modalKraftBreite = static_cast<double>(modalKraftBreiteParam.getValModDenorm());
+		const auto& modalResoEnvParam = params(PID::ModalResonanzEnv);
+		const auto modalResoEnv = static_cast<double>(modalResoEnvParam.getValMod());
+		const auto& modalResoBreiteParam = params(PID::ModalResonanzBreite);
+		const auto modalResoBreite = static_cast<double>(modalResoBreiteParam.getValModDenorm());
 
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
@@ -126,11 +129,11 @@ namespace audio
 				(
 					samplesInput, samplesVoice, midiVoice, xen,
 					{
-						modalBlend, modalSpreizung, modalHarmonie, modalKraft,
-						modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv,
-						modalBlendBreite, modalSpreizungBreite, modalKraftBreite
+						modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso,
+						modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv,
+						modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite
 					},
-					modalReso, modalSemi,
+					modalSemi,
 					numChannels, numSamples,
 					v
 				);

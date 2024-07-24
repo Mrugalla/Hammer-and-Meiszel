@@ -4,8 +4,8 @@
 
 ~~~ todo ~~~
 
-ResonanzEnv ist noch nicht implementiert auf audio-seite
-    ich glaub resonanzbreite auch nicht
+resonatorbank
+    smoothe die parameter, weil vor allem sprezi oft ausbricht
 
 vereinheitliche viele GUI aspekte um den workflow zu verbessern
     zögere nicht!

@@ -49,14 +49,14 @@ namespace dsp
 			nyquist = sampleRate * .5;
 			reset();
 			setFrequencyHz(materialStereo, 1000., 2);
-			setReso(.25, 2);
+			for(auto ch = 0; ch < 2; ++ch)
+				setReso(.25, ch);
 		}
 
 		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo, double** samples, const MidiBuffer& midi,
-			const arch::XenManager& xen, double reso, double transposeSemi,
+			const arch::XenManager& xen, double transposeSemi,
 			int numChannels, int numSamples) noexcept
 		{
-			setReso(reso, numChannels);
 			process
 			(
 				materialStereo, samples, midi, xen,
@@ -100,17 +100,17 @@ namespace dsp
 				updateFreqRatios(materialStereo[ch], numFiltersBelowNyquist[ch], ch);
 		}
 
-		void ResonatorBank::setReso(double reso, int numChannels) noexcept
+		void ResonatorBank::setReso(double reso, int ch) noexcept
 		{
 			const auto bw = calcBandwidthFc(reso, sampleRateInv);
 			gain = 1. + Tau * reso * reso;
-			for(auto ch = 0; ch < numChannels; ++ch)
-				for (auto i = 0; i < NumFilters; ++i)
-				{
-					auto& resonator = resonators[i];
-					resonator.setBandwidth(bw, ch);
-					resonator.update(ch);
-				}
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				auto& resonator = resonators[i];
+				resonator.setBandwidth(bw, ch);
+				resonator.update(ch);
+			}
+				
 		}
 
 		void ResonatorBank::updateFreqRatios(const MaterialData& material, int& nfbn, int ch) noexcept

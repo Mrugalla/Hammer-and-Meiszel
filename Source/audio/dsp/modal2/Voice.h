@@ -10,20 +10,24 @@ namespace dsp
 		{
 			struct Parameters
 			{
-				Parameters(double _blend = -420., double _spreizung = 0., double _harmonie = 0., double _kraft = 0.,
-					double _blendEnv = 0., double _spreizungEnv = 0., double _harmonieEnv = 0., double _kraftEnv = 0.,
-					double _blendBreite = 0., double _spreizungBreite = 0., double _kraftBreite = 0.) :
+				Parameters(double _blend = -420., double _spreizung = 0., double _harmonie = 0., double _kraft = 0., double _reso = 0.,
+					double _blendEnv = 0., double _spreizungEnv = 0., double _harmonieEnv = 0., double _kraftEnv = 0., double _resoEnv = 0.,
+					double _blendBreite = 0., double _spreizungBreite = 0., double _harmonieBreite = 0., double _kraftBreite = 0., double _resoBreite = 0.) :
 					blend(_blend),
 					spreizung(_spreizung),
 					harmonie(_harmonie),
 					kraft(_kraft),
+					reso(_reso),
 					blendEnv(_blendEnv),
 					spreizungEnv(_spreizungEnv),
 					harmonieEnv(_harmonieEnv),
 					kraftEnv(_kraftEnv),
+					resoEnv(_resoEnv),
 					blendBreite(_blendBreite),
 					spreizungBreite(_spreizungBreite),
-					kraftBreite(_kraftBreite)
+					harmonieBreite(_harmonieBreite),
+					kraftBreite(_kraftBreite),
+					resoBreite(_resoBreite)
 				{}
 
 				const bool operator!=(const Parameters& other) const noexcept
@@ -32,14 +36,17 @@ namespace dsp
 						spreizung != other.spreizung ||
 						harmonie != other.harmonie ||
 						kraft != other.kraft ||
+						reso != other.reso ||
 						blendBreite != other.blendBreite ||
 						spreizungBreite != other.spreizungBreite ||
-						kraftBreite != other.kraftBreite;
+						harmonieBreite != other.harmonieBreite ||
+						kraftBreite != other.kraftBreite ||
+						resoBreite != other.resoBreite;
 				}
 
-				double blend, spreizung, harmonie, kraft;
-				double blendEnv, spreizungEnv, harmonieEnv, kraftEnv;
-				double blendBreite, spreizungBreite, kraftBreite;
+				double blend, spreizung, harmonie, kraft, reso;
+				double blendEnv, spreizungEnv, harmonieEnv, kraftEnv, resoEnv;
+				double blendBreite, spreizungBreite, harmonieBreite, kraftBreite, resoBreite;
 			};
 
 			Voice(const EnvelopeGenerator::Parameters& envGenParams) :
@@ -60,13 +67,13 @@ namespace dsp
 			void operator()(const DualMaterial& dualMaterial, const Parameters& _parameters,
 				const double** samplesSrc, double** samplesDest,
 				const MidiBuffer& midi, const arch::XenManager& xen,
-				double reso, double transposeSemi,
+				double transposeSemi,
 				int numChannels, int numSamples) noexcept
 			{
 				synthesizeEnvelope(midi, numSamples);
 				processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
 				updateParameters(dualMaterial, _parameters, numChannels);
-				resonatorBank(materialStereo, samplesDest, midi, xen, reso, transposeSemi, numChannels, numSamples);
+				resonatorBank(materialStereo, samplesDest, midi, xen, transposeSemi, numChannels, numSamples);
 			}
 
 			bool isSleepy(bool sleepy, double** samplesDest,
@@ -170,15 +177,31 @@ namespace dsp
 				const auto spreizungEnv = _parameters.spreizungEnv * envGenValue;
 				const auto harmonieEnv = _parameters.harmonieEnv * envGenValue;
 				const auto kraftEnv = _parameters.kraftEnv * envGenValue;
+				const auto resoEnv = _parameters.resoEnv * envGenValue;
 
 				const auto blend = _parameters.blend + blendEnv;
 				const auto spreizung = _parameters.spreizung + spreizungEnv;
 				const auto harmonie = _parameters.harmonie + harmonieEnv;
 				const auto kraft = _parameters.kraft + kraftEnv;
+				const auto reso = _parameters.reso + resoEnv;
 
 				const auto blendBreite = _parameters.blendBreite;
 				const auto spreizungBreite = _parameters.spreizungBreite;
+				const auto harmonieBreite = _parameters.harmonieBreite;
 				const auto kraftBreite = _parameters.kraftBreite;
+				const auto resoBreite = _parameters.resoBreite;
+
+				parameters.reso = reso;
+				double resoVals[2];
+				if(resoBreite == 0.)
+					resoVals[0] = resoVals[1] = math::limit(0., 1., reso);
+				else
+				{
+					resoVals[0] = math::limit(0., 1., reso - resoBreite);
+					resoVals[1] = math::limit(0., 1., reso + resoBreite);
+				}
+				for (auto ch = 0; ch < numChannels; ++ch)
+					resonatorBank.setReso(resoVals[ch], ch);
 
 				if(!wantsMaterialUpdate)
 					if(parameters.blend == blend &&
@@ -187,6 +210,7 @@ namespace dsp
 						parameters.kraft == kraft &&
 						parameters.blendBreite == blendBreite &&
 						parameters.spreizungBreite == spreizungBreite &&
+						parameters.harmonieBreite == harmonieBreite &&
 						parameters.kraftBreite == kraftBreite)
 						return;
 				
@@ -196,9 +220,10 @@ namespace dsp
 				parameters.kraft = kraft;
 				parameters.blendBreite = blendBreite;
 				parameters.spreizungBreite = spreizungBreite;
+				parameters.harmonieBreite = harmonieBreite;
 				parameters.kraftBreite = kraftBreite;
 
-				double blendVals[2], spreizVals[2], kraftVals[2];
+				double blendVals[2], spreizVals[2], harmonieVals[2], kraftVals[2];
 
 				if (blendBreite == 0.)
 					blendVals[0] = blendVals[1] = math::limit(0., 1., blend);
@@ -210,16 +235,24 @@ namespace dsp
 
 				if (spreizungBreite == 0.)
 				{
-					const auto sprezi = math::limit(SpreizungMin, SpreizungMax, std::exp(spreizung));
-					spreizVals[0] = spreizVals[1] = math::limit(0., 1., sprezi);
+					const auto sprezi = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung));
+					spreizVals[0] = spreizVals[1] = sprezi;
 				}
 					
 				else
 				{
-					const auto sprezi0 = std::exp(spreizung - spreizungBreite);
-					const auto sprezi1 = std::exp(spreizung + spreizungBreite);
-					spreizVals[0] = math::limit(SpreizungMin, SpreizungMax, sprezi0);
-					spreizVals[1] = math::limit(SpreizungMin, SpreizungMax, sprezi1);
+					const auto sprezi0 = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung - spreizungBreite));
+					const auto sprezi1 = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung + spreizungBreite));
+					spreizVals[0] = sprezi0;
+					spreizVals[1] = sprezi1;
+				}
+
+				if (harmonieBreite == 0.)
+					harmonieVals[0] = harmonieVals[1] = math::limit(0., 1., harmonie);
+				else
+				{
+					harmonieVals[0] = math::limit(0., 1., harmonie - harmonieBreite);
+					harmonieVals[1] = math::limit(0., 1., harmonie + harmonieBreite);
 				}
 
 				{
@@ -230,6 +263,7 @@ namespace dsp
 					{
 						auto& material = materialStereo[ch];
 						const auto blendVal = blendVals[ch];
+						const auto harmonieVal = harmonieVals[ch];
 						const auto spreizVal = spreizVals[ch];
 
 						for (auto i = 0; i < NumFilters; ++i)
@@ -254,11 +288,9 @@ namespace dsp
 							material[i].ratio *= spreizVal;
 
 							// HARMONIE
-							{
-								const auto r = material[i].ratio;
-								const auto frac = std::floor(r) - r;
-								material[i].ratio += harmonie * frac;
-							}
+							const auto r = material[i].ratio;
+							const auto frac = std::floor(r) - r;
+							material[i].ratio += harmonieVal * frac;
 						}
 					}
 				}

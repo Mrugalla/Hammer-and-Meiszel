@@ -28,9 +28,9 @@ namespace dsp
 			// materialStereo, sampleRate
 			void prepare(const MaterialDataStereo&, double);
 
-			// materialStereo, samples, midi, xen, reso, transposeSemi, numChannels, numSamples
+			// materialStereo, samples, midi, xen, transposeSemi, numChannels, numSamples
 			void operator()(const MaterialDataStereo&, double**, const MidiBuffer&,
-				const arch::XenManager&, double, double, int, int) noexcept;
+				const arch::XenManager&, double, int, int) noexcept;
 
 			// materialStereo, freqHz, numChannels
 			void setFrequencyHz(const MaterialDataStereo&, double, int) noexcept;
@@ -38,7 +38,7 @@ namespace dsp
 			// materialStereo, numChannels
 			void updateFreqRatios(const MaterialDataStereo&, int) noexcept;
 
-			// bw, numChannels
+			// bw, ch
 			void setReso(double, int) noexcept;
 
 		private:
