@@ -9,6 +9,8 @@ namespace dsp
 	{
 		class ResonatorBank
 		{
+			static constexpr double MinPitch = 24;
+
 			using ResonatorArray = std::array<ResonatorStereo2, NumFilters>;
 
 			struct Val
@@ -44,6 +46,7 @@ namespace dsp
 		private:
 			ResonatorArray resonators;
 			Val val;
+			const double FreqMin;
 			double freqHz, sampleRate, sampleRateInv, nyquist, gain;
 			std::array<int, 2> numFiltersBelowNyquist;
 

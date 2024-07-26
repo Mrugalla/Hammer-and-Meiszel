@@ -27,6 +27,7 @@ namespace dsp
 		ResonatorBank::ResonatorBank() :
 			resonators(),
 			val(),
+			FreqMin(math::noteToFreqHz2(MinPitch)),
 			freqHz(1000.),
 			sampleRate(1.),
 			sampleRateInv(1.),
@@ -77,7 +78,9 @@ namespace dsp
 				for (auto i = 0; i < NumFilters; ++i)
 				{
 					const auto freqRatio = material.getRatio(i);
-					const auto freqFilter = freqHz * freqRatio;
+					auto freqFilter = freqHz * freqRatio;
+					while (freqFilter < FreqMin)
+						freqFilter *= 2.;
 					if (freqFilter < nyquist)
 					{
 						const auto fc = math::freqHzToFc(freqFilter, sampleRate);
@@ -118,7 +121,9 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				const auto freqRatio = material.getRatio(i);
-				const auto freqFilter = freqHz * freqRatio;
+				auto freqFilter = freqHz * freqRatio;
+				while (freqFilter < FreqMin)
+					freqFilter *= 2.;
 				if (freqFilter < nyquist)
 				{
 					const auto fc = math::freqHzToFc(freqFilter, sampleRate);

@@ -9,39 +9,114 @@ namespace dsp
 	{
 		struct Voice
 		{
-			struct Parameters
+			enum kParam{ kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumParams };
+
+			struct Parameter
 			{
-				Parameters(double _blend = -420., double _spreizung = 0., double _harmonie = 0., double _kraft = 0., double _reso = 0.,
-					double _blendEnv = 0., double _spreizungEnv = 0., double _harmonieEnv = 0., double _kraftEnv = 0., double _resoEnv = 0.,
-					double _blendBreite = 0., double _spreizungBreite = 0., double _harmonieBreite = 0., double _kraftBreite = 0., double _resoBreite = 0.) :
-					blend(_blend),
-					spreizung(_spreizung),
-					harmonie(_harmonie),
-					kraft(_kraft),
-					reso(_reso),
-					blendEnv(_blendEnv),
-					spreizungEnv(_spreizungEnv),
-					harmonieEnv(_harmonieEnv),
-					kraftEnv(_kraftEnv),
-					resoEnv(_resoEnv),
-					blendBreite(_blendBreite),
-					spreizungBreite(_spreizungBreite),
-					harmonieBreite(_harmonieBreite),
-					kraftBreite(_kraftBreite),
-					resoBreite(_resoBreite)
+				Parameter(double _val = 0., double _breite = 0., double _env = 0.) :
+					val(_val),
+					breite(_breite),
+					env(_env)
 				{}
 
-				double blend, spreizung, harmonie, kraft, reso;
-				double blendEnv, spreizungEnv, harmonieEnv, kraftEnv, resoEnv;
-				double blendBreite, spreizungBreite, harmonieBreite, kraftBreite, resoBreite;
+				double val, breite, env;
+			};
+
+			struct Parameters
+			{
+				Parameters(double _blend = -0., double _spreizung = 0., double _harmonie = 0., double _kraft = 0., double _reso = 0.,
+					double _blendEnv = 0., double _spreizungEnv = 0., double _harmonieEnv = 0., double _kraftEnv = 0., double _resoEnv = 0.,
+					double _blendBreite = 0., double _spreizungBreite = 0., double _harmonieBreite = 0., double _kraftBreite = 0., double _resoBreite = 0.) :
+					params
+					{
+						Parameter(_blend, _blendBreite, _blendEnv),
+						Parameter(_spreizung, _spreizungBreite, _spreizungEnv),
+						Parameter(_harmonie, _harmonieBreite, _harmonieEnv),
+						Parameter(_kraft, _kraftBreite, _kraftEnv),
+						Parameter(_reso, _resoBreite, _resoEnv)
+					}
+				{}
+
+				const Parameter& operator[](int i) const noexcept
+				{
+					return params[i];
+				}
+
+				std::array<Parameter, kNumParams> params;
+			};
+
+			class SmoothStereoParameter
+			{
+				struct Param
+				{
+					Param() :
+						prm(0.),
+						val(0.)
+					{}
+
+					void prepare(double sampleRate, double smoothLenMs) noexcept
+					{
+						prm.prepare(sampleRate, smoothLenMs);
+						val = 0.;
+					}
+
+					void processL(const Parameter& p, double env,
+						double min, double max) noexcept
+					{
+						const auto info = prm(p.val - p.breite);
+						process(info.val, env, min, max);
+					}
+
+					void processR(const Parameter& p, double env,
+						double min, double max) noexcept
+					{
+						const auto info = prm(p.val + p.breite);
+						process(info.val, env, min, max);
+					}
+
+					PRMBlockD prm;
+					double val;
+				private:
+					void process(double infoVal, double env, double min, double max) noexcept
+					{
+						const auto y = infoVal + env;
+						val = math::limit(min, max, y);
+					}
+				};
+			public:
+				SmoothStereoParameter() :
+					params()
+				{}
+
+				void prepare(double sampleRate, double smoothLenMs) noexcept
+				{
+					for(auto& param: params)
+						param.prepare(sampleRate, smoothLenMs);
+				}
+
+				bool operator()(const Parameter& p,
+					double env, double min, double max, int numChannels) noexcept
+				{
+					env = p.env * env;
+					params[0].processL(p, env, min, max);
+					if(numChannels == 2)
+						params[1].processR(p, env, min, max);
+					return params[0].prm.info.smoothing || params[1].prm.info.smoothing;
+				}
+
+				double operator[](int ch) const noexcept
+				{
+					return params[ch].val;
+				}
+
+				std::array<Param, 2> params;
 			};
 
 			Voice(const EnvelopeGenerator::Parameters& envGenParams) :
-				materialStereo(),
-				parameters(),
-				blendPRM(), spreizungPRM(), harmoniePRM(), kraftPRM(), resoPRM(),
 				env(envGenParams),
 				envBuffer(),
+				materialStereo(),
+				parameters(),
 				resonatorBank(),
 				wantsMaterialUpdate(true)
 			{}
@@ -50,12 +125,9 @@ namespace dsp
 			{
 				env.prepare(sampleRate);
 				resonatorBank.prepare(materialStereo, sampleRate);
-				const auto smoothLenMs = 4.;
-				blendPRM.prepare(sampleRate, smoothLenMs);
-				spreizungPRM.prepare(sampleRate, smoothLenMs);
-				harmoniePRM.prepare(sampleRate, smoothLenMs);
-				kraftPRM.prepare(sampleRate, smoothLenMs);
-				resoPRM.prepare(sampleRate, smoothLenMs);
+				const auto smoothLenMs = 40.;
+				for (auto i = 0; i < kNumParams; ++i)
+					parameters[i].prepare(sampleRate, smoothLenMs);
 			}
 
 			void operator()(const DualMaterial& dualMaterial, const Parameters& _parameters,
@@ -96,11 +168,10 @@ namespace dsp
 			}
 
 		private:
-			MaterialDataStereo materialStereo;
-			Parameters parameters;
-			PRMBlockStereoD blendPRM, spreizungPRM, harmoniePRM, kraftPRM, resoPRM;
 			EnvelopeGenerator env;
 			std::array<double, BlockSize> envBuffer;
+			MaterialDataStereo materialStereo;
+			std::array<SmoothStereoParameter, kNumParams> parameters;
 			ResonatorBank resonatorBank;
 			bool wantsMaterialUpdate;
 
@@ -166,25 +237,141 @@ namespace dsp
 			void updateParameters(const DualMaterial& dualMaterial,
 				const Parameters& _parameters, int numChannels) noexcept
 			{
-				auto envGenValue = env.getEnvNoSustain();
-				envGenValue *= envGenValue;
-				const auto blendEnv = _parameters.blendEnv * envGenValue;
-				const auto spreizungEnv = _parameters.spreizungEnv * envGenValue;
-				const auto harmonieEnv = _parameters.harmonieEnv * envGenValue;
-				const auto kraftEnv = _parameters.kraftEnv * envGenValue;
-				const auto resoEnv = _parameters.resoEnv * envGenValue;
+				const auto envGenValue = env.getEnvNoSustain();
 
-				const auto blend = _parameters.blend + blendEnv;
-				const auto spreizung = _parameters.spreizung + spreizungEnv;
-				const auto harmonie = _parameters.harmonie + harmonieEnv;
-				const auto kraft = _parameters.kraft + kraftEnv;
-				const auto reso = _parameters.reso + resoEnv;
+				if(parameters[kReso](_parameters[kReso], envGenValue, 0., 1., numChannels))
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						const auto& reso = parameters[kReso][ch];
+						resonatorBank.setReso(reso, ch);
+					}
 
-				const auto blendBreite = _parameters.blendBreite;
-				const auto spreizungBreite = _parameters.spreizungBreite;
-				const auto harmonieBreite = _parameters.harmonieBreite;
-				const auto kraftBreite = _parameters.kraftBreite;
-				const auto resoBreite = _parameters.resoBreite;
+				const bool blendSmooth = parameters[kBlend](_parameters[kBlend], envGenValue, 0., 1., numChannels);
+				const bool spreziSmooth = parameters[kSpreizung](_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);
+				const bool harmonieSmooth = parameters[kHarmonie](_parameters[kHarmonie], envGenValue, 0., 1., numChannels);
+				
+				bool updatesMaterial = false;
+
+				if (blendSmooth || spreziSmooth || harmonieSmooth || wantsMaterialUpdate)
+				{
+					updatesMaterial = true;
+					const auto& mat0 = dualMaterial[0].peakInfos;
+					const auto& mat1 = dualMaterial[1].peakInfos;
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						auto& material = materialStereo[ch];
+
+						const auto blend = parameters[kBlend][ch];
+						const auto spreizung = parameters[kSpreizung][ch];
+						const auto sprezi = std::exp(spreizung);
+						const auto harmonie = parameters[kHarmonie][ch];
+						const auto harmi = math::tanhApprox(Pi * harmonie);
+						
+						for (auto i = 0; i < NumFilters; ++i)
+						{
+							const auto& filt0 = mat0[i];
+							const auto& filt1 = mat1[i];
+
+							// BLEND
+							const auto mag0 = filt0.mag;
+							const auto mag1 = filt1.mag;
+							const auto magRange = mag1 - mag0;
+							const auto mag = mag0 + blend * magRange;
+							material[i].mag = mag;
+
+							const auto ratio0 = filt0.ratio;
+							const auto ratio1 = filt1.ratio;
+							const auto ratioRange = ratio1 - ratio0;
+							const auto ratio = ratio0 + blend * ratioRange;
+							material[i].ratio = ratio;
+
+							// SPREIZUNG
+							const auto iF = static_cast<double>(i);
+							material[i].ratio += iF * sprezi;
+
+							// HARMONIE
+							const auto r = material[i].ratio;
+							//const auto rFloor = std::floor(r);
+							//const auto rFrac = r - rFloor;
+							//const auto rFracWeighted = math::tanhApprox(2. * Tau * rFrac - Tau) * .5 + .5;
+							//const auto rWeighted = rFloor + rFrac + harmi * (rFracWeighted - rFrac);
+							//material[i].ratio = rWeighted;
+							const auto rTuned = std::round(r);
+							material[i].ratio = r + harmi * (rTuned - r);
+						}
+					}
+				}
+				
+				bool kraftSmooth = parameters[kKraft](_parameters[kKraft], envGenValue, -1., 1., numChannels);
+				if (kraftSmooth || wantsMaterialUpdate)
+				{
+					updatesMaterial = true;
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						auto& material = materialStereo[ch];
+
+						auto kraft = parameters[kKraft][ch];
+						kraft = (math::tanhApprox(Pi * kraft) + 1.) * .5;
+
+						if (kraft != 0.)
+						{
+							for (auto i = 0; i < NumFilters; ++i)
+							{
+								const auto x = material[i].mag;
+								const auto y = kraft * x / ((1. - kraft) - x + 2. * kraft * x);
+								material[i].mag = y;
+							}
+						}
+					}
+				}
+				
+				if (updatesMaterial)
+				{
+					resonatorBank.updateFreqRatios(materialStereo, numChannels);
+					wantsMaterialUpdate = false;
+				}
+			}
+		};
+	}
+}
+
+/*
+
+todo:
+
+optimize kraft, weil der braucht kein update von den frequency ratios
+harmonie approached zu spät harmonisch wertvollen bereich
+
+wenn spreizung tief liegt und harmonie hoch kann spreizung-modulation sound explodieren lassen
+	minimal frequenz anheben?
+	parameter smoothing?
+
+*/
+
+
+
+
+
+
+
+/*
+				const auto blendEnv = _parameters.blend.env * envGenValue;
+				const auto spreizungEnv = _parameters.spreizung.env * envGenValue;
+				const auto harmonieEnv = _parameters.harmonie.env * envGenValue;
+				const auto kraftEnv = _parameters.kraft.env * envGenValue;
+				const auto resoEnv = _parameters.reso.env * envGenValue;
+
+				const auto blend = _parameters.blend.val + blendEnv;
+				const auto spreizung = _parameters.spreizung.val + spreizungEnv;
+				const auto harmonie = _parameters.harmonie.val + harmonieEnv;
+				const auto kraft = _parameters.kraft.val + kraftEnv;
+				const auto reso = _parameters.reso.val + resoEnv;
+
+				const auto blendBreite = _parameters.blend.breite;
+				const auto spreizungBreite = _parameters.spreizung.breite;
+				const auto harmonieBreite = _parameters.harmonie.breite;
+				const auto kraftBreite = _parameters.kraft.breite;
+				const auto resoBreite = _parameters.reso.breite;
 
 				parameters.reso = reso;
 				if (resoBreite == 0.)
@@ -207,28 +394,26 @@ namespace dsp
 						resonatorBank.setReso(resoInfo, ch);
 					}
 				}
-				
-				
 
 				if(!wantsMaterialUpdate)
-					if(parameters.blend == blend &&
-						parameters.spreizung == spreizung &&
-						parameters.harmonie == harmonie &&
-						parameters.kraft == kraft &&
-						parameters.blendBreite == blendBreite &&
-						parameters.spreizungBreite == spreizungBreite &&
-						parameters.harmonieBreite == harmonieBreite &&
-						parameters.kraftBreite == kraftBreite)
+					if(parameters.blend.val == blend &&
+						parameters.spreizung.val == spreizung &&
+						parameters.harmonie.val == harmonie &&
+						parameters.kraft.val == kraft &&
+						parameters.blend.breite == blendBreite &&
+						parameters.spreizung.breite == spreizungBreite &&
+						parameters.harmonie.breite == harmonieBreite &&
+						parameters.kraft.breite == kraftBreite)
 						return;
-				
-				parameters.blend = blend;
-				parameters.spreizung = spreizung;
-				parameters.harmonie = harmonie;
-				parameters.kraft = kraft;
-				parameters.blendBreite = blendBreite;
-				parameters.spreizungBreite = spreizungBreite;
-				parameters.harmonieBreite = harmonieBreite;
-				parameters.kraftBreite = kraftBreite;
+
+				parameters.blend.val = blend;
+				parameters.spreizung.val = spreizung;
+				parameters.harmonie.val = harmonie;
+				parameters.kraft.val = kraft;
+				parameters.blend.breite = blendBreite;
+				parameters.spreizung.breite = spreizungBreite;
+				parameters.harmonie.breite = harmonieBreite;
+				parameters.kraft.breite = kraftBreite;
 
 				double blendVals[2], spreizVals[2], harmonieVals[2], kraftVals[2];
 
@@ -239,13 +424,14 @@ namespace dsp
 					blendVals[0] = math::limit(0., 1., blend - blendBreite);
 					blendVals[1] = math::limit(0., 1., blend + blendBreite);
 				}
+				for(auto ch = 0; ch < numChannels; ++ch)
+					blendPRM(blendVals[ch], ch);
 
 				if (spreizungBreite == 0.)
 				{
 					const auto sprezi = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung));
 					spreizVals[0] = spreizVals[1] = sprezi;
 				}
-					
 				else
 				{
 					const auto sprezi0 = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung - spreizungBreite));
@@ -253,6 +439,8 @@ namespace dsp
 					spreizVals[0] = sprezi0;
 					spreizVals[1] = sprezi1;
 				}
+				for (auto ch = 0; ch < numChannels; ++ch)
+					spreizungPRM(spreizVals[ch], ch);
 
 				if (harmonieBreite == 0.)
 					harmonieVals[0] = harmonieVals[1] = math::limit(0., 1., harmonie);
@@ -261,6 +449,8 @@ namespace dsp
 					harmonieVals[0] = math::limit(0., 1., harmonie - harmonieBreite);
 					harmonieVals[1] = math::limit(0., 1., harmonie + harmonieBreite);
 				}
+				for (auto ch = 0; ch < numChannels; ++ch)
+					harmoniePRM(harmonieVals[ch], ch);
 
 				{
 					const auto& mat0 = dualMaterial[0].peakInfos;
@@ -301,7 +491,7 @@ namespace dsp
 						}
 					}
 				}
-				
+
 				if (kraftBreite == 0.)
 				{
 					const auto kkb = (math::tanhApprox(4. * kraft) + 1.) * .5;
@@ -329,24 +519,4 @@ namespace dsp
 						}
 					}
 				}
-				
-				resonatorBank.updateFreqRatios(materialStereo, numChannels);
-				wantsMaterialUpdate = false;
-			}
-		};
-	}
-}
-
-/*
-
-todo:
-
-finish implement parameter smoothing
-optimize kraft, weil der braucht kein update von den frequency ratios
-harmonie approached zu spät harmonisch wertvollen bereich
-
-wenn spreizung tief liegt und harmonie hoch kann spreizung-modulation sound explodieren lassen
-	minimal frequenz anheben?
-	parameter smoothing?
-
-*/
+				*/

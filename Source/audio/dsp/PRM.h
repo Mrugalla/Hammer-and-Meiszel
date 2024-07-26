@@ -27,22 +27,22 @@ namespace dsp
 	template<typename Float>
 	struct PRM
 	{
-		/* startVal */
+		// startVal
 		PRM(Float = static_cast<Float>(0));
 		
-		/* sampleRate, smoothLenMs */
+		// sampleRate, smoothLenMs
 		void prepare(Float sampleRate, Float smoothLenMs) noexcept;
 
-		/* value, numSamples */
+		// value, numSamples
 		PRMInfo<Float> operator()(Float, int) noexcept;
 
-		/* value, startIdx, endIdx */
+		// value, startIdx, endIdx
 		PRMInfo<Float> operator()(Float, int, int) noexcept;
 
-		/* numSamples */
+		// numSamples
 		PRMInfo<Float> operator()(int) noexcept;
 
-		/* idx */
+		// idx
 		Float operator[](int) const noexcept;
 
 		std::array<Float, BlockSize2x> buf;
@@ -67,7 +67,6 @@ namespace dsp
 
 		operator Float() const noexcept;
 
-	protected:
 		Float startVal;
 		smooth::Lowpass<Float, false> lp;
 		PRMInfo<Float> info;
@@ -87,6 +86,10 @@ namespace dsp
 
 		// value, ch
 		PRMInfo<Float> operator()(Float, int) noexcept;
+
+		// ch
+		PRMInfo<Float> operator[](int) const noexcept;
+
 	protected:
 		std::array<PRMBlock<Float>, 2> prms;
 	};

@@ -4,10 +4,7 @@
 
 ~~~ todo ~~~
 
-resonatorbank
-    smoothe die parameter, weil vor allem sprezi oft ausbricht
-
-vereinheitliche viele GUI aspekte um den workflow zu verbessern
+abstrahiere viele GUI aspekte um den workflow zu verbessern
     zögere nicht!
 
 H&M Imagepflege

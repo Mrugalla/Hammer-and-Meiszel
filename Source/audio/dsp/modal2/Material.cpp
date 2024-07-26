@@ -128,11 +128,11 @@ namespace dsp
 			{ // dc offset filter!
 				moog::BiquadFilter hp;
 				hp.setType(moog::BiquadFilter::Type::HP);
-				hp.setCutoffFc(20.f / 44100.f);
-				hp.setResonance(.2f);
+				hp.setCutoffFc(20. / 44100.);
+				hp.setResonance(.2);
 				hp.update();
 				for (auto i = 0; i < FFTSize; ++i)
-					fifo[i] = hp(fifo[i]);
+					fifo[i] = static_cast<float>(hp(static_cast<double>(fifo[i])));
 			}
 			FFT fft(FFTOrder);
 			fft.performRealOnlyForwardTransform(fifo, true);

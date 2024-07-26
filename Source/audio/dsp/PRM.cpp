@@ -140,6 +140,12 @@ namespace dsp
 		return prms[ch](x);
 	}
 
+	template<typename Float>
+	PRMInfo<Float> PRMBlockStereo<Float>::operator[](int ch) const noexcept
+	{
+		return prms[ch].info;
+	}
+
 	template struct PRMBlockStereo<float>;
 	template struct PRMBlockStereo<double>;
 }

@@ -72,6 +72,51 @@ namespace gui
         ModDial paramMod, breiteMod, envMod;
     };
 
+    struct SidePanelParam
+    {
+        SidePanelParam(Utils& u) :
+            layout(),
+            label(u),
+            param(u),
+            modDial(u)
+		{
+			layout.init
+			(
+				{ 1, 3, 1 },
+				{ 1 }
+			);
+		}
+
+        void init(AudioProcessorEditor& editor, const String& name, PID pID)
+        {
+            editor.addAndMakeVisible(label);
+            editor.addAndMakeVisible(param);
+            editor.addAndMakeVisible(modDial);
+
+            const auto fontKnobs = font::dosisExtraBold();
+            const auto just = Just::bottomRight;
+
+            makeTextLabel(label, name, fontKnobs, just, CID::Txt);
+            makeSlider(pID, param);
+            modDial.attach(pID);
+            modDial.verticalDrag = false;
+        }
+
+        void setBounds(BoundsF bounds)
+        {
+            layout.resized(bounds);
+
+            layout.place(label, 0, 0, 1, 1);
+            layout.place(param, 1, 0, 1, 1);
+            layout.place(modDial, 2, 0, 1, 1);
+        }
+
+        Layout layout;
+        Label label;
+        Knob param;
+		ModDial modDial;
+    };
+
     struct Editor :
         public AudioProcessorEditor
     {
@@ -89,24 +134,30 @@ namespace gui
 
         static constexpr float GridNumXF = static_cast<float>(GridNumX);
         static constexpr float GridNumYF = static_cast<float>(GridNumY);
-        static constexpr float SidePanelHeight = (GridNumYF - TooltipHeight - TitleHeight);
-        static constexpr float SidePanelMidY = TitleHeight + SidePanelHeight * .5f;
+		static constexpr float SidePanelY = TitleHeight;
+        static constexpr float SidePanelHeight = (GridNumYF - TooltipHeight - SidePanelY);
+        static constexpr float SidePanelMidY = SidePanelY + SidePanelHeight * .5f;
         static constexpr float FXChainX = SidePanelWidth;
-        static constexpr float FXChainY = TitleHeight;
+        static constexpr float FXChainY = SidePanelY;
         static constexpr float FXChainWidth = GridNumXF - SidePanelWidth * 2.f;
         static constexpr float FXChainBottom = FXChainY + FXChainHeight;
         static constexpr float FXChainRight = FXChainX + FXChainWidth;
+		static constexpr float SidePanelRightX = FXChainRight;
+
+        static constexpr float IOButtonsHeight = 1.f;
+        static constexpr float IOButtonsY = SidePanelMidY - IOButtonsHeight;
+		static constexpr float IOButtonsWidth = SidePanelWidth;
+		static constexpr float IOButtonsX = SidePanelRightX;
 
         static constexpr float TooltipY = -1 - TooltipHeight;
 
         static constexpr float ModuleX = FXChainX;
         static constexpr float ModuleWidth = FXChainWidth;
         static constexpr float ModuleHeight = SidePanelHeight - FXChainHeight;
-        static constexpr float ModuleWidthHalf = ModuleWidth * .5f;
 
         static constexpr float ModuleTitleX = ModuleX;
         static constexpr float ModuleTitleY = FXChainBottom;
-        static constexpr float ModuleTitleWidth = ModuleWidthHalf;
+        static constexpr float ModuleTitleWidth = ModuleWidth;
         static constexpr float ModuleTitleBottom = ModuleTitleY + ModuleTitleHeight;
 
         static constexpr float ModMatABX = ModuleX + ModMatEditorMargin;
@@ -166,13 +217,17 @@ namespace gui
 		static constexpr int NumKnobs = static_cast<int>(kKnobs::kNumKnobs);
         std::array<Knob, NumKnobs> knobs;
         std::array<ModDial, NumKnobs> modDials;
-        enum class kButtons { kMacroRel, kMacroSwap, kMaterialDropDown, kMaterialA, kMaterialB, kNumButtons };
+        enum class kButtons { kMacroRel, kMacroSwap, kMaterialDropDown, kMaterialA, kMaterialB, kPower, kDelta, kMidSide, kNumButtons };
 		static constexpr int NumButtons = static_cast<int>(kButtons::kNumButtons);
 		std::array<Button, NumButtons> buttons;
 		
         enum class kModParams { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumModParams };
 		static constexpr int NumModParams = static_cast<int>(kModParams::kNumModParams);
 		std::array<HnMParam, NumModParams> modParams;
+
+		enum class kIOSliders { kWet, kMix, kOut, kNumIOSliders };
+		static constexpr int NumIOSliders = static_cast<int>(kIOSliders::kNumIOSliders);
+        std::array<SidePanelParam, NumIOSliders> ioSliders;
 
         std::array<ModalMaterialView, 2> materialViews;
         DropDownMenu materialDropDown;

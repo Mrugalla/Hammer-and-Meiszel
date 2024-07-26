@@ -79,6 +79,9 @@ namespace gui
 			Button(utils),
             Button(utils),
             Button(utils),
+            Button(utils),
+            Button(utils),
+            Button(utils),
             Button(utils)
         },
         modParams
@@ -89,6 +92,12 @@ namespace gui
 			HnMParam(utils),
 			HnMParam(utils)
         },
+		ioSliders
+	    {
+			SidePanelParam(utils),
+            SidePanelParam(utils),
+            SidePanelParam(utils)
+	    },
         materialViews
         {
             ModalMaterialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(0)),
@@ -101,13 +110,15 @@ namespace gui
         addAndMakeVisible(genAni);
         addAndMakeVisible(tooltip);
 
+        const auto fontKnobs = font::dosisExtraBold();
         String dev(JucePlugin_Manufacturer);
-        auto devFont = font::flx();
-        devFont.setExtraKerningFactor(.1f);
-        makeTextLabel(get(kLabels::kDev), "- " + dev + " -", devFont, Just::centred, CID::Txt);
-
-		makeTextLabel(get(kLabels::kTitleModal), "// Modal //", devFont, Just::centredLeft, CID::Txt);
-		makeTextLabel(get(kLabels::kTitleFlanger), "// Flanger //", devFont, Just::centredLeft, CID::Txt);
+        auto titleFont = font::flx();
+        const auto devFont = titleFont;
+        titleFont.setExtraKerningFactor(.2f);
+        makeTextLabel(get(kLabels::kDev), "crafted by Florian " + dev, devFont, Just::centred, CID::Txt);
+        const auto moduleTitleFont = font::dosisBold();
+		makeTextLabel(get(kLabels::kTitleModal), "// Modal \\\\", moduleTitleFont, Just::centred, CID::Txt);
+		makeTextLabel(get(kLabels::kTitleFlanger), "// Flanger \\\\", moduleTitleFont, Just::centred, CID::Txt);
 
         auto sz = String(juce::CharPointer_UTF8("\xc3\x9f"));
         String name(JucePlugin_Name);
@@ -116,7 +127,7 @@ namespace gui
                 name = name.replaceSection(i, 2, sz);
             //else if(name[i] == ' ')
             //    name = name.replaceSection(i, 1, "\n");
-        auto titleFont = font::flx();
+        
         makeTextLabel(get(kLabels::kTitle), name, titleFont, Just::centred, CID::Txt);
         for (auto& label : labels)
             addAndMakeVisible(label);
@@ -128,8 +139,6 @@ namespace gui
 		for (auto& modDial : modDials)
 			addAndMakeVisible(modDial);
         modDials[0].setVisible(false);
-
-        const auto fontKnobs = font::dosisExtraBold();
 
 		makeKnob(PID::VoiceAttack, get(kKnobs::kEnvAmpAttack));
 		makeKnob(PID::VoiceDecay, get(kKnobs::kEnvAmpDecay));
@@ -145,7 +154,7 @@ namespace gui
 		makeTextLabel(get(kLabels::kEnvAmpRls), "R", fontKnobs, Just::centred, CID::Txt);
 
         auto& titleMacro = get(kLabels::kTitleMacro);
-        makeTextLabel(titleMacro, "// Macro //", titleFont, Just::centred, CID::Txt);
+        makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
         makeKnob(PID::Macro, get(kKnobs::kMacro), false);
 		
         auto& buttonMacroRel = get(kButtons::kMacroRel);
@@ -296,6 +305,28 @@ namespace gui
 		modParams[3].init(*this, "Kraft", PID::ModalKraft, PID::ModalKraftBreite, PID::ModalKraftEnv);
 		modParams[4].init(*this, "Resonanz", PID::ModalResonanz, PID::ModalResonanzBreite, PID::ModalResonanzEnv);
 
+        ioSliders[0].init(*this, "Wet", PID::GainWet);
+		ioSliders[1].init(*this, "Mix", PID::Mix);
+		ioSliders[2].init(*this, "Out", PID::GainOut);
+        {
+            auto& powerButton = get(kButtons::kPower);
+            makeParameter(powerButton, PID::Power, Button::Type::kToggle, "Power");
+            const auto powerButtonOnClick = powerButton.onClick;
+            powerButton.onClick = [&, oc = powerButtonOnClick](const Mouse& mouse)
+            {
+                oc(mouse);
+                repaint();
+            };
+        }
+        {
+			auto& deltaButton = get(kButtons::kDelta);
+			makeParameter(deltaButton, PID::Delta, Button::Type::kToggle, "Delta");
+        }
+        {
+			auto& midSideButton = get(kButtons::kMidSide);
+			makeParameter(midSideButton, PID::StereoConfig, Button::Type::kToggle, "M/S");
+		}
+
         const auto& user = *audioProcessor.state.props.getUserSettings();
         addChildComponent(toast);
 		
@@ -417,7 +448,11 @@ namespace gui
 
     void Editor::paintOverChildren(Graphics& g)
     {
-       layout.paint(g, Colour(0x05ffffff));
+       //layout.paint(g, Colour(0x05ffffff));
+
+	   const auto power = utils.audioProcessor.params(PID::Power).getValue() > .5f;
+       if (!power)
+           g.fillAll(Colour(0x44000000));
     }
 
     void Editor::resized()
@@ -450,6 +485,32 @@ namespace gui
         for (auto i = 0; i < materialViews.size(); ++i)
             materialViews[i].setBounds(materialBounds);
 
+		const auto leftArea = layout(0.f, SidePanelY, SidePanelWidth, SidePanelHeight);
+        const auto rightArea = layout(SidePanelRightX, SidePanelY, SidePanelWidth, SidePanelHeight);
+		
+        auto& titleMacro = get(kLabels::kTitleMacro);
+        layout.place(titleMacro, SidePanelRightX, SidePanelY + 1.f, SidePanelWidth * .3f , 1.f);
+        layout.place(get(kKnobs::kMacro), SidePanelRightX + SidePanelWidth * .3f, SidePanelY, SidePanelWidth * .4f, 2.f);
+		layout.place(get(kButtons::kMacroRel), SidePanelRightX + SidePanelWidth * .7f, SidePanelY, SidePanelWidth * .3f, 1.f);
+		layout.place(get(kButtons::kMacroSwap), SidePanelRightX + SidePanelWidth * .7f, SidePanelY + 1.f, SidePanelWidth * .3f, 1.f);
+        titleMacro.setMaxHeight();
+
+        auto& ioOutSlider = ioSliders[static_cast<int>(kIOSliders::kOut)];
+        ioOutSlider.setBounds(layout(SidePanelRightX, IOButtonsY - 1.f, SidePanelWidth, 1.f));
+		auto& ioMixSlider = ioSliders[static_cast<int>(kIOSliders::kMix)];
+		ioMixSlider.setBounds(layout(SidePanelRightX, IOButtonsY  - 2.f, SidePanelWidth, 1.f));
+		auto& ioWetSlider = ioSliders[static_cast<int>(kIOSliders::kWet)];
+		ioWetSlider.setBounds(layout(SidePanelRightX, IOButtonsY - 3.f, SidePanelWidth, 1.f));
+        {
+            const auto ioButtonWidth = IOButtonsWidth * .333f;
+            auto ioButtonX = IOButtonsX;
+            layout.place(get(kButtons::kPower), ioButtonX, IOButtonsY, ioButtonWidth, IOButtonsHeight);
+			ioButtonX += ioButtonWidth;
+			layout.place(get(kButtons::kDelta), ioButtonX, IOButtonsY, ioButtonWidth, IOButtonsHeight);
+			ioButtonX += ioButtonWidth;
+			layout.place(get(kButtons::kMidSide), ioButtonX, IOButtonsY, ioButtonWidth, IOButtonsHeight);
+        }
+
 		const auto modalParametersBounds = layout(ModParamsX, ModParamsY, ModParamsWidth, ModParamsHeight)
 			.reduced(utils.thicc * 2.f);
         {
@@ -466,6 +527,12 @@ namespace gui
 				y += h;
             }
         }
+		auto& modMatAButton = get(kButtons::kMaterialA);
+		const auto modMatABWidthHalf = ModMatABWidth * .5f;
+		layout.place(modMatAButton, ModMatABX, ModMatABY, modMatABWidthHalf, ModMatABHeight);
+		auto& modMatBButton = get(kButtons::kMaterialB);
+		layout.place(modMatBButton, ModMatABX + modMatABWidthHalf, ModMatABY, modMatABWidthHalf, ModMatABHeight);
+
         LabelGroup modalKnobLabels;
         for(auto& m: modParams)
             modalKnobLabels.add(m.label);
@@ -479,9 +546,6 @@ namespace gui
         toast.setSize(toastWidth, toastHeight);
 
         /*
-        auto& titleMacro = get(kLabels::kTitleMacro);
-        layout.place(titleMacro, -5, 0, 4, 1);
-        titleMacro.setMaxHeight();
         layout.place(get(kKnobs::kMacro), -5, 1, 2, 2, true);
 		layout.place(get(kButtons::kMacroRel), -3, 1, 2, 1);
 		layout.place(get(kButtons::kMacroSwap), -3, 2, 2, 1);
@@ -498,12 +562,7 @@ namespace gui
         auto modalY = 4;
         auto modalX = 8;
 
-        for (auto i = 0; i < 2; ++i)
-        {
-            const auto idx = static_cast<int>(kButtons::kMaterialA) + i;
-            const auto x = static_cast<float>(modalX + i);
-            layout.place(get(static_cast<kButtons>(idx)), x, modalY, 1.f, 1);
-        }
+        
 
 		layout.place(get(kButtons::kMaterialDropDown), 15.5f, modalY, 1.f, 1);
 
