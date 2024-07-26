@@ -131,8 +131,8 @@ namespace dsp
 				hp.setCutoffFc(20. / 44100.);
 				hp.setResonance(.2);
 				hp.update();
-				for (auto i = 0; i < FFTSize; ++i)
-					fifo[i] = static_cast<float>(hp(static_cast<double>(fifo[i])));
+				for (auto j = 0; j < FFTSize; ++j)
+					fifo[j] = static_cast<float>(hp(static_cast<double>(fifo[j])));
 			}
 			FFT fft(FFTOrder);
 			fft.performRealOnlyForwardTransform(fifo, true);

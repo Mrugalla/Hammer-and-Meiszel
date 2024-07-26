@@ -250,11 +250,8 @@ namespace dsp
 				const bool spreziSmooth = parameters[kSpreizung](_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);
 				const bool harmonieSmooth = parameters[kHarmonie](_parameters[kHarmonie], envGenValue, 0., 1., numChannels);
 				
-				bool updatesMaterial = false;
-
 				if (blendSmooth || spreziSmooth || harmonieSmooth || wantsMaterialUpdate)
 				{
-					updatesMaterial = true;
 					const auto& mat0 = dualMaterial[0].peakInfos;
 					const auto& mat1 = dualMaterial[1].peakInfos;
 					for (auto ch = 0; ch < numChannels; ++ch)
@@ -291,21 +288,17 @@ namespace dsp
 
 							// HARMONIE
 							const auto r = material[i].ratio;
-							//const auto rFloor = std::floor(r);
-							//const auto rFrac = r - rFloor;
-							//const auto rFracWeighted = math::tanhApprox(2. * Tau * rFrac - Tau) * .5 + .5;
-							//const auto rWeighted = rFloor + rFrac + harmi * (rFracWeighted - rFrac);
-							//material[i].ratio = rWeighted;
 							const auto rTuned = std::round(r);
 							material[i].ratio = r + harmi * (rTuned - r);
 						}
 					}
+
+					resonatorBank.updateFreqRatios(materialStereo, numChannels);
 				}
 				
 				bool kraftSmooth = parameters[kKraft](_parameters[kKraft], envGenValue, -1., 1., numChannels);
 				if (kraftSmooth || wantsMaterialUpdate)
 				{
-					updatesMaterial = true;
 					for (auto ch = 0; ch < numChannels; ++ch)
 					{
 						auto& material = materialStereo[ch];
@@ -324,12 +317,6 @@ namespace dsp
 						}
 					}
 				}
-				
-				if (updatesMaterial)
-				{
-					resonatorBank.updateFreqRatios(materialStereo, numChannels);
-					wantsMaterialUpdate = false;
-				}
 			}
 		};
 	}
@@ -339,184 +326,6 @@ namespace dsp
 
 todo:
 
-optimize kraft, weil der braucht kein update von den frequency ratios
-harmonie approached zu spät harmonisch wertvollen bereich
-
-wenn spreizung tief liegt und harmonie hoch kann spreizung-modulation sound explodieren lassen
-	minimal frequenz anheben?
-	parameter smoothing?
+knisternder soundcharacter manchmal, warum?
 
 */
-
-
-
-
-
-
-
-/*
-				const auto blendEnv = _parameters.blend.env * envGenValue;
-				const auto spreizungEnv = _parameters.spreizung.env * envGenValue;
-				const auto harmonieEnv = _parameters.harmonie.env * envGenValue;
-				const auto kraftEnv = _parameters.kraft.env * envGenValue;
-				const auto resoEnv = _parameters.reso.env * envGenValue;
-
-				const auto blend = _parameters.blend.val + blendEnv;
-				const auto spreizung = _parameters.spreizung.val + spreizungEnv;
-				const auto harmonie = _parameters.harmonie.val + harmonieEnv;
-				const auto kraft = _parameters.kraft.val + kraftEnv;
-				const auto reso = _parameters.reso.val + resoEnv;
-
-				const auto blendBreite = _parameters.blend.breite;
-				const auto spreizungBreite = _parameters.spreizung.breite;
-				const auto harmonieBreite = _parameters.harmonie.breite;
-				const auto kraftBreite = _parameters.kraft.breite;
-				const auto resoBreite = _parameters.reso.breite;
-
-				parameters.reso = reso;
-				if (resoBreite == 0.)
-				{
-					const auto resi = math::limit(0., 1., reso);
-					const auto resoInfoL = resoPRM(resi, 0);
-					for (auto ch = 0; ch < numChannels; ++ch)
-						resonatorBank.setReso(resoInfoL, ch);
-				}
-				else
-				{
-					double resiVals[2] =
-					{
-						math::limit(0., 1., reso - resoBreite),
-						math::limit(0., 1., reso + resoBreite)
-					};
-					for (auto ch = 0; ch < numChannels; ++ch)
-					{
-						const auto resoInfo = resoPRM(resiVals[ch], ch);
-						resonatorBank.setReso(resoInfo, ch);
-					}
-				}
-
-				if(!wantsMaterialUpdate)
-					if(parameters.blend.val == blend &&
-						parameters.spreizung.val == spreizung &&
-						parameters.harmonie.val == harmonie &&
-						parameters.kraft.val == kraft &&
-						parameters.blend.breite == blendBreite &&
-						parameters.spreizung.breite == spreizungBreite &&
-						parameters.harmonie.breite == harmonieBreite &&
-						parameters.kraft.breite == kraftBreite)
-						return;
-
-				parameters.blend.val = blend;
-				parameters.spreizung.val = spreizung;
-				parameters.harmonie.val = harmonie;
-				parameters.kraft.val = kraft;
-				parameters.blend.breite = blendBreite;
-				parameters.spreizung.breite = spreizungBreite;
-				parameters.harmonie.breite = harmonieBreite;
-				parameters.kraft.breite = kraftBreite;
-
-				double blendVals[2], spreizVals[2], harmonieVals[2], kraftVals[2];
-
-				if (blendBreite == 0.)
-					blendVals[0] = blendVals[1] = math::limit(0., 1., blend);
-				else
-				{
-					blendVals[0] = math::limit(0., 1., blend - blendBreite);
-					blendVals[1] = math::limit(0., 1., blend + blendBreite);
-				}
-				for(auto ch = 0; ch < numChannels; ++ch)
-					blendPRM(blendVals[ch], ch);
-
-				if (spreizungBreite == 0.)
-				{
-					const auto sprezi = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung));
-					spreizVals[0] = spreizVals[1] = sprezi;
-				}
-				else
-				{
-					const auto sprezi0 = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung - spreizungBreite));
-					const auto sprezi1 = std::exp(math::limit(SpreizungMin, SpreizungMax, spreizung + spreizungBreite));
-					spreizVals[0] = sprezi0;
-					spreizVals[1] = sprezi1;
-				}
-				for (auto ch = 0; ch < numChannels; ++ch)
-					spreizungPRM(spreizVals[ch], ch);
-
-				if (harmonieBreite == 0.)
-					harmonieVals[0] = harmonieVals[1] = math::limit(0., 1., harmonie);
-				else
-				{
-					harmonieVals[0] = math::limit(0., 1., harmonie - harmonieBreite);
-					harmonieVals[1] = math::limit(0., 1., harmonie + harmonieBreite);
-				}
-				for (auto ch = 0; ch < numChannels; ++ch)
-					harmoniePRM(harmonieVals[ch], ch);
-
-				{
-					const auto& mat0 = dualMaterial[0].peakInfos;
-					const auto& mat1 = dualMaterial[1].peakInfos;
-
-					for (auto ch = 0; ch < numChannels; ++ch)
-					{
-						auto& material = materialStereo[ch];
-						const auto blendVal = blendVals[ch];
-						const auto harmonieVal = harmonieVals[ch];
-						const auto spreizVal = spreizVals[ch];
-
-						for (auto i = 0; i < NumFilters; ++i)
-						{
-							const auto& filt0 = mat0[i];
-							const auto& filt1 = mat1[i];
-
-							// BLEND
-							const auto mag0 = filt0.mag;
-							const auto mag1 = filt1.mag;
-							const auto magRange = mag1 - mag0;
-							const auto mag = mag0 + blendVal * magRange;
-							material[i].mag = mag;
-
-							const auto ratio0 = filt0.ratio;
-							const auto ratio1 = filt1.ratio;
-							const auto ratioRange = ratio1 - ratio0;
-							const auto ratio = ratio0 + blendVal * ratioRange;
-							material[i].ratio = ratio;
-
-							// SPREIZUNG
-							material[i].ratio *= spreizVal;
-
-							// HARMONIE
-							const auto r = material[i].ratio;
-							const auto frac = std::floor(r) - r;
-							material[i].ratio += harmonieVal * frac;
-						}
-					}
-				}
-
-				if (kraftBreite == 0.)
-				{
-					const auto kkb = (math::tanhApprox(4. * kraft) + 1.) * .5;
-					kraftVals[0] = kraftVals[1] = math::limit(-1., 1., kkb);
-				}
-				else
-				{
-					const auto kb0 = kraft - kraftBreite;
-					const auto kb1 = kraft + kraftBreite;
-					kraftVals[0] = math::limit(-1., 1., (math::tanhApprox(4. * kb0) + 1.) * .5);
-					kraftVals[1] = math::limit(-1., 1., (math::tanhApprox(4. * kb1) + 1.) * .5);
-				}
-
-				for (auto ch = 0; ch < numChannels; ++ch)
-				{
-					const auto kraftVal = kraftVals[ch];
-					if (kraftVal != 0.)
-					{
-						auto& material = materialStereo[ch];
-						for (auto i = 0; i < NumFilters; ++i)
-						{
-							const auto x = material[i].mag;
-							const auto y = kraftVal * x / ((1. - kraftVal) - x + 2. * kraftVal * x);
-							material[i].mag = y;
-						}
-					}
-				}
-				*/
