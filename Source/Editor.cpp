@@ -439,9 +439,9 @@ namespace gui
             // right panel
             {
                 p.clear();
-                const auto startPos = layout(-1, IOControlsY);
+                const auto startPos = layout(-1, GenAniY);
                 p.startNewSubPath(startPos);
-                p.lineTo(layout(SidePanelRightX, IOControlsY));
+                p.lineTo(layout(SidePanelRightX, GenAniY));
                 p.lineTo(layout(SidePanelRightX, TooltipY));
                 p.lineTo(layout(-1, TooltipY));
                 closePathOverBounds(p, bounds, startPos, thicc, 1, 2, 2, 2);

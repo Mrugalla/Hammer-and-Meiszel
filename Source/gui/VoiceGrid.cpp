@@ -30,14 +30,20 @@ namespace gui
 		const auto y = 0.f;
 		const auto w2 = w * NumVoicesInv;
 
+		const auto col = getColour(CID::Mod);
+		const auto colDarker = col.darker(.2f);
+		const auto thicc2 = thicc * 2.f;
+		g.setColour(colDarker);
+
 		auto x = 0.f;
 		{
 			const auto voice = voices[0];
 			BoundsF bounds(x, y, w2, h);
 			if (voice)
 			{
-				setCol(g, CID::Mod);
-				g.fillRoundedRectangle(bounds, thicc);
+				g.setColour(col);
+				g.fillRoundedRectangle(bounds.reduced(thicc2), thicc);
+				g.setColour(colDarker);
 			}
 			x += w2;
 		}
@@ -45,15 +51,12 @@ namespace gui
 		{
 			const auto voice = voices[i];
 			BoundsF bounds(x, y, w2, h);
+			g.drawLine(x, y, x, h, thicc);
 			if (voice)
 			{
-				setCol(g, CID::Mod);
-				g.fillRoundedRectangle(bounds, thicc);
-			}
-			else
-			{
-				g.setColour(getColour(CID::Mod).darker(.2f));
-				g.drawLine(x, y, x, h, thicc);
+				g.setColour(col);
+				g.fillRoundedRectangle(bounds.reduced(thicc2), thicc);
+				g.setColour(colDarker);
 			}
 			x += w2;
 		}
