@@ -4,6 +4,8 @@
 
 ~~~ todo ~~~
 
+check ob voicing system jede erdenkliche leere voice gut nutzt
+
 abstrahiere viele GUI aspekte um den workflow zu verbessern
     zögere nicht!
 

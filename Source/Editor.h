@@ -1,4 +1,5 @@
 #pragma once
+#include "gui/VoiceGrid.h"
 #include "gui/GenAniComp.h"
 #include "gui/Tooltip.h"
 #include "gui/DropDownMenu.h"
@@ -148,6 +149,8 @@ namespace gui
         static constexpr float IOButtonsY = SidePanelMidY - IOButtonsHeight;
 		static constexpr float IOButtonsWidth = SidePanelWidth;
 		static constexpr float IOButtonsX = SidePanelRightX;
+        static constexpr float IOControlsHeight = 3.f;
+		static constexpr float IOControlsY = IOButtonsY - IOControlsHeight;
 
         static constexpr float TooltipY = -1 - TooltipHeight;
 
@@ -201,6 +204,7 @@ namespace gui
         evt::Member evtMember;
         Tooltip tooltip;
         GenAniGrowTrees genAni;
+        VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;
         Toast toast;
 
         enum class kLabels

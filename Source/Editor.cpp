@@ -44,6 +44,7 @@ namespace gui
         evtMember(utils.eventSystem, makeEvt(*this)),
         tooltip(utils),
         genAni(utils),
+        voiceGrid(utils),
         toast(utils),
         labels
         {
@@ -108,6 +109,22 @@ namespace gui
         layout.initGrid(GridNumX, GridNumY);
         
         addAndMakeVisible(genAni);
+		addAndMakeVisible(voiceGrid);
+		voiceGrid.init([&](VoiceGrid<dsp::AutoMPE::VoicesSize>::Voices& voices)
+		{
+            bool updated = false;
+            const auto& pp = audioProcessor.pluginProcessor.parallelProcessor;
+            for (auto i = 0; i < voices.size(); ++i)
+            {
+                const auto active = !pp.isSleepy(i);
+                if (voices[i] != active)
+                {
+                    updated = true;
+                    voices[i] = active;
+                }
+            }
+			return updated;
+		});
         addAndMakeVisible(tooltip);
 
         const auto fontKnobs = font::dosisExtraBold();
@@ -125,8 +142,6 @@ namespace gui
         for (auto i = 0; i < name.length(); ++i)
             if (name[i] == 's' && name[i + 1] == 'z')
                 name = name.replaceSection(i, 2, sz);
-            //else if(name[i] == ' ')
-            //    name = name.replaceSection(i, 1, "\n");
         
         makeTextLabel(get(kLabels::kTitle), name, titleFont, Just::centred, CID::Txt);
         for (auto& label : labels)
@@ -157,34 +172,50 @@ namespace gui
         makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
         makeKnob(PID::Macro, get(kKnobs::kMacro), false);
 		
-        auto& buttonMacroRel = get(kButtons::kMacroRel);
-		makeTextButton(buttonMacroRel, "Rel", "Switch between absolute and relative macro modulation.", CID::Interact);
-		buttonMacroRel.onPaint = makeButtonOnPaint(Button::Type::kToggle);
-        buttonMacroRel.value = utils.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
-        buttonMacroRel.onClick = [&u = utils, &b = buttonMacroRel](const Mouse&)
         {
-            u.audioProcessor.params.switchModDepthAbsolute();
-            b.value = u.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
-        };
-
-		auto& buttonMacroSwap = get(kButtons::kMacroSwap);
-		makeTextButton(buttonMacroSwap, "Swap", "Swap all parameters' main values with their modulation destinations", CID::Interact);
-        buttonMacroSwap.onPaint = makeButtonOnPaint(Button::Type::kTrigger);
-		buttonMacroSwap.onClick = [&u = utils](const Mouse&)
-		{
-            for (auto param : u.audioProcessor.params.data())
+            auto& buttonMacroRel = get(kButtons::kMacroRel);
+            String textAbsRel;
+            if (utils.audioProcessor.params.isModDepthAbsolute())
             {
-                const auto val = param->getValue();
-				const auto modDepth = param->getModDepth();
-				const auto valModMax = juce::jlimit(0.f, 1.f, val + modDepth);
-
-                param->beginGesture();
-				param->setValueNotifyingHost(valModMax);
-				param->endGesture();
-                
-                param->setModDepth(juce::jlimit(-1.f, 1.f, val - valModMax));
+                buttonMacroRel.value = 0.f;
+                textAbsRel = "Abs";
             }
-		};
+			else
+			{
+				buttonMacroRel.value = 1.f;
+				textAbsRel = "Rel";
+			}
+            makeTextButton(buttonMacroRel, textAbsRel, "Switch between absolute and relative macro modulation.", CID::Interact);
+            buttonMacroRel.type = Button::Type::kToggle;
+            buttonMacroRel.onPaint = makeButtonOnPaint(false);
+            buttonMacroRel.onClick = [&u = utils, &b = buttonMacroRel](const Mouse&)
+            {
+                u.audioProcessor.params.switchModDepthAbsolute();
+                b.value = u.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
+                b.label.setText(b.value > .5f ? "Rel" : "Abs");
+                b.label.repaint();
+            };
+        }
+        
+        {
+            auto& buttonMacroSwap = get(kButtons::kMacroSwap);
+            buttonMacroSwap.setTooltip("Swap all parameters' main values with their modulation destinations.");
+            buttonMacroSwap.onPaint = makeButtonOnPaintSwap();
+            buttonMacroSwap.onClick = [&u = utils](const Mouse&)
+            {
+                for (auto param : u.audioProcessor.params.data())
+                {
+                    const auto val = param->getValue();
+                    const auto modDepth = param->getModDepth();
+                    const auto valModMax = juce::jlimit(0.f, 1.f, val + modDepth);
+
+                    param->beginGesture();
+                    param->setValueNotifyingHost(valModMax);
+                    param->endGesture();
+                    param->setModDepth(juce::jlimit(-1.f, 1.f, val - valModMax));
+                }
+            };
+        }
 
         for(auto& materialView: materialViews)
 			addChildComponent(materialView);
@@ -203,7 +234,8 @@ namespace gui
                 const auto btnIdx = static_cast<int>(kButtons::kMaterialA) + i;
                 auto& btn = get(static_cast<kButtons>(btnIdx));
                 makeTextButton(btn, btnName, tooltips[i], CID::Interact);
-                btn.onPaint = makeButtonOnPaint(Button::Type::kToggle);
+				btn.type = Button::Type::kToggle;
+                btn.onPaint = makeButtonOnPaint(true);
                 btn.onClick = [&, i](const Mouse&)
                 {
                     for (auto& mv : materialViews)
@@ -293,7 +325,7 @@ namespace gui
 
 		auto& materialDropDownButton = get(kButtons::kMaterialDropDown);
         makeTextButton(materialDropDownButton, "V", "Here you can find additional modal material features.", CID::Interact);
-        materialDropDownButton.onPaint = makeButtonOnPaint(Button::Type::kTrigger);
+        materialDropDownButton.onPaint = makeButtonOnPaint(true);
         materialDropDownButton.onClick = [&m = materialDropDown](const Mouse&)
 		{
 			m.setVisible(!m.isVisible());
@@ -310,7 +342,7 @@ namespace gui
 		ioSliders[2].init(*this, "Out", PID::GainOut);
         {
             auto& powerButton = get(kButtons::kPower);
-            makeParameter(powerButton, PID::Power, Button::Type::kToggle, "Power");
+            makeParameter(powerButton, PID::Power, Button::Type::kToggle, makeButtonOnPaintPower());
             const auto powerButtonOnClick = powerButton.onClick;
             powerButton.onClick = [&, oc = powerButtonOnClick](const Mouse& mouse)
             {
@@ -320,25 +352,23 @@ namespace gui
         }
         {
 			auto& deltaButton = get(kButtons::kDelta);
-			makeParameter(deltaButton, PID::Delta, Button::Type::kToggle, "Delta");
+			makeParameter(deltaButton, PID::Delta, Button::Type::kToggle, makeButtonOnPaintPolarity());
         }
         {
 			auto& midSideButton = get(kButtons::kMidSide);
-			makeParameter(midSideButton, PID::StereoConfig, Button::Type::kToggle, "M/S");
+			makeParameter(midSideButton, PID::StereoConfig, Button::Type::kChoice, "L/R;M/S");
 		}
 
-        const auto& user = *audioProcessor.state.props.getUserSettings();
         addChildComponent(toast);
 		
-        const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
-        const auto editorHeight = user.getDoubleValue("EditorHeight", EditorHeight);
-        setOpaque(true);
-        setResizable(true, true);
-        setSize
-        (
-            static_cast<int>(editorWidth),
-            static_cast<int>(editorHeight)
-        );
+        {
+            const auto& user = *audioProcessor.state.props.getUserSettings();
+            const auto editorWidth = user.getIntValue("EditorWidth", EditorWidth);
+            const auto editorHeight = user.getIntValue("EditorHeight", EditorHeight);
+            setOpaque(true);
+            setResizable(true, true);
+            setSize(editorWidth, editorHeight);
+        }
 
         utils.audioProcessor.pluginProcessor.editorExists.store(true);
     }
@@ -351,8 +381,7 @@ namespace gui
     void Editor::paint(Graphics& g)
     {
         const auto bgCol = getColour(CID::Bg);
-        const auto modulatorAreaCol = getColour(CID::Txt);
-        const auto titleAreaCol = getColour(CID::Mod);
+        const auto titleAreaCol = getColour(CID::Interact).darker(1.f);
         g.fillAll(bgCol);
         
         const auto bounds = getLocalBounds().toFloat();
@@ -394,26 +423,30 @@ namespace gui
 
         // side panels
         {
-            p.clear();
-            auto startPos = layout(0, TitleHeight);
-            p.startNewSubPath(startPos);
-            p.lineTo(layout(SidePanelWidth, TitleHeight));
-            p.lineTo(layout(SidePanelWidth, -1 - TooltipHeight));
-            p.lineTo(layout(0, -1 - TooltipHeight));
-            closePathOverBounds(p, bounds, startPos, thicc, 0, 2, 2, 2);
-            g.strokePath(p, stroke);
-
-            p.clear();
-            startPos = layout(-1, TitleHeight);
-            p.startNewSubPath(startPos);
-            p.lineTo(layout(- 1 - SidePanelWidth, TitleHeight));
-            p.lineTo(layout(-1 - SidePanelWidth, -1 - TooltipHeight));
-            p.lineTo(layout(-1, -1 - TooltipHeight));
-            closePathOverBounds(p, bounds, startPos, thicc, 1, 2, 2, 2);
-            g.strokePath(p, stroke);
-
-            g.drawLine(LineF(layout(0, SidePanelMidY), layout(SidePanelWidth, SidePanelMidY)), thicc);
-            g.drawLine(LineF(layout(-1 - SidePanelWidth, SidePanelMidY), layout(-1, SidePanelMidY)), thicc);
+            // left panel
+            {
+                p.clear();
+                const auto startPos = layout(0, TitleHeight);
+                p.startNewSubPath(startPos);
+                p.lineTo(layout(SidePanelWidth, TitleHeight));
+                p.lineTo(layout(SidePanelWidth, -1 - TooltipHeight));
+                p.lineTo(layout(0, -1 - TooltipHeight));
+                closePathOverBounds(p, bounds, startPos, thicc, 0, 2, 2, 2);
+                g.strokePath(p, stroke);
+                g.drawLine(LineF(layout(0, SidePanelMidY), layout(SidePanelWidth, SidePanelMidY)), thicc);
+            }
+            
+            // right panel
+            {
+                p.clear();
+                const auto startPos = layout(-1, IOControlsY);
+                p.startNewSubPath(startPos);
+                p.lineTo(layout(SidePanelRightX, IOControlsY));
+                p.lineTo(layout(SidePanelRightX, TooltipY));
+                p.lineTo(layout(-1, TooltipY));
+                closePathOverBounds(p, bounds, startPos, thicc, 1, 2, 2, 2);
+                g.strokePath(p, stroke);
+            }
         }
 
         // fx chain area
@@ -436,7 +469,7 @@ namespace gui
         }
 
         // tooltip area
-        g.drawLine(layout.getLine(0, TooltipY, -1, TooltipY), thicc);
+        //g.drawLine(layout.getLine(0, TooltipY, -1, TooltipY), thicc);
 
         // draw bg of material view
         {
@@ -457,10 +490,21 @@ namespace gui
 
     void Editor::resized()
     {
-        if (getWidth() < EditorMinWidth)
-            return setSize(EditorMinWidth, getHeight());
-        if (getHeight() < EditorMinHeight)
-            return setSize(getWidth(), EditorMinHeight);
+        {
+            const auto w = getWidth();
+			const auto h = getHeight();
+            if (w < EditorMinWidth)
+                return setSize(EditorMinWidth, h);
+            if (h < EditorMinHeight)
+                return setSize(w, EditorMinHeight);
+        }
+        {
+            auto& user = *audioProcessor.state.props.getUserSettings();
+            const auto editorWidth = getWidth();
+            const auto editorHeight = getHeight();
+            user.setValue("EditorWidth", editorWidth);
+            user.setValue("EditorHeight", editorHeight);
+        }
 
         utils.resized();
         layout.resized(getLocalBounds());
@@ -501,6 +545,7 @@ namespace gui
 		ioMixSlider.setBounds(layout(SidePanelRightX, IOButtonsY  - 2.f, SidePanelWidth, 1.f));
 		auto& ioWetSlider = ioSliders[static_cast<int>(kIOSliders::kWet)];
 		ioWetSlider.setBounds(layout(SidePanelRightX, IOButtonsY - 3.f, SidePanelWidth, 1.f));
+		layout.place(voiceGrid, SidePanelRightX, IOButtonsY - 4.f, SidePanelWidth, 1.f);
         {
             const auto ioButtonWidth = IOButtonsWidth * .333f;
             auto ioButtonX = IOButtonsX;
@@ -538,7 +583,8 @@ namespace gui
             modalKnobLabels.add(m.label);
         modalKnobLabels.setMaxHeight();
 
-        layout.place(genAni, GenAniX, GenAniY, GenAniWidth, GenAniHeight);
+        auto genAniBounds = layout(GenAniX, GenAniY, GenAniWidth, GenAniHeight).reduced(utils.thicc);
+		genAni.setBounds(genAniBounds.toNearestInt());
         layout.place(tooltip, 0, TooltipY, GridNumX, TooltipHeight);
 
         const auto toastWidth = static_cast<int>(utils.thicc * 28.f);
@@ -572,12 +618,6 @@ namespace gui
 
 		materialDropDown.setBounds(materialBounds);
         */
-
-        auto& user = *audioProcessor.state.props.getUserSettings();
-		const auto editorWidth = static_cast<double>(getWidth());
-		const auto editorHeight = static_cast<double>(getHeight());
-		user.setValue("EditorWidth", editorWidth);
-		user.setValue("EditorHeight", editorHeight);
 	}
 
     void Editor::mouseEnter(const Mouse&)

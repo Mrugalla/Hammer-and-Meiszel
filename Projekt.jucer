@@ -200,6 +200,8 @@
         <FILE id="BThon6" name="Using.h" compile="0" resource="0" file="Source/audio/Using.h"/>
       </GROUP>
       <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui">
+        <FILE id="EqK7eV" name="VoiceGrid.cpp" compile="1" resource="0" file="Source/gui/VoiceGrid.cpp"/>
+        <FILE id="Sm40ut" name="VoiceGrid.h" compile="0" resource="0" file="Source/gui/VoiceGrid.h"/>
         <FILE id="bpI4zK" name="DropDownMenu.cpp" compile="1" resource="0"
               file="Source/gui/DropDownMenu.cpp"/>
         <FILE id="z6stJN" name="DropDownMenu.h" compile="0" resource="0" file="Source/gui/DropDownMenu.h"/>

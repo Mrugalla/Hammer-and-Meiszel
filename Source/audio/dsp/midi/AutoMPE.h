@@ -20,6 +20,8 @@ namespace dsp
 
 		void operator()(MidiBuffer&);
 
+		const Voices& getVoices() const noexcept;
+
 	private:
 		MidiBuffer buffer;
 		Voices voices;

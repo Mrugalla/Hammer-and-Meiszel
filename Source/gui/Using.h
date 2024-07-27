@@ -74,8 +74,8 @@ namespace gui
     static constexpr float PiHalf = Tau * .25f;
     static constexpr float PiQuart = Tau * .125f;
 
-    static constexpr double EditorWidth = 690.;
-    static constexpr double EditorHeight = 420.;
+    static constexpr int EditorWidth = 690;
+    static constexpr int EditorHeight = 420;
     static constexpr int EditorMinWidth = 100;
     static constexpr int EditorMinHeight = 100;
     static constexpr int FPS = 60;

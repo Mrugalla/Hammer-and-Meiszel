@@ -14,6 +14,11 @@ namespace dsp
 		channelIdx(-1)
 	{}
 
+	const AutoMPE::Voices& AutoMPE::AutoMPE::getVoices() const noexcept
+	{
+		return voices;
+	}
+
 	void AutoMPE::operator()(MidiBuffer& midi)
 	{
 		buffer.clear();

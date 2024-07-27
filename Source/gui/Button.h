@@ -10,7 +10,7 @@ namespace gui
 		using OnClick = std::function<void(const Mouse&)>;
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;
 		enum class Type { kTrigger, kToggle, kChoice, kNumTypes };
-		enum { kHoverAniCB, kClickAniCB, kUpdateParameterCB, kNumCallbacks };
+		enum { kHoverAniCB, kClickAniCB, kToggleStateCB, kUpdateParameterCB, kNumCallbacks };
 
 		/* u */
 		Button(Utils&);
@@ -41,19 +41,33 @@ namespace gui
 		Type type;
 	};
 
-	/* type */
-	Button::OnPaint makeButtonOnPaint(Button::Type) noexcept;
+	////// ONPAINTS:
+	
+	// drawToggle
+	Button::OnPaint makeButtonOnPaint(bool);
+
+	Button::OnPaint makeButtonOnPaintPower();
+
+	Button::OnPaint makeButtonOnPaintPolarity();
+
+	Button::OnPaint makeButtonOnPaintSwap();
 
 	////// LOOK AND FEEL:
 
-	/* btn, text, tooltip, cID */
+	// btn, text, tooltip, cID
 	void makeTextButton(Button&, const String&, const String&, CID);
 
-	/* btn, onPaint, tooltip */
+	// btn, onPaint, tooltip
 	void makePaintButton(Button&, const Label::OnPaint&, const String&);
 
 	////// PARAMETER ATTACHMENT:
 
-	/* button, PID, type, name */
+	// button, PID
+	void makeParameter(Button&, PID);
+
+	// button, PID, type, name
 	void makeParameter(Button&, PID, Button::Type, const String& = "");
+
+	// button, PID, type, onPaint
+	void makeParameter(Button&, PID, Button::Type, Button::OnPaint);
 }
