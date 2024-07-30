@@ -44,7 +44,6 @@ namespace audio
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;
 		dsp::PPMIDIBand parallelProcessor;
-		//dsp::modal::Filtr modalFilter;
 		dsp::modal2::ModalFilter modalFilter;
 		dsp::flanger::Flanger flanger;
 		std::atomic<bool> editorExists;

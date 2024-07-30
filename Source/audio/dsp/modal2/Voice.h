@@ -60,28 +60,20 @@ namespace dsp
 						val = 0.;
 					}
 
-					void processL(const Parameter& p, double env,
-						double min, double max) noexcept
+					// p, env, min, max, direct[-1,1]
+					// returns true if smoothing
+					bool operator()(const Parameter& p, double env,
+						double min, double max, double direc) noexcept
 					{
-						const auto info = prm(p.val - p.breite);
-						process(info.val, env, min, max);
-					}
-
-					void processR(const Parameter& p, double env,
-						double min, double max) noexcept
-					{
-						const auto info = prm(p.val + p.breite);
-						process(info.val, env, min, max);
+						const auto cVal = val;
+						const auto nVal = p.val + p.breite * direc;
+						const auto info = prm(nVal) + env;
+						val = math::limit(min, max, info);
+						return cVal != val;
 					}
 
 					PRMBlockD prm;
 					double val;
-				private:
-					void process(double infoVal, double env, double min, double max) noexcept
-					{
-						const auto y = infoVal + env;
-						val = math::limit(min, max, y);
-					}
 				};
 			public:
 				SmoothStereoParameter() :
@@ -97,11 +89,12 @@ namespace dsp
 				bool operator()(const Parameter& p, double env,
 					double min, double max, int numChannels) noexcept
 				{
-					env = p.env * env;
-					params[0].processL(p, env, min, max);
+					env *= p.env;
+					bool smooth = params[0](p, env, min, max, -1.);
 					if(numChannels == 2)
-						params[1].processR(p, env, min, max);
-					return params[0].prm.info.smoothing || params[1].prm.info.smoothing;
+						if(params[1](p, env, min, max, 1.))
+							smooth = true;
+					return smooth;
 				}
 
 				double operator[](int ch) const noexcept
@@ -248,12 +241,16 @@ namespace dsp
 			{
 				const auto envGenValue = env.getEnvNoSustain();
 
-				if(parameters[kReso](_parameters[kReso], envGenValue, 0., 1., numChannels))
-					for (auto ch = 0; ch < numChannels; ++ch)
-					{
-						const auto reso = parameters[kReso][ch];
-						resonatorBank.setReso(reso, ch);
-					}
+				{
+					auto resoParam = parameters[kReso];
+					const auto resoSmooth = resoParam(_parameters[kReso], envGenValue, 0., 1., numChannels);
+					if (resoSmooth)
+						for (auto ch = 0; ch < numChannels; ++ch)
+						{
+							const auto reso = resoParam[ch];
+							resonatorBank.setReso(reso, ch);
+						}
+				}
 
 				const bool blendSmooth = parameters[kBlend](_parameters[kBlend], envGenValue, 0., 1., numChannels);
 				const bool spreziSmooth = parameters[kSpreizung](_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);
