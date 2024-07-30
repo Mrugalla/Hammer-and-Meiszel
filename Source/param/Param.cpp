@@ -74,11 +74,14 @@ namespace param
 		case PID::ModalSpreizungBreite: return "Modal Spreizung Breite";
 		case PID::ModalHarmonie: return "Modal Harmonie";
 		case PID::ModalHarmonieEnv: return "Modal Harmonie Env";
+		case PID::ModalHarmonieBreite: return "Modal Harmonie Breite";
 		case PID::ModalKraft: return "Modal Kraft";
 		case PID::ModalKraftEnv: return "Modal Kraft Env";
+		case PID::ModalKraftBreite: return "Modal Kraft Breite";
 		case PID::ModalResonanz: return "Modal Resonanz";
 		case PID::ModalResonanzEnv: return "Modal Resonanz Env";
-		case PID::ModalKraftBreite: return "Modal Kraft Breite";
+		case PID::ModalResonanzBreite: return "Modal Resonanz Breite";
+		//
 		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Comb R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
 		case PID::CombSemi: return "Comb Semi";

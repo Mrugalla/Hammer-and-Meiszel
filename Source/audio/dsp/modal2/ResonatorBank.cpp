@@ -32,7 +32,7 @@ namespace dsp
 			sampleRate(1.),
 			sampleRateInv(1.),
 			nyquist(.5),
-			gain(1.),
+			gains{ 1., 1. },
 			numFiltersBelowNyquist{ 0, 0 }
 		{
 		}
@@ -106,14 +106,13 @@ namespace dsp
 		void ResonatorBank::setReso(double reso, int ch) noexcept
 		{
 			const auto bw = calcBandwidthFc(reso, sampleRateInv);
-			gain = 1. + Tau * reso * reso;
+			gains[ch] = 1. + Tau * reso;
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& resonator = resonators[i];
 				resonator.setBandwidth(bw, ch);
 				resonator.update(ch);
 			}
-				
 		}
 
 		void ResonatorBank::updateFreqRatios(const MaterialData& material, int& nfbn, int ch) noexcept
@@ -199,6 +198,7 @@ namespace dsp
 			{
 				const auto& material = materialStereo[ch];
 				const auto nfbn = numFiltersBelowNyquist[ch];
+				const auto gain = gains[ch];
 				auto smpls = samples[ch];
 
 				for (auto i = startIdx; i < endIdx; ++i)

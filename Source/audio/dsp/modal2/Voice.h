@@ -94,8 +94,8 @@ namespace dsp
 						param.prepare(sampleRate, smoothLenMs);
 				}
 
-				bool operator()(const Parameter& p,
-					double env, double min, double max, int numChannels) noexcept
+				bool operator()(const Parameter& p, double env,
+					double min, double max, int numChannels) noexcept
 				{
 					env = p.env * env;
 					params[0].processL(p, env, min, max);
@@ -125,7 +125,7 @@ namespace dsp
 			{
 				env.prepare(sampleRate);
 				resonatorBank.prepare(materialStereo, sampleRate);
-				const auto smoothLenMs = 40.;
+				const auto smoothLenMs = 14.;
 				for (auto i = 0; i < kNumParams; ++i)
 					parameters[i].prepare(sampleRate, smoothLenMs);
 			}
@@ -140,6 +140,15 @@ namespace dsp
 				processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
 				updateParameters(dualMaterial, _parameters, numChannels);
 				resonatorBank(materialStereo, samplesDest, midi, xen, transposeSemi, numChannels, numSamples);
+			}
+
+			void processSleepy(const DualMaterial& dualMaterial,
+				const Parameters& _parameters, int numChannels) noexcept
+			{
+				env.env = 0.;
+				env.state = EnvelopeGenerator::State::Release;
+				env.noteOn = false;
+				updateParameters(dualMaterial, _parameters, numChannels);
 			}
 
 			bool isSleepy(bool sleepy, double** samplesDest,
@@ -223,10 +232,10 @@ namespace dsp
 			{
 				for (auto ch = 0; ch < numChannels; ++ch)
 				{
-					auto smpls = samplesDest[ch];
+					const auto smpls = samplesDest[ch];
 					for (auto s = 0; s < numSamples; ++s)
 					{
-						auto smpl = std::abs(smpls[s]);
+						const auto smpl = std::abs(smpls[s]);
 						if (smpl > 1e-4)
 							return false;
 					}
@@ -242,7 +251,7 @@ namespace dsp
 				if(parameters[kReso](_parameters[kReso], envGenValue, 0., 1., numChannels))
 					for (auto ch = 0; ch < numChannels; ++ch)
 					{
-						const auto& reso = parameters[kReso][ch];
+						const auto reso = parameters[kReso][ch];
 						resonatorBank.setReso(reso, ch);
 					}
 
@@ -323,9 +332,5 @@ namespace dsp
 }
 
 /*
-
-todo:
-
-knisternder soundcharacter manchmal, warum?
 
 */

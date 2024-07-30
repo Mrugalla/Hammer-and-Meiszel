@@ -71,7 +71,7 @@ namespace audio
 		const auto& modalResoParam = params(PID::ModalResonanz);
 		const auto modalReso = static_cast<double>(modalResoParam.getValMod());
 		const auto& modalResoEnvParam = params(PID::ModalResonanzEnv);
-		const auto modalResoEnv = static_cast<double>(modalResoEnvParam.getValMod());
+		const auto modalResoEnv = static_cast<double>(modalResoEnvParam.getValModDenorm());
 		const auto& modalResoBreiteParam = params(PID::ModalResonanzBreite);
 		const auto modalResoBreite = static_cast<double>(modalResoBreiteParam.getValModDenorm());
 
@@ -102,6 +102,13 @@ namespace audio
 		const auto& voiceReleaseParam = params(PID::VoiceRelease);
 		const auto voiceRelease = static_cast<double>(voiceReleaseParam.getValModDenorm());
 
+		const dsp::modal2::Voice::Parameters modalVoiceParams
+		(
+			modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso,
+			modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv,
+			modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite
+		);
+
 		modalFilter
 		(
 			{ voiceAttack, voiceDecay, voiceSustain, voiceRelease }
@@ -128,11 +135,7 @@ namespace audio
 				modalFilter
 				(
 					samplesInput, samplesVoice, midiVoice, xen,
-					{
-						modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso,
-						modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv,
-						modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite
-					},
+					modalVoiceParams,
 					modalSemi,
 					numChannels, numSamples,
 					v
@@ -146,6 +149,10 @@ namespace audio
 				//);
 				sleepy = modalFilter.isSleepy(sleepy, samplesVoice, numChannels, numSamples, v);
 				parallelProcessor.setSleepy(sleepy, v);
+			}
+			else
+			{
+				modalFilter.processSleepy(modalVoiceParams, numChannels, v);
 			}
 		}
 

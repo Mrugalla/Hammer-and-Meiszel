@@ -7,78 +7,26 @@ namespace dsp
 	{
 		struct ModalFilter
 		{
-			ModalFilter() :
-				materials(),
-				envGenParams(),
-				voices
-				{
-					Voice(envGenParams), Voice(envGenParams), Voice(envGenParams), Voice(envGenParams),
-					Voice(envGenParams), Voice(envGenParams), Voice(envGenParams), Voice(envGenParams),
-					Voice(envGenParams), Voice(envGenParams), Voice(envGenParams), Voice(envGenParams),
-					Voice(envGenParams), Voice(envGenParams), Voice(envGenParams)
-				}
-			{
-				generateSaw(materials[0]);
-				generateSquare(materials[1]);
-			}
+			ModalFilter();
 
-			void prepare(double sampleRate) noexcept
-			{
-				envGenParams.prepare(sampleRate);
-				for (auto v = 0; v < voices.size(); ++v)
-				{
-					auto& voice = voices[v];
-					voice.prepare(sampleRate);
-				}
-			}
+			// sampleRate
+			void prepare(double) noexcept;
 
-			void operator()(const EnvelopeGenerator::Parameters& _envGenParams) noexcept
-			{
-				envGenParams.updateParameters(_envGenParams);
+			void operator()(const EnvelopeGenerator::Parameters&) noexcept;
 
-				for (auto m = 0; m < 2; ++m)
-				{
-					auto& material = materials[m];
-					auto& status = material.status;
-					if (status == Status::UpdatedMaterial)
-					{
-						for (auto& voice : voices)
-							voice.reportMaterialUpdate();
-						status = Status::UpdatedProcessor;
-					}
-				}
-			}
+			// samplesSrc, samplesDest, midi, xen, voiceParams, transposeSemi, numChannels, numSamples, v
+			void operator()(const double**, double**, const MidiBuffer&,
+				const arch::XenManager&, const Voice::Parameters&, double, int, int, int) noexcept;
 
-			void operator()(const double** samplesSrc, double** samplesDest,
-				const MidiBuffer& midi, const arch::XenManager& xen,
-				const Voice::Parameters& voiceParams, double transposeSemi,
-				int numChannels, int numSamples, int v) noexcept
-			{
-				auto& voice = voices[v];
-				voice
-				(
-					materials, voiceParams,
-					samplesSrc, samplesDest,
-					midi, xen, transposeSemi,
-					numChannels, numSamples
-				);
-			}
+			// voiceParams, numChannels, v
+			void processSleepy(const Voice::Parameters&, int, int) noexcept;
 
-			bool isSleepy(bool& sleepy, double** samplesDest,
-				int numChannels, int numSamples, int v) noexcept
-			{
-				return voices[v].isSleepy(sleepy, samplesDest, numChannels, numSamples);
-			}
+			// sleepy, samplesDest, numChannels, numSamples, v
+			bool isSleepy(bool&, double**, int, int, int) noexcept;
 
-			Material& getMaterial(int i) noexcept
-			{
-				return materials[i];
-			}
+			Material& getMaterial(int) noexcept;
 
-			const Material& getMaterial(int i) const noexcept
-			{
-				return materials[i];
-			}
+			const Material& getMaterial(int) const noexcept;
 
 		private:
 			DualMaterial materials;

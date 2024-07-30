@@ -592,10 +592,6 @@ namespace gui
         toast.setSize(toastWidth, toastHeight);
 
         /*
-        layout.place(get(kKnobs::kMacro), -5, 1, 2, 2, true);
-		layout.place(get(kButtons::kMacroRel), -3, 1, 2, 1);
-		layout.place(get(kButtons::kMacroSwap), -3, 2, 2, 1);
-        
 		layout.place(get(kKnobs::kEnvAmpAttack), 0, 6, 2, 2, true);
 		layout.place(get(kKnobs::kEnvAmpDecay), 2, 6, 2, 2, true);
 		layout.place(get(kKnobs::kEnvAmpSustain), 4, 6, 2, 2, true);
@@ -604,18 +600,7 @@ namespace gui
 		layout.place(get(kLabels::kEnvAmpDcy), 2, 8, 2, 1);
 		layout.place(get(kLabels::kEnvAmpSus), 4, 8, 2, 1);
 		layout.place(get(kLabels::kEnvAmpRls), 6, 8, 2, 1);
-
-        auto modalY = 4;
-        auto modalX = 8;
-
-        
-
 		layout.place(get(kButtons::kMaterialDropDown), 15.5f, modalY, 1.f, 1);
-
-        const auto moduleWidth = 9;
-        const auto materialHeight = 4;
-        ++modalY;
-
 		materialDropDown.setBounds(materialBounds);
         */
 	}

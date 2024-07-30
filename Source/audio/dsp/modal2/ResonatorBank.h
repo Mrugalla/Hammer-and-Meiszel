@@ -47,7 +47,8 @@ namespace dsp
 			ResonatorArray resonators;
 			Val val;
 			const double FreqMin;
-			double freqHz, sampleRate, sampleRateInv, nyquist, gain;
+			double freqHz, sampleRate, sampleRateInv, nyquist;
+			std::array<double, 2> gains;
 			std::array<int, 2> numFiltersBelowNyquist;
 
 			// material, numFiltersBelowNyquist, ch
