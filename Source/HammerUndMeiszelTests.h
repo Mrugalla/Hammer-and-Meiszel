@@ -6,9 +6,26 @@
 
 namespace test
 {
+	struct RandomNoiseGenerator
+	{
+		RandomNoiseGenerator() :
+			rand()
+		{}
+
+		void operator()(double** samples,
+			int numChannels, int numSamples, double gain) noexcept
+		{
+			for(auto ch = 0; ch < numChannels; ++ch)
+				for (auto s = 0; s < numSamples; ++s)
+					samples[ch][s] = rand.nextDouble() * gain;
+		}
+
+		juce::Random rand;
+	};
+
 	struct MIDIRandomMelodyGenerator
 	{
-		static constexpr float Likelyness = .001f;
+		static constexpr float Likelyness = .005f;
 		static constexpr int NoteMin = 36;
 		static constexpr int NoteMax = 96;
 		static constexpr int NoteRange = NoteMax - NoteMin;
@@ -65,7 +82,13 @@ namespace test
 
 			void sendNoteOn(juce::MidiBuffer& buffer, juce::Random& rand, int s) noexcept
 			{
-				const auto noteNumber = NoteMin + rand.nextInt(NoteRange);
+				auto noteNumber = NoteMin + rand.nextInt(NoteRange);
+				// quantize noteNumber to C major scale
+				auto pitchclass = noteNumber % 12;
+				const auto rest = noteNumber / 12;
+				if (pitchclass == 1 || pitchclass == 3 || pitchclass == 6 || pitchclass == 8 || pitchclass == 10)
+					noteNumber += 1;
+				noteNumber = pitchclass + rest * 12;
 				buffer.addEvent(juce::MidiMessage::noteOn(1, noteNumber, juce::uint8(100)), s);
 				idx = (idx + 1) % stack.size();
 				stack[idx].noteOn = true;
@@ -84,13 +107,16 @@ namespace test
 		MIDIRandomMelodyGenerator() :
 			rand(),
 			buffer(),
-			stack()
+			stack(),
+			allNotesOffIdx(0),
+			keepExistingMIDI(false)
 		{}
 
 		void operator()(juce::MidiBuffer& midi, int numSamples) noexcept
 		{
 			buffer.clear();
-			buffer.addEvents(midi, 0, numSamples, 0);
+			if(keepExistingMIDI)
+				buffer.addEvents(midi, 0, numSamples, 0);
 
 			const bool eventOccurs = rand.nextFloat() < Likelyness;
 			if (eventOccurs)
@@ -110,12 +136,22 @@ namespace test
 				}
 			}
 
+			allNotesOffIdx += numSamples;
+			if (allNotesOffIdx > 44100 * 2)
+			{
+				for(auto i = NoteMin; i < NoteMax + 1; ++i)
+					buffer.addEvent(juce::MidiMessage::noteOff(1, i), 0);
+				allNotesOffIdx = 0;
+			}
+
 			midi.swapWith(buffer);
 		}
 
 		juce::Random rand;
 		juce::MidiBuffer buffer;
 		NoteStack stack;
+		int allNotesOffIdx;
+		bool keepExistingMIDI;
 	};
 
 	struct SpeedTestPB

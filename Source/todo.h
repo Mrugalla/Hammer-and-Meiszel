@@ -4,8 +4,6 @@
 
 ~~~ todo ~~~
 
-resonanz envelope scheint nicht zu funktionieren
-
 abstrahiere viele GUI aspekte um den workflow zu verbessern
     zögere nicht!
 

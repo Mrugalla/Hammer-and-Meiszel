@@ -62,14 +62,16 @@ namespace dsp
 
 					// p, env, min, max, direct[-1,1]
 					// returns true if smoothing
-					bool operator()(const Parameter& p, double env,
+					bool operator()(const Parameter& p, double envVal,
 						double min, double max, double direc) noexcept
 					{
 						const auto cVal = val;
 						const auto nVal = p.val + p.breite * direc;
-						const auto info = prm(nVal) + env;
+						const auto info = prm(nVal) + envVal;
 						val = math::limit(min, max, info);
-						return cVal != val;
+						const auto dif = val - cVal;
+						const auto distSquared = dif * dif;
+						return distSquared > 1e-4;
 					}
 
 					PRMBlockD prm;
@@ -86,13 +88,13 @@ namespace dsp
 						param.prepare(sampleRate, smoothLenMs);
 				}
 
-				bool operator()(const Parameter& p, double env,
+				bool operator()(const Parameter& p, double envGenVal,
 					double min, double max, int numChannels) noexcept
 				{
-					env *= p.env;
-					bool smooth = params[0](p, env, min, max, -1.);
+					const auto envVal = envGenVal * p.env;
+					bool smooth = params[0](p, envVal, min, max, -1.);
 					if(numChannels == 2)
-						if(params[1](p, env, min, max, 1.))
+						if(params[1](p, envVal, min, max, 1.))
 							smooth = true;
 					return smooth;
 				}
@@ -242,14 +244,13 @@ namespace dsp
 				const auto envGenValue = env.getEnvNoSustain();
 
 				{
-					auto resoParam = parameters[kReso];
+					auto& resoParam = parameters[kReso];
 					const auto resoSmooth = resoParam(_parameters[kReso], envGenValue, 0., 1., numChannels);
-					if (resoSmooth)
-						for (auto ch = 0; ch < numChannels; ++ch)
-						{
-							const auto reso = resoParam[ch];
-							resonatorBank.setReso(reso, ch);
-						}
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						const auto reso = resoParam[ch];
+						resonatorBank.setReso(reso, ch);
+					}
 				}
 
 				const bool blendSmooth = parameters[kBlend](_parameters[kBlend], envGenValue, 0., 1., numChannels);

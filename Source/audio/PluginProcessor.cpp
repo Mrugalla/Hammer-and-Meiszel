@@ -20,7 +20,6 @@ namespace audio
 		//	prepare(44100.);
 		//	operator()(samples, midi, 2, dsp::BlockSize2x);
 		//}, 10, "i am speed");
-
 		startTimerHz(2);
 	}
 
@@ -33,6 +32,8 @@ namespace audio
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
 	{
+		//randNoiseGen(samples, numChannels, numSamples, .25);
+		//randMeloGen(midi, numSamples);
 		autoMPE(midi); voiceSplit(midi);
 
 		const auto& modalOctParam = params(PID::ModalOct);

@@ -152,7 +152,7 @@ namespace dsp
 			const auto one = static_cast<Float>(1);
 			a0 = one - x;
 
-			if (AutoGain)
+			if constexpr (AutoGain)
 				b1 = x * (one - a0);
 			else
 				b1 = x;

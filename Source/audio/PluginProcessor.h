@@ -1,11 +1,11 @@
 #pragma once
 #include <juce_events/juce_events.h>
 
+#include "../HammerUndMeiszelTests.h"
 #include "../param/Param.h"
 #include "dsp/midi/AutoMPE.h"
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
-//#include "dsp/modal/Filtr.h"
 #include "dsp/modal2/ModalFilter.h"
 #include "dsp/flanger/flanger.h"
 
@@ -40,6 +40,9 @@ namespace audio
 		Params& params;
 		const arch::XenManager& xen;
 		double sampleRate;
+
+		//test::RandomNoiseGenerator randNoiseGen;
+		//test::MIDIRandomMelodyGenerator randMeloGen;
 
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;
