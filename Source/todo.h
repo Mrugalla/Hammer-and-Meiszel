@@ -43,6 +43,29 @@ AUDIO
         add latency compensation delay
         write cpp
 
+~~~ video releases ~~~
+
+Fixed My Auto-Suspend Voice Bug With Breakpoints
+https://youtu.be/ycLhqMkX4lk?si=RMXjk8sqLYwptULJ
+
+VST Coding: Harmonize and Saturate Modal Filters
+https://www.youtube.com/watch?v=PP3Gg9-KQiU
+
+VST Coding: Transposing Synth Voices
+https://youtu.be/u7dhEzGlFyI?si=_dWUi8-w0Bz-gynf
+
+Navigating Atomic State Using Call Graphs (Coding Tutorial)
+https://www.youtube.com/watch?v=deVicZAaI44
+
+Creative DSP Coding
+https://www.youtube.com/watch?v=u39isqUp_KU
+
+Coding Tutorial: Save and Load Non-Parameter Instance State
+https://youtu.be/PQGN1Nf49uI?si=DwMHiBX-nBvyixq4
+
+Handling Project Constants With My Axiom Namespace
+https://youtu.be/v9d4Kc-c2Wg?si=6tSkd0CNFbgE_8-H
+
 -----------------------------------------------------------------------------------------
 
 */
