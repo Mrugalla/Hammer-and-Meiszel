@@ -112,10 +112,9 @@ namespace dsp
 	{}
 
 	template<class ResoClass>
-	void ResonatorStereo<ResoClass>::reset() noexcept
+	void ResonatorStereo<ResoClass>::reset(int ch) noexcept
 	{
-		resonators[0].reset();
-		resonators[1].reset();
+		resonators[ch].reset();
 	}
 
 	template<class ResoClass>

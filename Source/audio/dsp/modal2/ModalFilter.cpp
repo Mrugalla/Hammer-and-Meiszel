@@ -6,14 +6,7 @@ namespace dsp
 	{
 		ModalFilter::ModalFilter() :
 			materials(),
-			envGenParams(),
-			voices
-			{
-				Voice(envGenParams), Voice(envGenParams), Voice(envGenParams), Voice(envGenParams),
-				Voice(envGenParams), Voice(envGenParams), Voice(envGenParams), Voice(envGenParams),
-				Voice(envGenParams), Voice(envGenParams), Voice(envGenParams), Voice(envGenParams),
-				Voice(envGenParams), Voice(envGenParams), Voice(envGenParams)
-			}
+			voices()
 		{
 			generateSaw(materials[0]);
 			generateSquare(materials[1]);
@@ -21,7 +14,6 @@ namespace dsp
 
 		void ModalFilter::prepare(double sampleRate) noexcept
 		{
-			envGenParams.prepare(sampleRate);
 			for (auto v = 0; v < voices.size(); ++v)
 			{
 				auto& voice = voices[v];
@@ -29,10 +21,8 @@ namespace dsp
 			}
 		}
 
-		void ModalFilter::operator()(const EnvelopeGenerator::Parameters& _envGenParams) noexcept
+		void ModalFilter::operator()() noexcept
 		{
-			envGenParams.updateParameters(_envGenParams);
-
 			for (auto m = 0; m < 2; ++m)
 			{
 				auto& material = materials[m];
@@ -46,31 +36,20 @@ namespace dsp
 			}
 		}
 
-		void ModalFilter::operator()(const double** samplesSrc, double** samplesDest,
+		void ModalFilter::operator()(double** samples,
 			const MidiBuffer& midi, const arch::XenManager& xen,
-			const Voice::Parameters& voiceParams, double transposeSemi,
+			const Voice::Parameters& voiceParams,
+			double transposeSemi, double envGenMod,
 			int numChannels, int numSamples, int v) noexcept
 		{
 			auto& voice = voices[v];
 			voice
 			(
 				materials, voiceParams,
-				samplesSrc, samplesDest,
-				midi, xen, transposeSemi,
+				samples, midi, xen,
+				transposeSemi, envGenMod,
 				numChannels, numSamples
 			);
-		}
-
-		void ModalFilter::processSleepy(const Voice::Parameters& voiceParams, int numChannels, int v) noexcept
-		{
-			auto& voice = voices[v];
-			voice.processSleepy(materials, voiceParams, numChannels);
-		}
-
-		bool ModalFilter::isSleepy(bool& sleepy, double** samplesDest,
-			int numChannels, int numSamples, int v) noexcept
-		{
-			return voices[v].isSleepy(sleepy, samplesDest, numChannels, numSamples);
 		}
 
 		Material& ModalFilter::getMaterial(int i) noexcept

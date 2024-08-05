@@ -28,19 +28,28 @@ namespace dsp
 			resonators(),
 			val(),
 			FreqMin(math::noteToFreqHz2(MinPitch)),
+			FreqMax(math::noteToFreqHz2(MaxPitch)),
 			freqHz(1000.),
 			sampleRate(1.),
 			sampleRateInv(1.),
 			nyquist(.5),
 			gains{ 1., 1. },
-			numFiltersBelowNyquist{ 0, 0 }
+			numFiltersBelowNyquist{ 0, 0 },
+			sleepyTimer(0),
+			sleepyTimerThreshold(0),
+			active(false)
 		{
 		}
 
-		void ResonatorBank::reset() noexcept
+		void ResonatorBank::reset(int numChannels) noexcept
 		{
-			for (auto i = 0; i < NumFilters; ++i)
-				resonators[i].reset();
+			for(auto ch = 0; ch < numChannels; ++ch)
+				for (auto i = 0; i < NumFilters; ++i)
+					resonators[i].reset(ch);
+			for (auto& n : numFiltersBelowNyquist)
+				n = 0;
+			sleepyTimer = 0;
+			active = false;
 		}
 
 		void ResonatorBank::prepare(const MaterialDataStereo& materialStereo, double _sampleRate)
@@ -48,13 +57,15 @@ namespace dsp
 			sampleRate = _sampleRate;
 			sampleRateInv = 1. / sampleRate;
 			nyquist = sampleRate * .5;
-			reset();
+			reset(2);
 			setFrequencyHz(materialStereo, 1000., 2);
 			for(auto ch = 0; ch < 2; ++ch)
 				setReso(.25, ch);
+			sleepyTimerThreshold = static_cast<int>(nyquist) / 2;
 		}
 
-		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo, double** samples, const MidiBuffer& midi,
+		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo,
+			double** samples, const MidiBuffer& midi,
 			const arch::XenManager& xen, double transposeSemi,
 			int numChannels, int numSamples) noexcept
 		{
@@ -74,26 +85,8 @@ namespace dsp
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				auto& material = materialStereo[ch];
-				numFiltersBelowNyquist[ch] = NumFilters;
-				for (auto i = 0; i < NumFilters; ++i)
-				{
-					const auto freqRatio = material.getRatio(i);
-					auto freqFilter = freqHz * freqRatio;
-					while (freqFilter < FreqMin)
-						freqFilter *= 2.;
-					if (freqFilter < nyquist)
-					{
-						const auto fc = math::freqHzToFc(freqFilter, sampleRate);
-						auto& resonator = resonators[i];
-						resonator.setCutoffFc(fc, ch);
-						resonator.update(ch);
-					}
-					else
-					{
-						numFiltersBelowNyquist[ch] = i;
-						i = NumFilters;
-					}
-				}
+				auto& nfbn = numFiltersBelowNyquist[ch];
+				updateFreqRatios(material, nfbn, ch);
 			}
 		}
 
@@ -117,13 +110,16 @@ namespace dsp
 
 		void ResonatorBank::updateFreqRatios(const MaterialData& material, int& nfbn, int ch) noexcept
 		{
+			nfbn = 0;
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				const auto freqRatio = material.getRatio(i);
 				auto freqFilter = freqHz * freqRatio;
-				while (freqFilter < FreqMin)
-					freqFilter *= 2.;
-				if (freqFilter < nyquist)
+				//while (freqFilter < FreqMin)
+				//	freqFilter *= 2.;
+				if (freqFilter < FreqMin)
+					return;
+				if (freqFilter < FreqMax)
 				{
 					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
 					auto& resonator = resonators[i];
@@ -143,8 +139,8 @@ namespace dsp
 			const MidiBuffer& midi, const arch::XenManager& xen, double transposeSemi,
 			int numChannels, int numSamples) noexcept
 		{
-			static constexpr double PB = 0x3fff;
-			static constexpr double PBInv = 1. / PB;
+			static constexpr auto PB = static_cast<double>(0x3fff);
+			static constexpr auto PBInv = 1. / PB;
 
 			{
 				const auto pbRange = xen.getPitchbendRange(); // can be improved by being triggered from xenManger changes directly
@@ -167,10 +163,17 @@ namespace dsp
 				const auto msg = it.getMessage();
 				if (msg.isNoteOn())
 				{
+					if (!active)
+						for (auto ch = 0; ch < numChannels; ++ch)
+							for (auto i = 0; i < NumFilters; ++i)
+								resonators[i].reset(ch);
+					active = true;
+
 					const auto ts = it.samplePosition;
 					val.pitch = static_cast<double>(msg.getNoteNumber());
 					const auto freq = val.getFreq(xen);
 					setFrequencyHz(materialStereo, freq, numChannels);
+					sleepyTimer = 0;
 					applyFilter(materialStereo, samples, numChannels, s, ts);
 					s = ts;
 				}
@@ -183,17 +186,22 @@ namespace dsp
 						val.pb = pb;
 						const auto freq = val.getFreq(xen);
 						setFrequencyHz(materialStereo, freq, numChannels);
-						applyFilter(materialStereo, samples, numChannels, s, ts);
+						if(active)
+							applyFilter(materialStereo, samples, numChannels, s, ts);
 						s = ts;
 					}
 				}
 			}
-			applyFilter(materialStereo, samples, numChannels, s, numSamples);
+
+			if(active)
+				applyFilter(materialStereo, samples, numChannels, s, numSamples);
 		}
 
 		void ResonatorBank::applyFilter(const MaterialDataStereo& materialStereo, double** samples,
 			int numChannels, int startIdx, int endIdx) noexcept
 		{
+			static constexpr auto Eps = 1e-6;
+
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				const auto& material = materialStereo[ch];
@@ -211,9 +219,16 @@ namespace dsp
 						const auto bpY = resonator(dry, ch) * material.getMag(f) * gain;
 						wet += bpY;
 					}
+					if (wet * wet > Eps)
+						sleepyTimer = 0;
 					smpls[i] = wet;
 				}
 			}
+
+			const auto blockLength = endIdx - startIdx;
+			sleepyTimer += blockLength;
+			if (sleepyTimer > sleepyTimerThreshold)
+				active = false;
 		}
 	}
 }

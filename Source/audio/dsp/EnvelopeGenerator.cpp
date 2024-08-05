@@ -21,10 +21,10 @@ namespace dsp
 		dcy = dcyP;
 		rls = rlsP;
 		atkP = dcyP = rlsP = -1.;
-		updateParameters(atk, dcy, sus, rls);
+		operator()(atk, dcy, sus, rls);
 	}
 
-	void EnvelopeGenerator::Parameters::updateParameters(double _atk, double _dcy,
+	void EnvelopeGenerator::Parameters::operator()(double _atk, double _dcy,
 		double _sus, double _rls) noexcept
 	{
 		sus = _sus;
@@ -54,9 +54,9 @@ namespace dsp
 		}
 	}
 
-	void EnvelopeGenerator::Parameters::updateParameters(const Parameters& other) noexcept
+	void EnvelopeGenerator::Parameters::operator()(const Parameters& other) noexcept
 	{
-		updateParameters(other.atkP, other.dcyP, other.sus, other.rlsP);
+		operator()(other.atkP, other.dcyP, other.sus, other.rlsP);
 	}
 
 	EnvelopeGenerator::EnvelopeGenerator(const Parameters& p) :

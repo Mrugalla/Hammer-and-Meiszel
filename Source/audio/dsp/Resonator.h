@@ -71,7 +71,8 @@ namespace dsp
 	{
 		ResonatorStereo();
 
-		void reset() noexcept;
+		// ch
+		void reset(int) noexcept;
 
 		// fc [0, .5], ch
 		void setCutoffFc(double, int) noexcept;

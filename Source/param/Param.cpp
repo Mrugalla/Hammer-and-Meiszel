@@ -60,10 +60,14 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::VoiceAttack: return "Voice Attack";
-		case PID::VoiceDecay: return "Voice Decay";
-		case PID::VoiceSustain: return "Voice Sustain";
-		case PID::VoiceRelease: return "Voice Release";
+		case PID::EnvGenAmpAttack: return "EnvGenAmp Attack";
+		case PID::EnvGenAmpDecay: return "EnvGenAmp Decay";
+		case PID::EnvGenAmpSustain: return "EnvGenAmp Sustain";
+		case PID::EnvGenAmpRelease: return "EnvGenAmp Release";
+		case PID::EnvGenModAttack: return "EnvGenMod Attack";
+		case PID::EnvGenModDecay: return "EnvGenMod Decay";
+		case PID::EnvGenModSustain: return "EnvGenMod Sustain";
+		case PID::EnvGenModRelease: return "EnvGenMod Release";
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
 		case PID::ModalBlend: return "Modal Blend";
@@ -153,10 +157,14 @@ namespace param
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
-		case PID::VoiceAttack: return "The amplitude envelope generator's attack time.";
-		case PID::VoiceDecay: return "The amplitude envelope generator's decay time.";
-		case PID::VoiceSustain: return "The amplitude envelope generator's sustain level.";
-		case PID::VoiceRelease: return "The amplitude envelope generator's release time.";
+		case PID::EnvGenAmpAttack: return "The amplitude envelope generator's attack time.";
+		case PID::EnvGenAmpDecay: return "The amplitude envelope generator's decay time.";
+		case PID::EnvGenAmpSustain: return "The amplitude envelope generator's sustain level.";
+		case PID::EnvGenAmpRelease: return "The amplitude envelope generator's release time.";
+		case PID::EnvGenModAttack: return "The modulation envelope generator's attack time.";
+		case PID::EnvGenModDecay: return "The modulation envelope generator's decay time.";
+		case PID::EnvGenModSustain: return "The modulation envelope generator's sustain level.";
+		case PID::EnvGenModRelease: return "The modulation envelope generator's release time.";
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
 		case PID::ModalBlend: return "Blends between the 2 modal filters.";
@@ -1351,10 +1359,16 @@ namespace param
 		const auto SpreizungMax = dsp::modal2::SpreizungMax;
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::VoiceAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
-		params.push_back(makeParam(PID::VoiceDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
-		params.push_back(makeParam(PID::VoiceSustain, .999f, makeRange::lin(0.f, .999f)));
-		params.push_back(makeParam(PID::VoiceRelease, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpAttack, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpDecay, 420.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpSustain, .999f, makeRange::lin(0.f, .999f)));
+		params.push_back(makeParam(PID::EnvGenAmpRelease, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+
+		params.push_back(makeParam(PID::EnvGenModAttack, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModDecay, 420.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModSustain, .999f, makeRange::lin(0.f, .999f)));
+		params.push_back(makeParam(PID::EnvGenModRelease, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::ModalBlend, 0.f));

@@ -46,10 +46,14 @@ namespace param
 		Power,
 
 		// low level parameters
-		VoiceAttack,
-		VoiceDecay,
-		VoiceSustain,
-		VoiceRelease,
+		EnvGenAmpAttack,
+		EnvGenAmpDecay,
+		EnvGenAmpSustain,
+		EnvGenAmpRelease,
+		EnvGenModAttack,
+		EnvGenModDecay,
+		EnvGenModSustain,
+		EnvGenModRelease,
 		ModalOct,
 		ModalSemi,
 		ModalBlend,

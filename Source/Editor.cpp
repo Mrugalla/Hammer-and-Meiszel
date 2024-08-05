@@ -56,10 +56,18 @@ namespace gui
 			Label(utils),
 			Label(utils),
 			Label(utils),
+            Label(utils),
+            Label(utils),
+            Label(utils),
+            Label(utils),
 			Label(utils)
         },
         knobs
         {
+            Knob(utils),
+            Knob(utils),
+            Knob(utils),
+            Knob(utils),
             Knob(utils),
             Knob(utils),
             Knob(utils),
@@ -72,6 +80,10 @@ namespace gui
 			ModDial(utils),
 			ModDial(utils),
 			ModDial(utils),
+            ModDial(utils),
+            ModDial(utils),
+            ModDial(utils),
+            ModDial(utils),
 			ModDial(utils)
 		},
         buttons
@@ -155,18 +167,31 @@ namespace gui
 			addAndMakeVisible(modDial);
         modDials[0].setVisible(false);
 
-		makeKnob(PID::VoiceAttack, get(kKnobs::kEnvAmpAttack));
-		makeKnob(PID::VoiceDecay, get(kKnobs::kEnvAmpDecay));
-		makeKnob(PID::VoiceSustain, get(kKnobs::kEnvAmpSustain));
-		makeKnob(PID::VoiceRelease, get(kKnobs::kEnvAmpRelease));
-		getModDial(kKnobs::kEnvAmpAttack).attach(PID::VoiceAttack);
-		getModDial(kKnobs::kEnvAmpDecay).attach(PID::VoiceDecay);
-		getModDial(kKnobs::kEnvAmpSustain).attach(PID::VoiceSustain);
-		getModDial(kKnobs::kEnvAmpRelease).attach(PID::VoiceRelease);
+		makeKnob(PID::EnvGenAmpAttack, get(kKnobs::kEnvAmpAttack));
+		makeKnob(PID::EnvGenAmpDecay, get(kKnobs::kEnvAmpDecay));
+		makeKnob(PID::EnvGenAmpSustain, get(kKnobs::kEnvAmpSustain));
+		makeKnob(PID::EnvGenAmpRelease, get(kKnobs::kEnvAmpRelease));
+		getModDial(kKnobs::kEnvAmpAttack).attach(PID::EnvGenAmpAttack);
+		getModDial(kKnobs::kEnvAmpDecay).attach(PID::EnvGenAmpDecay);
+		getModDial(kKnobs::kEnvAmpSustain).attach(PID::EnvGenAmpSustain);
+		getModDial(kKnobs::kEnvAmpRelease).attach(PID::EnvGenAmpRelease);
 		makeTextLabel(get(kLabels::kEnvAmpAtk), "A", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(get(kLabels::kEnvAmpDcy), "D", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(get(kLabels::kEnvAmpSus), "S", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(get(kLabels::kEnvAmpRls), "R", fontKnobs, Just::centred, CID::Txt);
+
+		makeKnob(PID::EnvGenModAttack, get(kKnobs::kEnvModAttack));
+		makeKnob(PID::EnvGenModDecay, get(kKnobs::kEnvModDecay));
+		makeKnob(PID::EnvGenModSustain, get(kKnobs::kEnvModSustain));
+		makeKnob(PID::EnvGenModRelease, get(kKnobs::kEnvModRelease));
+		getModDial(kKnobs::kEnvModAttack).attach(PID::EnvGenModAttack);
+		getModDial(kKnobs::kEnvModDecay).attach(PID::EnvGenModDecay);
+		getModDial(kKnobs::kEnvModSustain).attach(PID::EnvGenModSustain);
+		getModDial(kKnobs::kEnvModRelease).attach(PID::EnvGenModRelease);
+		makeTextLabel(get(kLabels::kEnvModAtk), "A", fontKnobs, Just::centred, CID::Txt);
+		makeTextLabel(get(kLabels::kEnvModDcy), "D", fontKnobs, Just::centred, CID::Txt);
+		makeTextLabel(get(kLabels::kEnvModSus), "S", fontKnobs, Just::centred, CID::Txt);
+		makeTextLabel(get(kLabels::kEnvModRls), "R", fontKnobs, Just::centred, CID::Txt);
 
         auto& titleMacro = get(kLabels::kTitleMacro);
         makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
@@ -530,6 +555,27 @@ namespace gui
             materialViews[i].setBounds(materialBounds);
 
 		const auto leftArea = layout(0.f, SidePanelY, SidePanelWidth, SidePanelHeight);
+
+        {
+            const auto knobWidth = leftArea.getWidth() * .25f;
+            const auto knobHeight = leftArea.getHeight() * .25f;
+            const auto y0 = leftArea.getY();
+			const auto y1 = y0 + knobHeight;
+            auto x = leftArea.getX();
+            for (auto i = 0; i < 4; ++i)
+            {
+                const auto ampKnobIdx = static_cast<int>(kKnobs::kEnvAmpAttack) + i;
+                auto& ampKnob = knobs[ampKnobIdx];
+				BoundsF ampBounds(x, y0, knobWidth, knobHeight);
+                ampKnob.setBounds(ampBounds.toNearestInt());
+				const auto modKnobIdx = static_cast<int>(kKnobs::kEnvModAttack) + i;
+				auto& modKnob = knobs[modKnobIdx];
+				BoundsF modBounds(x, y1, knobWidth, knobHeight);
+				modKnob.setBounds(modBounds.toNearestInt());
+				x += knobWidth;
+            }
+        }
+        
         const auto rightArea = layout(SidePanelRightX, SidePanelY, SidePanelWidth, SidePanelHeight);
 		
         auto& titleMacro = get(kLabels::kTitleMacro);

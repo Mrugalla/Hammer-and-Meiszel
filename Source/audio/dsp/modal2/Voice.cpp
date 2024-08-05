@@ -87,9 +87,7 @@ namespace dsp
 
 		//
 
-		Voice::Voice(const EnvelopeGenerator::Parameters& envGenParams) :
-			env(envGenParams),
-			envBuffer(),
+		Voice::Voice() :
 			materialStereo(),
 			parameters(),
 			resonatorBank(),
@@ -98,7 +96,6 @@ namespace dsp
 
 		void Voice::prepare(double sampleRate) noexcept
 		{
-			env.prepare(sampleRate);
 			resonatorBank.prepare(materialStereo, sampleRate);
 			const auto smoothLenMs = 14.;
 			for (auto i = 0; i < kNumParams; ++i)
@@ -106,114 +103,22 @@ namespace dsp
 		}
 
 		void Voice::operator()(const DualMaterial& dualMaterial, const Parameters& _parameters,
-			const double** samplesSrc, double** samplesDest,
-			const MidiBuffer& midi, const arch::XenManager& xen,
-			double transposeSemi,
+			double** samples, const MidiBuffer& midi, const arch::XenManager& xen,
+			const double envGenMod, double transposeSemi,
 			int numChannels, int numSamples) noexcept
 		{
-			synthesizeEnvelope(midi, numSamples);
-			processEnvelope(samplesSrc, samplesDest, numChannels, numSamples);
-			updateParameters(dualMaterial, _parameters, numChannels);
-			resonatorBank(materialStereo, samplesDest, midi, xen, transposeSemi, numChannels, numSamples);
-		}
-
-		void Voice::processSleepy(const DualMaterial& dualMaterial,
-			const Parameters& _parameters, int numChannels) noexcept
-		{
-			env.env = 0.;
-			env.state = EnvelopeGenerator::State::Release;
-			env.noteOn = false;
-			updateParameters(dualMaterial, _parameters, numChannels);
-		}
-
-		bool Voice::isSleepy(bool sleepy, double** samplesDest,
-			int numChannels, int numSamples) noexcept
-		{
-			if (env.state != EnvelopeGenerator::State::Release)
-				return false;
-
-			const bool bufferTooSmall = numSamples != BlockSize;
-			if (bufferTooSmall)
-				return sleepy;
-
-			sleepy = bufferSilent(samplesDest, numChannels, numSamples);
-			if (!sleepy)
-				return sleepy;
-
-			resonatorBank.reset();
-			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::clear(samplesDest[ch], numSamples);
-			return sleepy;
-		}
-
-		void Voice::reportMaterialUpdate() noexcept
-		{
-			wantsMaterialUpdate = true;
-		}
-
-		void Voice::synthesizeEnvelope(const MidiBuffer& midi, int numSamples) noexcept
-		{
-			auto s = 0;
-			for (const auto it : midi)
-			{
-				const auto msg = it.getMessage();
-				const auto ts = it.samplePosition;
-				if (msg.isNoteOn())
-				{
-					s = synthesizeEnvelope(s, ts);
-					env.noteOn = true;
-				}
-				else if (msg.isNoteOff() || msg.isAllNotesOff())
-				{
-					s = synthesizeEnvelope(s, ts);
-					env.noteOn = false;
-				}
-				else
-					s = synthesizeEnvelope(s, ts);
-			}
-			synthesizeEnvelope(s, numSamples);
-		}
-
-		int Voice::synthesizeEnvelope(int s, int ts) noexcept
-		{
-			while (s < ts)
-			{
-				envBuffer[s] = env();
-				++s;
-			}
-			return s;
-		}
-
-		void Voice::processEnvelope(const double** samplesSrc, double** samplesDest,
-			int numChannels, int numSamples) noexcept
-		{
-			for (auto ch = 0; ch < numChannels; ++ch)
-			{
-				const auto smplsSrc = samplesSrc[ch];
-				auto smplsDest = samplesDest[ch];
-				SIMD::multiply(smplsDest, smplsSrc, envBuffer.data(), numSamples);
-			}
-		}
-
-		bool Voice::bufferSilent(double* const* samplesDest, int numChannels, int numSamples) const noexcept
-		{
-			for (auto ch = 0; ch < numChannels; ++ch)
-			{
-				const auto smpls = samplesDest[ch];
-				for (auto s = 0; s < numSamples; ++s)
-				{
-					const auto smpl = std::abs(smpls[s]);
-					if (smpl > 1e-4)
-						return false;
-				}
-			}
-			return true;
+			updateParameters(dualMaterial, _parameters, envGenMod, numChannels);
+			resonatorBank
+			(
+				materialStereo, samples, midi, xen,
+				transposeSemi, numChannels, numSamples
+			);
 		}
 
 		void Voice::updateParameters(const DualMaterial& dualMaterial,
-			const Parameters& _parameters, int numChannels) noexcept
+			const Parameters& _parameters, double envGenMod, int numChannels) noexcept
 		{
-			const auto envGenValue = env.getEnvNoSustain();
+			const auto envGenValue = envGenMod;
 
 			{
 				auto& resoParam = parameters[kReso];
@@ -296,6 +201,11 @@ namespace dsp
 					}
 				}
 			}
+		}
+
+		void Voice::reportMaterialUpdate() noexcept
+		{
+			wantsMaterialUpdate = true;
 		}
 	}
 }

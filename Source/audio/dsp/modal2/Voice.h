@@ -60,49 +60,29 @@ namespace dsp
 				std::array<Param, 2> params;
 			};
 
-			Voice(const EnvelopeGenerator::Parameters&);
+			Voice();
 
 			// sampleRate
 			void prepare(double) noexcept;
 
-			// dualMaterial, parameters, samplesSrc, samplesDest, midi, xen, transposeSemi, numChannels, numSamples
+			// dualMaterial, parameters, samples,
+			// midi, xen, envGenMod, transposeSemi,
+			// numChannels, numSamples
 			void operator()(const DualMaterial&, const Parameters&,
-				const double**, double**,
-				const MidiBuffer&, const arch::XenManager&,
-				double, int, int) noexcept;
-
-			// dualMaterial, parameters, numChannels
-			void processSleepy(const DualMaterial&, const Parameters&, int) noexcept;
-
-			// sleepy, samplesDest, numChannels, numSamples
-			bool isSleepy(bool, double**, int, int) noexcept;
+				double**, const MidiBuffer&, const arch::XenManager&,
+				double, double, int, int) noexcept;
 
 			void reportMaterialUpdate() noexcept;
 
 		private:
-			EnvelopeGenerator env;
-			std::array<double, BlockSize> envBuffer;
 			MaterialDataStereo materialStereo;
 			std::array<SmoothStereoParameter, kNumParams> parameters;
 			ResonatorBank resonatorBank;
 			bool wantsMaterialUpdate;
 
-			// midi, numSamples
-			void synthesizeEnvelope(const MidiBuffer&, int) noexcept;
-
-			// s, ts
-			int synthesizeEnvelope(int, int) noexcept;
-
-			// samplesSrc, samplesDest, numChannels, numSamples
-			void processEnvelope(const double**, double**,
-				int, int) noexcept;
-
-			// samplesDest, numChannels, numSamples
-			bool bufferSilent(double* const*, int, int) const noexcept;
-
-			// dualMaterial, parameters, numChannels
+			// dualMaterial, parameters, envGenMod, numChannels
 			void updateParameters(const DualMaterial&,
-				const Parameters&, int) noexcept;
+				const Parameters&, double, int) noexcept;
 		};
 	}
 }

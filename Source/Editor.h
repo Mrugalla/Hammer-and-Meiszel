@@ -210,13 +210,18 @@ namespace gui
         enum class kLabels
         {
             kTitle, kDev, kTitleModal, kTitleFlanger, kTitleMacro,
-            kEnvAmpAtk, kEnvAmpDcy, kEnvAmpSus, kEnvAmpRls, kNumLabels
+            kEnvAmpAtk, kEnvAmpDcy, kEnvAmpSus, kEnvAmpRls,
+			kEnvModAtk, kEnvModDcy, kEnvModSus, kEnvModRls,
+            kNumLabels
         };
 		static constexpr int NumLabels = static_cast<int>(kLabels::kNumLabels);
         std::array<Label, NumLabels> labels;
         enum class kKnobs
         {
-            kMacro, kEnvAmpAttack, kEnvAmpDecay, kEnvAmpSustain, kEnvAmpRelease, kNumKnobs
+            kMacro,
+            kEnvAmpAttack, kEnvAmpDecay, kEnvAmpSustain, kEnvAmpRelease,
+			kEnvModAttack, kEnvModDecay, kEnvModSustain, kEnvModRelease,
+            kNumKnobs
         };
 		static constexpr int NumKnobs = static_cast<int>(kKnobs::kNumKnobs);
         std::array<Knob, NumKnobs> knobs;
