@@ -449,7 +449,7 @@ namespace gui
 
 	bool ModalMaterialView::isAudioFile(const String& fileName) const
 	{
-		const auto ext = fileName.fromLastOccurrenceOf(".", false, false);
+		const auto ext = fileName.fromLastOccurrenceOf(".", false, false).toLowerCase();
 		return ext == "flac" || ext == "wav" || ext == "mp3" || ext == "aiff";
 	}
 
