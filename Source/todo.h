@@ -4,6 +4,10 @@
 
 ~~~ todo ~~~
 
+H&M dash glitch keytrack controls
+    higher frequencies / higher partials have less keytrack
+    transition from keytrack and no keytrack hard / smooth
+
 abstrahiere viele GUI aspekte um den workflow zu verbessern
     zögere nicht!
 
@@ -65,6 +69,10 @@ https://youtu.be/PQGN1Nf49uI?si=DwMHiBX-nBvyixq4
 
 Handling Project Constants With My Axiom Namespace
 https://youtu.be/v9d4Kc-c2Wg?si=6tSkd0CNFbgE_8-H
+
+~~~ desired beta team ~~~
+
+dash glitch, because https://www.youtube.com/watch?v=0i1LCrC7dZw
 
 -----------------------------------------------------------------------------------------
 
