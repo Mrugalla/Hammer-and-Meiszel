@@ -147,6 +147,7 @@ namespace audio
 
 			// synthsize modulation envelope generator
 			const auto envGenModInfo = envGensMod(midiVoice, numSamples, v);
+			const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
 
 			// process modal filter
 			modalFilter
@@ -154,7 +155,7 @@ namespace audio
 				samplesVoice,
 				midiVoice, xen,
 				modalVoiceParams,
-				modalSemi, envGenModInfo.data[0],
+				modalSemi, envGenModVal,
 				numChannels, numSamples,
 				v
 			);

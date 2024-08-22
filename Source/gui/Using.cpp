@@ -12,7 +12,8 @@ namespace gui
 		Font getFont(const char* ttf, size_t size)
 		{
 			const auto typeface = juce::Typeface::createSystemTypefaceFor(ttf, size);
-			return Font(typeface);
+			const FontOptions fontOptions = juce::FontOptions().withTypeface(typeface);
+			return Font(fontOptions);
 		}
 
 		Font nel()

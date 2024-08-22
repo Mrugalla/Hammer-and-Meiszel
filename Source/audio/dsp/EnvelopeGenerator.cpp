@@ -5,7 +5,7 @@
 namespace dsp
 {
 	EnvelopeGenerator::Parameters::Parameters(double _atk, double _dcy, double _sus, double _rls) :
-		sampleRate(44100.),
+		sampleRate(1.),
 		atkP(_atk), dcyP(_dcy), rlsP(_rls),
 		atk(math::msToInc(atkP, sampleRate)),
 		dcy(math::msToInc(dcyP, sampleRate)),
@@ -16,7 +16,7 @@ namespace dsp
 
 	void EnvelopeGenerator::Parameters::prepare(double _sampleRate) noexcept
 	{
-		sampleRate = sampleRate;
+		sampleRate = _sampleRate;
 		atk = atkP;
 		dcy = dcyP;
 		rls = rlsP;
@@ -61,11 +61,12 @@ namespace dsp
 
 	EnvelopeGenerator::EnvelopeGenerator(const Parameters& p) :
 		parameters(p),
-		env(0.), sampleRate(44100.),
+		env(0.), sampleRate(1.),
 		state(State::Release),
 		noteOn(false),
 		smooth(0.),
-		curEnv(0.)
+		curEnv(0.),
+		MinDb(math::dbToAmp(-60.))
 	{
 	}
 

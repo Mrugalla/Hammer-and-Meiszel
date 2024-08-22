@@ -1359,15 +1359,15 @@ namespace param
 		const auto SpreizungMax = dsp::modal2::SpreizungMax;
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::EnvGenAmpAttack, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
-		params.push_back(makeParam(PID::EnvGenAmpDecay, 420.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenAmpSustain, .999f, makeRange::lin(0.f, .999f)));
-		params.push_back(makeParam(PID::EnvGenAmpRelease, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpRelease, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 
-		params.push_back(makeParam(PID::EnvGenModAttack, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
-		params.push_back(makeParam(PID::EnvGenModDecay, 420.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenModSustain, .999f, makeRange::lin(0.f, .999f)));
-		params.push_back(makeParam(PID::EnvGenModRelease, 1.f, makeRange::quad(0.f, 8000.f, 3), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModRelease, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));

@@ -368,15 +368,19 @@ namespace dsp
 				const auto peakIdx = peakIndexes[i];
 				if (peakIdx != -1)
 				{
-					const auto ratio = static_cast<double>(peakIdx) / static_cast<double>(harm0Idx);
+					const auto peakIdxD = static_cast<double>(peakIdx);
+					const auto ratio = peakIdxD / static_cast<double>(harm0Idx);
 					const auto mag = static_cast<double>(bins[peakIdx]);
 					peakInfos[i].ratio = ratio;
 					peakInfos[i].mag = mag;
+					peakInfos[i].freqHz = .5 * peakIdxD * static_cast<double>(FFTSizeInv * sampleRate);
+					DBG(ratio);
 				}
 				else
 				{
 					peakInfos[i].ratio = 1.;
 					peakInfos[i].mag = 0.;
+					peakInfos[i].freqHz = 0.;
 				}
 			}
 		}

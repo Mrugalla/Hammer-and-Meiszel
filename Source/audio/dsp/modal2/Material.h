@@ -9,7 +9,7 @@ namespace dsp
 	{
 		struct PeakInfo
 		{
-			double mag, ratio;
+			double mag, ratio, freqHz;
 		};
 
 		struct MaterialData

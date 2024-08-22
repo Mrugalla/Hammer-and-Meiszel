@@ -4,6 +4,11 @@
 
 ~~~ todo ~~~
 
+when sample imported user defines which range should be taken
+    if user defines 2 ranges, it's one for each modal material
+
+material editor solve instrument imports where fundamental not highest peak
+
 H&M dash glitch keytrack controls
     higher frequencies / higher partials have less keytrack
     transition from keytrack and no keytrack hard / smooth
@@ -73,6 +78,7 @@ https://youtu.be/v9d4Kc-c2Wg?si=6tSkd0CNFbgE_8-H
 ~~~ desired beta team ~~~
 
 dash glitch, because https://www.youtube.com/watch?v=0i1LCrC7dZw
+dr. laguna weil er hat dieses geile allpass plugin gemacht
 
 -----------------------------------------------------------------------------------------
 

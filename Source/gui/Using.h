@@ -18,6 +18,7 @@ namespace gui
     using String = juce::String;
     using WChar = juce::juce_wchar;
     using Font = juce::Font;
+    using FontOptions = juce::Font::FontOptions;
     using Props = juce::PropertiesFile;
     using AppProps = juce::ApplicationProperties;
     using Cursor = juce::MouseCursor;
@@ -62,6 +63,7 @@ namespace gui
     using StringArray = juce::StringArray;
     using AudioFormatManager = juce::AudioFormatManager;
     using AudioBufferF = juce::AudioBuffer<float>;
+	
 
     using Processor = audio::Processor;
 

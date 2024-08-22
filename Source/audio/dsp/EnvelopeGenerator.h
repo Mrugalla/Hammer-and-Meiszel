@@ -36,10 +36,12 @@ namespace dsp
 		// sampleRate
 		void prepare(double) noexcept;
 
-		const bool isSleepy() const noexcept
+		bool isSleepy() noexcept
 		{
-			static constexpr auto Eps = 1e-6;
-			return !noteOn && env < Eps;
+			bool sleepy = !noteOn && curEnv < MinDb;
+			if (sleepy)
+				env = curEnv = 0.;
+			return sleepy;
 		}
 
 		// returns true if envelope active
@@ -86,6 +88,7 @@ namespace dsp
 	protected:
 		smooth::LowpassD smooth;
 		double curEnv;
+		const double MinDb;
 
 		void processAttack() noexcept;
 
@@ -110,6 +113,11 @@ namespace dsp
 	{
 		struct Info
 		{
+			double operator[](int i) const noexcept
+			{
+				return data[i];
+			}
+
 			double* data;
 			const bool active;
 		};
@@ -132,7 +140,7 @@ namespace dsp
 				envGen.prepare(sampleRate);
 		}
 
-		bool isSleepy(int vIdx) const noexcept
+		bool isSleepy(int vIdx) noexcept
 		{
 			return envGens[vIdx].isSleepy();
 		}
