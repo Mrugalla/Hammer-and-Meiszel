@@ -4,6 +4,8 @@
 
 ~~~ todo ~~~
 
+partials soloen zum tweaken
+
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material
 

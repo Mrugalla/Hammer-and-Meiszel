@@ -13,51 +13,76 @@ namespace dsp
 
 			struct Parameter
 			{
-				Parameter(double = 0., double = 0., double = 0.);
+				Parameter(double, double, double);
 
 				double val, breite, env;
 			};
 
 			struct Parameters
 			{
-				std::array<Parameter, kNumParams> params; Parameters(double = -0., double = 0., double = 0., double = 0., double = 0.,
+				Parameters(double = -0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.);
 
 				const Parameter& operator[](int i) const noexcept;
+
+				std::array<Parameter, kNumParams> params;
 			};
 
-			class SmoothStereoParameter
+			struct ParameterProcessor
 			{
-				struct Param
-				{
-					Param();
-
-					// sampleRate, smoothLenMs
-					void prepare(double, double) noexcept;
-
-					// p, env, min, max, direct[-1,1]
-					// returns true if smoothing
-					bool operator()(const Parameter&, double,
-						double, double, double) noexcept;
-
-					PRMBlockD prm;
-					double val;
-				};
 			public:
-				SmoothStereoParameter();
+				ParameterProcessor(double defaultVal = 0.) :
+					prms{ defaultVal, defaultVal },
+					vals{ defaultVal, defaultVal }
+				{}
 
 				// sampleRate, smoothLenMs
-				void prepare(double, double) noexcept;
+				void prepare(double sampleRate, double smoothLenMs) noexcept
+				{
+					for (auto& prm : prms)
+						prm.prepare(sampleRate, smoothLenMs);
+					for (auto& val : vals)
+						val = 0.;
+				}
 
 				// p, envGenVal, min, max, numChannels
-				bool operator()(const Parameter&, double,
-					double, double, int) noexcept;
+				bool operator()(const Parameter& p, double envGenVal,
+					double min, double max, int numChannels) noexcept
+				{
+					bool smooth = false;
+					const auto env = p.env * envGenVal;
 
-				// ch
-				double operator[](int) const noexcept;
+					auto lastVal = vals[0];
+					auto nVal = p.val + p.breite;
+					auto smVal = prms[0](nVal);
+					vals[0] = math::limit(min, max, smVal + env);
+					auto dif = vals[0] - lastVal;
+					auto distSquared = dif * dif;
+					if(distSquared > 1e-4)
+						smooth = true;
+					if (numChannels != 2)
+						return smooth;
 
-				std::array<Param, 2> params;
+					lastVal = vals[1];
+					nVal = p.val - p.breite;
+					smVal = prms[1](nVal);
+					vals[1] = math::limit(min, max, smVal + env);
+					dif = vals[1] - lastVal;
+					distSquared = dif * dif;
+					if (distSquared > 1e-4)
+						smooth = true;
+
+					return smooth;
+				}
+
+				double operator[](int i) const noexcept
+				{
+					return vals[i];
+				}
+
+				std::array<PRMBlockD, 2> prms;
+				std::array<double, 2> vals;
 			};
 
 			Voice();
@@ -66,7 +91,7 @@ namespace dsp
 			void prepare(double) noexcept;
 
 			// dualMaterial, parameters, samples,
-			// midi, xen, envGenMod, transposeSemi,
+			// midi, xen, transposeSemi, envGenMod,
 			// numChannels, numSamples
 			void operator()(const DualMaterial&, const Parameters&,
 				double**, const MidiBuffer&, const arch::XenManager&,
@@ -76,7 +101,7 @@ namespace dsp
 
 		private:
 			MaterialDataStereo materialStereo;
-			std::array<SmoothStereoParameter, kNumParams> parameters;
+			std::array<ParameterProcessor, kNumParams> parameters;
 			ResonatorBank resonatorBank;
 			bool wantsMaterialUpdate;
 

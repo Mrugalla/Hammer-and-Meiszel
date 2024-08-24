@@ -10,7 +10,6 @@ namespace dsp
 		class ResonatorBank
 		{
 			static constexpr double MinPitch = 24;
-			static constexpr double MaxPitch = 132;
 
 			using ResonatorArray = std::array<ResonatorStereo2, NumFilters>;
 
@@ -48,8 +47,8 @@ namespace dsp
 		private:
 			ResonatorArray resonators;
 			Val val;
-			const double FreqMin, FreqMax;
-			double freqHz, sampleRate, sampleRateInv, nyquist;
+			const double FreqMin;
+			double freqMax, freqHz, sampleRate, sampleRateInv, nyquist;
 			std::array<double, 2> gains;
 			std::array<int, 2> numFiltersBelowNyquist;
 			int sleepyTimer, sleepyTimerThreshold;

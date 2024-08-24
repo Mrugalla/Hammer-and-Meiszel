@@ -146,9 +146,10 @@ namespace audio
 					dsp::SIMD::clear(samplesVoice[ch], numSamples);
 
 			// synthsize modulation envelope generator
+			
 			const auto envGenModInfo = envGensMod(midiVoice, numSamples, v);
 			const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
-
+			
 			// process modal filter
 			modalFilter
 			(
@@ -160,10 +161,6 @@ namespace audio
 				v
 			);
 
-			const bool voiceSilent = math::bufferSilent(samplesVoice, numChannels, numSamples);
-			const bool sleepy = !envGenAmpInfo.active && voiceSilent;
-			parallelProcessor.setSleepy(sleepy, v);
-
 			/*
 			flanger
 			(
@@ -173,6 +170,10 @@ namespace audio
 				v
 			);
 			*/
+
+			const bool voiceSilent = math::bufferSilent(samplesVoice, numChannels, numSamples);
+			const bool sleepy = !envGenAmpInfo.active && voiceSilent;
+			parallelProcessor.setSleepy(sleepy, v);
 		}
 
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);
@@ -193,6 +194,7 @@ namespace audio
 				const auto peakStr = matStr + "pk" + juce::String(j);
 				state.set(peakStr + "mg", peakInfo.mag);
 				state.set(peakStr + "rt", peakInfo.ratio);
+				state.set(peakStr + "fr", peakInfo.freqHz);
 			}
 		}
 	}
@@ -213,6 +215,9 @@ namespace audio
 				const auto ratioVal = state.get(peakStr + "rt");
 				if (ratioVal != nullptr)
 					peakInfo.ratio = static_cast<double>(*ratioVal);
+				const auto freqVal = state.get(peakStr + "fr");
+				if (freqVal != nullptr)
+					peakInfo.freqHz = static_cast<double>(*freqVal);
 			}
 			material.status.store(dsp::modal2::Status::UpdatedMaterial);
 		}

@@ -28,7 +28,7 @@ namespace dsp
 			resonators(),
 			val(),
 			FreqMin(math::noteToFreqHz2(MinPitch)),
-			FreqMax(math::noteToFreqHz2(MaxPitch)),
+			freqMax(1.),
 			freqHz(1000.),
 			sampleRate(1.),
 			sampleRateInv(1.),
@@ -57,6 +57,7 @@ namespace dsp
 			sampleRate = _sampleRate;
 			sampleRateInv = 1. / sampleRate;
 			nyquist = sampleRate * .5;
+			freqMax = math::noteToFreqHz2(math::freqHzToNote2(nyquist) - 1.);
 			reset(2);
 			setFrequencyHz(materialStereo, 1000., 2);
 			for(auto ch = 0; ch < 2; ++ch)
@@ -119,7 +120,7 @@ namespace dsp
 				//	freqFilter *= 2.;
 				if (freqFilter < FreqMin)
 					return;
-				if (freqFilter < FreqMax)
+				if (freqFilter < freqMax)
 				{
 					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
 					auto& resonator = resonators[i];
@@ -143,7 +144,7 @@ namespace dsp
 			static constexpr auto PBInv = 1. / PB;
 
 			{
-				const auto pbRange = xen.getPitchbendRange(); // can be improved by being triggered from xenManger changes directly
+				const auto pbRange = xen.getPitchbendRange(); // can be improved by being triggered from xenManager changes directly
 				const auto xenScale = xen.getXen();
 				if (val.transpose != transposeSemi ||
 					val.pbRange != pbRange ||
@@ -227,8 +228,7 @@ namespace dsp
 
 			const auto blockLength = endIdx - startIdx;
 			sleepyTimer += blockLength;
-			if (sleepyTimer > sleepyTimerThreshold)
-				active = false;
+			active = sleepyTimer < sleepyTimerThreshold;
 		}
 	}
 }

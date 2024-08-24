@@ -374,7 +374,6 @@ namespace dsp
 					peakInfos[i].ratio = ratio;
 					peakInfos[i].mag = mag;
 					peakInfos[i].freqHz = .5 * peakIdxD * static_cast<double>(FFTSizeInv * sampleRate);
-					DBG(ratio);
 				}
 				else
 				{
