@@ -105,6 +105,9 @@ namespace dsp
 			ResonatorBank resonatorBank;
 			bool wantsMaterialUpdate;
 
+			void updatePartial(MaterialData&, const MaterialData&, const MaterialData&,
+				double, double, double, int) noexcept;
+
 			// dualMaterial, parameters, envGenMod, numChannels
 			void updateParameters(const DualMaterial&,
 				const Parameters&, double, int) noexcept;

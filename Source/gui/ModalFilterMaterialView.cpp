@@ -151,10 +151,16 @@ namespace gui
 		}
 	}
 
-	ModalMaterialView::ModalMaterialView(Utils& u, Material& _material) :
+	PointF ModalMaterialView::Draggerfall::getCoords() const noexcept
+	{
+		return { xAbs - lenAbsHalf, lenAbs };
+	}
+
+	ModalMaterialView::ModalMaterialView(Utils& u, Material& _material, Actives& _actives) :
 		Comp(u),
 		FileDragAndDropTarget(),
 		material(_material),
+		actives(_actives),
 		partials(),
 		dragAniComp(u),
 		draggerfall(),
@@ -164,7 +170,7 @@ namespace gui
 		layout.init
 		(
 			{ 1 },
-			{ 1, 5 }
+			{ 2, 13 }
 		);
 
 		add(Callback([&]()
@@ -203,6 +209,10 @@ namespace gui
 		auto const h = static_cast<float>(hInt);
 		const auto thiccInt = static_cast<int>(utils.thicc);
 
+		const auto buttonsHeight = layout.getY(1);
+		g.setColour(Colours::c(CID::Hover).withMultipliedAlpha(.25f));
+		g.fillRect(0.f, 0.f, w, buttonsHeight);
+
 		if (isMouseOver() && !isMouseButtonDownAnywhere())
 			draggerfall.paint(g);
 
@@ -224,8 +234,15 @@ namespace gui
 			} while (x < w);
 		}
 
-		for (auto i = 0; i < NumFilters; ++i)
+		auto unselectedPartialsCol = Colours::c(CID::Txt);
+		paintPartial(g, h, unselectedPartialsCol, 0);
+		if (material.soloing.load())
+			unselectedPartialsCol = unselectedPartialsCol.darker(.7f);
+
+		for (auto i = 1; i < NumFilters; ++i)
 		{
+			paintPartial(g, h, unselectedPartialsCol, i);
+			/*
 			const auto strumPhase = callbacks[kStrumCB + i].phase;
 			const bool selected = draggerfall.isSelected(i);
 			const auto knotW = utils.thicc
@@ -239,12 +256,35 @@ namespace gui
 			if (selected)
 				g.setColour(Colours::c(CID::Interact));
 			else
-				g.setColour(Colours::c(CID::Txt));
+				g.setColour(unselectedPartialsCol);
 			g.fillRect(x - knotWHalf, y, knotW, h);
 
 			g.setColour(Colours::c(CID::Interact));
 			g.fillRect(x - knotWHalf, y - knotWHalf, knotW, knotW);
+			*/
 		}
+	}
+
+	void ModalMaterialView::paintPartial(Graphics& g, float h, Colour unselectedPartialsCol, int i)
+	{
+		const auto strumPhase = callbacks[kStrumCB + i].phase;
+		const bool selected = draggerfall.isSelected(i);
+		const auto knotW = utils.thicc
+			* (selected ? 2.f : 1.f)
+			+ utils.thicc * strumPhase * 2.f;
+		const auto knotWHalf = knotW * .5f;
+
+		const auto x = partials[i].x;
+		const auto y = partials[i].y;
+
+		if (selected)
+			g.setColour(Colours::c(CID::Interact));
+		else
+			g.setColour(unselectedPartialsCol);
+		g.fillRect(x - knotWHalf, y, knotW, h);
+
+		g.setColour(Colours::c(CID::Interact));
+		g.fillRect(x - knotWHalf, y - knotWHalf, knotW, knotW);
 	}
 
 	void ModalMaterialView::resized()
@@ -316,19 +356,21 @@ namespace gui
 		draggerfall.clearSelection();
 		updateInfoLabel("");
 		repaint();
-
 		notify(evt::Type::ToastVanish);
 	}
 
 	void ModalMaterialView::mouseMove(const Mouse& mouse)
 	{
 		draggerfall.updateX(partials, mouse.position.x, true);
+		
 		for (auto i = 0; i < NumFilters; ++i)
 		{
 			const bool selected = draggerfall.isSelected(i);
 			if (selected)
 				callbacks[kStrumCB + i].start(1.f);
 		}
+		updateActives(material.soloing.load());
+
 		updateInfoLabel();
 		repaint();
 	}
@@ -384,27 +426,27 @@ namespace gui
 
 	void ModalMaterialView::mouseUp(const Mouse& mouse)
 	{
-		if (draggerfall.selectionEmpty())
-			return;
-
-		mouseDrag(mouse);
-		material.reportEndGesture();
-
-		for (auto i = 0; i < NumFilters; ++i)
+		if (!draggerfall.selectionEmpty())
 		{
-			const bool selected = draggerfall.isSelected(i);
-			if (selected)
+			mouseDrag(mouse);
+			material.reportEndGesture();
+
+			for (auto i = 0; i < NumFilters; ++i)
 			{
-				PointF pos
-				(
-					static_cast<float>(partials[i].x),
-					static_cast<float>(partials[i].y)
-				);
+				const bool selected = draggerfall.isSelected(i);
+				if (selected)
+				{
+					PointF pos
+					(
+						static_cast<float>(partials[i].x),
+						static_cast<float>(partials[i].y)
+					);
 
-				PointF screenPos = localPointToGlobal(pos);
+					PointF screenPos = localPointToGlobal(pos);
 
-				showCursor(screenPos);
-				return;
+					showCursor(screenPos);
+					break;
+				}
 			}
 		}
 	}
@@ -506,5 +548,35 @@ namespace gui
 			}
 
 		notify(evt::Type::ToastUpdateMessage, &txt);
+	}
+
+	void ModalMaterialView::updateActives(bool soloActive)
+	{
+		bool wantMaterialUpdate = false;
+		if (soloActive)
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				const bool selected = draggerfall.isSelected(i);
+				if (actives[i] != selected)
+				{
+					wantMaterialUpdate = true;
+					actives[i] = selected;
+				}
+			}
+		}
+		else
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				if (!actives[i])
+				{
+					wantMaterialUpdate = true;
+					actives[i] = true;
+				}
+			}
+		}
+		if (wantMaterialUpdate)
+			material.reportUpdate();
 	}
 }

@@ -21,6 +21,4 @@ namespace gui
 	protected:
 		std::array<bool, NumVoices> voices;
 	};
-
-	template struct VoiceGrid<15>;
 }

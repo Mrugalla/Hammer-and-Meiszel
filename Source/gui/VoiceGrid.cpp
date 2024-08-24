@@ -61,4 +61,6 @@ namespace gui
 			x += w2;
 		}
 	}
+
+	template struct VoiceGrid<15>;
 }

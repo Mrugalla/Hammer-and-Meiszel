@@ -1,5 +1,5 @@
 #pragma once
-#include "Label.h"
+#include "Button.h"
 #include "../audio/dsp/modal2/Material.h"
 
 namespace gui
@@ -13,6 +13,7 @@ namespace gui
 		using Status = dsp::modal2::Status;
 		using Material = dsp::modal2::Material;
 		using PeakInfo = dsp::modal2::PeakInfo;
+		using Actives = dsp::modal2::ActivesArray;
 		static constexpr int NumFilters = dsp::modal2::NumFilters;
 		
 		struct Partial
@@ -59,6 +60,8 @@ namespace gui
 
 			bool selectionEmpty() const noexcept;
 
+			PointF getCoords() const noexcept;
+
 		protected:
 			float width, height, xRel, xAbs, lenRel, lenAbs, lenAbsHalf;
 			std::array<bool, NumFilters> selection;
@@ -74,13 +77,20 @@ namespace gui
 			kNumCallbacks
 		};
 
-		ModalMaterialView(Utils&, Material&);
+		ModalMaterialView(Utils&, Material&, Actives&);
 
 		void paint(Graphics&) override;
 
+		// g, h, unselectedPartialCol, idx
+		void paintPartial(Graphics&, float, Colour, int);
+
 		void resized() override;
 
+		// soloActive
+		void updateActives(bool);
+
 		Material& material;
+		Actives& actives;
 		Partials partials;
 		DragAnimationComp dragAniComp;
 		Draggerfall draggerfall;
@@ -117,5 +127,8 @@ namespace gui
 		bool isInterestedInFileDrag(const StringArray&) override;
 
 		void updateInfoLabel(const String& = "abcabcabc");
+
+		// buttonsHeight
+		void updateButtonsPosition(float);
 	};
 }

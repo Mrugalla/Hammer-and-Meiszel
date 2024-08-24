@@ -79,6 +79,8 @@ namespace dsp
 
 			void reportEndGesture() noexcept;
 
+			void reportUpdate() noexcept;
+
 			// sampleRate, samples, numChannels, numSamples
 			void fillBuffer(float, const float* const*, int, int);
 
@@ -87,6 +89,7 @@ namespace dsp
 			std::atomic<Status> status;
 			String name;
 			float sampleRate;
+			std::atomic<bool> soloing;
 		private:
 			struct PeakIndexInfo
 			{
@@ -153,6 +156,71 @@ namespace dsp
 		void generateSaw(Material&);
 		void generateSquare(Material&);
 
-		using DualMaterial = std::array<Material, 2>;
+		using ActivesArray = std::array<bool, NumFilters>;
+
+		struct DualMaterial
+		{
+			DualMaterial() :
+				materials(),
+				actives()
+			{
+				generateSaw(materials[0]);
+				generateSquare(materials[1]);
+				for (auto& active : actives)
+					active = true;
+			}
+
+			const bool updated() const noexcept
+			{
+				bool u = false;
+				for (auto m = 0; m < 2; ++m)
+				{
+					const auto& material = materials[m];
+					const auto& status = material.status;
+					if (status == Status::UpdatedMaterial)
+						u = true;
+				}
+				return u;
+			}
+
+			void reportUpdate() noexcept
+			{
+				for (auto m = 0; m < 2; ++m)
+				{
+					auto& material = materials[m];
+					auto& status = material.status;
+					status = Status::UpdatedProcessor;
+				}
+			}
+
+			Material& getMaterial(int i) noexcept
+			{
+				return materials[i];
+			}
+
+			const Material& getMaterial(int i) const noexcept
+			{
+				return materials[i];
+			}
+
+			const MaterialData& getMaterialData(int i) const noexcept
+			{
+				return materials[i].peakInfos;
+			}
+
+			const bool isActive(int i) const noexcept
+			{
+				return actives[i];
+			}
+
+			ActivesArray& getActives() noexcept
+			{
+				return actives;
+			}
+
+		protected:
+			std::array<Material, 2> materials;
+			ActivesArray actives;
+		};
 	}
 }

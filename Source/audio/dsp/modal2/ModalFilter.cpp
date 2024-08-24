@@ -8,8 +8,6 @@ namespace dsp
 			materials(),
 			voices()
 		{
-			generateSaw(materials[0]);
-			generateSquare(materials[1]);
 		}
 
 		void ModalFilter::prepare(double sampleRate) noexcept
@@ -23,16 +21,11 @@ namespace dsp
 
 		void ModalFilter::operator()() noexcept
 		{
-			for (auto m = 0; m < 2; ++m)
+			if (materials.updated())
 			{
-				auto& material = materials[m];
-				auto& status = material.status;
-				if (status == Status::UpdatedMaterial)
-				{
-					for (auto& voice : voices)
-						voice.reportMaterialUpdate();
-					status = Status::UpdatedProcessor;
-				}
+				for (auto& voice : voices)
+					voice.reportMaterialUpdate();
+				materials.reportUpdate();
 			}
 		}
 
@@ -54,12 +47,23 @@ namespace dsp
 
 		Material& ModalFilter::getMaterial(int i) noexcept
 		{
-			return materials[i];
+			return materials.getMaterial(i);
 		}
 
 		const Material& ModalFilter::getMaterial(int i) const noexcept
 		{
-			return materials[i];
+			return materials.getMaterial(i);
+		}
+
+		ActivesArray& ModalFilter::getActives() noexcept
+		{
+			return materials.getActives();
+		}
+
+		void ModalFilter::setSolo(bool e) noexcept
+		{
+			materials.getMaterial(0).soloing = e;
+			materials.getMaterial(1).soloing = e;
 		}
 	}
 }

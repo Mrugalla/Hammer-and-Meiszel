@@ -226,7 +226,7 @@ namespace gui
 		static constexpr int NumKnobs = static_cast<int>(kKnobs::kNumKnobs);
         std::array<Knob, NumKnobs> knobs;
         std::array<ModDial, NumKnobs> modDials;
-        enum class kButtons { kMacroRel, kMacroSwap, kMaterialDropDown, kMaterialA, kMaterialB, kPower, kDelta, kMidSide, kNumButtons };
+        enum class kButtons { kMacroRel, kMacroSwap, kMaterialDropDown, kMaterialA, kMaterialB, kMaterialSolo, kPower, kDelta, kMidSide, kNumButtons };
 		static constexpr int NumButtons = static_cast<int>(kButtons::kNumButtons);
 		std::array<Button, NumButtons> buttons;
 		

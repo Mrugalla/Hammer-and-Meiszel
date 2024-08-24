@@ -14,8 +14,14 @@ namespace dsp
 			peakInfos(),
 			status(Status::Processing),
 			name("init material"),
-			sampleRate(0.f)
+			sampleRate(0.f),
+			soloing(false)
 		{
+		}
+
+		void Material::reportUpdate() noexcept
+		{
+			status.store(Status::UpdatedMaterial);
 		}
 
 		void Material::updatePeakInfosFromGUI() noexcept
@@ -29,13 +35,13 @@ namespace dsp
 				for (auto p = 0; p < NumFilters; ++p)
 					peakInfos[p].mag *= g;
 			}
-			status.store(Status::UpdatedMaterial);
+			reportUpdate();
 		}
 
 		void Material::reportEndGesture() noexcept
 		{
 			sortPeaks();
-			status.store(Status::UpdatedMaterial);
+			reportUpdate();
 		}
 
 		void Material::sortPeaks() noexcept
@@ -84,7 +90,7 @@ namespace dsp
 			const auto gain = 1.f / maxMag;
 			for (auto i = 0; i < NumFilters; ++i)
 				peakInfos[i].mag *= gain;
-			status.store(Status::UpdatedMaterial);
+			reportUpdate();
 		}
 
 		void Material::fillBuffer(const char* data, int size)

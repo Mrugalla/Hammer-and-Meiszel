@@ -95,6 +95,7 @@ namespace gui
             Button(utils),
             Button(utils),
             Button(utils),
+            Button(utils),
             Button(utils)
         },
         modParams
@@ -113,8 +114,18 @@ namespace gui
 	    },
         materialViews
         {
-            ModalMaterialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(0)),
-            ModalMaterialView(utils, utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(1))
+            ModalMaterialView
+            (
+                utils,
+                utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(0),
+				utils.audioProcessor.pluginProcessor.modalFilter.getActives()
+            ),
+            ModalMaterialView
+            (
+                utils,
+                utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(1),
+                utils.audioProcessor.pluginProcessor.modalFilter.getActives()
+            )
         },
         materialDropDown(utils)
     {
@@ -281,6 +292,26 @@ namespace gui
                 };
             }
 			get(kButtons::kMaterialA).value = 1.f;
+        }
+        {
+			auto& buttonSolo = get(kButtons::kMaterialSolo);
+            addAndMakeVisible(buttonSolo);
+            makeTextButton(buttonSolo, "S", "Solo the selected partials with this button!", CID::Interact);
+            buttonSolo.value = 0.f;
+            buttonSolo.type = Button::Type::kToggle;
+            buttonSolo.onClick = [&](const Mouse&)
+            {
+                buttonSolo.value = std::round(1.f - buttonSolo.value);
+				utils.audioProcessor.pluginProcessor.modalFilter.setSolo(buttonSolo.value > .5f);
+                for (auto& mv : materialViews)
+                {
+                    if (mv.isShowing())
+                    {
+                        mv.updateActives(buttonSolo.value > .5f);
+						mv.repaint();
+                    }
+                }
+            };
         }
 
 		addChildComponent(materialDropDown);
@@ -618,12 +649,19 @@ namespace gui
 				y += h;
             }
         }
-		auto& modMatAButton = get(kButtons::kMaterialA);
-		const auto modMatABWidthHalf = ModMatABWidth * .5f;
-		layout.place(modMatAButton, ModMatABX, ModMatABY, modMatABWidthHalf, ModMatABHeight);
-		auto& modMatBButton = get(kButtons::kMaterialB);
-		layout.place(modMatBButton, ModMatABX + modMatABWidthHalf, ModMatABY, modMatABWidthHalf, ModMatABHeight);
-
+        const auto modMatButtonWidth = ModMatABWidth * .333333f;
+        {
+			auto x = ModMatABX;
+            auto& modMatAButton = get(kButtons::kMaterialA);
+            layout.place(modMatAButton, x, ModMatABY, modMatButtonWidth, ModMatABHeight);
+			x += modMatButtonWidth;
+            auto& modMatBButton = get(kButtons::kMaterialB);
+            layout.place(modMatBButton, x, ModMatABY, modMatButtonWidth, ModMatABHeight);
+			x += modMatButtonWidth;
+            auto& modMatSoloButton = get(kButtons::kMaterialSolo);
+            layout.place(modMatSoloButton, x, ModMatABY, modMatButtonWidth, ModMatABHeight);
+        }
+		
         LabelGroup modalKnobLabels;
         for(auto& m: modParams)
             modalKnobLabels.add(m.label);

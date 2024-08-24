@@ -22,6 +22,10 @@ namespace dsp
 
 			const Material& getMaterial(int) const noexcept;
 
+			ActivesArray& getActives() noexcept;
+
+			void setSolo(bool) noexcept;
+
 		private:
 			DualMaterial materials;
 			std::array<Voice, NumMPEChannels> voices;
