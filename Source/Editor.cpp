@@ -21,19 +21,19 @@ namespace gui
 		return labels[static_cast<int>(i)];
 	}
 
-    Knob& Editor::get(kKnobs i) noexcept
-    {
-		return knobs[static_cast<int>(i)];
-    }
-
-    ModDial& Editor::getModDial(kKnobs i) noexcept
-    {
-		return modDials[static_cast<int>(i)];
-    }
-
     Button& Editor::get(kButtons i) noexcept
     {
 		return buttons[static_cast<int>(i)];
+    }
+
+    void loadBounds(Editor& e)
+    {
+        const auto& user = *e.audioProcessor.state.props.getUserSettings();
+        const auto editorWidth = user.getIntValue("EditorWidth", EditorWidth);
+        const auto editorHeight = user.getIntValue("EditorHeight", EditorHeight);
+        e.setOpaque(true);
+        e.setResizable(true, true);
+        e.setSize(editorWidth, editorHeight);
     }
 
     Editor::Editor(Processor& p) :
@@ -53,39 +53,37 @@ namespace gui
             Label(utils),
             Label(utils),
             Label(utils),
-			Label(utils),
-			Label(utils),
-			Label(utils),
             Label(utils),
             Label(utils),
+			Label(utils),
+			Label(utils),
+			Label(utils),
             Label(utils),
             Label(utils),
 			Label(utils)
         },
-        knobs
+        envGens
         {
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-            Knob(utils),
-			Knob(utils)
+			EnvelopeGeneratorMultiVoiceEditor
+            (
+                utils,
+                "Gain Envelope:",
+                PID::EnvGenAmpAttack,
+		        PID::EnvGenAmpDecay,
+		        PID::EnvGenAmpSustain,
+		        PID::EnvGenAmpRelease
+			),
+			EnvelopeGeneratorMultiVoiceEditor
+            (
+                utils,
+                "Mod Envelope:",
+				PID::EnvGenModAttack,
+				PID::EnvGenModDecay,
+				PID::EnvGenModSustain,
+				PID::EnvGenModRelease
+			)
         },
-        modDials
-		{
-			ModDial(utils),
-			ModDial(utils),
-			ModDial(utils),
-			ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-            ModDial(utils),
-			ModDial(utils)
-		},
+        macro(utils),
         buttons
         {
             Button(utils),
@@ -167,46 +165,19 @@ namespace gui
                 name = name.replaceSection(i, 2, sz);
         
         makeTextLabel(get(kLabels::kTitle), name, titleFont, Just::centred, CID::Txt);
+        
         for (auto& label : labels)
             addAndMakeVisible(label);
-
-        for(auto& knob: knobs)
-            addAndMakeVisible(knob);
+        addAndMakeVisible(macro);
         for (auto& button : buttons)
             addAndMakeVisible(button);
-		for (auto& modDial : modDials)
-			addAndMakeVisible(modDial);
-        modDials[0].setVisible(false);
-
-		makeKnob(PID::EnvGenAmpAttack, get(kKnobs::kEnvAmpAttack));
-		makeKnob(PID::EnvGenAmpDecay, get(kKnobs::kEnvAmpDecay));
-		makeKnob(PID::EnvGenAmpSustain, get(kKnobs::kEnvAmpSustain));
-		makeKnob(PID::EnvGenAmpRelease, get(kKnobs::kEnvAmpRelease));
-		getModDial(kKnobs::kEnvAmpAttack).attach(PID::EnvGenAmpAttack);
-		getModDial(kKnobs::kEnvAmpDecay).attach(PID::EnvGenAmpDecay);
-		getModDial(kKnobs::kEnvAmpSustain).attach(PID::EnvGenAmpSustain);
-		getModDial(kKnobs::kEnvAmpRelease).attach(PID::EnvGenAmpRelease);
-		makeTextLabel(get(kLabels::kEnvAmpAtk), "A", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(get(kLabels::kEnvAmpDcy), "D", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(get(kLabels::kEnvAmpSus), "S", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(get(kLabels::kEnvAmpRls), "R", fontKnobs, Just::centred, CID::Txt);
-
-		makeKnob(PID::EnvGenModAttack, get(kKnobs::kEnvModAttack));
-		makeKnob(PID::EnvGenModDecay, get(kKnobs::kEnvModDecay));
-		makeKnob(PID::EnvGenModSustain, get(kKnobs::kEnvModSustain));
-		makeKnob(PID::EnvGenModRelease, get(kKnobs::kEnvModRelease));
-		getModDial(kKnobs::kEnvModAttack).attach(PID::EnvGenModAttack);
-		getModDial(kKnobs::kEnvModDecay).attach(PID::EnvGenModDecay);
-		getModDial(kKnobs::kEnvModSustain).attach(PID::EnvGenModSustain);
-		getModDial(kKnobs::kEnvModRelease).attach(PID::EnvGenModRelease);
-		makeTextLabel(get(kLabels::kEnvModAtk), "A", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(get(kLabels::kEnvModDcy), "D", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(get(kLabels::kEnvModSus), "S", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(get(kLabels::kEnvModRls), "R", fontKnobs, Just::centred, CID::Txt);
+		
+        for (auto& envGen : envGens)
+            addAndMakeVisible(envGen);
 
         auto& titleMacro = get(kLabels::kTitleMacro);
         makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
-        makeKnob(PID::Macro, get(kKnobs::kMacro), false);
+        makeKnob(PID::Macro, macro, false);
 		
         {
             auto& buttonMacroRel = get(kButtons::kMacroRel);
@@ -293,6 +264,7 @@ namespace gui
             }
 			get(kButtons::kMaterialA).value = 1.f;
         }
+
         {
 			auto& buttonSolo = get(kButtons::kMaterialSolo);
             addAndMakeVisible(buttonSolo);
@@ -416,16 +388,7 @@ namespace gui
 		}
 
         addChildComponent(toast);
-		
-        {
-            const auto& user = *audioProcessor.state.props.getUserSettings();
-            const auto editorWidth = user.getIntValue("EditorWidth", EditorWidth);
-            const auto editorHeight = user.getIntValue("EditorHeight", EditorHeight);
-            setOpaque(true);
-            setResizable(true, true);
-            setSize(editorWidth, editorHeight);
-        }
-
+        loadBounds(*this);
         utils.audioProcessor.pluginProcessor.editorExists.store(true);
     }
 
@@ -488,8 +451,7 @@ namespace gui
                 p.lineTo(layout(SidePanelWidth, -1 - TooltipHeight));
                 p.lineTo(layout(0, -1 - TooltipHeight));
                 closePathOverBounds(p, bounds, startPos, thicc, 0, 2, 2, 2);
-                g.strokePath(p, stroke);
-                g.drawLine(LineF(layout(0, SidePanelMidY), layout(SidePanelWidth, SidePanelMidY)), thicc);
+                //g.strokePath(p, stroke);
             }
             
             // right panel
@@ -501,7 +463,8 @@ namespace gui
                 p.lineTo(layout(SidePanelRightX, TooltipY));
                 p.lineTo(layout(-1, TooltipY));
                 closePathOverBounds(p, bounds, startPos, thicc, 1, 2, 2, 2);
-                g.strokePath(p, stroke);
+                g.setColour(titleAreaCol);
+                //g.strokePath(p, stroke);
             }
         }
 
@@ -537,32 +500,65 @@ namespace gui
 
     void Editor::paintOverChildren(Graphics& g)
     {
-       //layout.paint(g, Colour(0x05ffffff));
-
+       //layout.paint(g, Colour(0x11ffffff));
 	   const auto power = utils.audioProcessor.params(PID::Power).getValue() > .5f;
        if (!power)
            g.fillAll(Colour(0x44000000));
     }
 
+    bool needsResize(Editor& e)
+    {
+        bool needResize = false;
+        const auto w = e.getWidth();
+        const auto h = e.getHeight();
+        if (w < EditorMinWidth)
+        {
+            e.setSize(EditorMinWidth, h);
+            needResize = true;
+        }
+        if (h < EditorMinHeight)
+        {
+            e.setSize(w, EditorMinHeight);
+            needResize = true;
+        }
+		return needResize;
+    }
+    
+    void saveBounds(Editor& e)
+    {
+        auto& user = *e.audioProcessor.state.props.getUserSettings();
+        const auto editorWidth = e.getWidth();
+        const auto editorHeight = e.getHeight();
+        user.setValue("EditorWidth", editorWidth);
+        user.setValue("EditorHeight", editorHeight);
+    }
+
+    void resizeLeftPanel(Editor& e, float envGenMargin)
+    {
+        const auto leftArea = e.layout(0.f, Editor::SidePanelY, Editor::SidePanelWidth, Editor::SidePanelHeight);
+		const auto x = leftArea.getX();
+		auto y = leftArea.getY();
+		const auto w = leftArea.getWidth();
+		const auto h = leftArea.getHeight();
+		const auto hHalf = h * .5f;
+        for (auto i = 0; i < e.envGens.size(); ++i)
+		{
+			auto& envGen = e.envGens[i];
+            envGen.setBounds(BoundsF(x, y, w, hHalf).reduced(envGenMargin).toNearestInt());
+			y += hHalf;
+		}
+    }
+
     void Editor::resized()
     {
-        {
-            const auto w = getWidth();
-			const auto h = getHeight();
-            if (w < EditorMinWidth)
-                return setSize(EditorMinWidth, h);
-            if (h < EditorMinHeight)
-                return setSize(w, EditorMinHeight);
-        }
-        {
-            auto& user = *audioProcessor.state.props.getUserSettings();
-            const auto editorWidth = getWidth();
-            const auto editorHeight = getHeight();
-            user.setValue("EditorWidth", editorWidth);
-            user.setValue("EditorHeight", editorHeight);
-        }
+        if (needsResize(*this))
+            return;
+        saveBounds(*this);
 
         utils.resized();
+        const auto thicc = utils.thicc;
+		const auto thicc2 = thicc * 2.f;
+
         layout.resized(getLocalBounds());
         
         const auto titleHeightHalf = static_cast<float>(TitleHeight) * .5f;
@@ -585,33 +581,13 @@ namespace gui
         for (auto i = 0; i < materialViews.size(); ++i)
             materialViews[i].setBounds(materialBounds);
 
-		const auto leftArea = layout(0.f, SidePanelY, SidePanelWidth, SidePanelHeight);
-
-        {
-            const auto knobWidth = leftArea.getWidth() * .25f;
-            const auto knobHeight = leftArea.getHeight() * .25f;
-            const auto y0 = leftArea.getY();
-			const auto y1 = y0 + knobHeight;
-            auto x = leftArea.getX();
-            for (auto i = 0; i < 4; ++i)
-            {
-                const auto ampKnobIdx = static_cast<int>(kKnobs::kEnvAmpAttack) + i;
-                auto& ampKnob = knobs[ampKnobIdx];
-				BoundsF ampBounds(x, y0, knobWidth, knobHeight);
-                ampKnob.setBounds(ampBounds.toNearestInt());
-				const auto modKnobIdx = static_cast<int>(kKnobs::kEnvModAttack) + i;
-				auto& modKnob = knobs[modKnobIdx];
-				BoundsF modBounds(x, y1, knobWidth, knobHeight);
-				modKnob.setBounds(modBounds.toNearestInt());
-				x += knobWidth;
-            }
-        }
+		resizeLeftPanel(*this, thicc2);
         
         const auto rightArea = layout(SidePanelRightX, SidePanelY, SidePanelWidth, SidePanelHeight);
 		
         auto& titleMacro = get(kLabels::kTitleMacro);
         layout.place(titleMacro, SidePanelRightX, SidePanelY + 1.f, SidePanelWidth * .3f , 1.f);
-        layout.place(get(kKnobs::kMacro), SidePanelRightX + SidePanelWidth * .3f, SidePanelY, SidePanelWidth * .4f, 2.f);
+        layout.place(macro, SidePanelRightX + SidePanelWidth * .3f, SidePanelY, SidePanelWidth * .4f, 2.f);
 		layout.place(get(kButtons::kMacroRel), SidePanelRightX + SidePanelWidth * .7f, SidePanelY, SidePanelWidth * .3f, 1.f);
 		layout.place(get(kButtons::kMacroSwap), SidePanelRightX + SidePanelWidth * .7f, SidePanelY + 1.f, SidePanelWidth * .3f, 1.f);
         titleMacro.setMaxHeight();
@@ -676,14 +652,6 @@ namespace gui
         toast.setSize(toastWidth, toastHeight);
 
         /*
-		layout.place(get(kKnobs::kEnvAmpAttack), 0, 6, 2, 2, true);
-		layout.place(get(kKnobs::kEnvAmpDecay), 2, 6, 2, 2, true);
-		layout.place(get(kKnobs::kEnvAmpSustain), 4, 6, 2, 2, true);
-		layout.place(get(kKnobs::kEnvAmpRelease), 6, 6, 2, 2, true);
-		layout.place(get(kLabels::kEnvAmpAtk), 0, 8, 2, 1);
-		layout.place(get(kLabels::kEnvAmpDcy), 2, 8, 2, 1);
-		layout.place(get(kLabels::kEnvAmpSus), 4, 8, 2, 1);
-		layout.place(get(kLabels::kEnvAmpRls), 6, 8, 2, 1);
 		layout.place(get(kButtons::kMaterialDropDown), 15.5f, modalY, 1.f, 1);
 		materialDropDown.setBounds(materialBounds);
         */

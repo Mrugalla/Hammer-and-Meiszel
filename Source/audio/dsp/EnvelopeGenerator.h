@@ -25,9 +25,8 @@ namespace dsp
 			void operator()(double, double, double, double) noexcept;
 
 			void operator()(const Parameters&) noexcept;
-		private:
+
 			double sampleRate, atkP, dcyP, rlsP;
-		public:
 			double atk, dcy, sus, rls;
 		};
 
@@ -155,6 +154,11 @@ namespace dsp
 		void updateParameters(const EnvelopeGenerator::Parameters& _params) noexcept
 		{
 			params(_params);
+		}
+
+		const EnvelopeGenerator::Parameters& getParameters() const noexcept
+		{
+			return params;
 		}
 
 	protected:

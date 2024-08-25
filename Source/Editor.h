@@ -3,7 +3,7 @@
 #include "gui/GenAniComp.h"
 #include "gui/Tooltip.h"
 #include "gui/DropDownMenu.h"
-#include "gui/Knob.h"
+#include "gui/EnvelopeGeneratorEditor.h"
 #include "gui/ModalFilterMaterialView.h"
 
 namespace gui
@@ -216,16 +216,10 @@ namespace gui
         };
 		static constexpr int NumLabels = static_cast<int>(kLabels::kNumLabels);
         std::array<Label, NumLabels> labels;
-        enum class kKnobs
-        {
-            kMacro,
-            kEnvAmpAttack, kEnvAmpDecay, kEnvAmpSustain, kEnvAmpRelease,
-			kEnvModAttack, kEnvModDecay, kEnvModSustain, kEnvModRelease,
-            kNumKnobs
-        };
-		static constexpr int NumKnobs = static_cast<int>(kKnobs::kNumKnobs);
-        std::array<Knob, NumKnobs> knobs;
-        std::array<ModDial, NumKnobs> modDials;
+		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
+		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
+		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
+        Knob macro;
         enum class kButtons { kMacroRel, kMacroSwap, kMaterialDropDown, kMaterialA, kMaterialB, kMaterialSolo, kPower, kDelta, kMidSide, kNumButtons };
 		static constexpr int NumButtons = static_cast<int>(kButtons::kNumButtons);
 		std::array<Button, NumButtons> buttons;
@@ -244,8 +238,6 @@ namespace gui
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
 
         Label& get(kLabels) noexcept;
-		Knob& get(kKnobs) noexcept;
-		ModDial& getModDial(kKnobs) noexcept;
 		Button& get(kButtons) noexcept;
     };
 }

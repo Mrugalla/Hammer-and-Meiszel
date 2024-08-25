@@ -80,9 +80,11 @@ namespace gui
 		return findMaxHeight(font, text, w, h);
 	}
 
-	void Label::setMaxHeight() noexcept
+	void Label::setMaxHeight(float margin) noexcept
 	{
-		setHeight(getMaxHeight());
+		const auto thicc = utils.thicc;
+		const auto h = getMaxHeight() - margin;
+		setHeight(h < thicc ? thicc : h);
 	}
 
 	//////

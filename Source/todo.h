@@ -4,7 +4,7 @@
 
 ~~~ todo ~~~
 
-partials soloen zum tweaken
+envgenamp envgenmod title labels und labels für A,D,S,R
 
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material

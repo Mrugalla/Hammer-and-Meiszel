@@ -149,8 +149,11 @@ namespace gui
         {
             const auto cID = CID::Mod;
             notify(evt::Type::ToastColour, &cID);
-            const auto bounds = getBounds();
-            notify(evt::Type::ToastShowUp, &bounds);
+            const auto windowPos = utils.pluginTop.getScreenPosition();
+            auto knobBounds = getScreenBounds();
+			knobBounds.setX(knobBounds.getX() - windowPos.x);
+			knobBounds.setY(knobBounds.getY() - windowPos.y);
+            notify(evt::Type::ToastShowUp, &knobBounds);
             updateToast(utils, *prms[0]);
         };
 
@@ -291,8 +294,11 @@ namespace gui
         {
             const auto cID = CID::Interact;
             k.notify(evt::Type::ToastColour, &cID);
-            const auto bounds = k.getBounds();
-            k.notify(evt::Type::ToastShowUp, &bounds);
+            const auto windowPos = k.utils.pluginTop.getScreenPosition();
+            auto knobBounds = k.getScreenBounds();
+            knobBounds.setX(knobBounds.getX() - windowPos.x);
+            knobBounds.setY(knobBounds.getY() - windowPos.y);
+            k.notify(evt::Type::ToastShowUp, &knobBounds);
             const String message(prm->getCurrentValueAsText());
             k.notify(evt::Type::ToastUpdateMessage, &message);
         };

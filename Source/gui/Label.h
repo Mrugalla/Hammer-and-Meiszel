@@ -30,7 +30,8 @@ namespace gui
 
 		float getMaxHeight() const noexcept;
 
-		void setMaxHeight() noexcept;
+		// margin
+		void setMaxHeight(float = 0.f) noexcept;
 
 		String text;
 		Font font;
@@ -164,11 +165,13 @@ namespace gui
 			labels.push_back(&label);
 		}
 
-		void setMaxHeight() noexcept
+		void setMaxHeight(float margin = 0.f) noexcept
 		{
-			const auto h = findMaxCommonHeight(labels);
+			const auto thicc = labels[0]->utils.thicc;
+			const auto h = findMaxCommonHeight(labels) - margin;
+			const auto height = h < 0.f ? thicc : h;
 			for (auto i = 0; i < labels.size(); ++i)
-				labels[i]->setHeight(h);
+				labels[i]->setHeight(height);
 		}
 
 	protected:

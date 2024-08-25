@@ -17,9 +17,9 @@ namespace gui
 		};
 		static constexpr int NumFPSs = static_cast<int>(kFPS::NumFPSs);
 		
-		/* function, id, fps, active */
 		struct CB
 		{
+			// function, id, fps, active
 			CB(std::function<void()>, int, kFPS, bool);
 
 			void start(float) noexcept;
