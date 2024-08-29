@@ -341,9 +341,14 @@ namespace gui
 	{
 		const auto& peakInfos = material.peakInfos;
 		const auto minFc = 1.f;
-		const auto maxFc = static_cast<float>(peakInfos[NumFilters - 1].ratio);
+
+		auto maxFc = minFc;
+		for (auto i = 1; i < NumFilters; ++i)
+			maxFc = std::max(maxFc, static_cast<float>(peakInfos[i].ratio));
+
 		const auto fcRange = maxFc - minFc;
 		ruler.setLength(fcRange);
+		ruler.repaint();
 	}
 
 	void ModalMaterialView::mouseEnter(const Mouse&)

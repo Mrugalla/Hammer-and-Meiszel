@@ -35,6 +35,7 @@ namespace dsp
 				for (auto p = 0; p < NumFilters; ++p)
 					peakInfos[p].mag *= g;
 			}
+			
 			reportUpdate();
 		}
 

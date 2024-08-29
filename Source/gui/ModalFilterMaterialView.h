@@ -133,8 +133,5 @@ namespace gui
 		bool isInterestedInFileDrag(const StringArray&) override;
 
 		void updateInfoLabel(const String& = "abcabcabc");
-
-		// buttonsHeight
-		void updateButtonsPosition(float);
 	};
 }
