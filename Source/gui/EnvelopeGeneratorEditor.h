@@ -1,6 +1,7 @@
 #pragma once
 #include "Knob.h"
 #include "../audio/dsp/EnvelopeGenerator.h"
+#include "Ruler.h"
 
 namespace gui
 {
@@ -22,10 +23,19 @@ namespace gui
 				dcyParam(u.audioProcessor.params(dcyPID)),
 				susParam(u.audioProcessor.params(susPID)),
 				rlsParam(u.audioProcessor.params(rlsPID)),
+				ruler(u),
 				curve(), curveMod(),
 				atkV(-1.f), dcyV(-1.f), susV(-1.f), rlsV(-1.f),
 				atkModV(-1.f), dcyModV(-1.f), susModV(-1.f), rlsModV(-1.f)
 			{
+				layout.init
+				(
+					{ 1 },
+					{ 2, 13 }
+				);
+
+				initRuler();
+
 				add(Callback([&]()
 				{
 					if(updateCurve())
@@ -35,6 +45,8 @@ namespace gui
 
 			void resized() override
 			{
+				layout.resized(getLocalBounds().toFloat());
+				layout.place(ruler, 0, 0, 1, 1);
 				curve.resize(getWidth());
 				curveMod.resize(getWidth());
 				updateCurve();
@@ -53,9 +65,23 @@ namespace gui
 
 		protected:
 			Param &atkParam, &dcyParam, &susParam, &rlsParam;
+			Ruler ruler;
 			std::vector<BoundsF> curve, curveMod;
 			float atkV, dcyV, susV, rlsV, atkModV, dcyModV, susModV, rlsModV;
 
+			void initRuler()
+			{
+				addAndMakeVisible(ruler);
+				ruler.makeIncExpansionOfGF();
+				ruler.setValToStrFunc([](float v)
+				{
+					return (v < 1000.f ? String(v) + "ms" : String(v * .001f) + "s");
+				});
+				ruler.setCID(CID::Interact);
+				ruler.setDrawFirstVal(true);
+			}
+
+			// returns the lengthInMs of the envelope
 			void updateCurve(std::vector<BoundsF>& c,
 				float atkRatio, float dcyRatio, float sus, float rlsRatio,
 				float pWidth) noexcept
@@ -174,6 +200,8 @@ namespace gui
 				susV = sus;
 				rlsV = rlsDenorm;
 
+				ruler.setLength(atkDenorm + dcyDenorm + rlsDenorm);
+
 				// denormalized parameter end values
 				const auto atkEndDenorm = atkParam.range.end;
 				const auto dcyEndDenorm = dcyParam.range.end;
@@ -236,9 +264,15 @@ namespace gui
 
 		void paint(Graphics& g) override
 		{
-			setCol(g, CID::Darken);
+			const auto col1 = Colours::c(CID::Bg);
+			const auto col2 = Colours::c(CID::Darken);
 			const auto envGenBounds = envGenView.getBounds().toFloat();
-			g.fillRoundedRectangle(envGenBounds, utils.thicc);
+			const auto envGenX = envGenBounds.getX();
+			const auto envGenY = envGenBounds.getY();
+			const auto envGenBtm = envGenBounds.getBottom();
+			Gradient gradient(col1, envGenX, envGenY, col2, envGenX, envGenBtm, false);
+			g.setGradientFill(gradient);
+			g.fillRoundedRectangle(envGenBounds.withBottom(layout.getY(-1)), utils.thicc);
 		}
 
 		void resized() override

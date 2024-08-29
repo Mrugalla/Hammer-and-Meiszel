@@ -8,6 +8,8 @@ namespace gui
 	{
 		Tooltip(Utils&);
 
+		void paint(Graphics&) override;
+
 		void resized() override;
 
 	protected:

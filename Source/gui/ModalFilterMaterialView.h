@@ -1,6 +1,7 @@
 #pragma once
 #include "Button.h"
 #include "../audio/dsp/modal2/Material.h"
+#include "Ruler.h"
 
 namespace gui
 {
@@ -79,6 +80,10 @@ namespace gui
 
 		ModalMaterialView(Utils&, Material&, Actives&);
 
+		void initRuler();
+
+		void updateRuler();
+
 		void paint(Graphics&) override;
 
 		// g, h, unselectedPartialCol, idx
@@ -91,6 +96,7 @@ namespace gui
 
 		Material& material;
 		Actives& actives;
+		Ruler ruler;
 		Partials partials;
 		DragAnimationComp dragAniComp;
 		Draggerfall draggerfall;

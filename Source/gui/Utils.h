@@ -42,6 +42,7 @@ namespace gui
 		Component& pluginTop;
 		Processor& audioProcessor;
 		Params& params;
+		Callback cb;
 		float thicc;
 	};
 }

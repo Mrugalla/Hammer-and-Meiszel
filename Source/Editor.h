@@ -1,6 +1,6 @@
 #pragma once
-#include "gui/VoiceGrid.h"
 #include "gui/GenAniComp.h"
+#include "gui/IOEditor.h"
 #include "gui/Tooltip.h"
 #include "gui/DropDownMenu.h"
 #include "gui/EnvelopeGeneratorEditor.h"
@@ -71,51 +71,6 @@ namespace gui
         Label label;
         Knob param, breite, env;
         ModDial paramMod, breiteMod, envMod;
-    };
-
-    struct SidePanelParam
-    {
-        SidePanelParam(Utils& u) :
-            layout(),
-            label(u),
-            param(u),
-            modDial(u)
-		{
-			layout.init
-			(
-				{ 1, 3, 1 },
-				{ 1 }
-			);
-		}
-
-        void init(AudioProcessorEditor& editor, const String& name, PID pID)
-        {
-            editor.addAndMakeVisible(label);
-            editor.addAndMakeVisible(param);
-            editor.addAndMakeVisible(modDial);
-
-            const auto fontKnobs = font::dosisExtraBold();
-            const auto just = Just::bottomRight;
-
-            makeTextLabel(label, name, fontKnobs, just, CID::Txt);
-            makeSlider(pID, param);
-            modDial.attach(pID);
-            modDial.verticalDrag = false;
-        }
-
-        void setBounds(BoundsF bounds)
-        {
-            layout.resized(bounds);
-
-            layout.place(label, 0, 0, 1, 1);
-            layout.place(param, 1, 0, 1, 1);
-            layout.place(modDial, 2, 0, 1, 1);
-        }
-
-        Layout layout;
-        Label label;
-        Knob param;
-		ModDial modDial;
     };
 
     struct Editor :
@@ -204,14 +159,12 @@ namespace gui
         evt::Member evtMember;
         Tooltip tooltip;
         GenAniGrowTrees genAni;
-        VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;
+		IOEditor ioEditor;
         Toast toast;
 
         enum class kLabels
         {
-            kTitle, kDev, kTitleModal, kTitleFlanger, kTitleMacro,
-            kEnvAmpAtk, kEnvAmpDcy, kEnvAmpSus, kEnvAmpRls,
-			kEnvModAtk, kEnvModDcy, kEnvModSus, kEnvModRls,
+            kTitle, kDev, kTitleModal, kTitleFlanger,
             kNumLabels
         };
 		static constexpr int NumLabels = static_cast<int>(kLabels::kNumLabels);
@@ -219,18 +172,13 @@ namespace gui
 		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
 		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
 		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
-        Knob macro;
-        enum class kButtons { kMacroRel, kMacroSwap, kMaterialDropDown, kMaterialA, kMaterialB, kMaterialSolo, kPower, kDelta, kMidSide, kNumButtons };
+        enum class kButtons { kMaterialDropDown, kMaterialA, kMaterialB, kMaterialSolo, kNumButtons };
 		static constexpr int NumButtons = static_cast<int>(kButtons::kNumButtons);
 		std::array<Button, NumButtons> buttons;
 		
         enum class kModParams { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumModParams };
 		static constexpr int NumModParams = static_cast<int>(kModParams::kNumModParams);
 		std::array<HnMParam, NumModParams> modParams;
-
-		enum class kIOSliders { kWet, kMix, kOut, kNumIOSliders };
-		static constexpr int NumIOSliders = static_cast<int>(kIOSliders::kNumIOSliders);
-        std::array<SidePanelParam, NumIOSliders> ioSliders;
 
         std::array<ModalMaterialView, 2> materialViews;
         DropDownMenu materialDropDown;

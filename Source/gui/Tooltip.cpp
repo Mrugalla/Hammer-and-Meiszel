@@ -42,6 +42,12 @@ namespace gui
 		});
 	}
 
+	void Tooltip::paint(Graphics& g)
+	{
+		setCol(g, CID::Darken);
+		g.fillAll();
+	}
+
 	void Tooltip::resized()
 	{
 		layout.resized(getLocalBounds());

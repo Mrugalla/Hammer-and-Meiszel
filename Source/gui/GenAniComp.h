@@ -144,15 +144,26 @@ namespace gui
 			}
 		}
 
-		void darken(float val) noexcept
+		void darken(float valTop, float valBtm) noexcept
 		{
+			Colour black(0xff000000);
+
+			const auto h = static_cast<float>(img.getHeight());
+			const auto hInv = 1.f / h;
+			const auto valRange = valBtm - valTop;
 			for (auto y = 0; y < img.getHeight(); ++y)
+			{
+				const auto yF = static_cast<float>(y);
+				const auto yR = yF * hInv;
+				const auto val = valTop + yR * valRange;
 				for (auto x = 0; x < img.getWidth(); ++x)
 				{
 					auto pxl = img.getPixelAt(x, y);
-					pxl = pxl.withMultipliedBrightness(val);
+					pxl = pxl.interpolatedWith(black, val);
 					img.setPixelAt(x, y, pxl);
 				}
+			}
+				
 		}
 
 		void genNewCol(float mixOldNew, int tolerance) noexcept
@@ -173,7 +184,7 @@ namespace gui
 		{
 			for(auto i = 0; i < 64; ++i)
 				makePoroes(width, height);
-			darken(.6f);
+			darken(1.f, .4f);
 			genNewCol(.7f, 3);
 			startNewBranch(width, height, 12.f, .7f);
 			alphaDownCount = 0;

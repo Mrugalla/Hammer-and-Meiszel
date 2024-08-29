@@ -4,7 +4,8 @@
 
 ~~~ todo ~~~
 
-envgenamp envgenmod title labels und labels für A,D,S,R
+abstrahiere viele GUI aspekte um den workflow zu verbessern
+    zögere nicht!
 
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material
@@ -15,8 +16,7 @@ H&M dash glitch keytrack controls
     higher frequencies / higher partials have less keytrack
     transition from keytrack and no keytrack hard / smooth
 
-abstrahiere viele GUI aspekte um den workflow zu verbessern
-    zögere nicht!
+optimize CPU with SIMD filters
 
 H&M Imagepflege
     sollten alle tooltips deutsch sein?
@@ -30,6 +30,8 @@ Param db valToStr can be -inf (gain wet [-inf, 0])
 GUI
     reintroduce custom mousecursor
     SharedPluginState (customizable state)
+        fonts für verschiedene funktionen
+            (zB knob-labels, titel, etc)
         sensitivity
             drag, wheel, key
         defaultvalue
@@ -77,10 +79,16 @@ https://youtu.be/PQGN1Nf49uI?si=DwMHiBX-nBvyixq4
 Handling Project Constants With My Axiom Namespace
 https://youtu.be/v9d4Kc-c2Wg?si=6tSkd0CNFbgE_8-H
 
-~~~ desired beta team ~~~
+~~~ awesome beta team ~~~
 
+mleuc weil geilste sounddesign für neurozeug und botanica
 dash glitch, because https://www.youtube.com/watch?v=0i1LCrC7dZw
 dr. laguna weil er hat dieses geile allpass plugin gemacht
+ewan bristow weil er n geiler botanica & plugdata-typ ist
+alex reid, weil bitwig community
+
+open: street shaman, zayne, xantux, lucas esrar, nimand, felix, peazy,
+liraxity, signalsmith, eyalamir
 
 -----------------------------------------------------------------------------------------
 

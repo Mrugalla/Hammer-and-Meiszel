@@ -161,6 +161,7 @@ namespace gui
 		FileDragAndDropTarget(),
 		material(_material),
 		actives(_actives),
+		ruler(u),
 		partials(),
 		dragAniComp(u),
 		draggerfall(),
@@ -172,6 +173,8 @@ namespace gui
 			{ 1 },
 			{ 2, 13 }
 		);
+
+		initRuler();
 
 		add(Callback([&]()
 		{
@@ -201,38 +204,50 @@ namespace gui
 		addChildComponent(dragAniComp);
 	}
 
+	void ModalMaterialView::initRuler()
+	{
+		addAndMakeVisible(ruler);
+		ruler.setGetIncFunc([](float len)
+		{
+			return len < 2.f ? .1f :
+				len < 5.f ? .2f :
+				len < 10.f ? .5f :
+				len < 15.f ? 1.f :
+				len < 30.f ? 2.f :
+				len < 45.f ? 4.f :
+				8.f;
+		});
+		ruler.setValToStrFunc([](float v)
+		{
+			return String(v + 1.f);
+		});
+		ruler.setCID(CID::Hover);
+		ruler.setDrawFirstVal(true);
+	}
+
 	void ModalMaterialView::paint(Graphics& g)
 	{
 		const auto hInt = getHeight();
 
 		const auto w = static_cast<float>(getWidth());
 		auto const h = static_cast<float>(hInt);
-		const auto thiccInt = static_cast<int>(utils.thicc);
 
-		const auto buttonsHeight = layout.getY(1);
+		Gradient bgGradient
+		(
+			Colours::c(CID::Bg), 0.f, 0.f,
+			Colours::c(CID::Darken), 0.f, h,
+			false
+		);
+		g.setGradientFill(bgGradient);
+		g.fillAll();
+		const auto rulerTop = layout.getY(1);
 		g.setColour(Colours::c(CID::Hover).withMultipliedAlpha(.25f));
-		g.fillRect(0.f, 0.f, w, buttonsHeight);
+		g.fillRect(0.f, 0.f, w, rulerTop);
+		const auto rulerBtm = h;
+		ruler.paintStripes(g, rulerTop, rulerBtm, 33);
 
 		if (isMouseOver() && !isMouseButtonDownAnywhere())
 			draggerfall.paint(g);
-
-		{
-			const auto& peakInfos = material.peakInfos;
-			const auto minFc = 1.f;
-			const auto maxFc = peakInfos[NumFilters - 1].ratio;
-			const auto fcRange = maxFc - minFc;
-			const auto inc = fcRange < 1.f ? .1f : fcRange < 15.f ? 1.f : fcRange < 30.f ? 2.f : fcRange < 50.f ? 5.f : 10.f;
-			setCol(g, CID::Hover);
-			auto i = 0.f;
-			auto x = 0;
-			do
-			{
-				g.drawVerticalLine(x, 0, h);
-				g.drawFittedText(String(i), { x + thiccInt,0,20,20 }, Just::centred, 1);
-				i += inc;
-				x = static_cast<int>(i / fcRange * w);
-			} while (x < w);
-		}
 
 		auto unselectedPartialsCol = Colours::c(CID::Txt);
 		paintPartial(g, h, unselectedPartialsCol, 0);
@@ -240,29 +255,7 @@ namespace gui
 			unselectedPartialsCol = unselectedPartialsCol.darker(.7f);
 
 		for (auto i = 1; i < NumFilters; ++i)
-		{
 			paintPartial(g, h, unselectedPartialsCol, i);
-			/*
-			const auto strumPhase = callbacks[kStrumCB + i].phase;
-			const bool selected = draggerfall.isSelected(i);
-			const auto knotW = utils.thicc
-				* (selected ? 2.f : 1.f)
-				+ utils.thicc * strumPhase * 2.f;
-			const auto knotWHalf = knotW * .5f;
-
-			const auto x = partials[i].x;
-			const auto y = partials[i].y;
-
-			if (selected)
-				g.setColour(Colours::c(CID::Interact));
-			else
-				g.setColour(unselectedPartialsCol);
-			g.fillRect(x - knotWHalf, y, knotW, h);
-
-			g.setColour(Colours::c(CID::Interact));
-			g.fillRect(x - knotWHalf, y - knotWHalf, knotW, knotW);
-			*/
-		}
 	}
 
 	void ModalMaterialView::paintPartial(Graphics& g, float h, Colour unselectedPartialsCol, int i)
@@ -297,6 +290,7 @@ namespace gui
 		);
 
 		layout.resized(getLocalBounds().toFloat());
+		layout.place(ruler, 0, 0, 1, 1);
 		dragAniComp.setBounds(getLocalBounds());
 		updatePartials();
 	}
@@ -340,6 +334,16 @@ namespace gui
 		}
 			
 		freqRatioRange = freqRatioMax - freqRatioMin;
+		updateRuler();
+	}
+
+	void ModalMaterialView::updateRuler()
+	{
+		const auto& peakInfos = material.peakInfos;
+		const auto minFc = 1.f;
+		const auto maxFc = static_cast<float>(peakInfos[NumFilters - 1].ratio);
+		const auto fcRange = maxFc - minFc;
+		ruler.setLength(fcRange);
 	}
 
 	void ModalMaterialView::mouseEnter(const Mouse&)

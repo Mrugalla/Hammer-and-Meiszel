@@ -48,11 +48,11 @@ namespace makeRange
 		return
 		{
 			start, end,
-			[b = f1k, bInv = 1.f / f1k, r = start - end](float min, float max, float x)
+			[b = f1k, bInv = 1.f / f1k, r = start - end](float, float max, float x)
 			{
 				return max + r * std::powf(1.f - std::powf(x, b), bInv);
 			},
-			[b = k1f, bInv = 1.f / k1f, rInv = 1.f / (end - start)](float min, float max, float x)
+			[b = k1f, bInv = 1.f / k1f, rInv = 1.f / (end - start)](float min, float, float x)
 			{
 				return 1.f - std::powf(1.f - std::powf((x - min) * rInv, b), bInv);
 			},

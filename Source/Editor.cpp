@@ -44,20 +44,11 @@ namespace gui
         evtMember(utils.eventSystem, makeEvt(*this)),
         tooltip(utils),
         genAni(utils),
-        voiceGrid(utils),
+        ioEditor(utils),
         toast(utils),
         labels
         {
             Label(utils),
-            Label(utils),
-            Label(utils),
-            Label(utils),
-            Label(utils),
-            Label(utils),
-            Label(utils),
-			Label(utils),
-			Label(utils),
-			Label(utils),
             Label(utils),
             Label(utils),
 			Label(utils)
@@ -83,16 +74,10 @@ namespace gui
 				PID::EnvGenModRelease
 			)
         },
-        macro(utils),
         buttons
         {
             Button(utils),
 			Button(utils),
-            Button(utils),
-            Button(utils),
-            Button(utils),
-            Button(utils),
-            Button(utils),
             Button(utils),
             Button(utils)
         },
@@ -104,12 +89,6 @@ namespace gui
 			HnMParam(utils),
 			HnMParam(utils)
         },
-		ioSliders
-	    {
-			SidePanelParam(utils),
-            SidePanelParam(utils),
-            SidePanelParam(utils)
-	    },
         materialViews
         {
             ModalMaterialView
@@ -128,24 +107,8 @@ namespace gui
         materialDropDown(utils)
     {
         layout.initGrid(GridNumX, GridNumY);
-        
         addAndMakeVisible(genAni);
-		addAndMakeVisible(voiceGrid);
-		voiceGrid.init([&](VoiceGrid<dsp::AutoMPE::VoicesSize>::Voices& voices)
-		{
-            bool updated = false;
-            const auto& pp = audioProcessor.pluginProcessor.parallelProcessor;
-            for (auto i = 0; i < voices.size(); ++i)
-            {
-                const auto active = !pp.isSleepy(i);
-                if (voices[i] != active)
-                {
-                    updated = true;
-                    voices[i] = active;
-                }
-            }
-			return updated;
-		});
+        addAndMakeVisible(ioEditor);
         addAndMakeVisible(tooltip);
 
         const auto fontKnobs = font::dosisExtraBold();
@@ -168,62 +131,11 @@ namespace gui
         
         for (auto& label : labels)
             addAndMakeVisible(label);
-        addAndMakeVisible(macro);
         for (auto& button : buttons)
             addAndMakeVisible(button);
 		
         for (auto& envGen : envGens)
             addAndMakeVisible(envGen);
-
-        auto& titleMacro = get(kLabels::kTitleMacro);
-        makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
-        makeKnob(PID::Macro, macro, false);
-		
-        {
-            auto& buttonMacroRel = get(kButtons::kMacroRel);
-            String textAbsRel;
-            if (utils.audioProcessor.params.isModDepthAbsolute())
-            {
-                buttonMacroRel.value = 0.f;
-                textAbsRel = "Abs";
-            }
-			else
-			{
-				buttonMacroRel.value = 1.f;
-				textAbsRel = "Rel";
-			}
-            makeTextButton(buttonMacroRel, textAbsRel, "Switch between absolute and relative macro modulation.", CID::Interact);
-            buttonMacroRel.type = Button::Type::kToggle;
-            buttonMacroRel.onPaint = makeButtonOnPaint(false);
-            buttonMacroRel.onClick = [&u = utils, &b = buttonMacroRel](const Mouse&)
-            {
-                u.audioProcessor.params.switchModDepthAbsolute();
-                b.value = u.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
-                b.label.setText(b.value > .5f ? "Rel" : "Abs");
-                b.label.repaint();
-            };
-        }
-        
-        {
-            auto& buttonMacroSwap = get(kButtons::kMacroSwap);
-            buttonMacroSwap.setTooltip("Swap all parameters' main values with their modulation destinations.");
-            buttonMacroSwap.onPaint = makeButtonOnPaintSwap();
-            buttonMacroSwap.onClick = [&u = utils](const Mouse&)
-            {
-                for (auto param : u.audioProcessor.params.data())
-                {
-                    const auto val = param->getValue();
-                    const auto modDepth = param->getModDepth();
-                    const auto valModMax = juce::jlimit(0.f, 1.f, val + modDepth);
-
-                    param->beginGesture();
-                    param->setValueNotifyingHost(valModMax);
-                    param->endGesture();
-                    param->setModDepth(juce::jlimit(-1.f, 1.f, val - valModMax));
-                }
-            };
-        }
-
         for(auto& materialView: materialViews)
 			addChildComponent(materialView);
         materialViews[0].setVisible(true);
@@ -365,28 +277,6 @@ namespace gui
 		modParams[3].init(*this, "Kraft", PID::ModalKraft, PID::ModalKraftBreite, PID::ModalKraftEnv);
 		modParams[4].init(*this, "Resonanz", PID::ModalResonanz, PID::ModalResonanzBreite, PID::ModalResonanzEnv);
 
-        ioSliders[0].init(*this, "Wet", PID::GainWet);
-		ioSliders[1].init(*this, "Mix", PID::Mix);
-		ioSliders[2].init(*this, "Out", PID::GainOut);
-        {
-            auto& powerButton = get(kButtons::kPower);
-            makeParameter(powerButton, PID::Power, Button::Type::kToggle, makeButtonOnPaintPower());
-            const auto powerButtonOnClick = powerButton.onClick;
-            powerButton.onClick = [&, oc = powerButtonOnClick](const Mouse& mouse)
-            {
-                oc(mouse);
-                repaint();
-            };
-        }
-        {
-			auto& deltaButton = get(kButtons::kDelta);
-			makeParameter(deltaButton, PID::Delta, Button::Type::kToggle, makeButtonOnPaintPolarity());
-        }
-        {
-			auto& midSideButton = get(kButtons::kMidSide);
-			makeParameter(midSideButton, PID::StereoConfig, Button::Type::kChoice, "L/R;M/S");
-		}
-
         addChildComponent(toast);
         loadBounds(*this);
         utils.audioProcessor.pluginProcessor.editorExists.store(true);
@@ -440,34 +330,6 @@ namespace gui
             g.strokePath(p, stroke);
         }
 
-        // side panels
-        {
-            // left panel
-            {
-                p.clear();
-                const auto startPos = layout(0, TitleHeight);
-                p.startNewSubPath(startPos);
-                p.lineTo(layout(SidePanelWidth, TitleHeight));
-                p.lineTo(layout(SidePanelWidth, -1 - TooltipHeight));
-                p.lineTo(layout(0, -1 - TooltipHeight));
-                closePathOverBounds(p, bounds, startPos, thicc, 0, 2, 2, 2);
-                //g.strokePath(p, stroke);
-            }
-            
-            // right panel
-            {
-                p.clear();
-                const auto startPos = layout(-1, GenAniY);
-                p.startNewSubPath(startPos);
-                p.lineTo(layout(SidePanelRightX, GenAniY));
-                p.lineTo(layout(SidePanelRightX, TooltipY));
-                p.lineTo(layout(-1, TooltipY));
-                closePathOverBounds(p, bounds, startPos, thicc, 1, 2, 2, 2);
-                g.setColour(titleAreaCol);
-                //g.strokePath(p, stroke);
-            }
-        }
-
         // fx chain area
         {
             p.clear();
@@ -487,23 +349,17 @@ namespace gui
             }
         }
 
-        // tooltip area
-        //g.drawLine(layout.getLine(0, TooltipY, -1, TooltipY), thicc);
-
         // draw bg of material view
         {
-            const auto modalMaterialViewArea = materialViews[0].getBounds().toFloat();
-            setCol(g, CID::Darken);
-            g.fillRoundedRectangle(modalMaterialViewArea.expanded(utils.thicc), utils.thicc);
+            //const auto modalMaterialViewArea = materialViews[0].getBounds().toFloat();
+            //setCol(g, CID::Darken);
+            //g.fillRoundedRectangle(modalMaterialViewArea.expanded(utils.thicc), utils.thicc);
         }
     }
 
-    void Editor::paintOverChildren(Graphics& g)
+    void Editor::paintOverChildren(Graphics&)
     {
        //layout.paint(g, Colour(0x11ffffff));
-	   const auto power = utils.audioProcessor.params(PID::Power).getValue() > .5f;
-       if (!power)
-           g.fillAll(Colour(0x44000000));
     }
 
     bool needsResize(Editor& e)
@@ -583,31 +439,8 @@ namespace gui
 
 		resizeLeftPanel(*this, thicc2);
         
-        const auto rightArea = layout(SidePanelRightX, SidePanelY, SidePanelWidth, SidePanelHeight);
-		
-        auto& titleMacro = get(kLabels::kTitleMacro);
-        layout.place(titleMacro, SidePanelRightX, SidePanelY + 1.f, SidePanelWidth * .3f , 1.f);
-        layout.place(macro, SidePanelRightX + SidePanelWidth * .3f, SidePanelY, SidePanelWidth * .4f, 2.f);
-		layout.place(get(kButtons::kMacroRel), SidePanelRightX + SidePanelWidth * .7f, SidePanelY, SidePanelWidth * .3f, 1.f);
-		layout.place(get(kButtons::kMacroSwap), SidePanelRightX + SidePanelWidth * .7f, SidePanelY + 1.f, SidePanelWidth * .3f, 1.f);
-        titleMacro.setMaxHeight();
-
-        auto& ioOutSlider = ioSliders[static_cast<int>(kIOSliders::kOut)];
-        ioOutSlider.setBounds(layout(SidePanelRightX, IOButtonsY - 1.f, SidePanelWidth, 1.f));
-		auto& ioMixSlider = ioSliders[static_cast<int>(kIOSliders::kMix)];
-		ioMixSlider.setBounds(layout(SidePanelRightX, IOButtonsY  - 2.f, SidePanelWidth, 1.f));
-		auto& ioWetSlider = ioSliders[static_cast<int>(kIOSliders::kWet)];
-		ioWetSlider.setBounds(layout(SidePanelRightX, IOButtonsY - 3.f, SidePanelWidth, 1.f));
-		layout.place(voiceGrid, SidePanelRightX, IOButtonsY - 4.f, SidePanelWidth, 1.f);
-        {
-            const auto ioButtonWidth = IOButtonsWidth * .333f;
-            auto ioButtonX = IOButtonsX;
-            layout.place(get(kButtons::kPower), ioButtonX, IOButtonsY, ioButtonWidth, IOButtonsHeight);
-			ioButtonX += ioButtonWidth;
-			layout.place(get(kButtons::kDelta), ioButtonX, IOButtonsY, ioButtonWidth, IOButtonsHeight);
-			ioButtonX += ioButtonWidth;
-			layout.place(get(kButtons::kMidSide), ioButtonX, IOButtonsY, ioButtonWidth, IOButtonsHeight);
-        }
+        //const auto rightArea = layout(SidePanelRightX, SidePanelY, SidePanelWidth, SidePanelHeight);
+        layout.place(ioEditor, SidePanelRightX, SidePanelY, SidePanelWidth, SidePanelHeight);
 
 		const auto modalParametersBounds = layout(ModParamsX, ModParamsY, ModParamsWidth, ModParamsHeight)
 			.reduced(utils.thicc * 2.f);
