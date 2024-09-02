@@ -47,26 +47,24 @@ namespace gui
 			{
 				layout.resized(getLocalBounds().toFloat());
 				layout.place(ruler, 0, 0, 1, 1);
-				curve.resize(getWidth());
-				curveMod.resize(getWidth());
+				//curve.resize(getWidth());
+				//curveMod.resize(getWidth());
 				updateCurve();
 			}
 
 			void paint(Graphics& g) override
 			{
-				const auto width = getWidth();
+				const Stroke stroke(utils.thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
 				setCol(g, CID::Mod);
-				for (auto x = 0; x < width; ++x)
-					g.fillRect(curveMod[x]);
+				g.strokePath(curveMod, stroke);
 				setCol(g, CID::Interact);
-				for (auto x = 0; x < width; ++x)
-					g.fillRect(curve[x]);
+				g.strokePath(curve, stroke);
 			}
 
 		protected:
 			Param &atkParam, &dcyParam, &susParam, &rlsParam;
 			Ruler ruler;
-			std::vector<BoundsF> curve, curveMod;
+			Path curve, curveMod;
 			float atkV, dcyV, susV, rlsV, atkModV, dcyModV, susModV, rlsModV;
 
 			void initRuler()
@@ -81,23 +79,22 @@ namespace gui
 				ruler.setDrawFirstVal(true);
 			}
 
-			// returns the lengthInMs of the envelope
-			void updateCurve(std::vector<BoundsF>& c,
-				float atkRatio, float dcyRatio, float sus, float rlsRatio,
-				float pWidth) noexcept
+			void updateCurve(Path& c, float atkRatio,
+				float dcyRatio, float sus, float rlsRatio) noexcept
 			{
 				const auto width = static_cast<float>(getWidth());
 				const auto height = static_cast<float>(getHeight());
 
 				const auto susHeight = height - sus * height;
 
+				c.clear();
+
 				// sum and normalize ratios
 				const auto ratioSum = atkRatio + dcyRatio + rlsRatio;
 				if (ratioSum == 0.f)
 				{
-					c[0] = BoundsF(0.f, susHeight, width, 1.f);
-					for (auto i = 1; i < getWidth(); ++i)
-						c[i] = BoundsF(0.f, 0.f, 0.f, 0.f);
+					c.startNewSubPath(0.f, susHeight);
+					c.lineTo(width, susHeight);
 					return;
 				}
 
@@ -106,72 +103,32 @@ namespace gui
 				// normalized ratios
 				const auto atkRatioNorm = atkRatio * ratioGain;
 				const auto dcyRatioNorm = dcyRatio * ratioGain;
-				const auto rlsRatioNorm = rlsRatio * ratioGain;
 
 				// width of envelope states
-				const auto atkWidth = atkRatioNorm * width;
-				const auto dcyWidth = dcyRatioNorm * width;
-				const auto rlsWidth = rlsRatioNorm * width;
+				const auto atkX = atkRatioNorm * width;
+				const auto dcyX = dcyRatioNorm * width;
 
-				const auto atkWidthInv = atkWidth == 0.f ? 1.f : 1.f / atkWidth;
-				const auto dcyWidthInv = dcyWidth == 0.f ? 1.f : 1.f / dcyWidth;
-				const auto rlsWidthInv = rlsWidth == 0.f ? 1.f : 1.f / rlsWidth;
-
-				//curve[0] = BoundsF(0.f, 0.f, atkWidth, height).reduced(utils.thicc);
-				//curve[1] = BoundsF(atkWidth, 0.f, dcyWidth, height).reduced(utils.thicc);
-				//curve[2] = BoundsF(atkWidth + dcyWidth, 0.f, rlsWidth, height).reduced(utils.thicc);
-
-				auto state = kAttack;
-				auto xOff = 0.f;
-				auto x0 = 0.f, x1 = 1.f;
-				auto y0 = height, y1 = height;
-
-				for (auto i = 0; i < getWidth() - 1; ++i, ++x0, x1 = x0 + 1.f, y0 = y1)
+				if (atkX == 0.f)
+					c.startNewSubPath(0.f, 0.f);
+				else
 				{
-					switch (state)
-					{
-					case kAttack:
-						y1 = height - x1 * atkWidthInv * height;
-						if (y1 <= 0.f)
-						{
-							y1 = 0.f;
-							state = kDecay;
-							xOff = atkWidth;
-							x0 = 0.f;
-						}
-						break;
-					case kDecay:
-						y1 = x1 * dcyWidthInv * susHeight;
-						if (y1 >= susHeight)
-						{
-							y1 = susHeight;
-							state = kRelease;
-							xOff += dcyWidth;
-							x0 = 0.f;
-						}
-						break;
-					case kRelease:
-						y1 = susHeight + x1 * rlsWidthInv * (height - susHeight);
-						if (y1 >= height)
-						{
-							for (auto j = i; j < getWidth(); ++j, ++x0)
-								c[j] = BoundsF(x0 + xOff, y1, pWidth, 1.f);
-							return;
-						}
-						break;
-					}
+					c.startNewSubPath(0.f, height);
+					c.quadraticTo(atkX * .5f, 0.f, atkX, 0.f);
+				}
 
-					auto yy = y0;
-					auto h = y1 - y0;
-					if (h < 0.f)
-					{
-						yy = y1;
-						h = -h;
-					}
-					if (h < 1.f)
-						h = 1.f;
-					BoundsF bounds(x0 + xOff, yy, pWidth, h);
-					c[i] = bounds;
+				const auto rlsX = atkX + dcyX;
+
+				if (dcyX == 0.f)
+					c.lineTo(rlsX, susHeight);
+				else
+					c.quadraticTo(atkX + dcyX * .5f, susHeight, rlsX, susHeight);
+
+				if (rlsX == width)
+					c.lineTo(width, height);
+				else
+				{
+					const auto dist = width - rlsX;
+					c.quadraticTo(rlsX + dist * .5f, height, width, height);
 				}
 			}
 
@@ -215,8 +172,8 @@ namespace gui
 				const auto dcyRatio = dcyDenorm / dcyEndDenorm;
 				const auto rlsRatio = rlsDenorm / rlsEndDenorm;
 
-				updateCurve(curveMod, atkModRatio, dcyModRatio, susMod, rlsModRatio, 1.f);
-				updateCurve(curve, atkRatio, dcyRatio, sus, rlsRatio, utils.thicc);
+				updateCurve(curveMod, atkModRatio, dcyModRatio, susMod, rlsModRatio);
+				updateCurve(curve, atkRatio, dcyRatio, sus, rlsRatio);
 				return true;
 			}
 		};
