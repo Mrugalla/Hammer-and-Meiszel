@@ -79,6 +79,9 @@ https://youtu.be/PQGN1Nf49uI?si=DwMHiBX-nBvyixq4
 Handling Project Constants With My Axiom Namespace
 https://youtu.be/v9d4Kc-c2Wg?si=6tSkd0CNFbgE_8-H
 
+Coding and UI/UX: How Long Is Your Envelope?
+https://youtu.be/Uo2hoLZDCSs?si=T_hQcCRwcd9ko4ul
+
 ~~~ awesome beta team ~~~
 
 mleuc weil geilste sounddesign für neurozeug und botanica

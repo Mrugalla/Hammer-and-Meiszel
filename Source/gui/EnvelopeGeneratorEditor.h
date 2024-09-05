@@ -47,8 +47,6 @@ namespace gui
 			{
 				layout.resized(getLocalBounds().toFloat());
 				layout.place(ruler, 0, 0, 1, 1);
-				//curve.resize(getWidth());
-				//curveMod.resize(getWidth());
 				updateCurve();
 			}
 
@@ -107,21 +105,25 @@ namespace gui
 				// width of envelope states
 				const auto atkX = atkRatioNorm * width;
 				const auto dcyX = dcyRatioNorm * width;
-
-				if (atkX == 0.f)
-					c.startNewSubPath(0.f, 0.f);
-				else
-				{
-					c.startNewSubPath(0.f, height);
-					c.quadraticTo(atkX * .5f, 0.f, atkX, 0.f);
-				}
-
 				const auto rlsX = atkX + dcyX;
 
-				if (dcyX == 0.f)
-					c.lineTo(rlsX, susHeight);
+				if (rlsX == 0.f)
+					c.startNewSubPath(0.f, susHeight);
 				else
-					c.quadraticTo(atkX + dcyX * .5f, susHeight, rlsX, susHeight);
+				{
+					if (atkX == 0.f)
+						c.startNewSubPath(0.f, 0.f);
+					else
+					{
+						c.startNewSubPath(0.f, height);
+						c.quadraticTo(atkX * .5f, 0.f, atkX, 0.f);
+					}
+
+					if (dcyX == 0.f)
+						c.lineTo(rlsX, susHeight);
+					else
+						c.quadraticTo(atkX + dcyX * .5f, susHeight, rlsX, susHeight);
+				}
 
 				if (rlsX == width)
 					c.lineTo(width, height);
