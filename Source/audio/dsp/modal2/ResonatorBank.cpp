@@ -114,12 +114,13 @@ namespace dsp
 			nfbn = 0;
 			for (auto i = 0; i < NumFilters; ++i)
 			{
-				const auto freqRatio = material.getRatio(i);
-				auto freqFilter = freqHz * freqRatio;
-				//while (freqFilter < FreqMin)
-				//	freqFilter *= 2.;
-				if (freqFilter < FreqMin)
-					return;
+				const auto pRatio = material.getRatio(i);
+				const auto pFreqHz = material.getFreqHz(i);
+				const auto pKeytrack = material.getKeytrack(i);
+
+				const auto freqKeytracked = freqHz * pRatio;
+
+				const auto freqFilter = pFreqHz + pKeytrack * (freqKeytracked - pFreqHz);
 				if (freqFilter < freqMax)
 				{
 					const auto fc = math::freqHzToFc(freqFilter, sampleRate);

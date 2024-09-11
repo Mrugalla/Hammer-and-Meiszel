@@ -1,5 +1,6 @@
 #pragma once
 #include "../../Using.h"
+#include "../../../arch/State.h"
 #include <juce_dsp/juce_dsp.h>
 #include "Axiom.h"
 
@@ -9,7 +10,7 @@ namespace dsp
 	{
 		struct PeakInfo
 		{
-			double mag, ratio, freqHz;
+			double mag, ratio, freqHz, keytrack;
 		};
 
 		struct MaterialData
@@ -23,6 +24,10 @@ namespace dsp
 			double getMag(int) const noexcept;
 
 			double getRatio(int) const noexcept;
+
+			double getFreqHz(int) const noexcept;
+
+			double getKeytrack(int) const noexcept;
 
 			void copy(const MaterialData&) noexcept;
 		private:
@@ -70,6 +75,37 @@ namespace dsp
 
 			Material();
 
+			void savePatch(arch::State& state, String&& matStr) const
+			{
+				for (auto j = 0; j < dsp::modal2::NumFilters; ++j)
+				{
+					const auto& peakInfo = peakInfos[j];
+					const auto peakStr = matStr + "pk" + juce::String(j);
+					state.set(peakStr + "mg", peakInfo.mag);
+					state.set(peakStr + "rt", peakInfo.ratio);
+					state.set(peakStr + "fr", peakInfo.freqHz);
+				}
+			}
+
+			void loadPatch(const arch::State& state, String&& matStr)
+			{
+				for (auto j = 0; j < dsp::modal2::NumFilters; ++j)
+				{
+					auto& peakInfo = peakInfos[j];
+					const auto peakStr = matStr + "pk" + juce::String(j);
+					const auto magVal = state.get(peakStr + "mg");
+					if (magVal != nullptr)
+						peakInfo.mag = static_cast<double>(*magVal);
+					const auto ratioVal = state.get(peakStr + "rt");
+					if (ratioVal != nullptr)
+						peakInfo.ratio = static_cast<double>(*ratioVal);
+					const auto freqVal = state.get(peakStr + "fr");
+					if (freqVal != nullptr)
+						peakInfo.freqHz = static_cast<double>(*freqVal);
+				}
+				updatePeakInfosFromGUI();
+			}
+
 			// data, size
 			void load(const char*, int);
 
@@ -80,6 +116,8 @@ namespace dsp
 			void reportEndGesture() noexcept;
 
 			void reportUpdate() noexcept;
+
+			void updateKeytrackValues() noexcept;
 
 			// sampleRate, samples, numChannels, numSamples
 			void fillBuffer(float, const float* const*, int, int);
@@ -160,63 +198,21 @@ namespace dsp
 
 		struct DualMaterial
 		{
-			DualMaterial() :
-				materials(),
-				actives()
-			{
-				generateSaw(materials[0]);
-				generateSquare(materials[1]);
-				for (auto& active : actives)
-					active = true;
-			}
+			DualMaterial();
 
-			const bool updated() const noexcept
-			{
-				bool u = false;
-				for (auto m = 0; m < 2; ++m)
-				{
-					const auto& material = materials[m];
-					const auto& status = material.status;
-					if (status == Status::UpdatedMaterial)
-						u = true;
-				}
-				return u;
-			}
+			const bool updated() const noexcept;
 
-			void reportUpdate() noexcept
-			{
-				for (auto m = 0; m < 2; ++m)
-				{
-					auto& material = materials[m];
-					auto& status = material.status;
-					status = Status::UpdatedProcessor;
-				}
-			}
+			void reportUpdate() noexcept;
 
-			Material& getMaterial(int i) noexcept
-			{
-				return materials[i];
-			}
+			Material& getMaterial(int) noexcept;
 
-			const Material& getMaterial(int i) const noexcept
-			{
-				return materials[i];
-			}
+			const Material& getMaterial(int) const noexcept;
 
-			const MaterialData& getMaterialData(int i) const noexcept
-			{
-				return materials[i].peakInfos;
-			}
+			const MaterialData& getMaterialData(int) const noexcept;
 
-			const bool isActive(int i) const noexcept
-			{
-				return actives[i];
-			}
+			const bool isActive(int) const noexcept;
 
-			ActivesArray& getActives() noexcept
-			{
-				return actives;
-			}
+			ActivesArray& getActives() noexcept;
 
 		protected:
 			std::array<Material, 2> materials;

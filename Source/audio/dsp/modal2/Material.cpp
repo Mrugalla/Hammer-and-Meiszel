@@ -19,6 +19,30 @@ namespace dsp
 		{
 		}
 
+		void Material::load()
+		{
+			std::vector<float> fifo;
+			fifo.resize(FFTSize2, 0.f);
+			auto bins = fifo.data();
+			applyFFT(bins);
+			std::vector<PeakIndexInfo> peakGroups;
+			const auto harm0Idx = getMaxMagnitudeIdx(bins, 0, FFTSizeHalf);
+			generatePeakGroups(peakGroups, bins, harm0Idx);
+			std::vector<int> peakIndexes;
+			peakIndexes.resize(NumFilters);
+			generatePeakIndexes(peakIndexes, bins, peakGroups);
+			generatePeakInfos(bins, peakIndexes.data(), static_cast<float>(harm0Idx));
+			sortPeaks();
+			auto maxMag = peakInfos[0].mag;
+			for (auto i = 1; i < NumFilters; ++i)
+				if (maxMag < peakInfos[i].mag)
+					maxMag = peakInfos[i].mag;
+			const auto gain = 1.f / maxMag;
+			for (auto i = 0; i < NumFilters; ++i)
+				peakInfos[i].mag *= gain;
+			reportUpdate();
+		}
+
 		void Material::reportUpdate() noexcept
 		{
 			status.store(Status::UpdatedMaterial);
@@ -35,7 +59,8 @@ namespace dsp
 				for (auto p = 0; p < NumFilters; ++p)
 					peakInfos[p].mag *= g;
 			}
-			
+
+			updateKeytrackValues();
 			reportUpdate();
 		}
 
@@ -57,41 +82,6 @@ namespace dsp
 		{
 			fillBuffer(data, size);
 			load();
-		}
-
-		void Material::load()
-		{
-			std::vector<float> fifo;//, binsNorm;
-			fifo.resize(FFTSize2, 0.f);
-			auto bins = fifo.data();
-			applyFFT(bins);
-			//{
-			//	std::vector<float> binsLP;
-			//	binsLP.resize(FFTSize2, 0.f);
-			//	applyLowpassIIR(binsLP.data(), bins, 50.f, .2f, 3);
-			//	binsNorm.resize(FFTSize2, 0.f);
-			//	SIMD::copy(binsNorm.data(), bins, FFTSize);
-			//	divide(binsNorm.data(), bins, binsLP.data(), 0.f);
-			//	normalize(binsNorm.data());
-			//}
-			std::vector<PeakIndexInfo> peakGroups;
-			//const auto harm0Idx = getMaxMagnitudeIdx(binsNorm.data(), 0, FFTSizeHalf);
-			//generatePeakGroups(peakGroups, binsNorm.data(), harm0Idx);
-			const auto harm0Idx = getMaxMagnitudeIdx(bins, 0, FFTSizeHalf);
-			generatePeakGroups(peakGroups, bins, harm0Idx);
-			std::vector<int> peakIndexes;
-			peakIndexes.resize(NumFilters);
-			generatePeakIndexes(peakIndexes, bins, peakGroups);
-			generatePeakInfos(bins, peakIndexes.data(), static_cast<float>(harm0Idx));
-			sortPeaks();
-			auto maxMag = peakInfos[0].mag;
-			for (auto i = 1; i < NumFilters; ++i)
-				if (maxMag < peakInfos[i].mag)
-					maxMag = peakInfos[i].mag;
-			const auto gain = 1.f / maxMag;
-			for (auto i = 0; i < NumFilters; ++i)
-				peakInfos[i].mag *= gain;
-			reportUpdate();
 		}
 
 		void Material::fillBuffer(const char* data, int size)
@@ -368,6 +358,19 @@ namespace dsp
 			return j;
 		}
 
+		void Material::updateKeytrackValues() noexcept
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				const auto ratio = peakInfos[i].ratio;
+				auto keytrack = (1. + std::cos(Tau * ratio)) * .5;
+				const auto ratioFrac = ratio - std::floor(ratio);
+				if (ratioFrac < .03 || ratioFrac > .97)
+					keytrack = std::round(keytrack);
+				peakInfos[i].keytrack = keytrack;
+			}
+		}
+
 		void Material::generatePeakInfos(const float* bins, const int* peakIndexes, float harm0Idx) noexcept
 		{
 			for (auto i = 0; i < NumFilters; ++i)
@@ -389,6 +392,7 @@ namespace dsp
 					peakInfos[i].freqHz = 0.;
 				}
 			}
+			updateKeytrackValues();
 		}
 
 		void Material::drawSpectrum(const String& text, const float* buf, float thresholdDb,
@@ -427,6 +431,16 @@ namespace dsp
 		double MaterialData::getRatio(int i) const noexcept
 		{
 			return data[i].ratio;
+		}
+
+		double MaterialData::getFreqHz(int i) const noexcept
+		{
+			return data[i].freqHz;
+		}
+
+		double MaterialData::getKeytrack(int i) const noexcept
+		{
+			return data[i].keytrack;
 		}
 
 		void MaterialData::copy(const MaterialData& m) noexcept
@@ -519,6 +533,66 @@ namespace dsp
 				material.buffer[s] = x < .5f ? 1.f : -1.f;
 			}
 			material.load();
+		}
+
+		// DUALMATERIAL
+
+		DualMaterial::DualMaterial() :
+			materials(),
+			actives()
+		{
+			generateSaw(materials[0]);
+			generateSquare(materials[1]);
+			for (auto& active : actives)
+				active = true;
+		}
+
+		const bool DualMaterial::updated() const noexcept
+		{
+			bool u = false;
+			for (auto m = 0; m < 2; ++m)
+			{
+				const auto& material = materials[m];
+				const auto& status = material.status;
+				if (status == Status::UpdatedMaterial)
+					u = true;
+			}
+			return u;
+		}
+
+		void DualMaterial::reportUpdate() noexcept
+		{
+			for (auto m = 0; m < 2; ++m)
+			{
+				auto& material = materials[m];
+				auto& status = material.status;
+				status = Status::UpdatedProcessor;
+			}
+		}
+
+		Material& DualMaterial::getMaterial(int i) noexcept
+		{
+			return materials[i];
+		}
+
+		const Material& DualMaterial::getMaterial(int i) const noexcept
+		{
+			return materials[i];
+		}
+
+		const MaterialData& DualMaterial::getMaterialData(int i) const noexcept
+		{
+			return materials[i].peakInfos;
+		}
+
+		const bool DualMaterial::isActive(int i) const noexcept
+		{
+			return actives[i];
+		}
+
+		ActivesArray& DualMaterial::getActives() noexcept
+		{
+			return actives;
 		}
 	}
 }

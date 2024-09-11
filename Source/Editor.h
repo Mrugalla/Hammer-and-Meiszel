@@ -1,5 +1,6 @@
 #pragma once
 #include "gui/GenAniComp.h"
+#include "gui/ModalParamsEditor.h"
 #include "gui/IOEditor.h"
 #include "gui/Tooltip.h"
 #include "gui/DropDownMenu.h"
@@ -127,14 +128,9 @@ namespace gui
         static constexpr float ModMatEditorHeight = ModuleHeight - ModuleTitleHeight - 5.f - ModMatABHeight - ModParamsTableTopHeight;
         static constexpr float ModMatEditorBottom = ModMatEditorY + ModMatEditorHeight;
 
-        static constexpr float ModParamsTableTopX = ModMatEditorX;
-        static constexpr float ModParamsTableTopY = ModMatEditorBottom;
-        static constexpr float ModParamsTableTopWidth = ModMatEditorWidth;
-		static constexpr float ModParamsTableTopBottom = ModParamsTableTopY + ModParamsTableTopHeight;
-
-		static constexpr float ModParamsX = ModParamsTableTopX;
-		static constexpr float ModParamsY = ModParamsTableTopBottom;
-		static constexpr float ModParamsWidth = ModParamsTableTopWidth;
+		static constexpr float ModParamsX = ModMatEditorX;
+		static constexpr float ModParamsY = ModMatEditorBottom;
+		static constexpr float ModParamsWidth = ModMatEditorWidth;
 		static constexpr float ModParamsBottom = TooltipY;
 		static constexpr float ModParamsHeight = ModParamsBottom - ModParamsY;
 
@@ -159,6 +155,7 @@ namespace gui
         evt::Member evtMember;
         Tooltip tooltip;
         GenAniGrowTrees genAni;
+		ModalParamsEditor modParamsEditor;
 		IOEditor ioEditor;
         Toast toast;
 
@@ -175,10 +172,6 @@ namespace gui
         enum class kButtons { kMaterialDropDown, kMaterialA, kMaterialB, kMaterialSolo, kNumButtons };
 		static constexpr int NumButtons = static_cast<int>(kButtons::kNumButtons);
 		std::array<Button, NumButtons> buttons;
-		
-        enum class kModParams { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumModParams };
-		static constexpr int NumModParams = static_cast<int>(kModParams::kNumModParams);
-		std::array<HnMParam, NumModParams> modParams;
 
         std::array<ModalMaterialView, 2> materialViews;
         DropDownMenu materialDropDown;

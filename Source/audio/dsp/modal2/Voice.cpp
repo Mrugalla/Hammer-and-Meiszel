@@ -14,11 +14,12 @@ namespace dsp
 
 		//
 
-		Voice::Parameters::Parameters(double _blend, double _spreizung, double _harmonie, double _kraft, double _reso,
-			double _blendEnv, double _spreizungEnv, double _harmonieEnv, double _kraftEnv, double _resoEnv,
-			double _blendBreite, double _spreizungBreite, double _harmonieBreite, double _kraftBreite, double _resoBreite) :
+		Voice::Parameters::Parameters(double _smartKeytrack, double _blend, double _spreizung, double _harmonie, double _kraft, double _reso,
+			double _smartKeytrackEnv, double _blendEnv, double _spreizungEnv, double _harmonieEnv, double _kraftEnv, double _resoEnv,
+			double _smartKeytrackBreite, double _blendBreite, double _spreizungBreite, double _harmonieBreite, double _kraftBreite, double _resoBreite) :
 			params
 			{
+				Parameter(_smartKeytrack, _smartKeytrackBreite, _smartKeytrackEnv),
 				Parameter(_blend, _blendBreite, _blendEnv),
 				Parameter(_spreizung, _spreizungBreite, _spreizungEnv),
 				Parameter(_harmonie, _harmonieBreite, _harmonieEnv),
@@ -64,7 +65,7 @@ namespace dsp
 		}
 
 		void Voice::updatePartial(MaterialData& dest, const MaterialData& src0, const MaterialData& src1,
-			double blend, double sprezi, double harmi, int i) noexcept
+			double smartKeytrack, double blend, double sprezi, double harmi, int i) noexcept
 		{
 			const auto& filt0 = src0[i];
 			const auto& filt1 = src1[i];
@@ -75,6 +76,17 @@ namespace dsp
 			const auto magRange = mag1 - mag0;
 			const auto mag = mag0 + blend * magRange;
 			dest[i].mag = mag;
+
+			const auto freqHz0 = filt0.freqHz;
+			const auto freqHz1 = filt1.freqHz;
+			const auto freqHzRange = freqHz1 - freqHz0;
+			dest[i].freqHz = freqHz0 + blend * freqHzRange;
+
+			const auto keytrack0 = filt0.keytrack;
+			const auto keytrack1 = filt1.keytrack;
+			const auto keytrackRange = keytrack1 - keytrack0;
+			const auto keyTrackMix = keytrack0 + blend * keytrackRange;
+			dest[i].keytrack = 1. + smartKeytrack * (keyTrackMix - 1.);
 
 			const auto ratio0 = filt0.ratio;
 			const auto ratio1 = filt1.ratio;
@@ -107,6 +119,8 @@ namespace dsp
 				}
 			}
 
+			auto& smartKeytrackParam = parameters[kSmartKeytrack];
+			const bool smartKeytrackSmooth = smartKeytrackParam(_parameters[kSmartKeytrack], envGenValue, 0., 1., numChannels);
 			auto& blendParam = parameters[kBlend];
 			const bool blendSmooth = blendParam(_parameters[kBlend], envGenValue, 0., 1., numChannels);
 			auto& spreziParam = parameters[kSpreizung];
@@ -114,7 +128,7 @@ namespace dsp
 			auto& harmonieParam = parameters[kHarmonie];
 			const bool harmonieSmooth = harmonieParam(_parameters[kHarmonie], envGenValue, 0., 1., numChannels);
 
-			if (blendSmooth || spreziSmooth || harmonieSmooth || wantsMaterialUpdate)
+			if (smartKeytrackSmooth || blendSmooth || spreziSmooth || harmonieSmooth || wantsMaterialUpdate)
 			{
 				const auto& mat0 = dualMaterial.getMaterialData(0);
 				const auto& mat1 = dualMaterial.getMaterialData(1);
@@ -122,17 +136,18 @@ namespace dsp
 				{
 					auto& material = materialStereo[ch];
 
+					const auto smartKeytrack = smartKeytrackParam[ch];
 					const auto blend = blendParam[ch];
 					const auto spreizung = spreziParam[ch];
 					const auto sprezi = std::exp(spreizung);
 					const auto harmonie = harmonieParam[ch];
 					const auto harmi = math::tanhApprox(Pi * harmonie);
 
-					updatePartial(material, mat0, mat1, blend, sprezi, harmi, 0);
+					updatePartial(material, mat0, mat1, smartKeytrack, blend, sprezi, harmi, 0);
 					for (auto i = 1; i < NumFilters; ++i)
 					{
 						if (dualMaterial.isActive(i))
-							updatePartial(material, mat0, mat1, blend, sprezi, harmi, i);
+							updatePartial(material, mat0, mat1, smartKeytrack, blend, sprezi, harmi, i);
 						else
 							material[i].mag = 0.;
 					}

@@ -200,6 +200,16 @@
         <FILE id="BThon6" name="Using.h" compile="0" resource="0" file="Source/audio/Using.h"/>
       </GROUP>
       <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui">
+        <GROUP id="{535413D6-9DC7-A95A-3D8E-94D5FCD4CECA}" name="modal">
+          <FILE id="grljkd" name="ModalFilterMaterialView.cpp" compile="1" resource="0"
+                file="Source/gui/ModalFilterMaterialView.cpp"/>
+          <FILE id="hlm5Mo" name="ModalFilterMaterialView.h" compile="0" resource="0"
+                file="Source/gui/ModalFilterMaterialView.h"/>
+          <FILE id="Fx04PQ" name="ModalParamsEditor.cpp" compile="1" resource="0"
+                file="Source/gui/ModalParamsEditor.cpp"/>
+          <FILE id="j7c4UA" name="ModalParamsEditor.h" compile="0" resource="0"
+                file="Source/gui/ModalParamsEditor.h"/>
+        </GROUP>
         <FILE id="VSJIYZ" name="Ruler.cpp" compile="1" resource="0" file="Source/gui/Ruler.cpp"/>
         <FILE id="dEwQsp" name="Ruler.h" compile="0" resource="0" file="Source/gui/Ruler.h"/>
         <FILE id="cXkNEf" name="IOEditor.cpp" compile="1" resource="0" file="Source/gui/IOEditor.cpp"/>
@@ -240,10 +250,6 @@
         <FILE id="QDqVwY" name="Using.h" compile="0" resource="0" file="Source/gui/Using.h"/>
         <FILE id="DEQaKD" name="Utils.cpp" compile="1" resource="0" file="Source/gui/Utils.cpp"/>
         <FILE id="VaLRZS" name="Utils.h" compile="0" resource="0" file="Source/gui/Utils.h"/>
-        <FILE id="grljkd" name="ModalFilterMaterialView.cpp" compile="1" resource="0"
-              file="Source/gui/ModalFilterMaterialView.cpp"/>
-        <FILE id="hlm5Mo" name="ModalFilterMaterialView.h" compile="0" resource="0"
-              file="Source/gui/ModalFilterMaterialView.h"/>
       </GROUP>
       <GROUP id="{48C2ACDD-158F-A70E-4A38-D05AB8BC52C6}" name="param">
         <FILE id="ZsMYbq" name="Param.cpp" compile="1" resource="0" file="Source/param/Param.cpp"/>

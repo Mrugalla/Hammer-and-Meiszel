@@ -4,6 +4,10 @@
 
 ~~~ todo ~~~
 
+parameter wo macht reso flexibel zwischen tiefstem und höchstem partial
+
+smoothing-zeiten sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
+
 abstrahiere viele GUI aspekte um den workflow zu verbessern
     zögere nicht!
 
@@ -12,14 +16,17 @@ when sample imported user defines which range should be taken
 
 material editor solve instrument imports where fundamental not highest peak
 
-H&M dash glitch keytrack controls
-    higher frequencies / higher partials have less keytrack
-    transition from keytrack and no keytrack hard / smooth
+mousewheel auf moddial tut nicht den toast updaten
++ schrecklich große steps und no sensitive mode
+
+keytrack
+    way to change freq of partials
 
 optimize CPU with SIMD filters
 
 H&M Imagepflege
     sollten alle tooltips deutsch sein?
+    breite or width?
 
 Material
     import von samples erzeugt oft keine geilen magnitudes

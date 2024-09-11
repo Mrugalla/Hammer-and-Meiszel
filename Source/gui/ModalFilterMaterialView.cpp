@@ -156,6 +156,8 @@ namespace gui
 		return { xAbs - lenAbsHalf, lenAbs };
 	}
 
+	// ModalMaterialView
+
 	ModalMaterialView::ModalMaterialView(Utils& u, Material& _material, Actives& _actives) :
 		Comp(u),
 		FileDragAndDropTarget(),
@@ -351,6 +353,8 @@ namespace gui
 		ruler.repaint();
 	}
 
+	// mouse event handling
+
 	void ModalMaterialView::mouseEnter(const Mouse&)
 	{
 		const auto cID = CID::Interact;
@@ -469,6 +473,14 @@ namespace gui
 		repaint();
 	}
 
+	// related to drag n drop and audio file handling
+
+	bool ModalMaterialView::isAudioFile(const String& fileName) const
+	{
+		const auto ext = fileName.fromLastOccurrenceOf(".", false, false).toLowerCase();
+		return ext == "flac" || ext == "wav" || ext == "mp3" || ext == "aiff";
+	}
+
 	void ModalMaterialView::loadAudioFile(const File& file)
 	{
 		auto formatManager = std::make_unique<AudioFormatManager>();
@@ -496,12 +508,6 @@ namespace gui
 		const auto file = files[0];
 		loadAudioFile(file);
 		material.load();
-	}
-
-	bool ModalMaterialView::isAudioFile(const String& fileName) const
-	{
-		const auto ext = fileName.fromLastOccurrenceOf(".", false, false).toLowerCase();
-		return ext == "flac" || ext == "wav" || ext == "mp3" || ext == "aiff";
 	}
 
 	void ModalMaterialView::fileDragEnter(const StringArray&, int, int)

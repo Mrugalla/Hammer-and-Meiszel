@@ -44,6 +44,7 @@ namespace gui
         evtMember(utils.eventSystem, makeEvt(*this)),
         tooltip(utils),
         genAni(utils),
+        modParamsEditor(utils),
         ioEditor(utils),
         toast(utils),
         labels
@@ -81,14 +82,6 @@ namespace gui
             Button(utils),
             Button(utils)
         },
-        modParams
-        {
-            HnMParam(utils),
-			HnMParam(utils),
-			HnMParam(utils),
-			HnMParam(utils),
-			HnMParam(utils)
-        },
         materialViews
         {
             ModalMaterialView
@@ -108,6 +101,7 @@ namespace gui
     {
         layout.initGrid(GridNumX, GridNumY);
         addAndMakeVisible(genAni);
+        addAndMakeVisible(modParamsEditor);
         addAndMakeVisible(ioEditor);
         addAndMakeVisible(tooltip);
 
@@ -271,12 +265,6 @@ namespace gui
 			m.setVisible(!m.isVisible());
 		};
 
-		modParams[0].init(*this, "Blend", PID::ModalBlend, PID::ModalBlendBreite, PID::ModalBlendEnv);
-		modParams[1].init(*this, "Spreizung", PID::ModalSpreizung, PID::ModalSpreizungBreite, PID::ModalSpreizungEnv);
-		modParams[2].init(*this, "Harmonie", PID::ModalHarmonie, PID::ModalHarmonieBreite, PID::ModalHarmonieEnv);
-		modParams[3].init(*this, "Kraft", PID::ModalKraft, PID::ModalKraftBreite, PID::ModalKraftEnv);
-		modParams[4].init(*this, "Resonanz", PID::ModalResonanz, PID::ModalResonanzBreite, PID::ModalResonanzEnv);
-
         addChildComponent(toast);
         loadBounds(*this);
         utils.audioProcessor.pluginProcessor.editorExists.store(true);
@@ -339,21 +327,6 @@ namespace gui
             p.lineTo(layout(FXChainRight, FXChainY));
             p.closeSubPath();
             g.strokePath(p, stroke);
-        }
-
-        // module area
-        {
-            // modal
-            {
-                g.drawRect(layout(ModParamsTableTopX, ModParamsTableTopY, ModParamsTableTopWidth, ModParamsTableTopHeight));
-            }
-        }
-
-        // draw bg of material view
-        {
-            //const auto modalMaterialViewArea = materialViews[0].getBounds().toFloat();
-            //setCol(g, CID::Darken);
-            //g.fillRoundedRectangle(modalMaterialViewArea.expanded(utils.thicc), utils.thicc);
         }
     }
 
@@ -444,20 +417,7 @@ namespace gui
 
 		const auto modalParametersBounds = layout(ModParamsX, ModParamsY, ModParamsWidth, ModParamsHeight)
 			.reduced(utils.thicc * 2.f);
-        {
-            const auto x = modalParametersBounds.getX();
-			const auto w = modalParametersBounds.getWidth();
-			const auto numParamsInv = 1.f / static_cast<float>(modParams.size());
-            const auto h = modalParametersBounds.getHeight() * numParamsInv;
-
-            auto y = modalParametersBounds.getY();
-            for (auto i = 0; i < modParams.size(); ++i)
-            {
-                auto modalParamBounds = BoundsF(x, y, w, h).reduced(utils.thicc);
-                modParams[i].setBounds(modalParamBounds);
-				y += h;
-            }
-        }
+		modParamsEditor.setBounds(modalParametersBounds.toNearestInt());
         const auto modMatButtonWidth = ModMatABWidth * .333333f;
         {
 			auto x = ModMatABX;
@@ -470,11 +430,6 @@ namespace gui
             auto& modMatSoloButton = get(kButtons::kMaterialSolo);
             layout.place(modMatSoloButton, x, ModMatABY, modMatButtonWidth, ModMatABHeight);
         }
-		
-        LabelGroup modalKnobLabels;
-        for(auto& m: modParams)
-            modalKnobLabels.add(m.label);
-        modalKnobLabels.setMaxHeight();
 
         auto genAniBounds = layout(GenAniX, GenAniY, GenAniWidth, GenAniHeight).reduced(utils.thicc);
 		genAni.setBounds(genAniBounds.toNearestInt());
@@ -484,10 +439,8 @@ namespace gui
         const auto toastHeight = toastWidth * 3 / 4;
         toast.setSize(toastWidth, toastHeight);
 
-        /*
-		layout.place(get(kButtons::kMaterialDropDown), 15.5f, modalY, 1.f, 1);
-		materialDropDown.setBounds(materialBounds);
-        */
+		//layout.place(get(kButtons::kMaterialDropDown), 15.5f, modalY, 1.f, 1);
+		//materialDropDown.setBounds(materialBounds);
 	}
 
     void Editor::mouseEnter(const Mouse&)

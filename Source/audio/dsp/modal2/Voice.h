@@ -9,8 +9,6 @@ namespace dsp
 	{
 		struct Voice
 		{
-			enum kParam{ kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumParams };
-
 			struct Parameter
 			{
 				Parameter(double, double, double);
@@ -20,7 +18,8 @@ namespace dsp
 
 			struct Parameters
 			{
-				Parameters(double = -0., double = 0., double = 0., double = 0., double = 0.,
+				Parameters(double = 0., double = -0., double = 0.,
+					double = 0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.);
 
@@ -106,7 +105,7 @@ namespace dsp
 			bool wantsMaterialUpdate;
 
 			void updatePartial(MaterialData&, const MaterialData&, const MaterialData&,
-				double, double, double, int) noexcept;
+				double, double, double, double, int) noexcept;
 
 			// dualMaterial, parameters, envGenMod, numChannels
 			void updateParameters(const DualMaterial&,

@@ -70,6 +70,9 @@ namespace param
 		case PID::EnvGenModRelease: return "EnvGenMod Release";
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
+		case PID::ModalSmartKeytrack: return "Modal Smart Keytrack";
+		case PID::ModalSmartKeytrackEnv: return "Modal Smart Keytrack Env";
+		case PID::ModalSmartKeytrackBreite: return "Modal Smart Keytrack Breite";
 		case PID::ModalBlend: return "Modal Blend";
 		case PID::ModalBlendEnv: return "Modal Blend Env";
 		case PID::ModalBlendBreite: return "Modal Blend Breite";
@@ -1371,6 +1374,9 @@ namespace param
 
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
+		params.push_back(makeParam(PID::ModalSmartKeytrack, 1.f));
+		params.push_back(makeParam(PID::ModalSmartKeytrackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalSmartKeytrackBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalBlend, 0.f));
 		params.push_back(makeParam(PID::ModalBlendEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalBlendBreite, 0.f, makeRange::lin(-1.f, 1.f)));
