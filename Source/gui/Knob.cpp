@@ -211,17 +211,29 @@ namespace gui
         {
             for (auto prm : prms)
             {
-                const auto& range = prm->range;
+                auto& param = *prm;
+                const auto& range = param.range;
                 const auto interval = range.interval;
 
                 if (interval > 0.f)
                 {
                     const auto nStep = interval / range.getRange().getLength();
-                    dragXY.setY(dragXY.y > 0.f ? nStep : -nStep);
+                    const auto nY = dragXY.y > 0.f ? nStep : -nStep;
+                    dragXY.setY(nY);
                 }
 
-                prm->setModDepth(prm->getModDepth() + dragXY.y);
+				const auto modDepth = param.getModDepth();
+				const auto valNorm = param.getValue();
+
+				const auto nModDepth = modDepth + dragXY.y;
+				const auto nValNorm = valNorm + nModDepth;
+				const auto nValDenorm = range.convertFrom0to1(nValNorm);
+				const auto valLegal = range.snapToLegalValue(nValDenorm);
+				const auto valLegalNorm = range.convertTo0to1(valLegal);
+				const auto modDepthLegal = valLegalNorm - valNorm;
+               param.setModDepth(modDepthLegal);
             }
+            updateToast(utils, *prms[0]);
         };
     }
 

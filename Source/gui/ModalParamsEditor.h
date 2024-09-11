@@ -198,7 +198,7 @@ namespace gui
 
 		ModalParamsEditor(Utils& u) :
 			Comp(u),
-			tabButtons(u, 1),
+			tabButtons(u, 0),
 			params
 			{
 				ModalMainParams(u, PID::ModalSmartKeytrack, PID::ModalBlend,

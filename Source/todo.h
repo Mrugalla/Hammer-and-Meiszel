@@ -16,9 +16,6 @@ when sample imported user defines which range should be taken
 
 material editor solve instrument imports where fundamental not highest peak
 
-mousewheel auf moddial tut nicht den toast updaten
-+ schrecklich groﬂe steps und no sensitive mode
-
 keytrack
     way to change freq of partials
 
