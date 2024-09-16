@@ -14,9 +14,9 @@ namespace dsp
 
 		//
 
-		Voice::Parameters::Parameters(double _smartKeytrack, double _blend, double _spreizung, double _harmonie, double _kraft, double _reso,
-			double _smartKeytrackEnv, double _blendEnv, double _spreizungEnv, double _harmonieEnv, double _kraftEnv, double _resoEnv,
-			double _smartKeytrackBreite, double _blendBreite, double _spreizungBreite, double _harmonieBreite, double _kraftBreite, double _resoBreite) :
+		Voice::Parameters::Parameters(double _smartKeytrack, double _blend, double _spreizung, double _harmonie, double _kraft, double _reso, double _resoDamp,
+			double _smartKeytrackEnv, double _blendEnv, double _spreizungEnv, double _harmonieEnv, double _kraftEnv, double _resoEnv, double _resoDampEnv,
+			double _smartKeytrackBreite, double _blendBreite, double _spreizungBreite, double _harmonieBreite, double _kraftBreite, double _resoBreite, double _resoDampBreite) :
 			params
 			{
 				Parameter(_smartKeytrack, _smartKeytrackBreite, _smartKeytrackEnv),
@@ -24,7 +24,9 @@ namespace dsp
 				Parameter(_spreizung, _spreizungBreite, _spreizungEnv),
 				Parameter(_harmonie, _harmonieBreite, _harmonieEnv),
 				Parameter(_kraft, _kraftBreite, _kraftEnv),
-				Parameter(_reso, _resoBreite, _resoEnv)
+				Parameter(_reso, _resoBreite, _resoEnv),
+				Parameter(_resoDamp, _resoDampBreite, _resoDampEnv)
+
 			}
 		{}
 
@@ -32,8 +34,6 @@ namespace dsp
 		{
 			return params[i];
 		}
-
-		//
 
 		//
 
@@ -47,7 +47,7 @@ namespace dsp
 		void Voice::prepare(double sampleRate) noexcept
 		{
 			resonatorBank.prepare(materialStereo, sampleRate);
-			const auto smoothLenMs = 12.;
+			const auto smoothLenMs = 13.;
 			for (auto i = 0; i < kNumParams; ++i)
 				parameters[i].prepare(sampleRate, smoothLenMs);
 		}
@@ -110,12 +110,15 @@ namespace dsp
 			const auto envGenValue = envGenMod;
 
 			{
-				auto& resoParam = parameters[kReso];
-				const auto resoSmooth = resoParam(_parameters[kReso], envGenValue, 0., 1., numChannels);
+				auto& resoParam = parameters[kParam::kReso];
+				resoParam(_parameters[kParam::kReso], envGenValue, 0., 1., numChannels);
+				auto& resoDampParam = parameters[kParam::kResoDamp];
+				resoDampParam(_parameters[kParam::kResoDamp], envGenValue, 0., 1., numChannels);
 				for (auto ch = 0; ch < numChannels; ++ch)
 				{
 					const auto reso = resoParam[ch];
-					resonatorBank.setReso(reso, ch);
+					const auto resoDamp = resoDampParam[ch];
+					resonatorBank.setReso(reso, resoDamp, ch);
 				}
 			}
 

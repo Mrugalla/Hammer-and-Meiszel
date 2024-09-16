@@ -30,14 +30,17 @@ namespace gui
 				editor.addAndMakeVisible(label);
 				editor.addAndMakeVisible(param);
 				editor.addAndMakeVisible(modDial);
-
-				const auto fontKnobs = font::dosisExtraBold();
-				const auto just = Just::bottomRight;
+				
+				const auto fontKnobs = font::dosisMedium();
+				const auto just = Just::centred;
 
 				makeTextLabel(label, name, fontKnobs, just, CID::Txt);
 				makeSlider(pID, param);
 				modDial.attach(pID);
 				modDial.verticalDrag = false;
+
+
+				label.autoMaxHeight = false;
 			}
 
 			void setBounds(BoundsF bounds)
@@ -73,7 +76,8 @@ namespace gui
 				Button(u),
 				Button(u)
 			},
-			voiceGrid(u)
+			voiceGrid(u),
+			labelGroup()
 		{
 			layout.init
 			(
@@ -125,6 +129,7 @@ namespace gui
 				auto& btn = buttons[i];
 				layout.place(btn, i - 2, -3, 1, 1);
 			}
+			labelGroup.setMaxHeight();
 		}
 
 	protected:
@@ -133,6 +138,7 @@ namespace gui
 		std::array<SidePanelParam, kSidePanelParams> sidePanelParams;
 		std::array<Button, kNumButtons> buttons;
 		VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;
+		LabelGroup labelGroup;
 
 		void initMacroSwap()
 		{
@@ -195,6 +201,8 @@ namespace gui
 			sidePanelParams[kWet].init(*this, "Wet", PID::GainWet);
 			sidePanelParams[kMix].init(*this, "Mix", PID::Mix);
 			sidePanelParams[kOut].init(*this, "Out", PID::GainOut);
+			for (auto& spp : sidePanelParams)
+				labelGroup.add(spp.label);
 		}
 
 		void initVoiceGrid()
@@ -226,13 +234,18 @@ namespace gui
 			makeParameter(powerButton, PID::Power, Button::Type::kToggle, makeButtonOnPaintPower());
 			const auto powerButtonOnClick = powerButton.onClick;
 			powerButton.onClick = [&, oc = powerButtonOnClick](const Mouse& mouse)
-				{
-					oc(mouse);
-					repaint();
-				};
+			{
+				oc(mouse);
+				powerButton.value = std::round(utils.audioProcessor.params(PID::Power).getValMod());
+				repaint();
+			};
+			powerButton.type = Button::Type::kToggle;
+			powerButton.value = std::round(utils.audioProcessor.params(PID::Power).getValMod());
 			// DELTA BUTTON
 			auto& deltaButton = buttons[kDelta];
 			makeParameter(deltaButton, PID::Delta, Button::Type::kToggle, makeButtonOnPaintPolarity());
+			deltaButton.type = Button::Type::kToggle;
+			deltaButton.value = std::round(utils.audioProcessor.params(PID::Delta).getValMod());
 			// MID/SIDE BUTTON
 			auto& midSideButton = buttons[kMidSide];
 			makeParameter(midSideButton, PID::StereoConfig, Button::Type::kChoice, "L/R;M/S");

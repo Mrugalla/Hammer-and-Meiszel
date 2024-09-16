@@ -4,8 +4,6 @@
 
 ~~~ todo ~~~
 
-parameter wo macht reso flexibel zwischen tiefstem und höchstem partial
-
 smoothing-zeiten sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
 
 abstrahiere viele GUI aspekte um den workflow zu verbessern

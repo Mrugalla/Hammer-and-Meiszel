@@ -81,6 +81,14 @@ namespace audio
 		const auto& modalResoBreiteParam = params(PID::ModalResonanzBreite);
 		const auto modalResoBreite = static_cast<double>(modalResoBreiteParam.getValModDenorm());
 
+		const auto& modalResoDampParam = params(PID::ModalResoDamp);
+		const auto modalResoDamp = static_cast<double>(modalResoDampParam.getValMod());
+		const auto& modalResoDampEnvParam = params(PID::ModalResoDampEnv);
+		const auto modalResoDampEnv = static_cast<double>(modalResoDampEnvParam.getValModDenorm());
+		const auto& modalResoDampBreiteParam = params(PID::ModalResoDampBreite);
+		const auto modalResoDampBreite = static_cast<double>(modalResoDampBreiteParam.getValModDenorm());
+
+		/*
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
 
@@ -93,11 +101,12 @@ namespace audio
 		if (combSemi > 0.)
 			combFeedback *= -1.;
 
-		//const auto& combAPResonanzParam = params(PID::CombAPResonanz);
-		//const auto combAPResonanz = static_cast<double>(combAPResonanzParam.getValModDenorm());
+		const auto& combAPResonanzParam = params(PID::CombAPResonanz);
+		const auto combAPResonanz = static_cast<double>(combAPResonanzParam.getValModDenorm());
 
-		//const auto& combAPShapeParam = params(PID::CombAPShape);
-		//const auto combAPShape = static_cast<double>(combAPShapeParam.getValMod());
+		const auto& combAPShapeParam = params(PID::CombAPShape);
+		const auto combAPShape = static_cast<double>(combAPShapeParam.getValMod());
+		*/
 
 		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
 		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
@@ -119,9 +128,9 @@ namespace audio
 
 		const dsp::modal2::Voice::Parameters modalVoiceParams
 		(
-			modalSmartKeytrack, modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso,
-			modalSmartKeytrackEnv, modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv,
-			modalSmartKeytrackBreite, modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite
+			modalSmartKeytrack, modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso, modalResoDamp,
+			modalSmartKeytrackEnv, modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv, modalResoDampEnv,
+			modalSmartKeytrackBreite, modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite, modalResoDampBreite
 		);
 
 		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });

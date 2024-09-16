@@ -175,7 +175,7 @@ namespace gui
 			const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
 
 			const auto lineThiccness = thicc + togglePhase * (thicc2 - thicc);
-			const auto margin = thicc4 - lineThiccness - hoverPhase * thicc;
+			const auto margin = 1.25f * thicc4 - lineThiccness - hoverPhase * thicc;
 			const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
 			const auto x = bounds.getX();
@@ -222,14 +222,13 @@ namespace gui
 			const auto& utils = b.utils;
 			const auto thicc = utils.thicc;
 			const auto thicc2 = thicc * 2.f;
-			const auto thicc4 = thicc * 4.f;
 
 			const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
 			const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
 			const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
 
 			const auto lineThiccness = thicc + togglePhase * (thicc2 - thicc);
-			const auto margin = thicc4 - lineThiccness - hoverPhase * thicc;
+			const auto margin = 2.5f * thicc2 - lineThiccness - hoverPhase * thicc;
 			const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
 			auto linesColour = getColour(CID::Interact).overlaidWith(getColour(CID::Txt).withAlpha(clickPhase));

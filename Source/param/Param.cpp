@@ -85,9 +85,12 @@ namespace param
 		case PID::ModalKraft: return "Modal Kraft";
 		case PID::ModalKraftEnv: return "Modal Kraft Env";
 		case PID::ModalKraftBreite: return "Modal Kraft Breite";
-		case PID::ModalResonanz: return "Modal Resonanz";
-		case PID::ModalResonanzEnv: return "Modal Resonanz Env";
-		case PID::ModalResonanzBreite: return "Modal Resonanz Breite";
+		case PID::ModalResonanz: return "Modal Reso";
+		case PID::ModalResonanzEnv: return "Modal Reso Env";
+		case PID::ModalResonanzBreite: return "Modal Reso Breite";
+		case PID::ModalResoDamp: return "Modal Reso Damp";
+		case PID::ModalResoDampEnv: return "Modal Reso Damp Env";
+		case PID::ModalResoDampBreite: return "Modal Reso Damp Breite";
 		//
 		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Comb R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
@@ -170,6 +173,9 @@ namespace param
 		case PID::EnvGenModRelease: return "The modulation envelope generator's release time.";
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
+		case PID::ModalSmartKeytrack: return "When keytrack+ is dialed in partials that are not in the harmonic series will be less keytracked.";
+		case PID::ModalSmartKeytrackEnv: return "The envelope generator's depth on the modal smart keytrack.";
+		case PID::ModalSmartKeytrackBreite: return "The stereo width of the modal smart keytrack.";
 		case PID::ModalBlend: return "Blends between the 2 modal filters.";
 		case PID::ModalBlendEnv: return "The envelope generator's depth on the modal blend.";
 		case PID::ModalBlendBreite: return "The stereo width of the modal breite.";
@@ -185,6 +191,9 @@ namespace param
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
 		case PID::ModalResonanzEnv: return "The envelope generator's depth on the modal resonanz.";
 		case PID::ModalResonanzBreite: return "The stereo width of the modal resonanz.";
+		case PID::ModalResoDamp: return "Reso damping causes higher partials to be more damped.";
+		case PID::ModalResoDampEnv: return "The envelope generator's depth on the modal reso damp.";
+		case PID::ModalResoDampBreite: return "The stereo width of the modal reso damp.";
 		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
 		case PID::CombSemi: return "Transposes the comb filter in semitones.";
@@ -1389,9 +1398,12 @@ namespace param
 		params.push_back(makeParam(PID::ModalKraft, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalKraftEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::ModalKraftBreite, 0.f, makeRange::lin(-2.f, 2.f)));
-		params.push_back(makeParam(PID::ModalResonanz, .6f));
+		params.push_back(makeParam(PID::ModalResonanz, .7f));
 		params.push_back(makeParam(PID::ModalResonanzEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResonanzBreite, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalResoDamp, .6f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalResoDampEnv, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalResoDampBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 
 		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));

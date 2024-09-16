@@ -18,7 +18,7 @@ namespace dsp
 
 			struct Parameters
 			{
-				Parameters(double = 0., double = -0., double = 0.,
+				Parameters(double = 0., double = -0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.);

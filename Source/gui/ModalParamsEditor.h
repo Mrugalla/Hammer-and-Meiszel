@@ -11,10 +11,10 @@ namespace gui
 		using kParam = dsp::modal2::kParam;
 
 		ModalMainParams(Utils& u, PID smartKeytrack, PID blend,
-			PID spread, PID harmonie, PID kraft, PID reso) :
+			PID spread, PID harmonie, PID kraft, PID reso, PID resoDamp) :
 			Comp(u),
-			knobs{ Knob(u), Knob(u), Knob(u), Knob(u), Knob(u), Knob(u) },
-			modDials{ ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u) }
+			knobs{ Knob(u), Knob(u), Knob(u), Knob(u), Knob(u), Knob(u), Knob(u) },
+			modDials{ ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u) }
 		{
 			for(auto& knob: knobs)
 				addAndMakeVisible(knob);
@@ -27,6 +27,7 @@ namespace gui
 			makeKnob(harmonie, knobs[kParam::kHarmonie]);
 			makeKnob(kraft, knobs[kParam::kKraft]);
 			makeKnob(reso, knobs[kParam::kReso]);
+			makeKnob(resoDamp, knobs[kParam::kResoDamp]);
 
 			modDials[kParam::kSmartKeytrack].attach(smartKeytrack);
 			modDials[kParam::kBlend].attach(blend);
@@ -34,6 +35,7 @@ namespace gui
 			modDials[kParam::kHarmonie].attach(harmonie);
 			modDials[kParam::kKraft].attach(kraft);
 			modDials[kParam::kReso].attach(reso);
+			modDials[kParam::kResoDamp].attach(resoDamp);
 		}
 
 		void resized() override
@@ -202,21 +204,21 @@ namespace gui
 			params
 			{
 				ModalMainParams(u, PID::ModalSmartKeytrack, PID::ModalBlend,
-					PID::ModalSpreizung, PID::ModalHarmonie, PID::ModalKraft, PID::ModalResonanz),
+					PID::ModalSpreizung, PID::ModalHarmonie, PID::ModalKraft, PID::ModalResonanz, PID::ModalResoDamp),
 				ModalMainParams(u, PID::ModalSmartKeytrackEnv, PID::ModalBlendEnv,
-					PID::ModalSpreizungEnv, PID::ModalHarmonieEnv, PID::ModalKraftEnv, PID::ModalResonanzEnv),
+					PID::ModalSpreizungEnv, PID::ModalHarmonieEnv, PID::ModalKraftEnv, PID::ModalResonanzEnv, PID::ModalResoDampEnv),
 				ModalMainParams(u, PID::ModalSmartKeytrackBreite, PID::ModalBlendBreite,
-					PID::ModalSpreizungBreite, PID::ModalHarmonieBreite, PID::ModalKraftBreite, PID::ModalResonanzBreite)
+					PID::ModalSpreizungBreite, PID::ModalHarmonieBreite, PID::ModalKraftBreite, PID::ModalResonanzBreite, PID::ModalResoDampBreite)
 			},
 			oct(u, PID::ModalOct, "Oct"),
 			semi(u, PID::ModalSemi, "Semi"),
-			labels{ Label(u), Label(u), Label(u), Label(u), Label(u), Label(u) },
+			labels{ Label(u), Label(u), Label(u), Label(u), Label(u), Label(u), Label(u) },
 			labelGroup(),
 			octSemiGroup()
 		{
 			layout.init
 			(
-				{ 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1 },
 				{ 3, 13, 2 }
 			);
 
@@ -237,6 +239,7 @@ namespace gui
 			makeTextLabel(labels[kParam::kHarmonie], "Harmonie", fontKnobs, just, CID::Txt);
 			makeTextLabel(labels[kParam::kKraft], "Kraft", fontKnobs, just, CID::Txt);
 			makeTextLabel(labels[kParam::kReso], "Reso", fontKnobs, just, CID::Txt);
+			makeTextLabel(labels[kParam::kResoDamp], "Reso Damp", fontKnobs, just, CID::Txt);
 
 			for (auto& label : labels)
 				labelGroup.add(label);
@@ -249,10 +252,10 @@ namespace gui
 			layout.resized(getLocalBounds());
 			layout.place(oct, 0, 0, 2, 1);
 			layout.place(semi, 2, 0, 2, 1);
-			layout.place(tabButtons, 6, 1, 1, 2);
+			layout.place(tabButtons, 7, 1, 1, 2);
 			
 			{
-				const auto area = layout(0, 1, 6, 1).toNearestInt();
+				const auto area = layout(0, 1, 7, 1).toNearestInt();
 				const auto w = area.getWidth();
 				const auto wKnob = w / static_cast<float>(kParam::kNumParams);
 

@@ -38,13 +38,19 @@ namespace math
 		return x < min ? min : x > max ? max : x;
     }
 
-    template <typename Float>
+    template<typename Float>
     inline Float sinApprox(Float x) noexcept
     {
         const auto x2 = x * x;
         const auto numerator = -x * (static_cast<Float>(-11511339840) + x2 * (static_cast<Float>(1640635920) + x2 * (static_cast<Float>(-52785432) + x2 * static_cast<Float>(479249))));
         const auto denominator = static_cast<Float>(11511339840) + x2 * (static_cast<Float>(277920720) + x2 * (static_cast<Float>(3177720) + x2 * static_cast<Float>(18361)));
         return numerator / denominator;
+    }
+
+	template<typename Float>
+    inline Float cosApprox(Float x) noexcept
+    {
+        return sinApprox(x + static_cast<Float>(PiHalf));
     }
 
     // for x != -9652.5

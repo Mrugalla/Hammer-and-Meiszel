@@ -61,7 +61,7 @@ namespace dsp
 			reset(2);
 			setFrequencyHz(materialStereo, 1000., 2);
 			for(auto ch = 0; ch < 2; ++ch)
-				setReso(.25, ch);
+				setReso(.25, 1., ch);
 			sleepyTimerThreshold = static_cast<int>(nyquist) / 2;
 		}
 
@@ -97,12 +97,31 @@ namespace dsp
 				updateFreqRatios(materialStereo[ch], numFiltersBelowNyquist[ch], ch);
 		}
 
-		void ResonatorBank::setReso(double reso, int ch) noexcept
+		void ResonatorBank::setReso(double reso, double damp, int ch) noexcept
 		{
-			const auto bw = calcBandwidthFc(reso, sampleRateInv);
 			gains[ch] = 1. + Tau * reso;
+
+			if (damp == 0.)
+			{
+				const auto bw = calcBandwidthFc(reso, sampleRateInv);
+				for (auto i = 0; i < NumFilters; ++i)
+				{
+					auto& resonator = resonators[i];
+					resonator.setBandwidth(bw, ch);
+					resonator.update(ch);
+				}
+				return;
+			}
+
 			for (auto i = 0; i < NumFilters; ++i)
 			{
+				const auto iF = static_cast<double>(i);
+				const auto iR = iF * NumFiltersInv;
+				const auto iX = .5 * math::cosApprox(iR * Pi) + .5;
+				const auto iM = 1. + damp * (iX - 1.);
+				const auto resoR = reso * iM;
+				const auto bw = calcBandwidthFc(resoR, sampleRateInv);
+
 				auto& resonator = resonators[i];
 				resonator.setBandwidth(bw, ch);
 				resonator.update(ch);
