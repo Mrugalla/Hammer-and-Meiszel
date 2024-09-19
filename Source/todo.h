@@ -4,27 +4,38 @@
 
 ~~~ todo ~~~
 
-smoothing-zeiten sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
+buttons ohne bg colour
 
-abstrahiere viele GUI aspekte um den workflow zu verbessern
-    zögere nicht!
+way to make changing colourscheme easier
+
+preset browser
+
+tuning editor
+
+modal > comb > post sequence thing
+
+material drop down
+    can create materials, like saw, sqr etc
+    can process materials
+    can resample materials from its parameters
+
+smoothing-zeiten sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
 
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material
-
-material editor solve instrument imports where fundamental not highest peak
 
 keytrack
     way to change freq of partials
 
 optimize CPU with SIMD filters
 
-H&M Imagepflege
-    sollten alle tooltips deutsch sein?
-    breite or width?
+all tooltips in english
+
+everything from breite to width
 
 Material
     import von samples erzeugt oft keine geilen magnitudes
+    material editor solve instrument imports where fundamental not highest peak
 
 Param db valToStr can be -inf (gain wet [-inf, 0])
     but it can also be not (gain out [-12,12])
@@ -38,8 +49,6 @@ GUI
             drag, wheel, key
         defaultvalue
             doubleclick, key
-        colourscheme
-            bias not needed anymore
     all parameters currently lack visible lock feature
     TextEditor
         button that edits its label

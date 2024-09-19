@@ -5,7 +5,7 @@
 
 namespace gui
 {
-	struct ModalMaterialView :
+	struct ModalMaterialEditor :
 		public Comp,
 		public FileDragAndDropTarget
 	{
@@ -78,7 +78,7 @@ namespace gui
 			kNumCallbacks
 		};
 
-		ModalMaterialView(Utils&, Material&, Actives&);
+		ModalMaterialEditor(Utils&, Material&, Actives&);
 
 		void initRuler();
 

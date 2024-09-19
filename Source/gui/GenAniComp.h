@@ -79,11 +79,14 @@ namespace gui
 
 			add(Callback([&, speed]()
 			{
+				if (!img.isValid())
+					return;
+
 				auto& phase = callbacks[0].phase;
 				phase += speed;
 				if (phase >= 1.f)
 					phase -= 1.f;
-
+				
 				Graphics g{ img };
 				
 				const auto width = static_cast<float>(getWidth());

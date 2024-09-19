@@ -98,7 +98,7 @@ namespace gui
 			const auto bounds = getLocalBounds().toFloat();
 			const auto thicc = utils.thicc;
 			//const auto col = Colours::c(CID::Darken);
-			setCol(g, CID::Darken);
+			setCol(g, CID::Bg);
 			Path path;
 			const auto startPoint = layout(-1, 0);
 			path.startNewSubPath(startPoint);

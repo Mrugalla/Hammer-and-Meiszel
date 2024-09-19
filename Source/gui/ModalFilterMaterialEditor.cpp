@@ -1,13 +1,13 @@
-#include "ModalFilterMaterialView.h"
+#include "ModalFilterMaterialEditor.h"
 
 namespace gui
 {
-	ModalMaterialView::Partial::Partial() :
+	ModalMaterialEditor::Partial::Partial() :
 		x(0.f), y(0.f)
 	{
 	}
 
-	ModalMaterialView::DragAnimationComp::DragAnimationComp(Utils& u) :
+	ModalMaterialEditor::DragAnimationComp::DragAnimationComp(Utils& u) :
 		Comp(u),
 		isInterested(false),
 		error("")
@@ -27,19 +27,19 @@ namespace gui
 		}, 0, fps, false));
 	}
 
-	void ModalMaterialView::DragAnimationComp::start()
+	void ModalMaterialEditor::DragAnimationComp::start()
 	{
 		setVisible(true);
 		callbacks[0].start(0.f);
 	}
 
-	void ModalMaterialView::DragAnimationComp::stop()
+	void ModalMaterialEditor::DragAnimationComp::stop()
 	{
 		setVisible(false);
 		callbacks[0].stop(0.f);
 	}
 
-	void ModalMaterialView::DragAnimationComp::paint(Graphics& g)
+	void ModalMaterialEditor::DragAnimationComp::paint(Graphics& g)
 	{
 		const auto w = static_cast<float>(getWidth());
 		const auto h = static_cast<float>(getHeight());
@@ -73,7 +73,7 @@ namespace gui
 		}
 	}
 
-	ModalMaterialView::Draggerfall::Draggerfall() :
+	ModalMaterialEditor::Draggerfall::Draggerfall() :
 		width(1.f),
 		height(1.f),
 		xRel(1.f),
@@ -87,7 +87,7 @@ namespace gui
 			s = false;
 	}
 
-	void ModalMaterialView::Draggerfall::resized(Partials& partials, float w, float h) noexcept
+	void ModalMaterialEditor::Draggerfall::resized(Partials& partials, float w, float h) noexcept
 	{
 		width = w;
 		height = h;
@@ -97,7 +97,7 @@ namespace gui
 		lenAbsHalf = lenAbs * .5f;
 	}
 
-	void ModalMaterialView::Draggerfall::updateX(Partials& partials, float x, bool doUpdateSelection) noexcept
+	void ModalMaterialEditor::Draggerfall::updateX(Partials& partials, float x, bool doUpdateSelection) noexcept
 	{
 		xAbs = x;
 		xRel = xAbs / width;
@@ -105,7 +105,7 @@ namespace gui
 			updateSelection(partials);
 	}
 
-	void ModalMaterialView::Draggerfall::addLength(Partials& partials, float valRel) noexcept
+	void ModalMaterialEditor::Draggerfall::addLength(Partials& partials, float valRel) noexcept
 	{
 		lenAbs = juce::jlimit(1.f, width, (lenRel + valRel) * width);
 		lenRel = lenAbs / width;
@@ -113,7 +113,7 @@ namespace gui
 		updateSelection(partials);
 	}
 
-	void ModalMaterialView::Draggerfall::paint(Graphics& g)
+	void ModalMaterialEditor::Draggerfall::paint(Graphics& g)
 	{
 		const auto x = xAbs - lenAbsHalf;
 		const auto w = lenAbs;
@@ -121,18 +121,18 @@ namespace gui
 		g.fillRect(x, 0.f, w, height);
 	}
 
-	bool ModalMaterialView::Draggerfall::isSelected(int i) const noexcept
+	bool ModalMaterialEditor::Draggerfall::isSelected(int i) const noexcept
 	{
 		return selection[i];
 	}
 
-	void ModalMaterialView::Draggerfall::clearSelection() noexcept
+	void ModalMaterialEditor::Draggerfall::clearSelection() noexcept
 	{
 		for (auto& s : selection)
 			s = false;
 	}
 
-	bool ModalMaterialView::Draggerfall::selectionEmpty() const noexcept
+	bool ModalMaterialEditor::Draggerfall::selectionEmpty() const noexcept
 	{
 		for (auto s : selection)
 			if (s)
@@ -140,7 +140,7 @@ namespace gui
 		return true;
 	}
 
-	void ModalMaterialView::Draggerfall::updateSelection(Partials& partials) noexcept
+	void ModalMaterialEditor::Draggerfall::updateSelection(Partials& partials) noexcept
 	{
 		const auto lowerLimit = xAbs - lenAbsHalf;
 		const auto upperLimit = lowerLimit + lenAbs;
@@ -151,14 +151,14 @@ namespace gui
 		}
 	}
 
-	PointF ModalMaterialView::Draggerfall::getCoords() const noexcept
+	PointF ModalMaterialEditor::Draggerfall::getCoords() const noexcept
 	{
 		return { xAbs - lenAbsHalf, lenAbs };
 	}
 
-	// ModalMaterialView
+	// ModalMaterialEditor
 
-	ModalMaterialView::ModalMaterialView(Utils& u, Material& _material, Actives& _actives) :
+	ModalMaterialEditor::ModalMaterialEditor(Utils& u, Material& _material, Actives& _actives) :
 		Comp(u),
 		FileDragAndDropTarget(),
 		material(_material),
@@ -206,7 +206,7 @@ namespace gui
 		addChildComponent(dragAniComp);
 	}
 
-	void ModalMaterialView::initRuler()
+	void ModalMaterialEditor::initRuler()
 	{
 		addAndMakeVisible(ruler);
 		ruler.setGetIncFunc([](float len)
@@ -227,7 +227,7 @@ namespace gui
 		ruler.setDrawFirstVal(true);
 	}
 
-	void ModalMaterialView::paint(Graphics& g)
+	void ModalMaterialEditor::paint(Graphics& g)
 	{
 		const auto hInt = getHeight();
 
@@ -260,7 +260,7 @@ namespace gui
 			paintPartial(g, h, unselectedPartialsCol, i);
 	}
 
-	void ModalMaterialView::paintPartial(Graphics& g, float h, Colour unselectedPartialsCol, int i)
+	void ModalMaterialEditor::paintPartial(Graphics& g, float h, Colour unselectedPartialsCol, int i)
 	{
 		const auto strumPhase = callbacks[kStrumCB + i].phase;
 		const bool selected = draggerfall.isSelected(i);
@@ -282,7 +282,7 @@ namespace gui
 		g.fillRect(x - knotWHalf, y - knotWHalf, knotW, knotW);
 	}
 
-	void ModalMaterialView::resized()
+	void ModalMaterialEditor::resized()
 	{
 		draggerfall.resized
 		(
@@ -297,7 +297,7 @@ namespace gui
 		updatePartials();
 	}
 
-	void ModalMaterialView::updatePartials()
+	void ModalMaterialEditor::updatePartials()
 	{
 		auto const w = static_cast<float>(getWidth());
 		auto const h = static_cast<float>(getHeight());
@@ -339,7 +339,7 @@ namespace gui
 		updateRuler();
 	}
 
-	void ModalMaterialView::updateRuler()
+	void ModalMaterialEditor::updateRuler()
 	{
 		const auto& peakInfos = material.peakInfos;
 		const auto minFc = 1.f;
@@ -355,7 +355,7 @@ namespace gui
 
 	// mouse event handling
 
-	void ModalMaterialView::mouseEnter(const Mouse&)
+	void ModalMaterialEditor::mouseEnter(const Mouse&)
 	{
 		const auto cID = CID::Interact;
 		notify(evt::Type::ToastColour, &cID);
@@ -364,7 +364,7 @@ namespace gui
 		updateInfoLabel();
 	}
 
-	void ModalMaterialView::mouseExit(const Mouse&)
+	void ModalMaterialEditor::mouseExit(const Mouse&)
 	{
 		draggerfall.clearSelection();
 		updateInfoLabel("");
@@ -372,7 +372,7 @@ namespace gui
 		notify(evt::Type::ToastVanish);
 	}
 
-	void ModalMaterialView::mouseMove(const Mouse& mouse)
+	void ModalMaterialEditor::mouseMove(const Mouse& mouse)
 	{
 		draggerfall.updateX(partials, mouse.position.x, true);
 		
@@ -388,7 +388,7 @@ namespace gui
 		repaint();
 	}
 
-	void ModalMaterialView::mouseDown(const Mouse& mouse)
+	void ModalMaterialEditor::mouseDown(const Mouse& mouse)
 	{
 		if (draggerfall.selectionEmpty())
 			return;
@@ -396,7 +396,7 @@ namespace gui
 		dragXY = { static_cast<float>(mouse.x), static_cast<float>(mouse.y) };
 	}
 
-	void ModalMaterialView::mouseDrag(const Mouse& mouse)
+	void ModalMaterialEditor::mouseDrag(const Mouse& mouse)
 	{
 		draggerfall.updateX(partials, mouse.position.x, false);
 
@@ -437,7 +437,7 @@ namespace gui
 		dragXY = mouse.position;
 	}
 
-	void ModalMaterialView::mouseUp(const Mouse& mouse)
+	void ModalMaterialEditor::mouseUp(const Mouse& mouse)
 	{
 		if (!draggerfall.selectionEmpty())
 		{
@@ -464,7 +464,7 @@ namespace gui
 		}
 	}
 
-	void ModalMaterialView::mouseWheelMove(const Mouse& mouse, const MouseWheel& wheel)
+	void ModalMaterialEditor::mouseWheelMove(const Mouse& mouse, const MouseWheel& wheel)
 	{
 		const auto sensitive = mouse.mods.isShiftDown();
 		const auto y = wheel.deltaY * (wheel.isReversed ? -1.f : 1.f);
@@ -475,13 +475,13 @@ namespace gui
 
 	// related to drag n drop and audio file handling
 
-	bool ModalMaterialView::isAudioFile(const String& fileName) const
+	bool ModalMaterialEditor::isAudioFile(const String& fileName) const
 	{
 		const auto ext = fileName.fromLastOccurrenceOf(".", false, false).toLowerCase();
 		return ext == "flac" || ext == "wav" || ext == "mp3" || ext == "aiff";
 	}
 
-	void ModalMaterialView::loadAudioFile(const File& file)
+	void ModalMaterialEditor::loadAudioFile(const File& file)
 	{
 		auto formatManager = std::make_unique<AudioFormatManager>();
 		formatManager->registerBasicFormats();
@@ -499,7 +499,7 @@ namespace gui
 		delete reader;
 	}
 
-	void ModalMaterialView::filesDropped(const StringArray& files, int, int)
+	void ModalMaterialEditor::filesDropped(const StringArray& files, int, int)
 	{
 		dragAniComp.stop();
 		const auto status = material.status.load();
@@ -510,17 +510,17 @@ namespace gui
 		material.load();
 	}
 
-	void ModalMaterialView::fileDragEnter(const StringArray&, int, int)
+	void ModalMaterialEditor::fileDragEnter(const StringArray&, int, int)
 	{
 		dragAniComp.start();
 	}
 
-	void ModalMaterialView::fileDragExit(const StringArray&)
+	void ModalMaterialEditor::fileDragExit(const StringArray&)
 	{
 		dragAniComp.stop();
 	}
 
-	bool ModalMaterialView::isInterestedInFileDrag(const StringArray& files)
+	bool ModalMaterialEditor::isInterestedInFileDrag(const StringArray& files)
 	{
 		bool isInterested = false;
 
@@ -537,7 +537,7 @@ namespace gui
 		return isInterested;
 	}
 
-	void ModalMaterialView::updateInfoLabel(const String& nMessage)
+	void ModalMaterialEditor::updateInfoLabel(const String& nMessage)
 	{
 		if (nMessage != "abcabcabc")
 		{
@@ -565,7 +565,7 @@ namespace gui
 		notify(evt::Type::ToastUpdateMessage, &txt);
 	}
 
-	void ModalMaterialView::updateActives(bool soloActive)
+	void ModalMaterialEditor::updateActives(bool soloActive)
 	{
 		bool wantMaterialUpdate = false;
 		if (soloActive)
