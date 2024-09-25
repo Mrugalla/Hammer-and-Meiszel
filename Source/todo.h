@@ -4,6 +4,8 @@
 
 ~~~ todo ~~~
 
+toast wrong place when hovering modal material editor
+
 buttons ohne bg colour
 
 preset browser
@@ -14,10 +16,7 @@ drag last created sound to DAW as audio
 
 modal > comb > post sequence thing
 
-material drop down
-    can process materials
-
-smoothing-zeiten sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
+smoothing-zeiten von modal voice sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
 
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material

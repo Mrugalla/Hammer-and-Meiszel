@@ -122,6 +122,8 @@ namespace dsp
 			// sampleRate, samples, numChannels, numSamples
 			void fillBuffer(float, const float* const*, int, int);
 
+			void sortPeaks() noexcept;
+
 			MaterialBuffer buffer;
 			MaterialData peakInfos;
 			std::atomic<StatusMat> status;
@@ -133,8 +135,6 @@ namespace dsp
 			{
 				std::vector<int> indexes;
 			};
-
-			void sortPeaks() noexcept;
 
 			// data, size
 			void fillBuffer(const char*, int);

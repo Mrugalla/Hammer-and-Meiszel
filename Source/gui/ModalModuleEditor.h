@@ -159,6 +159,7 @@ namespace gui
 
 		void initDropDown()
 		{
+			// GEN: SINE
 			dropDown.add
 			(
 				[](Graphics& g, const Button& btn)
@@ -174,6 +175,7 @@ namespace gui
 				}
 			);
 
+			// GEN: SAW
 			dropDown.add
 			(
 				[](Graphics& g, const Button& btn)
@@ -189,6 +191,7 @@ namespace gui
 				}
 			);
 
+			// GEN: SQUARE
 			dropDown.add
 			(
 				[](Graphics& g, const Button& btn)
@@ -204,6 +207,86 @@ namespace gui
 				}
 			);
 
+			// Copy To Other Material
+			dropDown.add
+			(
+				[](Graphics& g, const Button& btn)
+				{
+					setCol(g, CID::Interact);
+					g.drawFittedText("Copy To Other Material", btn.getLocalBounds(), Just::centred, 1);
+				},
+				[&](const Mouse&)
+				{
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					const auto thisIdx = buttonA.value > .5f ? 0 : 1;
+					const auto& materialThis = modalFilter.getMaterial(thisIdx);
+					auto& materialThat = modalFilter.getMaterial(1 - thisIdx);
+					materialThat.peakInfos = materialThis.peakInfos;
+					materialThat.reportUpdate();
+				}
+			);
+
+			// Proc: Vertical Flip
+			dropDown.add
+			(
+				[](Graphics& g, const Button& btn)
+				{
+					setCol(g, CID::Interact);
+					g.drawFittedText("Proc: Vertical Flip", btn.getLocalBounds(), Just::centred, 1);
+				},
+				[&](const Mouse&)
+				{
+					const auto numFilters = dsp::modal2::NumFilters;
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					const auto matIdx = buttonA.value > .5f ? 0 : 1;
+					auto& material = modalFilter.getMaterial(matIdx);
+					auto& peaks = material.peakInfos;
+					
+					auto maxRatio = peaks[0].ratio;
+					for (auto i = 1; i < numFilters; ++i)
+						maxRatio = std::max(maxRatio, peaks[i].ratio);
+
+					const auto peaksCopy = peaks;
+					for (auto i = 0; i < numFilters; ++i)
+					{
+						const auto j = numFilters - i - 1;
+						const auto& peakJ = peaksCopy[j];
+						auto& peak = peaks[i];
+						peak.ratio = maxRatio - peakJ.ratio + 1.f;
+						peak.mag = peakJ.mag;
+						peak.freqHz = peakJ.freqHz;
+					}
+
+					material.updateKeytrackValues();
+					material.reportUpdate();
+				}
+			);
+
+			// Proc: Horizontal Flip
+			dropDown.add
+			(
+				[](Graphics& g, const Button& btn)
+				{
+					setCol(g, CID::Interact);
+					g.drawFittedText("Proc: Horizontal Flip", btn.getLocalBounds(), Just::centred, 1);
+				},
+				[&](const Mouse&)
+				{
+					const auto numFilters = dsp::modal2::NumFilters;
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					const auto matIdx = buttonA.value > .5f ? 0 : 1;
+					auto& material = modalFilter.getMaterial(matIdx);
+					auto& peaks = material.peakInfos;
+					for (auto i = 0; i < numFilters; ++i)
+					{
+						auto& peak = peaks[i];
+						peak.mag = 1.f - peak.mag;
+					}
+					material.reportUpdate();
+				}
+			);
+
+			// Record Input
 			dropDown.add
 			(
 				[](Graphics& g, const Button& btn)
@@ -219,6 +302,7 @@ namespace gui
 				}
 			);
 
+			// Rescure Overlaps
 			dropDown.add
 			(
 				[](Graphics& g, const Button& btn)

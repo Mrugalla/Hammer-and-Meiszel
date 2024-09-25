@@ -38,7 +38,7 @@ namespace audio
 			auto& material = modalFilter.getMaterial(recordingIndex);
 			auto& recBuffer = material.buffer;
 			const auto numChannelsInv = 1. / static_cast<double>(numChannels);
-			const auto bufferSizeInv = 1. / static_cast<double>(recBuffer.size());
+			const auto bufferSizeInv = 1.f / static_cast<float>(recBuffer.size());
 			for (auto s = 0; s < numSamples; ++s)
 			{
 				auto mid = samples[0][s];
@@ -49,7 +49,7 @@ namespace audio
 
 				const auto sF = static_cast<float>(recSampleIndex);
 				const auto sR = sF * bufferSizeInv;
-				const auto window = .5f - .5f * std::cos(sR * dsp::Tau);
+				const auto window = .5f - .5f * std::cos(sR * static_cast<float>(dsp::Tau));
 
 				recBuffer[recSampleIndex] = midF * window;
 				++recSampleIndex;
