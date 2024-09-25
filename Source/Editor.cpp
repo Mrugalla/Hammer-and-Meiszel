@@ -169,15 +169,6 @@ namespace gui
 		}
     }
 
-	void resizeRightPanel(Editor& e)
-    {
-		const auto rightArea = e.layout(2, 1, 1, 2).toNearestInt();
-        e.genAni.setBounds(rightArea);
-        e.ioEditor.setBounds(rightArea);
-        const auto bottomArea = e.layout(2, 2, 1, 1);
-        e.buttonColours.setBounds(bottomArea.toNearestInt());
-    }
-
     void Editor::resized()
     {
         if (needsResize(*this))
@@ -190,16 +181,25 @@ namespace gui
 
         layout.resized(getLocalBounds());
 
+        // top panel
 		layout.place(labelTitle, 0, 0.f, 1, .5f);
         labelTitle.setMaxHeight();
 		layout.place(labelDev, 0, .5f, 1, .5f);
         labelDev.setMaxHeight();
 
+        // left panel
         resizeLeftPanel(*this, thicc2);
-		resizeRightPanel(*this);
+        
+        // right panel
+        layout.place(ioEditor, 2, 0, 1, 3);
+        layout.place(genAni, 2, 1.5f, 1, 1.5f);
+        layout.place(buttonColours, 2, 2, 1, 1);
 
+        // center panel
         layout.place(modalEditor, 1, 1, 1, 1);
         layout.place(coloursEditor, 1, 1, 1, 1);
+
+        // bottom panel
         tooltip.setBounds(layout.bottom().toNearestInt());
 
         const auto toastWidth = static_cast<int>(utils.thicc * 28.f);

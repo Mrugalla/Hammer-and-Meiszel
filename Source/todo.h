@@ -10,12 +10,12 @@ preset browser
 
 tuning editor
 
+drag last created sound to DAW as audio
+
 modal > comb > post sequence thing
 
 material drop down
-    can create materials, like saw, sqr etc
     can process materials
-    can resample materials from its parameters
 
 smoothing-zeiten sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
 

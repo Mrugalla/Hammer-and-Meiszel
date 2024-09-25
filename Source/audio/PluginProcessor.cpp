@@ -9,7 +9,9 @@ namespace audio
 		autoMPE(), voiceSplit(), parallelProcessor(),
 		envGensAmp(), envGensMod(),
 		modalFilter(), flanger(xen),
-		editorExists(false)
+		editorExists(false),
+		recording(-1),
+		recSampleIndex(0)
 	{
 		//test::SpeedTestPB([&](double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples)
 		//{
@@ -30,6 +32,38 @@ namespace audio
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
 	{
+		const auto recordingIndex = recording.load();
+		if (recordingIndex != -1)
+		{
+			auto& material = modalFilter.getMaterial(recordingIndex);
+			auto& recBuffer = material.buffer;
+			const auto numChannelsInv = 1. / static_cast<double>(numChannels);
+			const auto bufferSizeInv = 1. / static_cast<double>(recBuffer.size());
+			for (auto s = 0; s < numSamples; ++s)
+			{
+				auto mid = samples[0][s];
+				for (auto ch = 1; ch < numChannels; ++ch)
+					mid += samples[ch][s];
+				mid *= numChannelsInv;
+				const auto midF = static_cast<float>(mid);
+
+				const auto sF = static_cast<float>(recSampleIndex);
+				const auto sR = sF * bufferSizeInv;
+				const auto window = .5f - .5f * std::cos(sR * dsp::Tau);
+
+				recBuffer[recSampleIndex] = midF * window;
+				++recSampleIndex;
+
+				if (recSampleIndex >= recBuffer.size())
+				{
+					material.load();
+					recSampleIndex = 0;
+					recording.store(-1);
+					break;
+				}
+			}
+		}
+
 		//randNoiseGen(samples, numChannels, numSamples, .25);
 		//randMeloGen(midi, numSamples);
 		autoMPE(midi); voiceSplit(midi);
@@ -193,6 +227,8 @@ namespace audio
 		}
 
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);
+
+		
 	}
 
 	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept
@@ -227,7 +263,7 @@ namespace audio
 				if (freqVal != nullptr)
 					peakInfo.freqHz = static_cast<double>(*freqVal);
 			}
-			material.status.store(dsp::modal2::Status::UpdatedMaterial);
+			material.reportUpdate();
 		}
 	}
 
@@ -240,7 +276,7 @@ namespace audio
 		{
 			auto& material = modalFilter.getMaterial(i);
 			auto& status = material.status;
-			status.store(dsp::modal2::Status::Processing);
+			status.store(dsp::modal2::StatusMat::Processing);
 		}
 	}
 }

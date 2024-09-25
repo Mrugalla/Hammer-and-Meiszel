@@ -160,11 +160,73 @@ namespace gui
 		void initDropDown()
 		{
 			dropDown.add
-			([](Graphics& g, const Button& btn)
+			(
+				[](Graphics& g, const Button& btn)
+				{
+					setCol(g, CID::Interact);
+					g.drawFittedText("Gen: Sine", btn.getLocalBounds(), Just::centred, 1);
+				},
+				[&](const Mouse&)
+				{
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+					dsp::modal2::generateSine(material);
+				}
+			);
+
+			dropDown.add
+			(
+				[](Graphics& g, const Button& btn)
+				{
+					setCol(g, CID::Interact);
+					g.drawFittedText("Gen: Saw", btn.getLocalBounds(), Just::centred, 1);
+				},
+				[&](const Mouse&)
+				{
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+					dsp::modal2::generateSaw(material);
+				}
+			);
+
+			dropDown.add
+			(
+				[](Graphics& g, const Button& btn)
+				{
+					setCol(g, CID::Interact);
+					g.drawFittedText("Gen: Square", btn.getLocalBounds(), Just::centred, 1);
+				},
+				[&](const Mouse&)
+				{
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+					dsp::modal2::generateSquare(material);
+				}
+			);
+
+			dropDown.add
+			(
+				[](Graphics& g, const Button& btn)
+				{
+					setCol(g, CID::Interact);
+					g.drawFittedText("Record Input", btn.getLocalBounds(), Just::centred, 1);
+				},
+				[&](const Mouse&)
+				{
+					auto& processor = utils.audioProcessor.pluginProcessor;
+					processor.recording.store(buttonA.value > .5f ? 0 : 1);
+					processor.recSampleIndex = 0;
+				}
+			);
+
+			dropDown.add
+			(
+				[](Graphics& g, const Button& btn)
 				{
 					setCol(g, CID::Interact);
 					g.drawFittedText("Rescue Overlaps", btn.getLocalBounds(), Just::centred, 1);
-				}, [&](const Mouse&)
+				},
+				[&](const Mouse&)
 				{
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
@@ -209,9 +271,10 @@ namespace gui
 						const auto maxRatio = peakInfos[numFilters - 1].ratio;
 						peakInfos[numFilters - 1].ratio = maxRatio + 1.f;
 
-						material.status = dsp::modal2::Status::UpdatedMaterial;
+						material.reportUpdate();
 					}
-				});
+				}
+			);
 
 			dropDown.init();
 

@@ -53,5 +53,8 @@ namespace audio
 		dsp::modal2::ModalFilter modalFilter;
 		dsp::flanger::Flanger flanger;
 		std::atomic<bool> editorExists;
+
+		std::atomic<int> recording;
+		int recSampleIndex;
 	};
 }

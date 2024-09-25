@@ -73,7 +73,7 @@ namespace gui
 				{
 					return (v < 1000.f ? String(v) + "ms" : String(v * .001f) + "s");
 				});
-				ruler.setCID(CID::Interact);
+				ruler.setCID(CID::Hover);
 				ruler.setDrawFirstVal(true);
 			}
 

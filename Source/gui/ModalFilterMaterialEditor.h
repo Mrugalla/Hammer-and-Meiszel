@@ -11,7 +11,7 @@ namespace gui
 	{
 		static constexpr float Sensitive = .1f;
 
-		using Status = dsp::modal2::Status;
+		using Status = dsp::modal2::StatusMat;
 		using Material = dsp::modal2::Material;
 		using PeakInfo = dsp::modal2::PeakInfo;
 		using Actives = dsp::modal2::ActivesArray;

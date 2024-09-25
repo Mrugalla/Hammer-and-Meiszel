@@ -12,7 +12,7 @@ namespace dsp
 		Material::Material() :
 			buffer(),
 			peakInfos(),
-			status(Status::Processing),
+			status(StatusMat::Processing),
 			name("init material"),
 			sampleRate(0.f),
 			soloing(false)
@@ -21,6 +21,8 @@ namespace dsp
 
 		void Material::load()
 		{
+			if (math::bufferSilent(buffer.data(), FFTSize))
+				return;
 			std::vector<float> fifo;
 			fifo.resize(FFTSize2, 0.f);
 			auto bins = fifo.data();
@@ -45,7 +47,7 @@ namespace dsp
 
 		void Material::reportUpdate() noexcept
 		{
-			status.store(Status::UpdatedMaterial);
+			status.store(StatusMat::UpdatedMaterial);
 		}
 
 		void Material::updatePeakInfosFromGUI() noexcept
@@ -499,40 +501,56 @@ namespace dsp
 
 		void generateSine(Material& material)
 		{
-			material.sampleRate = static_cast<float>(material.buffer.size());
-			for (auto s = 0; s < material.buffer.size(); ++s)
+			material.sampleRate = 44100.f;
+			auto& peaks = material.peakInfos;
+			for (auto i = 0; i < NumFilters; ++i)
 			{
-				const auto sF = static_cast<float>(s);
-				const auto x = sF / material.sampleRate;
-				material.buffer[s] = std::cos(x * static_cast<float>(Pi));
+				auto& peak = peaks[i];
+				peak.freqHz = 420.f;
+				peak.keytrack = 1.f;
+				peak.mag = 0.f;
+				peak.ratio = 1.f + static_cast<float>(i);
 			}
-			material.load();
+			peaks[0].mag = 1.f;
+			material.reportUpdate();
 		}
 
 		void generateSaw(Material& material)
 		{
-			material.sampleRate = static_cast<float>(material.buffer.size());
-			for (auto s = 0; s < material.buffer.size(); ++s)
+			material.sampleRate = 44100.f;
+			auto& peaks = material.peakInfos;
+			for (auto i = 0; i < NumFilters; ++i)
 			{
-				const auto sF = static_cast<float>(s);
-				auto x = static_cast<float>(2 * NumFilters) * sF / material.sampleRate;
-				x = x - std::floor(x);
-				material.buffer[s] = 2.f * x - 1.f;
+				auto& peak = peaks[i];
+				peak.freqHz = 420.f;
+				peak.keytrack = 1.f;
+
+				const auto iF = static_cast<float>(i);
+				const auto iR = iF * NumFiltersInv;
+
+				peak.mag = 1.f - iR;
+				peak.ratio = 1.f + iF;
 			}
-			material.load();
+			material.reportUpdate();
 		}
 
 		void generateSquare(Material& material)
 		{
-			material.sampleRate = static_cast<float>(material.buffer.size());
-			for (auto s = 0; s < material.buffer.size(); ++s)
+			material.sampleRate = 44100.f;
+			auto& peaks = material.peakInfos;
+			for (auto i = 0; i < NumFilters; ++i)
 			{
-				const auto sF = static_cast<float>(s);
-				auto x = static_cast<float>(2 * NumFilters) * sF / material.sampleRate;
-				x = x - std::floor(x);
-				material.buffer[s] = x < .5f ? 1.f : -1.f;
+				auto& peak = peaks[i];
+				peak.freqHz = 420.f;
+				peak.keytrack = 1.f;
+
+				const auto iF = static_cast<float>(i);
+				const auto iR = iF * NumFiltersInv;
+
+				peak.mag = 1.f - iR;
+				peak.ratio = 1.f + iF * 2.f;
 			}
-			material.load();
+			material.reportUpdate();
 		}
 
 		// DUALMATERIAL
@@ -554,7 +572,7 @@ namespace dsp
 			{
 				const auto& material = materials[m];
 				const auto& status = material.status;
-				if (status == Status::UpdatedMaterial)
+				if (status == StatusMat::UpdatedMaterial)
 					u = true;
 			}
 			return u;
@@ -566,7 +584,7 @@ namespace dsp
 			{
 				auto& material = materials[m];
 				auto& status = material.status;
-				status = Status::UpdatedProcessor;
+				status = StatusMat::UpdatedProcessor;
 			}
 		}
 

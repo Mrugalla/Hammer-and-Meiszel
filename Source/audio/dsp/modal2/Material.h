@@ -124,7 +124,7 @@ namespace dsp
 
 			MaterialBuffer buffer;
 			MaterialData peakInfos;
-			std::atomic<Status> status;
+			std::atomic<StatusMat> status;
 			String name;
 			float sampleRate;
 			std::atomic<bool> soloing;

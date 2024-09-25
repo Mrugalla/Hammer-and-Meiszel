@@ -8,7 +8,7 @@ namespace dsp
 		static constexpr double NumFiltersD = static_cast<double>(NumFilters);
 		static constexpr double NumFiltersInv = 1. / NumFiltersD;
 
-		enum class Status
+		enum class StatusMat
 		{
 			Processing,
 			UpdatedMaterial,

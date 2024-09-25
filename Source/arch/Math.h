@@ -16,19 +16,25 @@ namespace math
     static constexpr double PiHalfInv = 1. / PiHalf;
 
     template<typename Float>
+    inline bool bufferSilent(Float* smpls, int numSamples) noexcept
+    {
+        static constexpr auto Eps = static_cast<Float>(1e-6);
+        for (auto s = 0; s < numSamples; ++s)
+        {
+            const auto smpl = smpls[s];
+            if (smpl * smpl > Eps)
+                return false;
+        }
+        return true;
+    }
+
+    template<typename Float>
     inline bool bufferSilent(Float** samples, int numChannels, int numSamples) noexcept
     {
         static constexpr auto Eps = static_cast<Float>(1e-6);
         for (auto ch = 0; ch < numChannels; ++ch)
-        {
-            const auto smpls = samples[ch];
-            for (auto s = 0; s < numSamples; ++s)
-            {
-                const auto smpl = smpls[s];
-                if (smpl * smpl > Eps)
-                    return false;
-            }
-        }
+			if (!bufferSilent(samples[ch], numSamples))
+				return false;
         return true;
     }
 

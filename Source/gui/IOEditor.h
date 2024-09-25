@@ -152,11 +152,13 @@ namespace gui
 					const auto val = param->getValue();
 					const auto modDepth = param->getModDepth();
 					const auto valModMax = juce::jlimit(0.f, 1.f, val + modDepth);
+					const auto modBias = param->getModBias();
 
 					param->beginGesture();
 					param->setValueNotifyingHost(valModMax);
 					param->endGesture();
 					param->setModDepth(juce::jlimit(-1.f, 1.f, val - valModMax));
+					param->setModBias(1.f - modBias);
 				}
 			};
 		}
