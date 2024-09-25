@@ -120,16 +120,16 @@ namespace gui
 
     void makeImageRefreshButton(Button& btn, const String& tooltip)
     {
-        const auto onPaint = [](Graphics& g, const Label& label)
+        const auto onPaint = [](Graphics& g, const Button& button)
         {
-            const auto& utils = label.utils;
+            const auto& utils = button.utils;
             const auto thicc = utils.thicc;
             const auto jointStyle = Stroke::JointStyle::curved;
             const auto endStyle = Stroke::EndCapStyle::butt;
             Stroke stroke(thicc, jointStyle, endStyle);
 
             g.setColour(getColour(CID::Interact));
-            const auto bounds = maxQuadIn(label.getLocalBounds()).reduced(thicc);
+            const auto bounds = maxQuadIn(button.getLocalBounds()).reduced(thicc);
 
             auto w = bounds.getWidth();
             auto h = bounds.getHeight();

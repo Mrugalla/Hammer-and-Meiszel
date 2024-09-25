@@ -8,7 +8,6 @@ namespace gui
     {
         enum class Type
         {
-            ColourSchemeChanged,
             TooltipUpdated,
             ClickedEmpty,
             ToastShowUp,

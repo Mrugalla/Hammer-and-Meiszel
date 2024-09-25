@@ -308,6 +308,12 @@ namespace gui
 		btn.onPaint = makeButtonOnPaint(true);
 	}
 
+	void makePaintButton(Button& btn, const Button::OnPaint& onPaint, const String& tooltip)
+	{
+		btn.onPaint = onPaint;
+		btn.setTooltip(tooltip);
+	}
+
 	////// PARAMETER ATTACHMENT:
 
 	std::function<String()> makeValToNameFunc(Button& button, PID pID, const String& text)

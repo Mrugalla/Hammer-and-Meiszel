@@ -2,16 +2,18 @@
 
 namespace gui
 {
-    evt::Evt makeEvt(Component& comp)
+    evt::Evt makeEvt(Editor& editor)
     {
-        return [&c = comp](evt::Type type, const void*)
+        return [&e = editor](evt::Type type, const void*)
         {
             switch (type)
             {
-            case evt::Type::ColourSchemeChanged:
-                return repaintWithChildren(&c);
             case evt::Type::ClickedEmpty:
-                return c.giveAwayKeyboardFocus();
+				e.coloursEditor.setVisible(false);
+                e.buttonColours.value = 0.f;
+                e.buttonColours.repaint();
+                e.giveAwayKeyboardFocus();
+                return;
             }
         };
     }
@@ -36,6 +38,7 @@ namespace gui
         genAni(utils),
         modParamsEditor(utils),
         ioEditor(utils),
+		coloursEditor(utils),
         toast(utils),
         labelDev(utils),
 		labelTitle(utils),
@@ -60,7 +63,8 @@ namespace gui
 				PID::EnvGenModRelease
 			)
         },
-		modalEditor(utils)
+		modalEditor(utils),
+        buttonColours(utils)
     {
         layout.init
         (
@@ -76,7 +80,18 @@ namespace gui
 		for (auto& envGen : envGens)
 			addAndMakeVisible(envGen);
 		addAndMakeVisible(modalEditor);
+        addAndMakeVisible(buttonColours);
+		addChildComponent(coloursEditor);
         addChildComponent(toast);
+
+        {
+            const auto oc = buttonColours.onClick;
+            buttonColours.onClick = [oc, &editor = coloursEditor, &btn = buttonColours](const Mouse& mouse)
+            {
+                editor.setVisible(btn.value < .5f);
+				oc(mouse);
+            };
+        }
 
         String dev(JucePlugin_Manufacturer);
         auto titleFont = font::flx();
@@ -159,6 +174,8 @@ namespace gui
 		const auto rightArea = e.layout(2, 1, 1, 2).toNearestInt();
         e.genAni.setBounds(rightArea);
         e.ioEditor.setBounds(rightArea);
+        const auto bottomArea = e.layout(2, 2, 1, 1);
+        e.buttonColours.setBounds(bottomArea.toNearestInt());
     }
 
     void Editor::resized()
@@ -182,6 +199,7 @@ namespace gui
 		resizeRightPanel(*this);
 
         layout.place(modalEditor, 1, 1, 1, 1);
+        layout.place(coloursEditor, 1, 1, 1, 1);
         tooltip.setBounds(layout.bottom().toNearestInt());
 
         const auto toastWidth = static_cast<int>(utils.thicc * 28.f);

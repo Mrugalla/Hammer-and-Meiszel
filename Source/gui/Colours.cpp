@@ -1,39 +1,9 @@
 #include "Colours.h"
-#define DisregardState true
+#define DisregardState false
 
 namespace gui
 {
     Colours Colours::c{};
-
-    String toString(Colours::ID cID)
-    {
-        switch (cID)
-        {
-        case Colours::ID::Bg: return "ColBg";
-        case Colours::ID::Txt: return "ColTxt";
-        case Colours::ID::Interact: return "ColInteract";
-        case Colours::ID::Inactive: return "ColInactive";
-        case Colours::ID::Hover: return "ColHover";
-        case Colours::ID::Mod: return "ColMod";
-        case Colours::ID::Darken: return "ColDarken";
-        default: return "ColInvalid";
-        }
-    }
-
-    Colour toDefault(Colours::ID cID) noexcept
-    {
-        switch (cID)
-        {
-        case Colours::ID::Bg: return Colour(0xff1d2022);
-        case Colours::ID::Txt: return Colour(0xff851cfd);
-        case Colours::ID::Interact: return Colour(0xffd134af);
-        case Colours::ID::Inactive: return Colour(0xffc1c1c1);
-        case Colours::ID::Hover: return Colour(0x77ffffff);
-        case Colours::ID::Mod: return Colour(0xffb6153d);
-        case Colours::ID::Darken: return Colour(0x88000000);
-        default: return Colour(0xff000000);
-        }
-    }
 
     void setColour(Colours::Array& cols, Colours::ID cID, Colour col, Props*
 #if !DisregardState
@@ -43,7 +13,7 @@ namespace gui
     {
         cols[static_cast<int>(cID)] = col;
 #if !DisregardState
-        props->setValue(toString(cID), col.toString());
+        props->setValue("col" + toString(cID), col.toString());
         props->save();
         props->sendChangeMessage();
 #endif
@@ -59,7 +29,7 @@ namespace gui
 #if DisregardState
 		cols[idx] = toDefault(cID);
 #else
-        const auto cIDStr = toString(cID);
+        const auto cIDStr = "col" + toString(cID);
         const auto str = props->getValue(cIDStr, toDefault(cID).toString());
         cols[idx] = Colour::fromString(str);
         props->setValue(cIDStr, str);
@@ -107,6 +77,34 @@ namespace gui
     Colour getColour(CID cID) noexcept
     {
         return Colours::c(cID);
+    }
+
+    String toString(CID cID)
+    {
+        switch (cID)
+        {
+        case Colours::ID::Bg: return "Background";
+        case Colours::ID::Txt: return "Text";
+        case Colours::ID::Interact: return "Interact";
+        case Colours::ID::Mod: return "Modulation";
+        case Colours::ID::Hover: return "Hover";
+        case Colours::ID::Darken: return "Darken";
+        default: return "Invalid";
+        }
+    }
+
+    Colour toDefault(CID cID) noexcept
+    {
+        switch (cID)
+        {
+        case Colours::ID::Bg: return Colour(0xff1d2022);
+        case Colours::ID::Txt: return Colour(0xff851cfd);
+        case Colours::ID::Interact: return Colour(0xffd134af);
+        case Colours::ID::Mod: return Colour(0xffb6153d);
+        case Colours::ID::Hover: return Colour(0x77ffffff);
+        case Colours::ID::Darken: return Colour(0x88000000);
+        default: return Colour(0xff000000);
+        }
     }
 
     void setCol(Graphics& g, CID cID)

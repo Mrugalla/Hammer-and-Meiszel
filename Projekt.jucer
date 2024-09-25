@@ -229,10 +229,16 @@
               file="Source/gui/EnvelopeGeneratorEditor.h"/>
         <FILE id="yT0rky" name="GenAniComp.cpp" compile="1" resource="0" file="Source/gui/GenAniComp.cpp"/>
         <FILE id="s6kdAh" name="GenAniComp.h" compile="0" resource="0" file="Source/gui/GenAniComp.h"/>
+        <FILE id="Zdnt0d" name="ColoursEditor.cpp" compile="1" resource="0"
+              file="Source/gui/ColoursEditor.cpp"/>
+        <FILE id="qAORvT" name="ColoursEditor.h" compile="0" resource="0" file="Source/gui/ColoursEditor.h"/>
         <FILE id="rYjSBg" name="BgImage.cpp" compile="1" resource="0" file="Source/gui/BgImage.cpp"/>
         <FILE id="XnUFHl" name="BgImage.h" compile="0" resource="0" file="Source/gui/BgImage.h"/>
         <FILE id="kKaRcj" name="Button.cpp" compile="1" resource="0" file="Source/gui/Button.cpp"/>
         <FILE id="FF2ejy" name="Button.h" compile="0" resource="0" file="Source/gui/Button.h"/>
+        <FILE id="ZRQ91R" name="ButtonColours.cpp" compile="1" resource="0"
+              file="Source/gui/ButtonColours.cpp"/>
+        <FILE id="IDJx9A" name="ButtonColours.h" compile="0" resource="0" file="Source/gui/ButtonColours.h"/>
         <FILE id="r7VpBE" name="Colours.cpp" compile="1" resource="0" file="Source/gui/Colours.cpp"/>
         <FILE id="uYUFj0" name="Colours.h" compile="0" resource="0" file="Source/gui/Colours.h"/>
         <FILE id="W38ixX" name="Comp.cpp" compile="1" resource="0" file="Source/gui/Comp.cpp"/>

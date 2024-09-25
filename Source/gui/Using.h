@@ -63,7 +63,9 @@ namespace gui
     using StringArray = juce::StringArray;
     using AudioFormatManager = juce::AudioFormatManager;
     using AudioBufferF = juce::AudioBuffer<float>;
-	
+	using RectanglePlacement = juce::RectanglePlacement;
+	using ResamplingQuality = Graphics::ResamplingQuality;
+	using ColourSelector = juce::ColourSelector;
 
     using Processor = audio::Processor;
 

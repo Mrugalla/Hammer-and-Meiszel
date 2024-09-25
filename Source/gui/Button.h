@@ -58,7 +58,7 @@ namespace gui
 	void makeTextButton(Button&, const String&, const String&, CID);
 
 	// btn, onPaint, tooltip
-	void makePaintButton(Button&, const Label::OnPaint&, const String&);
+	void makePaintButton(Button&, const Button::OnPaint&, const String&);
 
 	////// PARAMETER ATTACHMENT:
 

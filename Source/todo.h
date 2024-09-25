@@ -6,8 +6,6 @@
 
 buttons ohne bg colour
 
-way to make changing colourscheme easier
-
 preset browser
 
 tuning editor
