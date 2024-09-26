@@ -4,13 +4,13 @@
 
 ~~~ todo ~~~
 
+gain wet needs parameter smoothing
+
 toast wrong place when hovering modal material editor
 
 buttons ohne bg colour
 
 preset browser
-
-tuning editor
 
 drag last created sound to DAW as audio
 
@@ -98,7 +98,7 @@ dr. laguna weil er hat dieses geile allpass plugin gemacht
 ewan bristow weil er n geiler botanica & plugdata-typ ist
 alex reid, weil bitwig community
 
-open: street shaman, zayne, xantux, lucas esrar, nimand, felix, peazy,
+open: street shaman, zayne, xantux, nimand, felix, peazy,
 liraxity, signalsmith, eyalamir
 
 -----------------------------------------------------------------------------------------

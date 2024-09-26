@@ -59,8 +59,17 @@ namespace gui
 
 		IOEditor(Utils& u) :
 			Comp(u),
+			titleXen(u),
+			titleRefPitch(u),
+			titleMasterTune(u),
 			titleMacro(u),
+			xen(u),
+			refPitch(u),
+			masterTune(u),
 			macro(u),
+			modDialXen(u),
+			modDialRefPitch(u),
+			modDialMasterTune(u),
 			sidePanelParams
 			{
 				SidePanelParam(u),
@@ -77,15 +86,16 @@ namespace gui
 				Button(u)
 			},
 			voiceGrid(u),
-			labelGroup()
+			labelGroup(),
+			tuningLabelGroup()
 		{
 			layout.init
 			(
 				{ 1, 1, 1 },
-				{ 2, 2, 1, 2, 2, 2, 2, 13 }
+				{ 2, 1, 2, 2, 1, 2, 2, 2, 2, 8 }
 			);
 
-			initMacro();
+			initKnobs();
 			initMacroRel();
 			initMacroSwap();
 			initSidePanels();
@@ -97,7 +107,6 @@ namespace gui
 		{
 			const auto bounds = getLocalBounds().toFloat();
 			const auto thicc = utils.thicc;
-			//const auto col = Colours::c(CID::Darken);
 			setCol(g, CID::Bg);
 			Path path;
 			const auto startPoint = layout(-1, 0);
@@ -112,16 +121,22 @@ namespace gui
 		void resized()
 		{
 			layout.resized(getLocalBounds().toFloat());
-			layout.place(titleMacro, 0, 1, 1, 1);
+			layout.place(xen, 0, 0, 1, 1);
+			layout.place(refPitch, 1, 0, 1, 1);
+			layout.place(masterTune, 2, 0, 1, 1);
+			layout.place(titleXen, 0, 1, 1, 1);
+			layout.place(titleRefPitch, 1, 1, 1, 1);
+			layout.place(titleMasterTune, 2, 1, 1, 1);
+			layout.place(titleMacro, 0, 3, 1, 1);
 			titleMacro.setMaxHeight();
-			layout.place(macro, 1, 0, 1, 2);
-			layout.place(buttons[kMacroRel], 2, 0, 1, 1);
-			layout.place(buttons[kMacroSwap], 2, 1, 1, 1);
-			layout.place(voiceGrid, 0, 2, 3, 1);
+			layout.place(macro, 1, 2, 1, 2);
+			layout.place(buttons[kMacroRel], 2, 2, 1, 1);
+			layout.place(buttons[kMacroSwap], 2, 3, 1, 1);
+			layout.place(voiceGrid, 0, 4, 3, 1);
 			for (auto i = 0; i < sidePanelParams.size(); ++i)
 			{
 				auto& spp = sidePanelParams[i];
-				const auto bounds = layout(0, 3 + i, 3, 1);
+				const auto bounds = layout(0, 5 + i, 3, 1);
 				spp.setBounds(bounds);
 			}
 			for (auto i = 2; i < buttons.size(); ++i)
@@ -129,16 +144,23 @@ namespace gui
 				auto& btn = buttons[i];
 				layout.place(btn, i - 2, -3, 1, 1);
 			}
+
 			labelGroup.setMaxHeight();
+			tuningLabelGroup.setMaxHeight();
+
+			locateAtKnob(modDialXen, xen);
+			locateAtKnob(modDialRefPitch, refPitch);
+			locateAtKnob(modDialMasterTune, masterTune);
 		}
 
 	protected:
-		Label titleMacro;
-		Knob macro;
+		Label titleXen, titleRefPitch, titleMasterTune, titleMacro;
+		Knob xen, refPitch, masterTune, macro;
+		ModDial modDialXen, modDialRefPitch, modDialMasterTune;
 		std::array<SidePanelParam, kSidePanelParams> sidePanelParams;
 		std::array<Button, kNumButtons> buttons;
 		VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;
-		LabelGroup labelGroup;
+		LabelGroup labelGroup, tuningLabelGroup;
 
 		void initMacroSwap()
 		{
@@ -189,13 +211,38 @@ namespace gui
 			};
 		}
 
-		void initMacro()
+		void initKnobs()
 		{
+			addAndMakeVisible(titleXen);
+			addAndMakeVisible(titleRefPitch);
+			addAndMakeVisible(titleMasterTune);
+			addAndMakeVisible(titleMacro);
+			addAndMakeVisible(macro);
+			addAndMakeVisible(xen);
+			addAndMakeVisible(refPitch);
+			addAndMakeVisible(masterTune);
+			addAndMakeVisible(modDialXen);
+			addAndMakeVisible(modDialRefPitch);
+			addAndMakeVisible(modDialMasterTune);
+
 			const auto fontKnobs = font::dosisRegular();
+
+			makeTextLabel(titleXen, "Xen", fontKnobs, Just::centred, CID::Txt);
+			makeKnob(PID::Xen, xen);
+			makeTextLabel(titleRefPitch, "Ref Pitch", fontKnobs, Just::centred, CID::Txt);
+			makeKnob(PID::ReferencePitch, refPitch);
+			makeTextLabel(titleMasterTune, "Master Tune", fontKnobs, Just::centred, CID::Txt);
+			makeKnob(PID::MasterTune, masterTune);
 			makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
 			makeKnob(PID::Macro, macro, false);
-			addAndMakeVisible(macro);
-			addAndMakeVisible(titleMacro);
+
+			tuningLabelGroup.add(titleXen);
+			tuningLabelGroup.add(titleRefPitch);
+			tuningLabelGroup.add(titleMasterTune);
+
+			modDialXen.attach(PID::Xen);
+			modDialRefPitch.attach(PID::ReferencePitch);
+			modDialMasterTune.attach(PID::MasterTune);
 		}
 
 		void initSidePanels()
