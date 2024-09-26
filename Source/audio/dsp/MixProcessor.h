@@ -177,9 +177,9 @@ namespace dsp
 	{
 		MixProcessorWetMix() :
 			parallelProcessor(),
-			gainWetIn(0.f),
-			gainWetOut(0.f),
-			mixPRM(1.f)
+			gainWetIn(0.),
+			gainWetOut(0.),
+			mixPRM(1.)
 		{}
 
 		void prepare(double sampleRate)

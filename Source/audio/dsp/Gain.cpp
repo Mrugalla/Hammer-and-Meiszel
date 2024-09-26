@@ -28,7 +28,7 @@ namespace dsp
 				auto smpls = samples[ch];
 				SIMD::multiply(smpls, gainInfo.buf, numSamples);
 			}
-		else
+		else if(gainInfo.val != 1.)
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				auto smpls = samples[ch];

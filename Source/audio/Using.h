@@ -41,7 +41,7 @@ namespace dsp
 	}
 
 	static constexpr int NumChannels = PPDHasSidechain ? 4 : 2;
-    static constexpr int BlockSize = 8;
+    static constexpr int BlockSize = 16;
 	static constexpr int BlockSize2x = BlockSize * getOversamplingFactor(OversamplingOrder::x2);
 	static constexpr int BlockSize4x = BlockSize * getOversamplingFactor(OversamplingOrder::x4);
 
