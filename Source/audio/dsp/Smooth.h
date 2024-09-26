@@ -9,16 +9,17 @@ namespace dsp
 		template<typename Float>
 		struct Block
 		{
-			/* startVal */
+			// startVal
 			Block(Float = static_cast<Float>(0));
 
-			/* bufferOut, bufferIn, numSamples */
+			// not sure if this method makes sense lol
+			// bufferOut, bufferIn, numSamples
 			void operator()(Float*, Float*, int) noexcept;
 
-			/* buffer, val, numSamples */
+			// buffer, val, numSamples
 			void operator()(Float*, Float, int) noexcept;
 
-			/* buffer, numSamples */
+			// buffer, numSamples
 			void operator()(Float*, int) noexcept;
 
 			Float curVal;
@@ -27,38 +28,38 @@ namespace dsp
 		using BlockF = Block<float>;
 		using BlockD = Block<double>;
 
-		/* Float-Type, AutoGain */
+		// Float-Type, AutoGain 
 		template<typename Float, bool AutoGain>
 		struct Lowpass
 		{
-			/* decay */
+			// decay
 			static Float getXFromFc(Float) noexcept;
-			/* decay, Fs */
+			// decay, Fs
 			static Float getXFromHz(Float, Float) noexcept;
 
-			/* decay */
+			// decay
 			void makeFromDecayInSamples(Float) noexcept;
-			/* decay, Fs */
+			// decay, Fs
 			void makeFromDecayInSecs(Float, Float) noexcept;
-			/* fc */
+			// fc
 			void makeFromDecayInFc(Float) noexcept;
-			/* decay, Fs */
+			// decay, Fs
 			void makeFromDecayInHz(Float, Float) noexcept;
-			/* decay, Fs */
+			// decay, Fs
 			void makeFromDecayInMs(Float, Float) noexcept;
 
 			void copyCutoffFrom(const Lowpass<Float, AutoGain>&) noexcept;
 
-			/* startVal, autogain */
+			// startVal, autogain
 			Lowpass(const Float = static_cast<Float>(0));
 
 			void reset();
 
-			/* buffer, val, numSamples */
+			// buffer, val, numSamples
 			void operator()(Float*, Float, int) noexcept;
-			/* buffer, numSamples */
+			// buffer, numSamples
 			void operator()(Float*, int) noexcept;
-			/* val */
+			// val
 			Float operator()(Float) noexcept;
 
 			void setX(Float) noexcept;
@@ -76,13 +77,14 @@ namespace dsp
 		template<typename Float>
 		struct Smooth
 		{
-			/* smoothLenMs, Fs */
+			// smoothLenMs, Fs
 			void makeFromDecayInMs(Float, Float) noexcept;
 
-			/* freqHz, Fs */
+			// freqHz, Fs
 			void makeFromFreqInHz(Float, Float) noexcept;
 
-			Smooth(Float /*startVal*/ = static_cast<Float>(0));
+			// startVal
+			Smooth(Float = static_cast<Float>(0));
 
 			void operator=(Smooth<Float>& other) noexcept
 			{
@@ -93,19 +95,19 @@ namespace dsp
 				smoothing = other.smoothing;
 			}
 
-			/* bufferOut, bufferIn, numSamples */
+			// bufferOut, bufferIn, numSamples
 			void operator()(Float*, Float*, int) noexcept;
 
-			/* buffer, val, numSamples */
+			// buffer, val, numSamples
 			bool operator()(Float*, Float, int) noexcept;
 
-			/* buffer, val, startIdx, endIdx */
+			// buffer, val, startIdx, endIdx
 			bool operator()(Float*, Float, int, int) noexcept;
 
-			/* buffer, numSamples */
+			// buffer, numSamples
 			bool operator()(Float*, int) noexcept;
 
-			/* value (this method is not for parameters!) */
+			// value (this method is not for parameters!)
 			Float operator()(Float) noexcept;
 
 		protected:

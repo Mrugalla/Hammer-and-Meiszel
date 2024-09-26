@@ -45,7 +45,7 @@ namespace dsp
 		// idx
 		Float operator[](int) const noexcept;
 
-		std::array<Float, BlockSize2x> buf;
+		std::array<Float, BlockSize> buf;
 		smooth::Smooth<Float> smooth;
 		Float value;
 	};

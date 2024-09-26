@@ -4,7 +4,8 @@
 
 ~~~ todo ~~~
 
-gain wet needs parameter smoothing
+manifest of wisdom - make backwards compatible
+	while also introduce new format with yyyy_mm_dd__hh_mm_name
 
 toast wrong place when hovering modal material editor
 

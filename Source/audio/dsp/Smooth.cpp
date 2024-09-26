@@ -15,13 +15,12 @@ namespace dsp
 		void Block<Float>::operator()(Float* bufferOut, Float* bufferIn, int numSamples) noexcept
 		{
 			auto x = static_cast<Float>(0);
-			const auto inc = 1.f / static_cast<Float>(numSamples);
+			const auto inc = static_cast<Float>(1) / static_cast<Float>(numSamples);
 
 			for (auto s = 0; s < numSamples; ++s, x += inc)
 			{
 				curVal += inc;
 				const auto sIn = bufferIn[s];
-
 				bufferOut[s] = curVal + x * (sIn - curVal);
 			}
 
@@ -130,7 +129,10 @@ namespace dsp
 		void Lowpass<Float, AutoGain>::operator()(Float* buffer, int numSamples) noexcept
 		{
 			for (auto s = 0; s < numSamples; ++s)
-				buffer[s] = processSample(buffer[s]);
+			{
+				const auto y = processSample(buffer[s]);
+				buffer[s] = y;
+			}
 		}
 
 		template<typename Float, bool AutoGain>
@@ -191,7 +193,6 @@ namespace dsp
 		bool Smooth<Float>::operator()(Float* bufferOut, Float _dest, int numSamples) noexcept
 		{
 			dest = _dest;
-
 			return operator()(bufferOut, numSamples);
 		}
 
@@ -223,7 +224,10 @@ namespace dsp
 			lowpass(bufferOut, numSamples);
 
 			cur = bufferOut[numSamples - 1];
-			if (bufferOut[0] == cur)
+			const auto eps = static_cast<Float>(1e-6);
+			const auto dist = dest - cur;
+			const auto distSquared = dist * dist;
+			if (distSquared < eps)
 			{
 				smoothing = false;
 				cur = dest;
