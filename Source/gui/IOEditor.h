@@ -188,18 +188,7 @@ namespace gui
 		void initMacroRel()
 		{
 			auto& buttonMacroRel = buttons[kMacroRel];
-			String textAbsRel;
-			if (utils.audioProcessor.params.isModDepthAbsolute())
-			{
-				buttonMacroRel.value = 0.f;
-				textAbsRel = "Abs";
-			}
-			else
-			{
-				buttonMacroRel.value = 1.f;
-				textAbsRel = "Rel";
-			}
-			makeTextButton(buttonMacroRel, textAbsRel, "Switch between absolute and relative macro modulation modes.", CID::Interact);
+			makeTextButton(buttonMacroRel, "Rel", "Switch between absolute and relative macro modulation.", CID::Interact);
 			buttonMacroRel.type = Button::Type::kToggle;
 			buttonMacroRel.onPaint = makeButtonOnPaint(false);
 			buttonMacroRel.onClick = [&u = utils, &b = buttonMacroRel](const Mouse&)
@@ -209,6 +198,21 @@ namespace gui
 				b.label.setText(b.value > .5f ? "Rel" : "Abs");
 				b.label.repaint();
 			};
+
+			const auto fps = cbFPS::k15;
+			const auto inc = msToInc(1000.f, fps);
+
+			add(Callback([&, inc]()
+			{
+				callbacks[0].phase += inc;
+				const auto phase = callbacks[0].phase;
+				if (phase < 1.f)
+					return;
+				callbacks[0].stop(0.f);
+				buttonMacroRel.value = utils.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
+				buttonMacroRel.label.setText(buttonMacroRel.value > .5f ? "Rel" : "Abs");
+				buttonMacroRel.label.repaint();
+			}, 0, fps, true));
 		}
 
 		void initKnobs()

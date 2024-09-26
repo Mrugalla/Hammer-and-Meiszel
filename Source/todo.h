@@ -6,6 +6,8 @@
 
 gain wet needs parameter smoothing
 
+macro abs then terminate instance, then go back, modulations draw as abs while button shows rel
+
 toast wrong place when hovering modal material editor
 
 buttons ohne bg colour

@@ -2,6 +2,14 @@
 
 namespace gui
 {
+	Mouse generateFakeMouseEvent(const juce::MouseInputSource& src) noexcept
+	{
+		const auto now = juce::Time::getCurrentTime();
+		const PointF pos;
+		Mouse mouse(src, pos, juce::ModifierKeys(), 0.f, 0.f, 0.f, 0.f, 0.f, nullptr, nullptr, now, pos, now, 1, false);
+		return mouse;
+	}
+
 	void fixStupidJUCEImageThingie(Image& img)
 	{
 		img = juce::SoftwareImageType().convert(img);

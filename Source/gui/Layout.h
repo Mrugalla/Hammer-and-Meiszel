@@ -3,6 +3,8 @@
 
 namespace gui
 {
+	Mouse generateFakeMouseEvent(const juce::MouseInputSource&) noexcept;
+
 	void fixStupidJUCEImageThingie(Image&);
 
 	void hideCursor();
