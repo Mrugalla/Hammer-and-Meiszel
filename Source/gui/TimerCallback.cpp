@@ -67,7 +67,7 @@ namespace gui
 						cb->cb();
 		}
 
-		idx &= 15;
+		idx &= 31;
 	}
 
 	float secsToInc(float secs, cbFPS fps) noexcept

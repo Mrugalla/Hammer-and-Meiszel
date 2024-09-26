@@ -189,7 +189,6 @@ namespace dsp
 							for (auto i = 0; i < NumFilters; ++i)
 								resonators[i].reset(ch);
 					active = true;
-
 					const auto ts = it.samplePosition;
 					val.pitch = static_cast<double>(msg.getNoteNumber());
 					const auto freq = val.getFreq(xen);

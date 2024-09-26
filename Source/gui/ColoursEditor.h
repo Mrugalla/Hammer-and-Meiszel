@@ -64,18 +64,20 @@ namespace gui
 			makeTextButton(buttonRevert, "Revert", "Revert to the last saved colour settings.", CID::Interact);
 			makeTextButton(buttonDefault, "Default", "Revert to the default colour settings.", CID::Interact);
 
-			buttonRevert.onClick = [this](const Mouse&)
+			buttonRevert.onClick = [&](const Mouse&)
 			{
 				Colours::c.set(lastColour, static_cast<CID>(cIdx));
 				selector.setCurrentColour(lastColour);
+				utils.pluginTop.repaint();
 			};
 
-			buttonDefault.onClick = [this](const Mouse&)
+			buttonDefault.onClick = [&](const Mouse&)
 			{
 				const auto cID = static_cast<CID>(cIdx);
 				const auto col = toDefault(cID);
 				Colours::c.set(col, cID);
 				selector.setCurrentColour(col);
+				utils.pluginTop.repaint();
 			};
 
 			const auto fps = cbFPS::k7_5;

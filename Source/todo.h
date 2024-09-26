@@ -4,6 +4,29 @@
 
 ~~~ todo ~~~
 
+label mit zeilenumbruch richtet seine größe nicht richtig automatisch ein
+
+rescue overlaps funzt noch nicht gut genug, manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar
+
+hold down note, then press other notes to trigger the dry through bug
+
+finish manifest of wisdom functionality
+
+generated saw and sqr acts weird with keytrack+ when you drag partials away from harmonic series
+
+remap frequencies of partials with a MSEG curve, like mtransformer
+
+map velocity to certain parameters
+
+
+
+
+
+
+
+
+
+
 manifest of wisdom - make backwards compatible
 	while also introduce new format with yyyy_mm_dd__hh_mm_name
 
@@ -98,8 +121,10 @@ dash glitch, because https://www.youtube.com/watch?v=0i1LCrC7dZw
 dr. laguna weil er hat dieses geile allpass plugin gemacht
 ewan bristow weil er n geiler botanica & plugdata-typ ist
 alex reid, weil bitwig community
+peazy
+nimand
 
-open: street shaman, zayne, xantux, nimand, felix, peazy,
+open: street shaman, zayne, xantux, felix
 liraxity, signalsmith, eyalamir
 
 -----------------------------------------------------------------------------------------

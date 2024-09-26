@@ -7,6 +7,7 @@
 #include "gui/ModalModuleEditor.h"
 #include "gui/ButtonColours.h"
 #include "gui/ColoursEditor.h"
+#include "gui/ManifestOfWisdom.h"
 
 namespace gui
 {
@@ -33,7 +34,8 @@ namespace gui
         GenAniGrowTrees genAni;
 		ModalParamsEditor modParamsEditor;
 		IOEditor ioEditor;
-		ColoursEditor coloursEditor;
+        ColoursEditor coloursEditor;
+        ManifestOfWisdom manifestOfWisdom;
         Toast toast;
         Label labelDev, labelTitle;
 		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
@@ -41,5 +43,6 @@ namespace gui
 		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
 		ModalModuleEditor modalEditor;
         ButtonColours buttonColours;
+        Button manifestOfWisdomButton;
     };
 }

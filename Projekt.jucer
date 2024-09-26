@@ -251,6 +251,12 @@
         <FILE id="sajJqr" name="Label.h" compile="0" resource="0" file="Source/gui/Label.h"/>
         <FILE id="mMfZbm" name="Layout.cpp" compile="1" resource="0" file="Source/gui/Layout.cpp"/>
         <FILE id="alJFXn" name="Layout.h" compile="0" resource="0" file="Source/gui/Layout.h"/>
+        <FILE id="uQskvP" name="ManifestOfWisdom.cpp" compile="1" resource="0"
+              file="Source/gui/ManifestOfWisdom.cpp"/>
+        <FILE id="CShZOy" name="ManifestOfWisdom.h" compile="0" resource="0"
+              file="Source/gui/ManifestOfWisdom.h"/>
+        <FILE id="fBxC5T" name="TextEditor.cpp" compile="1" resource="0" file="Source/gui/TextEditor.cpp"/>
+        <FILE id="pqAvsQ" name="TextEditor.h" compile="0" resource="0" file="Source/gui/TextEditor.h"/>
         <FILE id="zsuacq" name="TimerCallback.cpp" compile="1" resource="0"
               file="Source/gui/TimerCallback.cpp"/>
         <FILE id="FrNNxD" name="TimerCallback.h" compile="0" resource="0" file="Source/gui/TimerCallback.h"/>
