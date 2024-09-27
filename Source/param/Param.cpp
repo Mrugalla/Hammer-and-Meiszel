@@ -60,6 +60,7 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
+		case PID::NoiseBlend: return "Noise Blend";
 		case PID::EnvGenAmpAttack: return "EnvGenAmp Attack";
 		case PID::EnvGenAmpDecay: return "EnvGenAmp Decay";
 		case PID::EnvGenAmpSustain: return "EnvGenAmp Sustain";
@@ -163,6 +164,7 @@ namespace param
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
+		case PID::NoiseBlend: return "Blends between the dry signal and the noise synth.";
 		case PID::EnvGenAmpAttack: return "The amplitude envelope generator's attack time.";
 		case PID::EnvGenAmpDecay: return "The amplitude envelope generator's decay time.";
 		case PID::EnvGenAmpSustain: return "The amplitude envelope generator's sustain level.";
@@ -1371,6 +1373,8 @@ namespace param
 		const auto SpreizungMax = dsp::modal2::SpreizungMax;
 
 		// LOW LEVEL PARAMS:
+		params.push_back(makeParam(PID::NoiseBlend, 0.f));
+
 		params.push_back(makeParam(PID::EnvGenAmpAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenAmpDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenAmpSustain, .999f, makeRange::lin(0.f, .999f)));

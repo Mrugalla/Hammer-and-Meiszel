@@ -37,7 +37,9 @@ namespace gui
         ColoursEditor coloursEditor;
         ManifestOfWisdom manifestOfWisdom;
         Toast toast;
-        Label labelDev, labelTitle;
+        Label labelDev, labelTitle, labelNoiseBlend;
+        Knob noiseBlend;
+		ModDial modDialNoiseBlend;
 		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
 		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
 		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;

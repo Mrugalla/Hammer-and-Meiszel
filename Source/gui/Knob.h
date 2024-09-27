@@ -88,6 +88,8 @@ namespace gui
 
     // modDial, horizontalSlider
     void locateAtSlider(ModDial&, const Knob&);
+
+
 }
 
 /*

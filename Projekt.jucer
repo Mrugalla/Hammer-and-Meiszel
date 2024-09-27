@@ -6,8 +6,8 @@
               companyEmail="beatsbasteln@web.de" pluginFormats="buildStandalone,buildVST3"
               pluginCharacteristicsValue="pluginWantsMidiIn" pluginName="Hammer und Meiszel"
               pluginDesc="Harvests energy from unexpected sources" pluginManufacturer="Mrugalla"
-              pluginManufacturerCode="Bbbb" pluginCode="Hmmz" pluginVST3Category="Filter,Fx,Tools"
-              pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
+              pluginManufacturerCode="Bbmr" pluginCode="Hrmz" pluginVST3Category="Filter,Fx"
+              pluginAAXCategory="64" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
               defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=30.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=96"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
@@ -173,6 +173,8 @@
           <FILE id="cJq9wX" name="Oversampler.h" compile="0" resource="0" file="Source/audio/dsp/Oversampler.h"/>
           <FILE id="v4AfAR" name="MidSide.cpp" compile="1" resource="0" file="Source/audio/dsp/MidSide.cpp"/>
           <FILE id="vkm6Z4" name="MidSide.h" compile="0" resource="0" file="Source/audio/dsp/MidSide.h"/>
+          <FILE id="RDSySh" name="NoiseSynth.cpp" compile="1" resource="0" file="Source/audio/dsp/NoiseSynth.cpp"/>
+          <FILE id="SpKCIv" name="NoiseSynth.h" compile="0" resource="0" file="Source/audio/dsp/NoiseSynth.h"/>
           <FILE id="pmlVdP" name="ParallelProcessor.cpp" compile="1" resource="0"
                 file="Source/audio/dsp/ParallelProcessor.cpp"/>
           <FILE id="C0s0uG" name="ParallelProcessor.h" compile="0" resource="0"

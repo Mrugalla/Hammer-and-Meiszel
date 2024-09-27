@@ -46,6 +46,9 @@ namespace gui
         toast(utils),
         labelDev(utils),
         labelTitle(utils),
+        labelNoiseBlend(utils),
+        noiseBlend(utils),
+		modDialNoiseBlend(utils),
         envGens
         {
             EnvelopeGeneratorMultiVoiceEditor
@@ -82,6 +85,9 @@ namespace gui
         addAndMakeVisible(genAni);
         addAndMakeVisible(ioEditor);
         addAndMakeVisible(modParamsEditor);
+		addAndMakeVisible(labelNoiseBlend);
+		addAndMakeVisible(noiseBlend);
+		addAndMakeVisible(modDialNoiseBlend);
 		for (auto& envGen : envGens)
 			addAndMakeVisible(envGen);
 		addAndMakeVisible(modalEditor);
@@ -90,6 +96,14 @@ namespace gui
 		addChildComponent(coloursEditor);
 		addChildComponent(manifestOfWisdom);
         addChildComponent(toast);
+
+        {
+            makeSlider(noiseBlend, true);
+            makeParameter(PID::NoiseBlend, noiseBlend, false);
+			modDialNoiseBlend.attach(PID::NoiseBlend);
+			modDialNoiseBlend.verticalDrag = false;
+			makeTextLabel(labelNoiseBlend, "Noise", font::dosisMedium(), Just::centred, CID::Txt);
+        }
 
         {
             String dev(JucePlugin_Manufacturer);
@@ -178,11 +192,15 @@ namespace gui
 
     void resizeLeftPanel(Editor& e, float envGenMargin)
     {
-        const auto leftArea = e.layout(0, 1, 1, 2);
-		const auto x = leftArea.getX();
-		auto y = leftArea.getY();
-		const auto w = leftArea.getWidth();
-		const auto h = leftArea.getHeight();
+        e.layout.place(e.labelNoiseBlend, 0.f, 1.f, .2f, .1f);
+		e.layout.place(e.noiseBlend, .2f, 1.f, .6f, .1f);
+        locateAtSlider(e.modDialNoiseBlend, e.noiseBlend);
+
+        const auto envsArea = e.layout(0, 1.1f, 1, 1.9f);
+		const auto x = envsArea.getX();
+		auto y = envsArea.getY();
+		const auto w = envsArea.getWidth();
+		const auto h = envsArea.getHeight();
 		const auto hHalf = h * .5f;
         for (auto i = 0; i < e.envGens.size(); ++i)
 		{

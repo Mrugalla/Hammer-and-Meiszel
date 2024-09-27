@@ -12,7 +12,7 @@ namespace gui
 	{
 		layout.init
 		(
-			{ 1, 5, 1 },
+			{ 2, 8, 1 },
 			{ 1 }
 		);
 	}
@@ -30,8 +30,6 @@ namespace gui
 		makeSlider(pID, param);
 		modDial.attach(pID);
 		modDial.verticalDrag = false;
-
-
 		label.autoMaxHeight = false;
 	}
 

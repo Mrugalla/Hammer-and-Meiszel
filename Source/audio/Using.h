@@ -314,4 +314,6 @@ namespace dsp
 		auto info = drawDebugText ? String(name + "\nmin: " + String(lowDb) + " db\nnum bins: " + String(fftSize)) : String();
 		makeImage(g, img, name, info);
 	}
+
+	using Random = juce::Random;
 }

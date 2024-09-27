@@ -6,6 +6,7 @@
 #include "dsp/midi/AutoMPE.h"
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
+#include "dsp/NoiseSynth.h"
 #include "dsp/modal2/ModalFilter.h"
 #include "dsp/flanger/flanger.h"
 
@@ -50,6 +51,7 @@ namespace audio
 
 		dsp::EnvGenMultiVoice envGensAmp, envGensMod;
 
+		dsp::NoiseSynth noiseSynth;
 		dsp::modal2::ModalFilter modalFilter;
 		dsp::flanger::Flanger flanger;
 		std::atomic<bool> editorExists;

@@ -8,6 +8,7 @@ namespace audio
 		params(_params), xen(_xen), sampleRate(1.),
 		autoMPE(), voiceSplit(), parallelProcessor(),
 		envGensAmp(), envGensMod(),
+		noiseSynth(),
 		modalFilter(), flanger(xen),
 		editorExists(false),
 		recording(-1),
@@ -32,6 +33,10 @@ namespace audio
 
 	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
 	{
+		const auto& noiseBlendParam = params(PID::NoiseBlend);
+		const auto noiseBlend = noiseBlendParam.getValMod();
+		noiseSynth(samples, noiseBlend, numChannels, numSamples);
+
 		const auto recordingIndex = recording.load();
 		if (recordingIndex != -1)
 		{
