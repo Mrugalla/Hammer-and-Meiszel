@@ -7,6 +7,11 @@ namespace gui
 		return wChar == '\n' || wChar == '\r' || wChar == '\r\n';
 	}
 
+	bool isTextCharacter(WChar wchar) noexcept
+	{
+		return wchar >= 0x20 && wchar <= 0x7E;
+	}
+
 	namespace font
 	{
 		Font getFont(const char* ttf, size_t size)

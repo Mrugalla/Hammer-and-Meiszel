@@ -3,6 +3,7 @@
 
 #include "../HammerUndMeiszelTests.h"
 #include "../param/Param.h"
+#include "dsp/KeySelector.h"
 #include "dsp/midi/AutoMPE.h"
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
@@ -23,13 +24,13 @@ namespace audio
 		
 		PluginProcessor(Params&, const arch::XenManager&);
 
-		/* sampleRate */
+		// sampleRate
 		void prepare(double);
 
-		/* samples, midiBuffer, numChannels, numSamples */
-		void operator()(double**, dsp::MidiBuffer&, int, int) noexcept;
+		// samples, midiBuffer, numChannels, numSamples, playing
+		void operator()(double**, dsp::MidiBuffer&, int, int, bool) noexcept;
 		
-		/* samples, midiBuffer, numChannels, numSamples */
+		// samples, midiBuffer, numChannels, numSamples
 		void processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept;
 
 		void savePatch(arch::State&);
@@ -42,9 +43,7 @@ namespace audio
 		const arch::XenManager& xen;
 		double sampleRate;
 
-		//test::RandomNoiseGenerator randNoiseGen;
-		//test::MIDIRandomMelodyGenerator randMeloGen;
-
+		dsp::KeySelector keySelector;
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;
 		dsp::PPMIDIBand parallelProcessor;

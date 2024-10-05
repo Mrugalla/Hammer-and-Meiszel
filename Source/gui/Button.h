@@ -52,6 +52,9 @@ namespace gui
 
 	Button::OnPaint makeButtonOnPaintSwap();
 
+	// numDiagnoalLines
+	Button::OnPaint makeButtonOnPaintVisor(int);
+
 	////// LOOK AND FEEL:
 
 	// btn, text, tooltip, cID

@@ -59,6 +59,43 @@ namespace dsp
 		operator()(other.atkP, other.dcyP, other.sus, other.rlsP);
 	}
 
+	bool EnvelopeGenerator::operator()(const MidiBuffer& midi, double* buffer, int numSamples) noexcept
+	{
+		if (midi.isEmpty() && isSleepy())
+			return false;
+
+		auto s = 0;
+		for (const auto it : midi)
+		{
+			const auto msg = it.getMessage();
+			const auto ts = it.samplePosition;
+			if (msg.isNoteOn())
+			{
+				s = synthesizeEnvelope(buffer, s, ts);
+				noteOn = true;
+			}
+			else if (msg.isNoteOff() || msg.isAllNotesOff())
+			{
+				s = synthesizeEnvelope(buffer, s, ts);
+				noteOn = false;
+			}
+			else
+				s = synthesizeEnvelope(buffer, s, ts);
+		}
+
+		synthesizeEnvelope(buffer, s, numSamples);
+
+		return true;
+	}
+
+	bool EnvelopeGenerator::isSleepy() noexcept
+	{
+		bool sleepy = !noteOn && curEnv < MinDb;
+		if (sleepy)
+			env = curEnv = 0.;
+		return sleepy;
+	}
+
 	EnvelopeGenerator::EnvelopeGenerator(const Parameters& p) :
 		parameters(p),
 		env(0.), sampleRate(1.),
@@ -90,10 +127,11 @@ namespace dsp
 		case State::Decay: processDecay(); break;
 		case State::Sustain: processSustain(); break;
 		case State::Release:
-		default: processRelease(); break;
+		default: processRelease();
+			break;
 		}
 
-		curEnv =  smooth(env * env);
+		curEnv = smooth(env * env);
 		return curEnv;
 	}
 
@@ -129,7 +167,9 @@ namespace dsp
 		if (noteOn)
 		{
 			env += parameters.dcy * (parameters.sus - env);
-			if (std::abs(parameters.sus - env) < 1e-6)
+			const auto dist = parameters.sus - env;
+			const auto distSquared = dist * dist;
+			if (distSquared < 1e-6)
 			{
 				state = State::Sustain;
 				processSustain();
@@ -161,5 +201,63 @@ namespace dsp
 		env += parameters.rls * (0. - env);
 		if (env < 1e-6)
 			env = 0.;
+	}
+
+	int EnvelopeGenerator::synthesizeEnvelope(double* buffer, int s, int ts) noexcept
+	{
+		while (s < ts)
+		{
+			buffer[s] = operator()();
+			++s;
+		}
+		return s;
+	}
+
+	//
+
+	double EnvGenMultiVoice::Info::operator[](int i) const noexcept
+	{
+		return data[i];
+	}
+
+	EnvGenMultiVoice::EnvGenMultiVoice() :
+		params(),
+		envGens
+		{
+			params, params, params, params, params,
+			params, params, params, params, params,
+			params, params, params, params, params
+		},
+		buffer()
+	{}
+
+	void EnvGenMultiVoice::prepare(double sampleRate)
+	{
+		params.prepare(sampleRate);
+		for (auto& envGen : envGens)
+			envGen.prepare(sampleRate);
+	}
+
+	bool EnvGenMultiVoice::isSleepy(int vIdx) noexcept
+	{
+		return envGens[vIdx].isSleepy();
+	}
+
+	EnvGenMultiVoice::Info EnvGenMultiVoice::operator()(const MidiBuffer& midi, int numSamples, int vIdx) noexcept
+	{
+		auto bufferData = buffer.data();
+		auto& envGen = envGens[vIdx];
+		const auto active = envGen(midi, bufferData, numSamples);
+		return { bufferData, active };
+	}
+
+	void EnvGenMultiVoice::updateParameters(const EnvelopeGenerator::Parameters& _params) noexcept
+	{
+		params(_params);
+	}
+
+	const EnvelopeGenerator::Parameters& EnvGenMultiVoice::getParameters() const noexcept
+	{
+		return params;
 	}
 }

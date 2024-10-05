@@ -35,43 +35,11 @@ namespace dsp
 		// sampleRate
 		void prepare(double) noexcept;
 
-		bool isSleepy() noexcept
-		{
-			bool sleepy = !noteOn && curEnv < MinDb;
-			if (sleepy)
-				env = curEnv = 0.;
-			return sleepy;
-		}
+		bool isSleepy() noexcept;
 
 		// returns true if envelope active
-		bool operator()(const MidiBuffer& midi, double* buffer, int numSamples) noexcept
-		{
-			if (midi.isEmpty() && isSleepy())
-				return false;
-
-			auto s = 0;
-			for (const auto it : midi)
-			{
-				const auto msg = it.getMessage();
-				const auto ts = it.samplePosition;
-				if (msg.isNoteOn())
-				{
-					s = synthesizeEnvelope(buffer, s, ts);
-					noteOn = true;
-				}
-				else if (msg.isNoteOff() || msg.isAllNotesOff())
-				{
-					s = synthesizeEnvelope(buffer, s, ts);
-					noteOn = false;
-				}
-				else
-					s = synthesizeEnvelope(buffer, s, ts);
-			}
-			
-			synthesizeEnvelope(buffer, s, numSamples);
-			
-			return true;
-		}
+		// midi, buffer, numSamples
+		bool operator()(const MidiBuffer&, double*, int) noexcept;
 
 		double operator()(bool) noexcept;
 
@@ -97,69 +65,34 @@ namespace dsp
 
 		void processRelease() noexcept;
 
-		int synthesizeEnvelope(double* buffer, int s, int ts) noexcept
-		{
-			while (s < ts)
-			{
-				buffer[s] = operator()();
-				++s;
-			}
-			return s;
-		}
+		// buffer, s, ts
+		int synthesizeEnvelope(double*, int, int) noexcept;
 	};
 
 	struct EnvGenMultiVoice
 	{
 		struct Info
 		{
-			double operator[](int i) const noexcept
-			{
-				return data[i];
-			}
+			double operator[](int i) const noexcept;
 
 			double* data;
 			const bool active;
 		};
 
-		EnvGenMultiVoice() :
-			params(),
-			envGens
-			{
-				params, params, params, params, params,
-				params, params, params, params, params,
-				params, params, params, params, params
-			},
-			buffer()
-		{}
+		EnvGenMultiVoice();
 
-		void prepare(double sampleRate)
-		{
-			params.prepare(sampleRate);
-			for (auto& envGen : envGens)
-				envGen.prepare(sampleRate);
-		}
+		// sampleRate
+		void prepare(double);
 
-		bool isSleepy(int vIdx) noexcept
-		{
-			return envGens[vIdx].isSleepy();
-		}
+		// vIdx
+		bool isSleepy(int) noexcept;
 
-		Info operator()(const MidiBuffer& midi, int numSamples, int vIdx) noexcept
-		{
-			auto bufferData = buffer.data();
-			const auto active = envGens[vIdx](midi, bufferData, numSamples);
-			return { bufferData, active };
-		}
+		// midi, numSamples, vIdx
+		Info operator()(const MidiBuffer&, int, int) noexcept;
 
-		void updateParameters(const EnvelopeGenerator::Parameters& _params) noexcept
-		{
-			params(_params);
-		}
+		void updateParameters(const EnvelopeGenerator::Parameters&) noexcept;
 
-		const EnvelopeGenerator::Parameters& getParameters() const noexcept
-		{
-			return params;
-		}
+		const EnvelopeGenerator::Parameters& getParameters() const noexcept;
 
 	protected:
 		EnvelopeGenerator::Parameters params;

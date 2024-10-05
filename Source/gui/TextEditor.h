@@ -12,7 +12,8 @@ namespace gui
 			Button(u),
 			labelEmpty(u),
 			txt(""),
-			caret(0)
+			caret(0),
+			active(true)
 		{
 			addAndMakeVisible(labelEmpty);
 			makeTextLabel(labelEmpty, "", font::dosisMedium(), Just::centred, CID::Hover);
@@ -23,31 +24,43 @@ namespace gui
 
 			add(Callback([&]()
 			{
-				if (txt.isNotEmpty())
-					return labelEmpty.setVisible(false);
-				labelEmpty.setVisible(true);
-				if (labelEmpty.text == ".")
-					labelEmpty.text = "..";
-				else if (labelEmpty.text == "..")
-					labelEmpty.text = "...";
-				else if (labelEmpty.text == "...")
-					labelEmpty.text = "";
-				else
-					labelEmpty.text = ".";
-				labelEmpty.setMaxHeight();
-				labelEmpty.repaint();
-
+				if (active)
+				{
+					if (txt.isEmpty())
+					{
+						labelEmpty.setVisible(true);
+						if (labelEmpty.text == ".")
+							labelEmpty.text = "..";
+						else if (labelEmpty.text == "..")
+							labelEmpty.text = "...";
+						else if (labelEmpty.text == "...")
+							labelEmpty.text = "";
+						else
+							labelEmpty.text = ".";
+						labelEmpty.setMaxHeight();
+						labelEmpty.repaint();
+					}
+					else
+					{
+						return labelEmpty.setVisible(false);
+					}
+				}
 			}, cbEmpty, cbFPS::k_1_875, true));
 
 			add(Callback([&]()
 			{
-				if (isShowing())
+				if (isShowing() && active)
 					grabKeyboardFocus();
-
 			}, cbKeyFocus, cbFPS::k7_5, true));
 
 			add(Callback([&]()
 			{
+				if (!active)
+				{
+					callbacks[cbCaret].phase = 0.f;
+					updateLabel();
+					return;
+				}
 				if (isShowing() && txt.isNotEmpty())
 				{
 					callbacks[cbCaret].phase = 1.f - callbacks[cbCaret].phase;
@@ -57,7 +70,7 @@ namespace gui
 
 			onClick = [&](const Mouse&)
 			{
-				// manifest
+				setActive(true);
 			};
 
 			setWantsKeyboardFocus(true);
@@ -65,11 +78,29 @@ namespace gui
 
 		bool keyPressed(const KeyPress& key) override
 		{
-			if (key == KeyPress::backspaceKey)
+			if (!active)
+				return false;
+			if (key == KeyPress::returnKey)
 			{
-				if (txt.isNotEmpty())
+				txt = txt.substring(0, caret) + "\n" + txt.substring(caret);
+				++caret;
+			}
+			else if (key == KeyPress::spaceKey)
+			{
+				txt = txt.substring(0, caret) + " " + txt.substring(caret);
+				++caret;
+			}
+			else if (key == KeyPress::tabKey)
+			{
+				caret += 4;
+				txt = txt.substring(0, caret) + "    " + txt.substring(caret);
+			}
+			else if (key == KeyPress::backspaceKey)
+			{
+				const auto c0 = caret - 1;
+				if (txt.isNotEmpty() && c0 > -1)
 				{
-					txt = txt.substring(0, caret - 1) + txt.substring(caret);
+					txt = txt.substring(0, c0) + txt.substring(caret);
 					--caret;
 				}
 			}
@@ -91,10 +122,10 @@ namespace gui
 			else
 			{
 				const auto wchar = key.getTextCharacter();
-				if (wchar > 'a' && wchar < 'z' || wchar > 'A' && wchar < 'Z' || wchar > '0' && wchar < '9' || wchar == ' ' || wchar == '.' || wchar == ',' || wchar == '!' || wchar == '?' || wchar == ':' || wchar == ';' || wchar == '(' || wchar == ')' || wchar == '[' || wchar == ']' || wchar == '{' || wchar == '}' || wchar == '-' || wchar == '_' || wchar == '+' || wchar == '=' || wchar == '*' || wchar == '/' || wchar == '\\' || wchar == '|' || wchar == '<' || wchar == '>' || wchar == '@' || wchar == '#' || wchar == '$' || wchar == '%' || wchar == '^' || wchar == '&' || wchar == '*' || wchar == '~' || wchar == '`' || wchar == '"' || wchar == '\'' || wchar == ' ')
+				if (isTextCharacter(wchar))
 				{
 					callbacks[cbCaret].start(1.f);
-					txt += wchar;
+					txt = txt.substring(0, caret) + wchar + txt.substring(caret);
 					++caret;
 				}
 			}
@@ -110,9 +141,51 @@ namespace gui
 			labelEmpty.setBounds(getLocalBounds().toFloat().reduced(thicc * 5.f).toNearestInt());
 		}
 
+		void clear()
+		{
+			setText("");
+		}
+
+		void setText(const String& nText)
+		{
+			txt = nText;
+			caret = txt.length();
+			updateLabel();
+		}
+
+		void addText(const String& nText)
+		{
+			txt = txt.substring(0, caret) + nText + txt.substring(caret);
+			caret += nText.length();
+			updateLabel();
+		}
+
+		void paste()
+		{
+			const auto cbTxt = SystemClipboard::getTextFromClipboard();
+			if (cbTxt.isEmpty())
+				return;
+			addText(cbTxt);
+		}
+
+		void setActive(bool e)
+		{
+			active = e;
+			if (active)
+				grabKeyboardFocus();
+			else
+				giveAwayKeyboardFocus();
+		}
+
+		bool isEmpty() const noexcept
+		{
+			return txt.isEmpty();
+		}
+
 		Label labelEmpty;
 		String txt;
 		int caret;
+		bool active;
 
 	private:
 		void updateLabel()
@@ -127,10 +200,10 @@ namespace gui
 
 			labelEmpty.setVisible(false);
 			if (callbacks[cbCaret].phase < .5f)
-				label.text = txt;
+				label.text = txt.substring(0, caret) + " " + txt.substring(caret);
 			else
 				label.text = txt.substring(0, caret) + "|" + txt.substring(caret);
-			label.setMaxHeight();
+			label.setMaxHeight(utils.thicc);
 			label.repaint();
 		}
 	};

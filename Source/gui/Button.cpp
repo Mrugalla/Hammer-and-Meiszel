@@ -299,6 +299,45 @@ namespace gui
 			};
 	}
 
+	Button::OnPaint makeButtonOnPaintVisor(int numDiagonalLines)
+	{
+		return [numDiagonalLines](Graphics& g, const Button& b)
+		{
+			const auto thicc = b.utils.thicc;
+			const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+			const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
+
+			const auto bounds = b.getLocalBounds().toFloat();
+			const auto w = bounds.getWidth();
+			const auto h = bounds.getHeight();
+			const auto minDimen = std::min(w, h);
+
+			const auto len = hoverPhase * minDimen * (.2f + clickPhase * .1f);
+
+			setCol(g, CID::Interact);
+			g.drawLine(LineF(0.f, 0.f, len, 0.f), thicc);
+			g.drawLine(LineF(0.f, 0.f, 0.f, len), thicc);
+			g.drawLine(LineF(0.f, h, len, h), thicc);
+			g.drawLine(LineF(0.f, h, 0.f, h - len), thicc);
+			g.drawLine(LineF(w, 0.f, w - len, 0.f), thicc);
+			g.drawLine(LineF(w, 0.f, w, len), thicc);
+			g.drawLine(LineF(w, h, w - len, h), thicc);
+			g.drawLine(LineF(w, h, w, h - len), thicc);
+
+			const auto numDiagonalLinesInv = 1.f / static_cast<float>(numDiagonalLines);
+			for (auto i = 1; i <= numDiagonalLines; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto iR = iF * numDiagonalLinesInv;
+				const auto iLen = len * iR;
+				g.drawLine(LineF(0.f, iLen, iLen, 0.f), thicc);
+				g.drawLine(LineF(w, h - iLen, w - iLen, h), thicc);
+				g.drawLine(LineF(0.f, h - iLen, iLen, h), thicc);
+				g.drawLine(LineF(w, iLen, w - iLen, 0.f), thicc);
+			}
+		};
+	}
+
 	////// LOOK AND FEEL:
 
 	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID)
@@ -351,6 +390,8 @@ namespace gui
 		auto& param = utils.getParam(pID);
 		button.value = param.getValue();
 
+		button.tooltip = param::toTooltip(pID);
+
 		const auto valChangeFunc = [&prm = param](int valDenorm)
 		{
 			const auto start = static_cast<int>(prm.range.start);
@@ -384,6 +425,23 @@ namespace gui
 			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval * direc;
 			valChangeFunc(valDenorm);
 		};
+
+		/*
+		const auto valToNameFunc = makeValToNameFunc(button, pID, text);
+		button.add(Callback([&btn = button, pID, valToNameFunc]()
+			{
+				const auto& utils = btn.utils;
+				const auto& param = utils.getParam(pID);
+				const auto val = param.getValue();
+
+				if (btn.value == val)
+					return;
+
+				btn.value = val;
+				btn.label.setText(valToNameFunc());
+				btn.repaint();
+			}, Button::kUpdateParameterCB, cbFPS::k15, true));
+		*/
 	}
 
 	void makeParameter(Button& button, PID pID, Button::Type type, const String& text)
@@ -409,7 +467,6 @@ namespace gui
 			btn.value = val;
 			btn.label.setText(valToNameFunc());
 			btn.repaint();
-
 		}, Button::kUpdateParameterCB, cbFPS::k15, true));
 	}
 

@@ -12,6 +12,7 @@
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
+      <FILE id="om2vpl" name="mow.png" compile="0" resource="1" file="Source/mow.png"/>
       <GROUP id="{9465D1EC-34B9-7D70-2DC1-3218DB8AF92B}" name="unittests">
         <FILE id="cgyRcP" name="HammerUndMeiszelTests.h" compile="0" resource="0"
               file="Source/HammerUndMeiszelTests.h"/>
@@ -117,6 +118,8 @@
           <GROUP id="{1D5BCCCC-42EE-52A6-7B66-DBFC5CC929C4}" name="midi">
             <FILE id="ls4YaF" name="AutoMPE.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/AutoMPE.cpp"/>
             <FILE id="huAUKl" name="AutoMPE.h" compile="0" resource="0" file="Source/audio/dsp/midi/AutoMPE.h"/>
+            <FILE id="RwVcDX" name="KeySelector.cpp" compile="1" resource="0" file="Source/audio/dsp/KeySelector.cpp"/>
+            <FILE id="CTwWLT" name="KeySelector.h" compile="0" resource="0" file="Source/audio/dsp/KeySelector.h"/>
             <FILE id="YdTVJ4" name="MIDITranspose.cpp" compile="1" resource="0"
                   file="Source/audio/dsp/midi/MIDITranspose.cpp"/>
             <FILE id="gl2l3M" name="MIDITranspose.h" compile="0" resource="0" file="Source/audio/dsp/midi/MIDITranspose.h"/>
@@ -238,15 +241,14 @@
         <FILE id="XnUFHl" name="BgImage.h" compile="0" resource="0" file="Source/gui/BgImage.h"/>
         <FILE id="kKaRcj" name="Button.cpp" compile="1" resource="0" file="Source/gui/Button.cpp"/>
         <FILE id="FF2ejy" name="Button.h" compile="0" resource="0" file="Source/gui/Button.h"/>
-        <FILE id="ZRQ91R" name="ButtonColours.cpp" compile="1" resource="0"
-              file="Source/gui/ButtonColours.cpp"/>
-        <FILE id="IDJx9A" name="ButtonColours.h" compile="0" resource="0" file="Source/gui/ButtonColours.h"/>
         <FILE id="r7VpBE" name="Colours.cpp" compile="1" resource="0" file="Source/gui/Colours.cpp"/>
         <FILE id="uYUFj0" name="Colours.h" compile="0" resource="0" file="Source/gui/Colours.h"/>
         <FILE id="W38ixX" name="Comp.cpp" compile="1" resource="0" file="Source/gui/Comp.cpp"/>
         <FILE id="HeCvCp" name="Comp.h" compile="0" resource="0" file="Source/gui/Comp.h"/>
         <FILE id="DxY7bF" name="Events.cpp" compile="1" resource="0" file="Source/gui/Events.cpp"/>
         <FILE id="sGl3Zw" name="Events.h" compile="0" resource="0" file="Source/gui/Events.h"/>
+        <FILE id="hUPXyZ" name="KeySelector.cpp" compile="1" resource="0" file="Source/gui/KeySelector.cpp"/>
+        <FILE id="MM1M37" name="KeySelector.h" compile="0" resource="0" file="Source/gui/KeySelector.h"/>
         <FILE id="g2Upin" name="Knob.cpp" compile="1" resource="0" file="Source/gui/Knob.cpp"/>
         <FILE id="tWuWsL" name="Knob.h" compile="0" resource="0" file="Source/gui/Knob.h"/>
         <FILE id="rOzncV" name="Label.cpp" compile="1" resource="0" file="Source/gui/Label.cpp"/>
@@ -280,6 +282,7 @@
     </GROUP>
     <FILE id="mILeaZ" name="todo.h" compile="0" resource="0" file="Source/todo.h"/>
     <FILE id="xgM4fI" name="outtakes.h" compile="0" resource="0" file="Source/outtakes.h"/>
+    <FILE id="cUyULO" name="marble.png" compile="0" resource="1" file="Source/marble.png"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>

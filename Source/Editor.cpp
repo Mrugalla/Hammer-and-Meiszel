@@ -34,6 +34,7 @@ namespace gui
     Editor::Editor(Processor& p) :
         AudioProcessorEditor(&p),
         audioProcessor(p),
+        marbleImg(juce::ImageCache::getFromMemory(BinaryData::marble_png, BinaryData::marble_pngSize)),
         utils(*this, p),
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
@@ -49,6 +50,7 @@ namespace gui
         labelNoiseBlend(utils),
         noiseBlend(utils),
 		modDialNoiseBlend(utils),
+        keySelector(utils),
         envGens
         {
             EnvelopeGeneratorMultiVoiceEditor
@@ -71,8 +73,8 @@ namespace gui
             )
         },
         modalEditor(utils),
-        buttonColours(utils),
-        manifestOfWisdomButton(utils)
+        buttonColours(coloursEditor),
+        manifestOfWisdomButton(utils, manifestOfWisdom)
     {
         layout.init
         (
@@ -88,6 +90,7 @@ namespace gui
 		addAndMakeVisible(labelNoiseBlend);
 		addAndMakeVisible(noiseBlend);
 		addAndMakeVisible(modDialNoiseBlend);
+		addAndMakeVisible(keySelector);
 		for (auto& envGen : envGens)
 			addAndMakeVisible(envGen);
 		addAndMakeVisible(modalEditor);
@@ -119,29 +122,6 @@ namespace gui
                     name = name.replaceSection(i, 2, sz);
             makeTextLabel(labelTitle, name, titleFont, Just::centred, CID::Txt);
         }
-        
-        {
-            const auto oc = buttonColours.onClick;
-            buttonColours.onClick = [&, oc](const Mouse& mouse)
-            {
-                const auto e = buttonColours.value < .5f;
-                if (e)
-                    utils.eventSystem.notify(evt::Type::ClickedEmpty);
-                coloursEditor.setVisible(e);
-                oc(mouse);
-            };
-        }
-
-        makeTextButton(manifestOfWisdomButton, "Manifest of\nWisdom",
-            "Click here to manifest wisdom in the manifest of wisdom!", CID::Interact);
-        manifestOfWisdomButton.onClick = [&](const Mouse&)
-        {
-            const auto e = !manifestOfWisdom.isVisible();
-            if (e)
-                utils.eventSystem.notify(evt::Type::ClickedEmpty);
-			manifestOfWisdom.setVisible(e);
-			manifestOfWisdomButton.value = e ? 1.f : 0.f;
-        };
 
         loadBounds(*this);
         utils.audioProcessor.pluginProcessor.editorExists.store(true);
@@ -154,7 +134,8 @@ namespace gui
     
     void Editor::paint(Graphics& g)
     {
-        setCol(g, CID::Bg);
+        g.drawImageAt(marbleImg, 0, 0, false);
+        g.setColour(Colours::c(CID::Bg).withMultipliedAlpha(.85f));
         g.fillAll();
     }
 
@@ -195,8 +176,8 @@ namespace gui
         e.layout.place(e.labelNoiseBlend, 0.f, 1.f, .2f, .1f);
 		e.layout.place(e.noiseBlend, .2f, 1.f, .6f, .1f);
         locateAtSlider(e.modDialNoiseBlend, e.noiseBlend);
-
-        const auto envsArea = e.layout(0, 1.1f, 1, 1.9f);
+        e.layout.place(e.keySelector, 0, 1.1f, 1, .1f);
+        const auto envsArea = e.layout(0, 1.2f, 1, 1.8f);
 		const auto x = envsArea.getX();
 		auto y = envsArea.getY();
 		const auto w = envsArea.getWidth();
@@ -216,6 +197,16 @@ namespace gui
             return;
         saveBounds(*this);
 
+        marbleImg = juce::ImageCache::getFromMemory(BinaryData::marble_png, BinaryData::marble_pngSize).rescaled(getWidth(), getHeight());
+		fixStupidJUCEImageThingie(marbleImg);
+        for (auto y = 0; y < marbleImg.getHeight(); ++y)
+            for (auto x = 0; x < marbleImg.getWidth(); ++x)
+            {
+				auto pxl = marbleImg.getPixelAt(x, y);
+                marbleImg.setPixelAt(x, y, pxl.withBrightness(1.f - pxl.getBrightness()));
+            }
+				
+
         utils.resized();
         const auto thicc = utils.thicc;
 		const auto thicc2 = thicc * 2.f;
@@ -234,8 +225,8 @@ namespace gui
         // right panel
         layout.place(ioEditor, 2, 0, 1, 3);
         layout.place(genAni, 2, 1.5f, 1, 1.5f);
-        layout.place(buttonColours, 2.f, 2, .5f, 1);
-		layout.place(manifestOfWisdomButton, 2.5f, 2, .5f, 1);
+        layout.place(buttonColours, 2.f, 2, .25f, 1);
+		layout.place(manifestOfWisdomButton, 2.25f, 2, .25f, 1);
 
         // center panel
         layout.place(modalEditor, 1, 1, 1, 1);

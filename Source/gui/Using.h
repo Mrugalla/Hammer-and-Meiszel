@@ -66,6 +66,7 @@ namespace gui
 	using RectanglePlacement = juce::RectanglePlacement;
 	using ResamplingQuality = Graphics::ResamplingQuality;
 	using ColourSelector = juce::ColourSelector;
+	using ImageCache = juce::ImageCache;
 
     using Processor = audio::Processor;
 
@@ -88,6 +89,8 @@ namespace gui
     static constexpr double FPSInv = 1. / FPSD;
 
     bool isLineBreak(WChar) noexcept;
+
+    bool isTextCharacter(WChar) noexcept;
 
     namespace font
     {

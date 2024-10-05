@@ -37,6 +37,57 @@ namespace dsp
 
 		//
 
+		Voice::ParameterProcessor::ParameterProcessor(double defaultVal) :
+			prms{ defaultVal, defaultVal },
+			vals{ defaultVal, defaultVal }
+		{}
+
+		// sampleRate, smoothLenMs
+		void Voice::ParameterProcessor::prepare(double sampleRate, double smoothLenMs) noexcept
+		{
+			for (auto& prm : prms)
+				prm.prepare(sampleRate, smoothLenMs);
+			for (auto& val : vals)
+				val = 0.;
+		}
+
+		// p, envGenVal, min, max, numChannels
+		bool Voice::ParameterProcessor::operator()(const Parameter& p, double envGenVal,
+			double min, double max, int numChannels) noexcept
+		{
+			bool smooth = false;
+			const auto env = p.env * envGenVal;
+
+			auto lastVal = vals[0];
+			auto nVal = p.val + p.breite;
+			auto smVal = prms[0](nVal);
+			vals[0] = math::limit(min, max, smVal + env);
+			auto dif = vals[0] - lastVal;
+			auto distSquared = dif * dif;
+			if (distSquared > 1e-4)
+				smooth = true;
+			if (numChannels != 2)
+				return smooth;
+
+			lastVal = vals[1];
+			nVal = p.val - p.breite;
+			smVal = prms[1](nVal);
+			vals[1] = math::limit(min, max, smVal + env);
+			dif = vals[1] - lastVal;
+			distSquared = dif * dif;
+			if (distSquared > 1e-4)
+				smooth = true;
+
+			return smooth;
+		}
+
+		double Voice::ParameterProcessor::operator[](int i) const noexcept
+		{
+			return vals[i];
+		}
+
+		//
+
 		Voice::Voice() :
 			materialStereo(),
 			parameters(),

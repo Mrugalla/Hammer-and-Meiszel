@@ -61,6 +61,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		case PID::NoiseBlend: return "Noise Blend";
+		case PID::KeySelectorEnabled: return "Key Selector Enabled";
 		case PID::EnvGenAmpAttack: return "EnvGenAmp Attack";
 		case PID::EnvGenAmpDecay: return "EnvGenAmp Decay";
 		case PID::EnvGenAmpSustain: return "EnvGenAmp Sustain";
@@ -165,6 +166,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		case PID::NoiseBlend: return "Blends between the dry signal and the noise synth.";
+		case PID::KeySelectorEnabled: return "If enabled the modal filters are triggered by the key selector.";
 		case PID::EnvGenAmpAttack: return "The amplitude envelope generator's attack time.";
 		case PID::EnvGenAmpDecay: return "The amplitude envelope generator's decay time.";
 		case PID::EnvGenAmpSustain: return "The amplitude envelope generator's sustain level.";
@@ -1374,6 +1376,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::NoiseBlend, 0.f));
+		params.push_back(makeParam(PID::KeySelectorEnabled, 1.f, makeRange::toggle(), Unit::Power));
 
 		params.push_back(makeParam(PID::EnvGenAmpAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenAmpDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));

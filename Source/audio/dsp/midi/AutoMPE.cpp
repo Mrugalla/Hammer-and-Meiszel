@@ -26,8 +26,7 @@ namespace dsp
 		for (const auto it : midi)
 		{
 			auto msg = it.getMessage();
-
-			if (msg.isNoteOn())
+ 			if (msg.isNoteOn())
 				processNoteOn(msg, it.samplePosition);
 			else if (msg.isNoteOff())
 				processNoteOff(msg);
@@ -35,7 +34,6 @@ namespace dsp
 				processPitchWheel(msg, it.samplePosition);
 			else
 				msg.setChannel(1);
-
 			buffer.addEvent(msg, it.samplePosition);
 		}
 

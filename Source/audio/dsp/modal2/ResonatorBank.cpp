@@ -6,7 +6,11 @@ namespace dsp
 	{
 		double calcBandwidthFc(double reso, double sampleRateInv) noexcept
 		{
-			const auto bw = 20. - math::tanhApprox(3. * reso) * 19.;
+			static constexpr auto Min = 20.;
+			static constexpr auto Range = 19.;
+
+			const auto remap = math::tanhApprox(3. * reso);
+			const auto bw = Min - remap * Range;
 			const auto bwFc = bw * sampleRateInv;
 			return bwFc;
 		}
@@ -49,7 +53,8 @@ namespace dsp
 			for (auto& n : numFiltersBelowNyquist)
 				n = 0;
 			sleepyTimer = 0;
-			active = false;
+			//active = false;
+			active = true;
 		}
 
 		void ResonatorBank::prepare(const MaterialDataStereo& materialStereo, double _sampleRate)
@@ -184,11 +189,11 @@ namespace dsp
 				const auto msg = it.getMessage();
 				if (msg.isNoteOn())
 				{
-					if (!active)
-						for (auto ch = 0; ch < numChannels; ++ch)
-							for (auto i = 0; i < NumFilters; ++i)
-								resonators[i].reset(ch);
-					active = true;
+					//if (!active)
+					//	for (auto ch = 0; ch < numChannels; ++ch)
+					//		for (auto i = 0; i < NumFilters; ++i)
+					//			resonators[i].reset(ch);
+					//active = true;
 					const auto ts = it.samplePosition;
 					val.pitch = static_cast<double>(msg.getNoteNumber());
 					const auto freq = val.getFreq(xen);
@@ -206,21 +211,21 @@ namespace dsp
 						val.pb = pb;
 						const auto freq = val.getFreq(xen);
 						setFrequencyHz(materialStereo, freq, numChannels);
-						if(active)
+						//if(active)
 							applyFilter(materialStereo, samples, numChannels, s, ts);
 						s = ts;
 					}
 				}
 			}
 
-			if(active)
+			//if(active)
 				applyFilter(materialStereo, samples, numChannels, s, numSamples);
 		}
 
 		void ResonatorBank::applyFilter(const MaterialDataStereo& materialStereo, double** samples,
 			int numChannels, int startIdx, int endIdx) noexcept
 		{
-			static constexpr auto Eps = 1e-6;
+			//static constexpr auto Eps = 1e-6;
 
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
@@ -239,15 +244,22 @@ namespace dsp
 						const auto bpY = resonator(dry, ch) * material.getMag(f) * gain;
 						wet += bpY;
 					}
-					if (wet * wet > Eps)
-						sleepyTimer = 0;
+					if (wet * wet > 4.)
+					{
+						for (auto f = 0; f < nfbn; ++f)
+							resonators[f].reset(ch);
+						wet = 0.;
+					}
+					
+					//if (wet * wet > Eps)
+					//	sleepyTimer = 0;
 					smpls[i] = wet;
 				}
 			}
 
-			const auto blockLength = endIdx - startIdx;
-			sleepyTimer += blockLength;
-			active = sleepyTimer < sleepyTimerThreshold;
+			//const auto blockLength = endIdx - startIdx;
+			//sleepyTimer += blockLength;
+			//active = sleepyTimer < sleepyTimerThreshold;
 		}
 	}
 }

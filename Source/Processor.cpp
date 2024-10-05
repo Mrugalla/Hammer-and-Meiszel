@@ -479,7 +479,15 @@ namespace audio
         double* samplesUp[] = { samples[0], samples[1] };
         const auto numSamplesUp = numSamples;
 #endif
-        pluginProcessor(samplesUp, midi, numChannels, numSamplesUp);
+        const auto ph = playHead.load();
+        const auto posOpt = ph->getPosition();
+        bool playing = false;
+        if (posOpt.hasValue())
+        {
+            auto pos = *posOpt;
+            playing = pos.getIsPlaying();
+        }
+        pluginProcessor(samplesUp, midi, numChannels, numSamplesUp, playing);
 
 #if PPDHasHQ
         oversampler.downsample(samples, numSamples);

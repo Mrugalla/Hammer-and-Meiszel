@@ -30,55 +30,17 @@ namespace dsp
 
 			struct ParameterProcessor
 			{
-			public:
-				ParameterProcessor(double defaultVal = 0.) :
-					prms{ defaultVal, defaultVal },
-					vals{ defaultVal, defaultVal }
-				{}
+				// default value
+				ParameterProcessor(double = 0.);
 
 				// sampleRate, smoothLenMs
-				void prepare(double sampleRate, double smoothLenMs) noexcept
-				{
-					for (auto& prm : prms)
-						prm.prepare(sampleRate, smoothLenMs);
-					for (auto& val : vals)
-						val = 0.;
-				}
+				void prepare(double, double) noexcept;
 
 				// p, envGenVal, min, max, numChannels
-				bool operator()(const Parameter& p, double envGenVal,
-					double min, double max, int numChannels) noexcept
-				{
-					bool smooth = false;
-					const auto env = p.env * envGenVal;
+				bool operator()(const Parameter&, double,
+					double, double, int) noexcept;
 
-					auto lastVal = vals[0];
-					auto nVal = p.val + p.breite;
-					auto smVal = prms[0](nVal);
-					vals[0] = math::limit(min, max, smVal + env);
-					auto dif = vals[0] - lastVal;
-					auto distSquared = dif * dif;
-					if(distSquared > 1e-4)
-						smooth = true;
-					if (numChannels != 2)
-						return smooth;
-
-					lastVal = vals[1];
-					nVal = p.val - p.breite;
-					smVal = prms[1](nVal);
-					vals[1] = math::limit(min, max, smVal + env);
-					dif = vals[1] - lastVal;
-					distSquared = dif * dif;
-					if (distSquared > 1e-4)
-						smooth = true;
-
-					return smooth;
-				}
-
-				double operator[](int i) const noexcept
-				{
-					return vals[i];
-				}
+				double operator[](int i) const noexcept;
 
 				std::array<PRMBlockD, 2> prms;
 				std::array<double, 2> vals;

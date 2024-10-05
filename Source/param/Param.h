@@ -47,6 +47,7 @@ namespace param
 
 		// low level parameters
 		NoiseBlend,
+		KeySelectorEnabled,
 		EnvGenAmpAttack,
 		EnvGenAmpDecay,
 		EnvGenAmpSustain,

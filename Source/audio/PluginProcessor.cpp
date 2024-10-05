@@ -6,6 +6,7 @@ namespace audio
 {
 	PluginProcessor::PluginProcessor(Params& _params, const arch::XenManager& _xen) :
 		params(_params), xen(_xen), sampleRate(1.),
+		keySelector(),
 		autoMPE(), voiceSplit(), parallelProcessor(),
 		envGensAmp(), envGensMod(),
 		noiseSynth(),
@@ -31,7 +32,9 @@ namespace audio
 		envGensMod.prepare(sampleRate);
 	}
 
-	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples) noexcept
+	void PluginProcessor::operator()(double** samples,
+		dsp::MidiBuffer& midi, int numChannels, int numSamples,
+		bool playing) noexcept
 	{
 		const auto& noiseBlendParam = params(PID::NoiseBlend);
 		const auto noiseBlend = noiseBlendParam.getValMod();
@@ -69,8 +72,10 @@ namespace audio
 			}
 		}
 
-		//randNoiseGen(samples, numChannels, numSamples, .25);
-		//randMeloGen(midi, numSamples);
+		const auto& keySelectorEnabledParam = params(PID::KeySelectorEnabled);
+		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
+		keySelector(midi, xen, keySelectorEnabled, playing);
+
 		autoMPE(midi); voiceSplit(midi);
 
 		const auto& modalOctParam = params(PID::ModalOct);
@@ -184,7 +189,6 @@ namespace audio
 		//);
 		
 		const auto samplesInput = const_cast<const double**>(samples);
-
 		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
 		{
 			const auto& midiVoice = voiceSplit[v + 2];
@@ -201,10 +205,9 @@ namespace audio
 					dsp::SIMD::clear(samplesVoice[ch], numSamples);
 
 			// synthsize modulation envelope generator
-			
 			const auto envGenModInfo = envGensMod(midiVoice, numSamples, v);
 			const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
-			
+
 			// process modal filter
 			modalFilter
 			(
@@ -215,7 +218,7 @@ namespace audio
 				numChannels, numSamples,
 				v
 			);
-
+			
 			/*
 			flanger
 			(
@@ -226,7 +229,7 @@ namespace audio
 			);
 			*/
 
-			const bool voiceSilent = math::bufferSilent(samplesVoice, numChannels, numSamples);
+			const bool voiceSilent = false;// math::bufferSilent(samplesVoice, numChannels, numSamples);
 			const bool sleepy = !envGenAmpInfo.active && voiceSilent;
 			parallelProcessor.setSleepy(sleepy, v);
 		}

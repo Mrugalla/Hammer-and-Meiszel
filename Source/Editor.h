@@ -5,9 +5,9 @@
 #include "gui/Tooltip.h"
 #include "gui/EnvelopeGeneratorEditor.h"
 #include "gui/ModalModuleEditor.h"
-#include "gui/ButtonColours.h"
 #include "gui/ColoursEditor.h"
 #include "gui/ManifestOfWisdom.h"
+#include "gui/KeySelector.h"
 
 namespace gui
 {
@@ -17,9 +17,7 @@ namespace gui
         public AudioProcessorEditor
     {
         Editor(Processor&);
-
         ~Editor() override;
-
         void paint(Graphics&) override;
         void paintOverChildren(Graphics&) override;
         void resized() override;
@@ -27,6 +25,7 @@ namespace gui
         void mouseUp(const Mouse&) override;
 
         Processor& audioProcessor;
+        Image marbleImg;
         Utils utils;
         Layout layout;
         evt::Member evtMember;
@@ -40,11 +39,12 @@ namespace gui
         Label labelDev, labelTitle, labelNoiseBlend;
         Knob noiseBlend;
 		ModDial modDialNoiseBlend;
+        KeySelector keySelector;
 		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
 		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
 		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
 		ModalModuleEditor modalEditor;
         ButtonColours buttonColours;
-        Button manifestOfWisdomButton;
+        ButtonWisdom manifestOfWisdomButton;
     };
 }

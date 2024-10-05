@@ -4,31 +4,37 @@
 
 ~~~ todo ~~~
 
-label mit zeilenumbruch richtet seine größe nicht richtig automatisch ein
+keySelector GUI hübsche buttons für keys
+    restricted to 12 keys
+    functionality for keys enabled
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+write new sleepy state mechanism for modal resonator filter.
+problem was: it turned off the modal filter when it got too quiet
+but quietness can also come from low sustain values on the envelope
+or from low audio input values, but it should only trigger when nothing's playing anymore
 
 rescue overlaps funzt noch nicht gut genug, manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar
 
 hold down note, then press other notes to trigger the dry through bug
-
-finish manifest of wisdom functionality
 
 generated saw and sqr acts weird with keytrack+ when you drag partials away from harmonic series
 
 remap frequencies of partials with a MSEG curve, like mtransformer
 
 map velocity to certain parameters
-
-
-
-
-
-
-
-
-
-
-manifest of wisdom - make backwards compatible
-	while also introduce new format with yyyy_mm_dd__hh_mm_name
 
 toast wrong place when hovering modal material editor
 
@@ -60,7 +66,6 @@ Material
 
 Param db valToStr can be -inf (gain wet [-inf, 0])
     but it can also be not (gain out [-12,12])
-
 GUI
     reintroduce custom mousecursor
     SharedPluginState (customizable state)
@@ -71,8 +76,6 @@ GUI
         defaultvalue
             doubleclick, key
     all parameters currently lack visible lock feature
-    TextEditor
-        button that edits its label
 AUDIO
     FFT
         replace by 3rd party lib for performance (kiss fft or pffft)
