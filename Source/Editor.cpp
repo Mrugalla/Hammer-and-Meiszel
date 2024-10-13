@@ -50,7 +50,7 @@ namespace gui
         labelNoiseBlend(utils),
         noiseBlend(utils),
 		modDialNoiseBlend(utils),
-        keySelector(utils),
+        keySelector(utils, utils.audioProcessor.pluginProcessor.keySelector),
         envGens
         {
             EnvelopeGeneratorMultiVoiceEditor
@@ -79,7 +79,7 @@ namespace gui
         layout.init
         (
             { 5, 13, 5 },
-            { 2, 13, 2, 1 }
+            { 2, 2, 13, 1, 1 }
         );
         addAndMakeVisible(labelDev);
         addAndMakeVisible(labelTitle);
@@ -173,11 +173,11 @@ namespace gui
 
     void resizeLeftPanel(Editor& e, float envGenMargin)
     {
-        e.layout.place(e.labelNoiseBlend, 0.f, 1.f, .2f, .1f);
-		e.layout.place(e.noiseBlend, .2f, 1.f, .6f, .1f);
+        e.layout.place(e.labelNoiseBlend, 0.f, 1, .2f, 1);
+        e.labelNoiseBlend.setMaxHeight();
+		e.layout.place(e.noiseBlend,      .2f, 1, .7f, 1);
         locateAtSlider(e.modDialNoiseBlend, e.noiseBlend);
-        e.layout.place(e.keySelector, 0, 1.1f, 1, .1f);
-        const auto envsArea = e.layout(0, 1.2f, 1, 1.8f);
+        const auto envsArea = e.layout(0, 2, 1, 1);
 		const auto x = envsArea.getX();
 		auto y = envsArea.getY();
 		const auto w = envsArea.getWidth();
@@ -225,13 +225,14 @@ namespace gui
         // right panel
         layout.place(ioEditor, 2, 0, 1, 3);
         layout.place(genAni, 2, 1.5f, 1, 1.5f);
-        layout.place(buttonColours, 2.f, 2, .25f, 1);
-		layout.place(manifestOfWisdomButton, 2.25f, 2, .25f, 1);
+        layout.place(buttonColours, 2.f, -3, .5f, 1);
+		layout.place(manifestOfWisdomButton, 2.5f, -3, .5f, 1);
 
         // center panel
-        layout.place(modalEditor, 1, 1, 1, 1);
-        layout.place(coloursEditor, 1, 1, 1, 1);
-        layout.place(manifestOfWisdom, 1, 1, 1, 1);
+        layout.place(keySelector, 1, 1, 1, 1);
+        layout.place(modalEditor, 1, 2, 1, 1);
+        layout.place(coloursEditor, 1, 2, 1, 1);
+        layout.place(manifestOfWisdom, 1, 2, 1, 1);
 
         // bottom panel
         tooltip.setBounds(layout.bottom().toNearestInt());

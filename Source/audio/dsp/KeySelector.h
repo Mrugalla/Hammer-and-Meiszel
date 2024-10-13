@@ -8,7 +8,7 @@ namespace dsp
 	struct KeySelector
 	{
 		static constexpr int Octave = 3;
-		static constexpr int NumKeys = 12;
+		static constexpr int NumKeys = PPDMaxXen;
 		using XenManager = arch::XenManager;
 
 		KeySelector() :
@@ -17,8 +17,9 @@ namespace dsp
 			actives(),
 			playing(false)
 		{
-			for (auto& key : keys)
-				key.store(false);
+			bool sharps[12] = { false, true, false, true, false, false, true, false, true, false, true, false };
+			for (auto i = 0; i < NumKeys; ++i)
+				keys[i].store(sharps[i % 12]);
 			for(auto& active : actives)
 				active = false;
 		}
@@ -28,6 +29,7 @@ namespace dsp
 		{
 			if (!useKeys)
 				return;
+			/*
 			gateNoteOffs(midi);
 			const auto xenVal = static_cast<int>(std::round(xen.getXen()));
 			if (playbackStopped(_playing))
@@ -35,6 +37,7 @@ namespace dsp
 					if (actives[i])
 						makeNoteOffs(midi, i, xenVal);
 			updateKeySelector(midi, xenVal);
+			*/
 		}
 
 		std::array<std::atomic<bool>, NumKeys> keys;

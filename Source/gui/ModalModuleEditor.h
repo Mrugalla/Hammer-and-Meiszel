@@ -109,7 +109,7 @@ namespace gui
 		{
 			makeTextButton(buttonA, "A", "Observe and edit Material A!", CID::Interact);
 			buttonA.type = Button::Type::kToggle;
-			buttonA.onPaint = makeButtonOnPaint(true);
+			buttonA.onPaint = makeButtonOnPaint(true, getColour(CID::Bg));
 			buttonA.onClick = [&](const Mouse&)
 			{
 				materialEditors[0].setVisible(true);
@@ -122,7 +122,7 @@ namespace gui
 
 			makeTextButton(buttonB, "B", "Observe and edit Material B!", CID::Interact);
 			buttonB.type = Button::Type::kToggle;
-			buttonB.onPaint = makeButtonOnPaint(false);
+			buttonB.onPaint = makeButtonOnPaint(false, getColour(CID::Bg));
 			buttonB.onClick = [&](const Mouse&)
 			{
 				materialEditors[0].setVisible(false);
@@ -363,7 +363,7 @@ namespace gui
 			dropDown.init();
 
 			makeTextButton(buttonDropDown, "V", "Here you can find additional modal material features.", CID::Interact);
-			buttonDropDown.onPaint = makeButtonOnPaint(true);
+			buttonDropDown.onPaint = makeButtonOnPaint(true, getColour(CID::Bg));
 			buttonDropDown.onClick = [&m = dropDown](const Mouse&)
 			{
 				m.setVisible(!m.isVisible());

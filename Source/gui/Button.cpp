@@ -52,9 +52,13 @@ namespace gui
 			auto& toggleState = callbacks[kToggleStateCB].phase;
 			if (type != Type::kToggle)
 			{
-				toggleState = 0.f;
-				callbacks[kToggleStateCB].stop(0.f);
-				repaint();
+				if (toggleState != 0.f)
+				{
+					toggleState = 0.f;
+					callbacks[kToggleStateCB].stop(0.f);
+					repaint();
+				}
+				return;
 			}
 			const auto dist = value - toggleState;
 			const auto dif = dist * dist;
@@ -134,9 +138,9 @@ namespace gui
 
 	////// ONPAINTS:
 	
-	Button::OnPaint makeButtonOnPaint(bool drawToggle)
+	Button::OnPaint makeButtonOnPaint(bool drawToggle, Colour bgCol)
 	{
-		return [drawToggle] (Graphics& g, const Button& b)
+		return [drawToggle, bgCol] (Graphics& g, const Button& b)
 		{
 			const auto& utils = b.utils;
 			const auto thicc = utils.thicc;
@@ -149,7 +153,7 @@ namespace gui
 			const auto lineThiccness = thicc + clickPhase * (thicc2 - thicc);
 			const auto bounds = b.getLocalBounds().toFloat().reduced(lineThiccness);
 
-			auto bgColour = getColour(CID::Bg);
+			auto bgColour = bgCol;
 			if(drawToggle)
 				bgColour = bgColour.interpolatedWith(getColour(CID::Interact), togglePhase * .3f);
 			bgColour = bgColour.overlaidWith(getColour(CID::Interact).withAlpha(hoverPhase * .3f));
@@ -161,7 +165,7 @@ namespace gui
 
 	Button::OnPaint makeButtonOnPaintPower()
 	{
-		return [op = makeButtonOnPaint(false)] (Graphics& g, const Button& b)
+		return [op = makeButtonOnPaint(false, getColour(CID::Bg))] (Graphics& g, const Button& b)
 		{
 			op(g, b);
 
@@ -215,7 +219,7 @@ namespace gui
 
 	Button::OnPaint makeButtonOnPaintPolarity()
 	{
-		return [op = makeButtonOnPaint(false)] (Graphics& g, const Button& b)
+		return [op = makeButtonOnPaint(false, getColour(CID::Bg))] (Graphics& g, const Button& b)
 		{
 			op(g, b);
 
@@ -241,7 +245,7 @@ namespace gui
 
 	Button::OnPaint makeButtonOnPaintSwap()
 	{
-		return [op = makeButtonOnPaint(false)](Graphics& g, const Button& b)
+		return [op = makeButtonOnPaint(false, getColour(CID::Bg))](Graphics& g, const Button& b)
 			{
 				op(g, b);
 
@@ -340,11 +344,11 @@ namespace gui
 
 	////// LOOK AND FEEL:
 
-	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID)
+	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID, Colour bgCol)
 	{
 		makeTextLabel(btn.label, txt, font::dosisBold(), Just::centred, cID);
 		btn.tooltip = tooltip;
-		btn.onPaint = makeButtonOnPaint(true);
+		btn.onPaint = makeButtonOnPaint(true, bgCol);
 	}
 
 	void makePaintButton(Button& btn, const Button::OnPaint& onPaint, const String& tooltip)
@@ -425,23 +429,6 @@ namespace gui
 			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval * direc;
 			valChangeFunc(valDenorm);
 		};
-
-		/*
-		const auto valToNameFunc = makeValToNameFunc(button, pID, text);
-		button.add(Callback([&btn = button, pID, valToNameFunc]()
-			{
-				const auto& utils = btn.utils;
-				const auto& param = utils.getParam(pID);
-				const auto val = param.getValue();
-
-				if (btn.value == val)
-					return;
-
-				btn.value = val;
-				btn.label.setText(valToNameFunc());
-				btn.repaint();
-			}, Button::kUpdateParameterCB, cbFPS::k15, true));
-		*/
 	}
 
 	void makeParameter(Button& button, PID pID, Button::Type type, const String& text)

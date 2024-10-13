@@ -169,7 +169,7 @@ namespace gui
 		auto& buttonMacroRel = buttons[kMacroRel];
 		makeTextButton(buttonMacroRel, "Rel", "Switch between absolute and relative macro modulation.", CID::Interact);
 		buttonMacroRel.type = Button::Type::kToggle;
-		buttonMacroRel.onPaint = makeButtonOnPaint(false);
+		buttonMacroRel.onPaint = makeButtonOnPaint(false, getColour(CID::Bg));
 		buttonMacroRel.onClick = [&u = utils, &b = buttonMacroRel](const Mouse&)
 			{
 				u.audioProcessor.params.switchModDepthAbsolute();

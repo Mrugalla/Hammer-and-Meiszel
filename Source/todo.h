@@ -4,22 +4,9 @@
 
 ~~~ todo ~~~
 
-keySelector GUI hübsche buttons für keys
-    restricted to 12 keys
-    functionality for keys enabled
-
-
-
-
-
-
-
-
-
-
-
-
-
+KeySelector
+    Buttons updaten sich nocht nicht passend zum Toggle State
+    Key Selector Enabled macht noch nichts sinnvolles
 
 write new sleepy state mechanism for modal resonator filter.
 problem was: it turned off the modal filter when it got too quiet

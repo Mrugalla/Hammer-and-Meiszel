@@ -43,8 +43,8 @@ namespace gui
 
 	////// ONPAINTS:
 	
-	// drawToggle
-	Button::OnPaint makeButtonOnPaint(bool);
+	// drawToggle, bgColour
+	Button::OnPaint makeButtonOnPaint(bool, Colour);
 
 	Button::OnPaint makeButtonOnPaintPower();
 
@@ -57,8 +57,8 @@ namespace gui
 
 	////// LOOK AND FEEL:
 
-	// btn, text, tooltip, cID
-	void makeTextButton(Button&, const String&, const String&, CID);
+	// btn, text, tooltip, cID, bgCol
+	void makeTextButton(Button&, const String&, const String&, CID, Colour = getColour(CID::Bg));
 
 	// btn, onPaint, tooltip
 	void makePaintButton(Button&, const Button::OnPaint&, const String&);
