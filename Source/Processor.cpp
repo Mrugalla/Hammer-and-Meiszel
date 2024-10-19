@@ -8,6 +8,8 @@
 #include "arch/Math.h"
 #include "audio/dsp/Distortion.h"
 
+#define KeepState true
+
 namespace audio
 {
     Processor::BusesProps Processor::makeBusesProps()
@@ -204,16 +206,20 @@ namespace audio
 
     void Processor::getStateInformation(juce::MemoryBlock& destData)
     {
+#if KeepState
         pluginProcessor.savePatch(state);
         params.savePatch(state);
         state.savePatch(*this, destData);
+#endif
     }
 
     void Processor::setStateInformation(const void* data, int sizeInBytes)
     {
+#if KeepState
         state.loadPatch(*this, data, sizeInBytes);
         params.loadPatch(state);
         pluginProcessor.loadPatch(state);
+#endif
     }
 
     void Processor::processBlockBypassed(AudioBufferD& buffer, MidiBuffer& midiMessages)
@@ -325,9 +331,9 @@ namespace audio
 #if PPDHasTuningEditor
         const auto xen = std::round(params(PID::Xen).getValModDenorm());
         const auto masterTune = std::round(params(PID::MasterTune).getValModDenorm());
-        const auto referencePitch = std::round(params(PID::ReferencePitch).getValModDenorm());
+        const auto anchor = std::round(params(PID::AnchorPitch).getValModDenorm());
         const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
-        xenManager(xen, masterTune, referencePitch, pitchbendRange);
+        xenManager(xen, masterTune, anchor, pitchbendRange);
 #endif
 
         for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
@@ -518,3 +524,5 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new audio::Processor();
 }
+
+#undef KeepState

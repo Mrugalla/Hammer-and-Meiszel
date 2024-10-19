@@ -5,13 +5,16 @@
 ~~~ todo ~~~
 
 KeySelector
-    Buttons updaten sich nocht nicht passend zum Toggle State
-    Key Selector Enabled macht noch nichts sinnvolles
+    funktionalität suckt noch
+
+polyphony parameter
+    monophonic mode with portamento and stuff
+    reset mod envelope on note on (or not)
 
 write new sleepy state mechanism for modal resonator filter.
-problem was: it turned off the modal filter when it got too quiet
-but quietness can also come from low sustain values on the envelope
-or from low audio input values, but it should only trigger when nothing's playing anymore
+    problem was: it turned off the modal filter when it got too quiet
+    but quietness can also come from low sustain values on the envelope
+    or from low audio input values, but it should only trigger when nothing's playing anymore
 
 rescue overlaps funzt noch nicht gut genug, manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar
 

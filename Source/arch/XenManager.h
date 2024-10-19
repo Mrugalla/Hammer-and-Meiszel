@@ -8,13 +8,13 @@ namespace arch
 	{
 		XenManager();
 
-		/* xen, masterTune, referencePitch, pitchbendRange */
+		// xen, masterTune, anchor, pitchbendRange
 		void operator()(double, double, double, double) noexcept;
 
 		template<typename Float>
 		Float noteToFreqHz(Float) const noexcept;
 
-		/* note, lowestFreq, highestFreq */
+		// note, lowestFreq, highestFreq
 		template<typename Float>
 		Float noteToFreqHzWithWrap(Float, Float = static_cast<Float>(0), Float = static_cast<Float>(22049)) const noexcept;
 
@@ -25,7 +25,9 @@ namespace arch
 
 		double getPitchbendRange() const noexcept;
 
+		double getAnchor() const noexcept;
+
 	protected:
-		double xen, masterTune, referencePitch, pitchbendRange;
+		double xen, masterTune, anchor, pitchbendRange;
 	};
 }

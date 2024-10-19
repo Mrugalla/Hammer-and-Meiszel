@@ -33,9 +33,9 @@ namespace gui
 		void resized();
 
 	protected:
-		Label titleXen, titleRefPitch, titleMasterTune, titleMacro;
-		Knob xen, refPitch, masterTune, macro;
-		ModDial modDialXen, modDialRefPitch, modDialMasterTune;
+		Label titleXen, titleAnchor, titleMasterTune, titlePitchbend, titleMacro;
+		Knob xen, anchor, masterTune, pitchbend, macro;
+		ModDial modDialXen, modDialRefPitch, modDialMasterTune, modDialPitchbend;
 		std::array<SidePanelParam, kSidePanelParams> sidePanelParams;
 		std::array<Button, kNumButtons> buttons;
 		VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;

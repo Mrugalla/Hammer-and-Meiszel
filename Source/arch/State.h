@@ -36,10 +36,10 @@ namespace arch
 
 		void loadPatch(const ValueTree&);
 		
-		/* path, var; paths like "params/param/gain/value" */
+		// path, var; paths like "params/param/gain/value"
 		void set(const String&, Var&&);
 
-		/* paths like "params/param/gain/value" */
+		// paths like "params/param/gain/value"
 		const Var* get(const String&) const;
 		
 		ValueTree state;

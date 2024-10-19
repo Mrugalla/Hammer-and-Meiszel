@@ -244,15 +244,18 @@ namespace audio
 
 	void PluginProcessor::savePatch(arch::State& state)
 	{
+		keySelector.savePatch(state);
 		for(auto i = 0; i < 2; ++i)
 		{
 			const auto& material = modalFilter.getMaterial(i);
 			material.savePatch(state, "mat" + juce::String(i));
 		}
+
 	}
 
 	void PluginProcessor::loadPatch(const arch::State& state)
 	{
+		keySelector.loadPatch(state);
 		for (auto i = 0; i < 2; ++i)
 		{
 			auto& material = modalFilter.getMaterial(i);

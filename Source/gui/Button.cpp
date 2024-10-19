@@ -60,17 +60,18 @@ namespace gui
 				}
 				return;
 			}
-			const auto dist = value - toggleState;
+			const auto vRound = std::round(value);
+			const auto dist = vRound - toggleState;
 			const auto dif = dist * dist;
 			const auto eps = .001f;
 			if (dif > eps)
 			{
-				toggleState += speed * ((value > .5f ? 1.f : 0.f) - toggleState);
+				toggleState += speed * (vRound - toggleState);
 				repaint();
 			}
 			else if (toggleState != value)
 			{
-				toggleState = value;
+				toggleState = vRound;
 				repaint();
 			}
 		}, kToggleStateCB, fps, true));

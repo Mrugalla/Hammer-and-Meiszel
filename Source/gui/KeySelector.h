@@ -137,8 +137,9 @@ namespace gui
 				button.onClick = [&, b](const Mouse&)
 				{
 					auto& key = selecta.keys[b];
-					key.store(!key.load());
+					selecta.setKey(b, !key.load());
 				};
+				button.type = Button::Type::kToggle;
 			}
 
 			for (auto i = 0; i < numKeys; ++i)

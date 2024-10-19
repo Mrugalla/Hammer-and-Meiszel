@@ -193,6 +193,8 @@ namespace dsp
 		void generateSine(Material&);
 		void generateSaw(Material&);
 		void generateSquare(Material&);
+		void generateFibonacci(Material&);
+		void generatePrime(Material&);
 
 		using ActivesArray = std::array<bool, NumFilters>;
 

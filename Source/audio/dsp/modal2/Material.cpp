@@ -506,12 +506,12 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = 420.f;
-				peak.keytrack = 1.f;
-				peak.mag = 0.f;
-				peak.ratio = 1.f + static_cast<float>(i);
+				peak.freqHz = static_cast<double>(420 * (i + 1));
+				peak.keytrack = 1.;
+				peak.mag = 0.;
+				peak.ratio = 1. + static_cast<float>(i);
 			}
-			peaks[0].mag = 1.f;
+			peaks[0].mag = 1.;
 			material.reportUpdate();
 		}
 
@@ -522,14 +522,14 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = 420.f;
-				peak.keytrack = 1.f;
+				peak.freqHz = static_cast<double>(420 * (i + 1));
+				peak.keytrack = 1.;
 
-				const auto iF = static_cast<float>(i);
+				const auto iF = static_cast<double>(i);
 				const auto iR = iF * NumFiltersInv;
 
-				peak.mag = 1.f - iR;
-				peak.ratio = 1.f + iF;
+				peak.mag = 1. - iR;
+				peak.ratio = 1. + iF;
 			}
 			material.reportUpdate();
 		}
@@ -541,14 +541,52 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = 420.f;
+				peak.freqHz = static_cast<double>(420 * (i + 1));
 				peak.keytrack = 1.f;
 
-				const auto iF = static_cast<float>(i);
+				const auto iF = static_cast<double>(i);
 				const auto iR = iF * NumFiltersInv;
 
-				peak.mag = 1.f - iR;
-				peak.ratio = 1.f + iF * 2.f;
+				peak.mag = 1. - iR;
+				peak.ratio = 1. + iF * 2.;
+			}
+			material.reportUpdate();
+		}
+
+		void generateFibonacci(Material& material)
+		{
+			material.sampleRate = 44100.f;
+			auto& peaks = material.peakInfos;
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				auto& peak = peaks[i];
+
+				const auto fibonacci = math::fibonacci(i + 1);
+				const auto fibD = static_cast<double>(fibonacci);
+
+				peak.ratio = fibD;
+				peak.mag = 1. / fibD;
+				peak.freqHz = 420. * fibD;
+				peak.keytrack = 1.;
+			}
+			material.reportUpdate();
+		}
+
+		void generatePrime(Material& material)
+		{
+			material.sampleRate = 44100.f;
+			auto& peaks = material.peakInfos;
+			for (auto i = 0; i < NumFilters; ++i)
+			{
+				auto& peak = peaks[i];
+
+				const auto fibonacci = math::prime(i + 1);
+				const auto fibD = static_cast<double>(fibonacci) * .5;
+
+				peak.ratio = fibD;
+				peak.mag = 1. / fibD;
+				peak.freqHz = 420. * fibD;
+				peak.keytrack = 1.;
 			}
 			material.reportUpdate();
 		}

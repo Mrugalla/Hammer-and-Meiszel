@@ -46,16 +46,19 @@ namespace gui
 	IOEditor::IOEditor(Utils& u) :
 		Comp(u),
 		titleXen(u),
-		titleRefPitch(u),
+		titleAnchor(u),
 		titleMasterTune(u),
+		titlePitchbend(u),
 		titleMacro(u),
 		xen(u),
-		refPitch(u),
+		anchor(u),
 		masterTune(u),
+		pitchbend(u),
 		macro(u),
 		modDialXen(u),
 		modDialRefPitch(u),
 		modDialMasterTune(u),
+		modDialPitchbend(u),
 		sidePanelParams
 		{
 			SidePanelParam(u),
@@ -78,7 +81,7 @@ namespace gui
 		layout.init
 		(
 			{ 1, 1, 1 },
-			{ 2, 1, 2, 2, 1, 2, 2, 2, 2, 8 }
+			{ 3, 2, 2, 1, 2, 2, 2, 2, 8 }
 		);
 
 		initKnobs();
@@ -107,36 +110,53 @@ namespace gui
 	void IOEditor::resized()
 	{
 		layout.resized(getLocalBounds().toFloat());
-		layout.place(xen, 0, 0, 1, 1);
-		layout.place(refPitch, 1, 0, 1, 1);
-		layout.place(masterTune, 2, 0, 1, 1);
-		layout.place(titleXen, 0, 1, 1, 1);
-		layout.place(titleRefPitch, 1, 1, 1, 1);
-		layout.place(titleMasterTune, 2, 1, 1, 1);
-		layout.place(titleMacro, 0, 3, 1, 1);
+		const auto tuningArea = layout(0, 0, 3, 1);
+		{
+			const auto y = tuningArea.getY();
+			const auto w = tuningArea.getWidth();
+			const auto h = tuningArea.getHeight();
+			const auto w1 = w * .25f;
+			const auto h1 = h * .6667f;
+			const auto y1 = y + h1;
+			const auto h2 = h * .3333f;
+			auto x = tuningArea.getX();
+			xen.setBounds(BoundsF(x, y, w1, h1).toNearestInt());
+			titleXen.setBounds(BoundsF(x, y1, w1, h2).toNearestInt());
+			x += w1;
+			anchor.setBounds(BoundsF(x, y, w1, h1).toNearestInt());
+			titleAnchor.setBounds(BoundsF(x, y1, w1, h2).toNearestInt());
+			x += w1;
+			masterTune.setBounds(BoundsF(x, y, w1, h1).toNearestInt());
+			titleMasterTune.setBounds(BoundsF(x, y1, w1, h2).toNearestInt());
+			x += w1;
+			pitchbend.setBounds(BoundsF(x, y, w1, h1).toNearestInt());
+			titlePitchbend.setBounds(BoundsF(x, y1, w1, h2).toNearestInt());
+
+			locateAtKnob(modDialXen, xen);
+			locateAtKnob(modDialRefPitch, anchor);
+			locateAtKnob(modDialMasterTune, masterTune);
+			locateAtKnob(modDialPitchbend, pitchbend);
+		}
+		layout.place(titleMacro, 0, 2, 1, 1);
 		titleMacro.setMaxHeight();
-		layout.place(macro, 1, 2, 1, 2);
-		layout.place(buttons[kMacroRel], 2, 2, 1, 1);
-		layout.place(buttons[kMacroSwap], 2, 3, 1, 1);
-		layout.place(voiceGrid, 0, 4, 3, 1);
+		layout.place(macro, 1, 1, 1, 2);
+		layout.place(buttons[kMacroRel], 2, 1, 1, 1);
+		layout.place(buttons[kMacroSwap], 2, 2, 1, 1);
+		layout.place(voiceGrid, 0, 3, 3, 1);
 		for (auto i = 0; i < sidePanelParams.size(); ++i)
 		{
 			auto& spp = sidePanelParams[i];
-			const auto bounds = layout(0, 5 + i, 3, 1);
+			const auto bounds = layout(0, 4 + i, 3, 1);
 			spp.setBounds(bounds);
 		}
 		for (auto i = 2; i < buttons.size(); ++i)
 		{
 			auto& btn = buttons[i];
-			layout.place(btn, i - 2, -3, 1, 1);
+			layout.place(btn, i -2, -3, 1, 1);
 		}
 
 		labelGroup.setMaxHeight();
 		tuningLabelGroup.setMaxHeight();
-
-		locateAtKnob(modDialXen, xen);
-		locateAtKnob(modDialRefPitch, refPitch);
-		locateAtKnob(modDialMasterTune, masterTune);
 	}
 
 	//
@@ -196,35 +216,42 @@ namespace gui
 	void IOEditor::initKnobs()
 	{
 		addAndMakeVisible(titleXen);
-		addAndMakeVisible(titleRefPitch);
+		addAndMakeVisible(titleAnchor);
 		addAndMakeVisible(titleMasterTune);
+		addAndMakeVisible(titlePitchbend);
 		addAndMakeVisible(titleMacro);
 		addAndMakeVisible(macro);
 		addAndMakeVisible(xen);
-		addAndMakeVisible(refPitch);
+		addAndMakeVisible(anchor);
 		addAndMakeVisible(masterTune);
+		addAndMakeVisible(pitchbend);
 		addAndMakeVisible(modDialXen);
 		addAndMakeVisible(modDialRefPitch);
 		addAndMakeVisible(modDialMasterTune);
+		addAndMakeVisible(modDialPitchbend);
 
 		const auto fontKnobs = font::dosisRegular();
 
 		makeTextLabel(titleXen, "Xen", fontKnobs, Just::centred, CID::Txt);
 		makeKnob(PID::Xen, xen);
-		makeTextLabel(titleRefPitch, "Ref Pitch", fontKnobs, Just::centred, CID::Txt);
-		makeKnob(PID::ReferencePitch, refPitch);
+		makeTextLabel(titleAnchor, "Anchor", fontKnobs, Just::centred, CID::Txt);
+		makeKnob(PID::AnchorPitch, anchor);
 		makeTextLabel(titleMasterTune, "Master Tune", fontKnobs, Just::centred, CID::Txt);
+		makeKnob(PID::PitchbendRange, pitchbend);
+		makeTextLabel(titlePitchbend, "PB Range", fontKnobs, Just::centred, CID::Txt);
 		makeKnob(PID::MasterTune, masterTune);
 		makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
 		makeKnob(PID::Macro, macro, false);
 
 		tuningLabelGroup.add(titleXen);
-		tuningLabelGroup.add(titleRefPitch);
+		tuningLabelGroup.add(titleAnchor);
 		tuningLabelGroup.add(titleMasterTune);
+		tuningLabelGroup.add(titlePitchbend);
 
 		modDialXen.attach(PID::Xen);
-		modDialRefPitch.attach(PID::ReferencePitch);
+		modDialRefPitch.attach(PID::AnchorPitch);
 		modDialMasterTune.attach(PID::MasterTune);
+		modDialPitchbend.attach(PID::PitchbendRange);
 	}
 
 	void IOEditor::initSidePanels()

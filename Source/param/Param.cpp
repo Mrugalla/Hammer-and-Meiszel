@@ -54,7 +54,7 @@ namespace param
 			// TUNING PARAM:
 		case PID::Xen: return "Xen";
 		case PID::MasterTune: return "Master Tune";
-		case PID::ReferencePitch: return "Reference Pitch";
+		case PID::AnchorPitch: return "Anchor Pitch";
 		case PID::PitchbendRange: return "Pitchbend Range";
 #endif
 		case PID::Power: return "Power";
@@ -157,10 +157,10 @@ namespace param
 #endif
 #if PPDHasTuningEditor
 		// TUNING PARAMS:
-		case PID::Xen: return "Define the xenharmonic scale.";
-		case PID::MasterTune: return "Define the master tune / chamber pitch.";
-		case PID::ReferencePitch: return "This pitch has the same frequency in all xen scales.";
-		case PID::PitchbendRange: return "Define the pitchbend range in semitones.";
+		case PID::Xen: return "The xenharmony describes how many pitches per octave exist. Higher values = Smaller intervals.";
+		case PID::MasterTune: return "This is the frequency the anchor pitch refers to. (Chamber Frequency)";
+		case PID::AnchorPitch: return "The anchor pitch refers to the same frequency regardless of xen scale.";
+		case PID::PitchbendRange: return "The pitchbend range in semitones describes how many pitches you can bend.";
 #endif
 		case PID::Power: return "Dis/Enable the plugin.";
 
@@ -1365,7 +1365,7 @@ namespace param
 			const auto maxXen = static_cast<float>(PPDMaxXen);
 			params.push_back(makeParam(PID::Xen, 12.f, makeRange::withCentre(3.f, maxXen, 12.f), Unit::Xen));
 			params.push_back(makeParam(PID::MasterTune, 440.f, makeRange::withCentre(420.f, 460.f, 440.f), Unit::Hz));
-			params.push_back(makeParam(PID::ReferencePitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
+			params.push_back(makeParam(PID::AnchorPitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
 			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(1.f, 48.f), Unit::Semi));
 #endif
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
@@ -1376,17 +1376,17 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::NoiseBlend, 0.f));
-		params.push_back(makeParam(PID::KeySelectorEnabled, 1.f, makeRange::toggle(), Unit::Power));
+		params.push_back(makeParam(PID::KeySelectorEnabled, 0.f, makeRange::toggle(), Unit::Power));
 
-		params.push_back(makeParam(PID::EnvGenAmpAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpAttack, 10.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenAmpDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
-		params.push_back(makeParam(PID::EnvGenAmpSustain, .999f, makeRange::lin(0.f, .999f)));
-		params.push_back(makeParam(PID::EnvGenAmpRelease, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenAmpSustain, .8f, makeRange::lin(0.f, .999f)));
+		params.push_back(makeParam(PID::EnvGenAmpRelease, 10.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 
-		params.push_back(makeParam(PID::EnvGenModAttack, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModAttack, 10.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenModDecay, 420.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
-		params.push_back(makeParam(PID::EnvGenModSustain, .999f, makeRange::lin(0.f, .999f)));
-		params.push_back(makeParam(PID::EnvGenModRelease, 1.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModSustain, .8f, makeRange::lin(0.f, .999f)));
+		params.push_back(makeParam(PID::EnvGenModRelease, 10.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
@@ -1408,7 +1408,7 @@ namespace param
 		params.push_back(makeParam(PID::ModalResonanz, .7f));
 		params.push_back(makeParam(PID::ModalResonanzEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResonanzBreite, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalResoDamp, .6f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalResoDamp, .6f, makeRange::lin(0.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResoDampEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResoDampBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 

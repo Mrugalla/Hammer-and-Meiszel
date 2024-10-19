@@ -6,65 +6,48 @@ namespace gui
 	struct DropDownMenu :
 		public Comp
 	{
-		DropDownMenu(Utils& u) :
-			Comp(u),
-			buttons()
-		{
-			addEvt([&](evt::Type type, const void*)
-			{
-				if (type == evt::Type::ClickedEmpty)
-					setVisible(false);
-			});
-		}
+		DropDownMenu(Utils&);
 
-		void paint(Graphics& g) override
-		{
-			setCol(g, CID::Darken);
-			const auto numButtons = buttons.size();
-			for (auto b = 0; b < numButtons; ++b)
-			{
-				auto& btn = *buttons[b];
-				const auto bounds = btn.getBounds().toFloat();
-				g.fillRoundedRectangle(bounds, utils.thicc);
-			}
-		}
+		void paint(Graphics&) override;
 
-		void add(Button::OnPaint onPaint, Button::OnClick onClick)
-		{
-			buttons.push_back(std::make_unique<Button>(utils));
-			auto& btn = *buttons.back().get();
-			btn.onClick = onClick;
-			btn.onPaint = onPaint;
-		}
+		void add(Button::OnPaint, Button::OnClick);
 
-		void init()
-		{
-			for (auto& btn : buttons)
-				addAndMakeVisible(*btn);
-		}
+		// onClick, text, tooltip
+		void add(Button::OnClick, const String&, const String&);
 
-		void resized() override
-		{
-			const auto width = static_cast<float>(getWidth());
-			const auto height = static_cast<float>(getHeight());
-			const auto numButtons = buttons.size();
-			const auto numButtonsF = static_cast<float>(numButtons);
-			const auto numButtonsInv = 1.f / numButtonsF;
-			for (auto b = 0; b < numButtons; ++b)
-			{
-				const auto bF = static_cast<float>(b);
-				const auto bR = bF * numButtonsInv;
-				const auto x = 0.f;
-				const auto y = bR * height;
-				const auto w = width;
-				const auto h = height * numButtonsInv;
-				
-				auto& btn = *buttons[b];
-				btn.setBounds(BoundsF(x,y,w,h).reduced(utils.thicc).toNearestInt());
-			}
-		}
+		void init();
+
+		void resized() override;
 
 	private:
 		std::vector<std::unique_ptr<Button>> buttons;
+	};
+
+	struct ButtonDropDown :
+		public Button
+	{
+		ButtonDropDown(Utils& u) :
+			Button(u)
+		{}
+
+		void init(DropDownMenu& dropDown, const String& _tooltip)
+		{
+			makeTextButton(*this, "V", _tooltip, CID::Interact);
+			type = Button::Type::kToggle;
+			onPaint = makeButtonOnPaint(true, getColour(CID::Bg));
+			onClick = [&m = dropDown](const Mouse&)
+			{
+				m.setVisible(!m.isVisible());
+			};
+			add(Callback([&]()
+			{
+				const auto v = value > .5f;
+				const auto e = dropDown.isVisible();
+				if (v == e)
+					return;
+				value = e ? 1.f : 0.f;
+				repaint();
+			}, 3, cbFPS::k15, true));
+		}
 	};
 }

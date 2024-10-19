@@ -15,6 +15,44 @@ namespace math
     static constexpr double PiHalf = Pi * .5;
     static constexpr double PiHalfInv = 1. / PiHalf;
 
+    inline int fibonacci(int iterations) noexcept
+    {
+		int a = 0, b = 1;
+		for (auto i = 0; i < iterations; ++i)
+		{
+			const auto temp = a;
+			a = b;
+			b += temp;
+		}
+		return a;
+    }
+
+    inline bool isPrime(int n) noexcept
+    {
+        const auto numSqrt = std::sqrt(n);
+        for (auto i = 2; i <= numSqrt; ++i)
+        {
+            if (n % i == 0)
+                return false;
+        }
+        return true;
+    }
+
+    inline int prime(int iterations) noexcept
+    {
+		int n = 2;
+        while(true)
+		{
+			if (isPrime(n))
+			{
+                --iterations;
+				if (iterations == 0)
+					return n;
+			}
+			++n;
+		}
+    }
+
     template<typename Float>
     inline bool bufferSilent(Float* smpls, int numSamples) noexcept
     {
