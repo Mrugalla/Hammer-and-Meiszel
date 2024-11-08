@@ -1,12 +1,12 @@
 #pragma once
-#include "../../Using.h"
-#include "../../../arch/State.h"
+#include "../../../Using.h"
+#include "../../../../arch/State.h"
 #include <juce_dsp/juce_dsp.h>
 #include "Axiom.h"
 
 namespace dsp
 {
-	namespace modal2
+	namespace modal
 	{
 		struct PeakInfo
 		{
@@ -77,7 +77,7 @@ namespace dsp
 
 			void savePatch(arch::State& state, String&& matStr) const
 			{
-				for (auto j = 0; j < dsp::modal2::NumFilters; ++j)
+				for (auto j = 0; j < NumFilters; ++j)
 				{
 					const auto& peakInfo = peakInfos[j];
 					const auto peakStr = matStr + "pk" + juce::String(j);
@@ -89,7 +89,7 @@ namespace dsp
 
 			void loadPatch(const arch::State& state, String&& matStr)
 			{
-				for (auto j = 0; j < dsp::modal2::NumFilters; ++j)
+				for (auto j = 0; j < NumFilters; ++j)
 				{
 					auto& peakInfo = peakInfos[j];
 					const auto peakStr = matStr + "pk" + juce::String(j);

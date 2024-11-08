@@ -29,6 +29,7 @@ namespace dsp
 
 			AllpassSeries() :
 				filters(),
+				sequences(),
 				sampleRateInv(1.)
 			{
 				for (auto& apSlopeChannels : filters)
@@ -140,8 +141,8 @@ namespace dsp
 			// apReso, numChannels
 			void setAPReso(double, int) noexcept;
 
-			// samples, wHead, rHead, feedback[-1,1], numChannels, startIdx, endIdx
-			void operator()(double**, const int*, const double*, double, int, int, int) noexcept;
+			// samples, wHead, rHead, feedback[-1,1], apResoInfo, numChannels, startIdx, endIdx
+			void operator()(double**, const int*, const double*, double, PRMInfoD, int, int, int) noexcept;
 
 		protected:
 			AudioBuffer ringBuffer;
@@ -165,25 +166,24 @@ namespace dsp
 		}
 
 		// samples, midi, wHead, feedback [-1,1], retune [-n,n]semi, apReso[.1, 8], numChannels, numSamples
-		void operator()(double**, const MidiBuffer&, const int* wHead,
-			double, double, double,
-			int, int) noexcept;
+		void operator()(double**, const MidiBuffer&, const int*, double, double, double, int, int) noexcept;
 
 	protected:
 		const arch::XenManager& xenManager;
 		PRMD smooth;
 		std::array<double, BlockSize2x> readHead;
+		PRMD apResoPRM;
 		DelayFeedback delay;
 		Val val;
-		double Fs, sizeF, curDelay, apReso, sequencesPos;
+		double Fs, sizeF, curDelay, sequencesPos;
 	public:
 		int size;
 	private:
 		// samples, midi, wHead, feedback, numChannels, s
-		void processMIDI(double**, const MidiBuffer&, const int*, double, int, int&) noexcept;
+		void processMIDI(double**, const MidiBuffer&, const int*, PRMInfoD, double, int, int&) noexcept;
 
-		// samples, wHead, feedback, numChannels, startIdx, endIdx
-		void processDelay(double**, const int*, double, int, int, int) noexcept;
+		// samples, wHead, apResoInfo, feedback, numChannels, startIdx, endIdx
+		void processDelay(double**, const int*, PRMInfoD, double, int, int, int) noexcept;
 
 		// numChannels
 		void updatePitch(int) noexcept;

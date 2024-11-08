@@ -38,6 +38,7 @@ namespace gui
         utils(*this, p),
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
+        compPower(utils),
         tooltip(utils),
         genAni(utils),
         modParamsEditor(utils),
@@ -73,6 +74,9 @@ namespace gui
             )
         },
         modalEditor(utils),
+        flangerEditor(utils),
+        buttonModalTab(utils),
+		buttonFlangerTab(utils),
         buttonColours(coloursEditor),
         manifestOfWisdomButton(utils, manifestOfWisdom)
     {
@@ -94,11 +98,15 @@ namespace gui
 		for (auto& envGen : envGens)
 			addAndMakeVisible(envGen);
 		addAndMakeVisible(modalEditor);
+        addChildComponent(flangerEditor);
+		addAndMakeVisible(buttonModalTab);
+		addAndMakeVisible(buttonFlangerTab);
         addAndMakeVisible(buttonColours);
         addAndMakeVisible(manifestOfWisdomButton);
 		addChildComponent(coloursEditor);
 		addChildComponent(manifestOfWisdom);
         addChildComponent(toast);
+        addAndMakeVisible(compPower);
 
         {
             makeSlider(noiseBlend, true);
@@ -123,8 +131,36 @@ namespace gui
             makeTextLabel(labelTitle, name, titleFont, Just::centred, CID::Txt);
         }
 
+        {
+			makeTextButton(buttonModalTab, "Modal", "Click here to open the modal module.", CID::Interact);
+            buttonModalTab.type = Button::Type::kToggle;
+			buttonModalTab.onClick = [&](const Mouse&)
+            {
+				modalEditor.setVisible(true);
+				flangerEditor.setVisible(false);
+                buttonModalTab.value = 1.f;
+				buttonFlangerTab.value = 0.f;
+                buttonModalTab.repaint();
+				buttonFlangerTab.repaint();
+			};
+            buttonModalTab.value = 1.f;
+
+			makeTextButton(buttonFlangerTab, "Flanger", "Click here to open the flanger module.", CID::Interact);
+			buttonFlangerTab.type = Button::Type::kToggle;
+            buttonFlangerTab.onClick = [&](const Mouse&)
+            {
+                modalEditor.setVisible(false);
+                flangerEditor.setVisible(true);
+                buttonModalTab.value = 0.f;
+                buttonFlangerTab.value = 1.f;
+                buttonModalTab.repaint();
+            };
+			buttonFlangerTab.value = 0.f;
+        }
+
         loadBounds(*this);
         utils.audioProcessor.pluginProcessor.editorExists.store(true);
+        setOpaque(true);
     }
 
     Editor::~Editor()
@@ -141,7 +177,7 @@ namespace gui
 
     void Editor::paintOverChildren(Graphics&)
     {
-       //layout.paint(g, Colour(0x11ffffff));
+        //layout.paint(g, Colour(0x11ffffff));
     }
 
     bool needsResize(Editor& e)
@@ -205,7 +241,8 @@ namespace gui
 				auto pxl = marbleImg.getPixelAt(x, y);
                 marbleImg.setPixelAt(x, y, pxl.withBrightness(1.f - pxl.getBrightness()));
             }
-				
+
+        compPower.setBounds(getLocalBounds());
 
         utils.resized();
         const auto thicc = utils.thicc;
@@ -231,8 +268,11 @@ namespace gui
         // center panel
         layout.place(keySelector, 1, 1, 1, 1);
         layout.place(modalEditor, 1, 2, 1, 1);
+		layout.place(flangerEditor, 1, 2, 1, 1);
         layout.place(coloursEditor, 1, 2, 1, 1);
         layout.place(manifestOfWisdom, 1, 2, 1, 1);
+        layout.place(buttonModalTab, 1.f, 3, .5f, 1);
+		layout.place(buttonFlangerTab, 1.5f, 3, .5f, 1);
 
         // bottom panel
         tooltip.setBounds(layout.bottom().toNearestInt());

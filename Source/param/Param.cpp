@@ -62,6 +62,7 @@ namespace param
 		// LOW LEVEL PARAMS:
 		case PID::NoiseBlend: return "Noise Blend";
 		case PID::KeySelectorEnabled: return "Key Selector Enabled";
+		//
 		case PID::EnvGenAmpAttack: return "EnvGenAmp Attack";
 		case PID::EnvGenAmpDecay: return "EnvGenAmp Decay";
 		case PID::EnvGenAmpSustain: return "EnvGenAmp Sustain";
@@ -70,6 +71,7 @@ namespace param
 		case PID::EnvGenModDecay: return "EnvGenMod Decay";
 		case PID::EnvGenModSustain: return "EnvGenMod Sustain";
 		case PID::EnvGenModRelease: return "EnvGenMod Release";
+		//
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
 		case PID::ModalSmartKeytrack: return "Modal Smart Keytrack";
@@ -94,11 +96,17 @@ namespace param
 		case PID::ModalResoDampEnv: return "Modal Reso Damp Env";
 		case PID::ModalResoDampBreite: return "Modal Reso Damp Breite";
 		//
-		case PID::CombRueckkopplung: return juce::CharPointer_UTF8("Comb R\xc3\xbc""ckkopplung");
 		case PID::CombOct: return "Comb Oct";
 		case PID::CombSemi: return "Comb Semi";
-		case PID::CombAPResonanz: return "Comb AP Resonanz";
+		case PID::CombFeedback: return "Comb Feedback";
+		case PID::CombFeedbackEnv: return "Comb Feedback Env";
+		case PID::CombFeedbackWidth: return "Comb Feedback Width";
+		case PID::CombAPReso: return "Comb AP Resonance";
+		case PID::CombAPResoEnv: return "Comb AP Reso Env";
+		case PID::CombAPResoWidth: return "Comb AP Reso Width";
 		case PID::CombAPShape: return "Comb AP Shape";
+		case PID::CombAPShapeEnv: return "Comb AP Shape Env";
+		case PID::CombAPShapeWidth: return "Comb AP Shape Width";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -198,11 +206,18 @@ namespace param
 		case PID::ModalResoDamp: return "Reso damping causes higher partials to be more damped.";
 		case PID::ModalResoDampEnv: return "The envelope generator's depth on the modal reso damp.";
 		case PID::ModalResoDampBreite: return "The stereo width of the modal reso damp.";
-		case PID::CombRueckkopplung: return "Stronger feedback causes the comb filter to ring sharper.";
+		
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
 		case PID::CombSemi: return "Transposes the comb filter in semitones.";
-		case PID::CombAPResonanz: return "I feel like more resonance sorta straightens out the signal.";
-		case PID::CombAPShape: return "Shape the relationship between the allpass filters for textures.";
+		case PID::CombFeedback: return "The feedback of the comb filter's feedback delay.";
+		case PID::CombFeedbackEnv: return "The envelope generator's depth on the comb filter's feedback.";
+		case PID::CombFeedbackWidth: return "The stereo width of the comb filter's feedback.";
+		case PID::CombAPReso: return "The resonance of the allpass filters in the comb filter's feedback loop.";
+		case PID::CombAPResoEnv: return "The envelope generator's depth on the comb filter's resonance.";
+		case PID::CombAPResoWidth: return "The stereo width of the comb filter's resonance.";
+		case PID::CombAPShape: return "Shape the relationship between the allpass filters for different textures.";
+		case PID::CombAPShapeEnv: return "The envelope generator's depth on the allpass filters' shape.";
+		case PID::CombAPShapeWidth: return "The stereo width of the allpass filters' shape.";
 
 		default: return "Invalid Tooltip.";
 		}
@@ -1412,11 +1427,18 @@ namespace param
 		params.push_back(makeParam(PID::ModalResoDampEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResoDampBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 
-		params.push_back(makeParam(PID::CombRueckkopplung, 0.f));
+		
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
-		params.push_back(makeParam(PID::CombAPResonanz, 2.f, makeRange::withCentre(1., 16., 2.), Unit::Q));
-		params.push_back(makeParam(PID::CombAPShape, 0.f, makeRange::lin(0.f, 1.f), Unit::Percent));
+		params.push_back(makeParam(PID::CombFeedback, 0.f));
+		params.push_back(makeParam(PID::CombFeedbackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombAPReso, 2.f, makeRange::withCentre(1., 16., 2.), Unit::Q));
+		params.push_back(makeParam(PID::CombAPResoEnv, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombAPResoWidth, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombAPShape, 0.f));
+		params.push_back(makeParam(PID::CombAPShapeEnv, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombAPShapeWidth, 0.f, makeRange::lin(-1.f, 1.f)));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

@@ -45,29 +45,57 @@ namespace dsp
 		allpassSeries.setAPReso(apReso, numChannels);
 	}
 
-	void CombFilter::DelayFeedback::operator()(double** samples,
-		const int* wHead, const double* rHead, double fb, int numChannels, int startIdx, int endIdx) noexcept
+	void CombFilter::DelayFeedback::operator()(double** samples, const int* wHead,
+		const double* rHead, double fb, PRMInfoD apResoInfo, int numChannels, int startIdx, int endIdx) noexcept
 	{
 		auto ringBuf = ringBuffer.getArrayOfWritePointers();
 
-		for (auto ch = 0; ch < numChannels; ++ch)
+		if (apResoInfo.smoothing)
 		{
-			auto smpls = samples[ch];
-			auto ring = ringBuf[ch];
-
-			for (auto s = startIdx; s < endIdx; ++s)
+			for (auto ch = 0; ch < numChannels; ++ch)
 			{
-				const auto w = wHead[s];
-				const auto r = rHead[s];
+				auto smpls = samples[ch];
+				auto ring = ringBuf[ch];
 
-				const auto smplPresent = smpls[s];
-				const auto smplDelayed = math::cubicHermiteSpline(ring, r, size);
+				for (auto s = startIdx; s < endIdx; ++s)
+				{
+					setAPReso(apResoInfo[s], numChannels);
 
-				const auto sOut = allpassSeries(smplDelayed, ch) * fb + smplPresent;
-				const auto sIn = sOut;
+					const auto w = wHead[s];
+					const auto r = rHead[s];
 
-				ring[w] = sIn;
-				smpls[s] = sOut;
+					const auto smplPresent = smpls[s];
+					const auto smplDelayed = math::cubicHermiteSpline(ring, r, size);
+
+					const auto sOut = allpassSeries(smplDelayed, ch) * fb + smplPresent;
+					const auto sIn = sOut;
+
+					ring[w] = sIn;
+					smpls[s] = sOut;
+				}
+			}
+		}
+		else
+		{
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				auto smpls = samples[ch];
+				auto ring = ringBuf[ch];
+
+				for (auto s = startIdx; s < endIdx; ++s)
+				{
+					const auto w = wHead[s];
+					const auto r = rHead[s];
+
+					const auto smplPresent = smpls[s];
+					const auto smplDelayed = math::cubicHermiteSpline(ring, r, size);
+
+					const auto sOut = allpassSeries(smplDelayed, ch) * fb + smplPresent;
+					const auto sIn = sOut;
+
+					ring[w] = sIn;
+					smpls[s] = sOut;
+				}
 			}
 		}
 	}
@@ -78,9 +106,10 @@ namespace dsp
 		xenManager(_xenManager),
 		smooth(0.),
 		readHead(),
+		apResoPRM(8.),
 		delay(),
 		val(),
-		Fs(0.), sizeF(0.), curDelay(0.),
+		Fs(0.), sizeF(0.), curDelay(0.), sequencesPos(0.),
 		size(0)
 	{
 	}
@@ -93,31 +122,28 @@ namespace dsp
 		delay.prepare(Fs, size);
 		smooth.prepare(Fs, 1.);
 		curDelay = 0.;
+		apResoPRM.prepare(sampleRate, 4.);
 	}
 
-	void CombFilter::operator()(double** samples, const MidiBuffer& midi, const int* wHead,
-		double feedback, double retune, double _apReso,
+	void CombFilter::operator()(double** samples, const MidiBuffer& midi,
+		const int* wHead, double feedback, double retune, double apReso,
 		int numChannels, int numSamples) noexcept
 	{
-		if(apReso != _apReso)
-		{
-			apReso = _apReso;
-			delay.setAPReso(apReso, numChannels);
-		}
-
 		if (val.pitchParam != retune)
 		{
 			val.pitchParam = retune;
 			updatePitch(numChannels);
 		}
 
+		const auto apResoInfo = apResoPRM(apReso, numSamples);
+
 		auto s = 0;
-		processMIDI(samples, midi, wHead, feedback, numChannels, s);
-		processDelay(samples, wHead, feedback, numChannels, s, numSamples);
+		processMIDI(samples, midi, wHead, apResoInfo, feedback, numChannels, s);
+		processDelay(samples, wHead, apResoInfo, feedback, numChannels, s, numSamples);
 	}
 
-	void CombFilter::processMIDI(double** samples, const MidiBuffer& midi, const int* wHead, double feedback,
-		int numChannels, int& s) noexcept
+	void CombFilter::processMIDI(double** samples, const MidiBuffer& midi, const int* wHead,
+		PRMInfoD apResoInfo, double feedback, int numChannels, int& s) noexcept
 	{
 		for (const auto it : midi)
 		{
@@ -128,7 +154,7 @@ namespace dsp
 				const auto note = msg.getNoteNumber();
 				val.pitchNote = static_cast<double>(note);
 				updatePitch(numChannels);
-				processDelay(samples, wHead, feedback, numChannels, s, ts);
+				processDelay(samples, wHead, apResoInfo, feedback, numChannels, s, ts);
 				s = ts;
 			}
 			else if (msg.isPitchWheel())
@@ -136,13 +162,14 @@ namespace dsp
 				const auto ts = it.samplePosition;
 				val.pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xenManager.getPitchbendRange() * 2.;
 				updatePitch(numChannels);
-				processDelay(samples, wHead, feedback, numChannels, s, ts);
+				processDelay(samples, wHead, apResoInfo, feedback, numChannels, s, ts);
 				s = ts;
 			}
 		}
 	}
 
-	void CombFilter::processDelay(double** samples, const int* wHead, double feedback,
+	void CombFilter::processDelay(double** samples, const int* wHead,
+		PRMInfoD apResoInfo, double feedback,
 		int numChannels, int startIdx, int endIdx) noexcept
 	{
 		const auto numSamples = endIdx - startIdx;
@@ -170,7 +197,7 @@ namespace dsp
 		(
 			samples,
 			wHead, readHead.data(),
-			feedback,
+			feedback, apResoInfo,
 			numChannels, startIdx, endIdx
 		);
 	}

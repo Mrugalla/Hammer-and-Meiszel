@@ -1,11 +1,11 @@
 /*
   ==============================================================================
 
-    flanger.cpp
-    Created: 30 Mar 2024 9:23:10pm
+    ModalParamsEditor.cpp
+    Created: 10 Sep 2024 10:11:37pm
     Author:  Xi
 
   ==============================================================================
 */
 
-#include "flanger.h"
+#include "ModalParamsEditor.h"

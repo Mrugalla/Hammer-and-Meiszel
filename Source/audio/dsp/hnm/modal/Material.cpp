@@ -1,11 +1,11 @@
 #include "Material.h"
-#include "../Convolver.h"
-#include "../../../libs/MoogLadders-master/src/Filters.h"
+#include "../../Convolver.h"
+#include "../../../../libs/MoogLadders-master/src/Filters.h"
 #include <BinaryData.h>
 
 namespace dsp
 {
-	namespace modal2
+	namespace modal
 	{
 		// MATERIAL
 

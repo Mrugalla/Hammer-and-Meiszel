@@ -4,8 +4,14 @@
 
 ~~~ todo ~~~
 
-KeySelector
-    funktionalität suckt noch
+modal material editor
+    snap partial to grid horizontally
+
+parameter smoothing im flanger katastrophal
+
+m/s button zu dicke schrift
+
+prevent some colours from having transparency
 
 polyphony parameter
     monophonic mode with portamento and stuff

@@ -151,7 +151,7 @@ namespace gui
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
-				dsp::modal2::generateSine(material);
+				dsp::modal::generateSine(material);
 			},
 			"Gen: Sine", "Generates a modal material with a single partial."
 		);
@@ -163,7 +163,7 @@ namespace gui
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
-				dsp::modal2::generateSaw(material);
+				dsp::modal::generateSaw(material);
 			},
 			"Gen: Saw", "Generates a sawtooth-shaped modal material."
 		);
@@ -175,7 +175,7 @@ namespace gui
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
-				dsp::modal2::generateSquare(material);
+				dsp::modal::generateSquare(material);
 			},
 			"Gen: Square", "Generates a square-shaped modal material."
 		);
@@ -187,7 +187,7 @@ namespace gui
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
-				dsp::modal2::generateFibonacci(material);
+				dsp::modal::generateFibonacci(material);
 			},
 			"Gen: Fibonacci", "Generates a modal material with Fibonacci ratios."
 		);
@@ -199,7 +199,7 @@ namespace gui
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
-				dsp::modal2::generatePrime(material);
+				dsp::modal::generatePrime(material);
 			},
 			"Gen: Prime", "Generates a modal material with prime ratios."
 		);
@@ -224,7 +224,7 @@ namespace gui
 		(
 			[&](const Mouse&)
 			{
-				const auto numFilters = dsp::modal2::NumFilters;
+				const auto numFilters = dsp::modal::NumFilters;
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				const auto matIdx = buttonA.value > .5f ? 0 : 1;
 				auto& material = modalFilter.getMaterial(matIdx);
@@ -256,7 +256,7 @@ namespace gui
 		(
 			[&](const Mouse&)
 			{
-				const auto numFilters = dsp::modal2::NumFilters;
+				const auto numFilters = dsp::modal::NumFilters;
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				const auto matIdx = buttonA.value > .5f ? 0 : 1;
 				auto& material = modalFilter.getMaterial(matIdx);
@@ -291,7 +291,7 @@ namespace gui
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
 				auto& peakInfos = material.peakInfos;
-				const auto numFilters = dsp::modal2::NumFilters;
+				const auto numFilters = dsp::modal::NumFilters;
 				while (true)
 				{
 					Point duplicate;

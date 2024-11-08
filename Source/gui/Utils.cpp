@@ -8,16 +8,9 @@ namespace gui
 		pluginTop(_pluginTop),
 		audioProcessor(_audioProcessor),
 		params(audioProcessor.params),
-		cb
-		([&]()
-		{
-			const auto power = params(PID::Power).getValue() > .5f;
-			pluginTop.setAlpha(power ? 1.f : .5f);
-		}, 0, cbFPS::k30, true),
 		thicc(2.f)
 	{
 		Colours::c.init(audioProcessor.state.props.getUserSettings());
-		add(&cb);
 	}
 
 	void Utils::add(Callback* ncb)

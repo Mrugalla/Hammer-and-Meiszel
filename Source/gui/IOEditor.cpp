@@ -71,9 +71,9 @@ namespace gui
 			Button(u),
 			Button(u),
 			Button(u),
-			Button(u),
 			Button(u)
 		},
+		buttonPower(u),
 		voiceGrid(u),
 		labelGroup(),
 		tuningLabelGroup()
@@ -149,10 +149,11 @@ namespace gui
 			const auto bounds = layout(0, 4 + i, 3, 1);
 			spp.setBounds(bounds);
 		}
+		layout.place(buttonPower, 0, -3, 1, 1);
 		for (auto i = 2; i < buttons.size(); ++i)
 		{
 			auto& btn = buttons[i];
-			layout.place(btn, i -2, -3, 1, 1);
+			layout.place(btn, i - 1, -3, 1, 1);
 		}
 
 		labelGroup.setMaxHeight();
@@ -287,18 +288,7 @@ namespace gui
 	{
 		for (auto& btn : buttons)
 			addAndMakeVisible(btn);
-		// POWER BUTTON
-		auto& powerButton = buttons[kPower];
-		makeParameter(powerButton, PID::Power, Button::Type::kToggle, makeButtonOnPaintPower());
-		const auto powerButtonOnClick = powerButton.onClick;
-		powerButton.onClick = [&, oc = powerButtonOnClick](const Mouse& mouse)
-			{
-				oc(mouse);
-				powerButton.value = std::round(utils.audioProcessor.params(PID::Power).getValMod());
-				repaint();
-			};
-		powerButton.type = Button::Type::kToggle;
-		powerButton.value = std::round(utils.audioProcessor.params(PID::Power).getValMod());
+		addAndMakeVisible(buttonPower);
 		// DELTA BUTTON
 		auto& deltaButton = buttons[kDelta];
 		makeParameter(deltaButton, PID::Delta, Button::Type::kToggle, makeButtonOnPaintPolarity());

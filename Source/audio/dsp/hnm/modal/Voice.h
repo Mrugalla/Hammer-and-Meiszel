@@ -1,11 +1,11 @@
 #pragma once
 #include "ResonatorBank.h"
-#include "../EnvelopeGenerator.h"
-#include "../PRM.h"
+#include "../../EnvelopeGenerator.h"
+#include "../../PRM.h"
 
 namespace dsp
 {
-	namespace modal2
+	namespace modal
 	{
 		struct Voice
 		{
@@ -75,7 +75,3 @@ namespace dsp
 		};
 	}
 }
-
-/*
-
-*/

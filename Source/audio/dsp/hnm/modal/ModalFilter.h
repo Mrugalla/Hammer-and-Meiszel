@@ -3,7 +3,7 @@
 
 namespace dsp
 {
-	namespace modal2
+	namespace modal
 	{
 		struct ModalFilter
 		{

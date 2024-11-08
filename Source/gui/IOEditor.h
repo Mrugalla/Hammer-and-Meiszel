@@ -1,6 +1,7 @@
 #pragma once
 #include "Knob.h"
 #include "VoiceGrid.h"
+#include "ButtonPower.h"
 
 namespace gui
 {
@@ -8,7 +9,7 @@ namespace gui
 		public Comp
 	{
 		enum { kWet, kMix, kOut, kMacro, kSidePanelParams };
-		enum { kMacroRel, kMacroSwap, kPower, kDelta, kMidSide, kNumButtons };
+		enum { kMacroRel, kMacroSwap, kDelta, kMidSide, kNumButtons };
 		enum { cbMacroRel };
 
 		struct SidePanelParam
@@ -38,6 +39,7 @@ namespace gui
 		ModDial modDialXen, modDialRefPitch, modDialMasterTune, modDialPitchbend;
 		std::array<SidePanelParam, kSidePanelParams> sidePanelParams;
 		std::array<Button, kNumButtons> buttons;
+		ButtonPower buttonPower;
 		VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;
 		LabelGroup labelGroup, tuningLabelGroup;
 

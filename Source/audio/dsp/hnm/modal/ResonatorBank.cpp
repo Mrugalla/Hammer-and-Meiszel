@@ -2,7 +2,7 @@
 
 namespace dsp
 {
-	namespace modal2
+	namespace modal
 	{
 		double calcBandwidthFc(double reso, double sampleRateInv) noexcept
 		{

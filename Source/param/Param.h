@@ -12,7 +12,7 @@ namespace param
 
 	enum class PID
 	{
-		// high level parameters
+		// high level parameters:
 		Macro,
 #if PPDIsNonlinear
 		GainIn,
@@ -36,7 +36,7 @@ namespace param
 #if PPDHasLookahead
 		Lookahead,
 #endif
-		// tuning parameters
+		// tuning parameters:
 #if PPDHasTuningEditor
 		Xen,
 		MasterTune,
@@ -45,9 +45,10 @@ namespace param
 #endif
 		Power,
 
-		// low level parameters
+		// inputs:
 		NoiseBlend,
 		KeySelectorEnabled,
+		// modsys:
 		EnvGenAmpAttack,
 		EnvGenAmpDecay,
 		EnvGenAmpSustain,
@@ -56,6 +57,7 @@ namespace param
 		EnvGenModDecay,
 		EnvGenModSustain,
 		EnvGenModRelease,
+		// modal
 		ModalOct,
 		ModalSemi,
 		ModalSmartKeytrack,
@@ -79,13 +81,19 @@ namespace param
 		ModalResoDamp,
 		ModalResoDampEnv,
 		ModalResoDampBreite,
-		CombRueckkopplung,
+		// comb:
 		CombOct,
 		CombSemi,
-		CombAPResonanz,
+		CombFeedback,
+		CombFeedbackEnv,
+		CombFeedbackWidth,
+		CombAPReso,
+		CombAPResoEnv,
+		CombAPResoWidth,
 		CombAPShape,
+		CombAPShapeEnv,
+		CombAPShapeWidth,
 		//
-		
 		NumParams
 	};
 	static constexpr int NumParams = static_cast<int>(PID::NumParams);

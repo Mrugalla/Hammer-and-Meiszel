@@ -115,6 +115,25 @@
       </GROUP>
       <GROUP id="{40307200-594D-4A49-C512-2C481058424A}" name="audio">
         <GROUP id="{59EAA807-50FE-F7F8-0D20-F8E7A0503840}" name="dsp">
+          <GROUP id="{4212BB2B-5BC7-EE70-E8D1-78CF49C543DD}" name="hnm">
+            <GROUP id="{63974B4F-B8F8-E17F-417F-A25D753477C0}" name="comb">
+              <FILE id="lCR37w" name="Comb.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/comb/Comb.cpp"/>
+              <FILE id="PKk4ZS" name="Comb.h" compile="0" resource="0" file="Source/audio/dsp/hnm/comb/Comb.h"/>
+            </GROUP>
+            <GROUP id="{5F442105-6F3F-8765-20EF-F0A30CCC9C6B}" name="modal">
+              <FILE id="Hbm9Fo" name="Axiom.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/modal/Axiom.cpp"/>
+              <FILE id="pCy3Z3" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/hnm/modal/Axiom.h"/>
+              <FILE id="hRTIHY" name="Material.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/modal/Material.cpp"/>
+              <FILE id="ymPitp" name="Material.h" compile="0" resource="0" file="Source/audio/dsp/hnm/modal/Material.h"/>
+              <FILE id="NpaSaq" name="ModalFilter.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/modal/ModalFilter.cpp"/>
+              <FILE id="D0QWQx" name="ModalFilter.h" compile="0" resource="0" file="Source/audio/dsp/hnm/modal/ModalFilter.h"/>
+              <FILE id="rXhu75" name="ResonatorBank.cpp" compile="1" resource="0"
+                    file="Source/audio/dsp/hnm/modal/ResonatorBank.cpp"/>
+              <FILE id="HSIebq" name="ResonatorBank.h" compile="0" resource="0" file="Source/audio/dsp/hnm/modal/ResonatorBank.h"/>
+              <FILE id="nsv1Br" name="Voice.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/modal/Voice.cpp"/>
+              <FILE id="JqBFCr" name="Voice.h" compile="0" resource="0" file="Source/audio/dsp/hnm/modal/Voice.h"/>
+            </GROUP>
+          </GROUP>
           <GROUP id="{1D5BCCCC-42EE-52A6-7B66-DBFC5CC929C4}" name="midi">
             <FILE id="ls4YaF" name="AutoMPE.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/AutoMPE.cpp"/>
             <FILE id="huAUKl" name="AutoMPE.h" compile="0" resource="0" file="Source/audio/dsp/midi/AutoMPE.h"/>
@@ -132,23 +151,6 @@
             <FILE id="DcsQaQ" name="XenDemoSynth.h" compile="0" resource="0" file="Source/audio/dsp/midi/XenDemoSynth.h"/>
             <FILE id="cZnebq" name="XenRescaler.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/XenRescaler.cpp"/>
             <FILE id="taFAps" name="XenRescaler.h" compile="0" resource="0" file="Source/audio/dsp/midi/XenRescaler.h"/>
-          </GROUP>
-          <GROUP id="{E9F4FD62-32A8-21CF-CE2B-D5ACC9DD08A7}" name="modal2">
-            <FILE id="Pzh3KQ" name="Axiom.cpp" compile="1" resource="0" file="Source/audio/dsp/modal2/Axiom.cpp"/>
-            <FILE id="mWWPYJ" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/modal2/Axiom.h"/>
-            <FILE id="sv7L0r" name="Material.cpp" compile="1" resource="0" file="Source/audio/dsp/modal2/Material.cpp"/>
-            <FILE id="X9mtR4" name="Material.h" compile="0" resource="0" file="Source/audio/dsp/modal2/Material.h"/>
-            <FILE id="R5eLV2" name="ModalFilter.cpp" compile="1" resource="0" file="Source/audio/dsp/modal2/ModalFilter.cpp"/>
-            <FILE id="MzGkQQ" name="ModalFilter.h" compile="0" resource="0" file="Source/audio/dsp/modal2/ModalFilter.h"/>
-            <FILE id="c3PDJ8" name="ResonatorBank.cpp" compile="1" resource="0"
-                  file="Source/audio/dsp/modal2/ResonatorBank.cpp"/>
-            <FILE id="h3uORn" name="ResonatorBank.h" compile="0" resource="0" file="Source/audio/dsp/modal2/ResonatorBank.h"/>
-            <FILE id="ClQVcR" name="Voice.cpp" compile="1" resource="0" file="Source/audio/dsp/modal2/Voice.cpp"/>
-            <FILE id="RX2bYA" name="Voice.h" compile="0" resource="0" file="Source/audio/dsp/modal2/Voice.h"/>
-          </GROUP>
-          <GROUP id="{34169043-55F3-04E0-A744-09A1E55779C2}" name="flanger">
-            <FILE id="AbgITi" name="flanger.cpp" compile="1" resource="0" file="Source/audio/dsp/flanger/flanger.cpp"/>
-            <FILE id="rG8yVj" name="flanger.h" compile="0" resource="0" file="Source/audio/dsp/flanger/flanger.h"/>
           </GROUP>
           <FILE id="lvOupd" name="Allpass.cpp" compile="1" resource="0" file="Source/audio/dsp/Allpass.cpp"/>
           <FILE id="t6mcvM" name="Allpass.h" compile="0" resource="0" file="Source/audio/dsp/Allpass.h"/>
@@ -205,19 +207,22 @@
         <FILE id="BThon6" name="Using.h" compile="0" resource="0" file="Source/audio/Using.h"/>
       </GROUP>
       <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui">
-        <GROUP id="{535413D6-9DC7-A95A-3D8E-94D5FCD4CECA}" name="modal">
-          <FILE id="grljkd" name="ModalFilterMaterialEditor.cpp" compile="1"
-                resource="0" file="Source/gui/ModalFilterMaterialEditor.cpp"/>
-          <FILE id="hlm5Mo" name="ModalFilterMaterialEditor.h" compile="0" resource="0"
-                file="Source/gui/ModalFilterMaterialEditor.h"/>
-          <FILE id="rkieaT" name="ModalModuleEditor.cpp" compile="1" resource="0"
-                file="Source/gui/ModalModuleEditor.cpp"/>
-          <FILE id="ZRvuTx" name="ModalModuleEditor.h" compile="0" resource="0"
-                file="Source/gui/ModalModuleEditor.h"/>
-          <FILE id="Fx04PQ" name="ModalParamsEditor.cpp" compile="1" resource="0"
-                file="Source/gui/ModalParamsEditor.cpp"/>
-          <FILE id="j7c4UA" name="ModalParamsEditor.h" compile="0" resource="0"
-                file="Source/gui/ModalParamsEditor.h"/>
+        <GROUP id="{CB8E511A-D334-CF7D-14D8-0399BA4D0D21}" name="hnm">
+          <FILE id="mH4GTZ" name="FlangerEditor.cpp" compile="1" resource="0"
+                file="Source/gui/hnm/FlangerEditor.cpp"/>
+          <FILE id="wfG802" name="FlangerEditor.h" compile="0" resource="0" file="Source/gui/hnm/FlangerEditor.h"/>
+          <FILE id="wdsqg1" name="ModalFilterMaterialEditor.cpp" compile="1"
+                resource="0" file="Source/gui/hnm/ModalFilterMaterialEditor.cpp"/>
+          <FILE id="MYz8nd" name="ModalFilterMaterialEditor.h" compile="0" resource="0"
+                file="Source/gui/hnm/ModalFilterMaterialEditor.h"/>
+          <FILE id="Wdz28q" name="ModalModuleEditor.cpp" compile="1" resource="0"
+                file="Source/gui/hnm/ModalModuleEditor.cpp"/>
+          <FILE id="MH1Net" name="ModalModuleEditor.h" compile="0" resource="0"
+                file="Source/gui/hnm/ModalModuleEditor.h"/>
+          <FILE id="rDws8K" name="ModalParamsEditor.cpp" compile="1" resource="0"
+                file="Source/gui/hnm/ModalParamsEditor.cpp"/>
+          <FILE id="znBdbp" name="ModalParamsEditor.h" compile="0" resource="0"
+                file="Source/gui/hnm/ModalParamsEditor.h"/>
         </GROUP>
         <FILE id="VSJIYZ" name="Ruler.cpp" compile="1" resource="0" file="Source/gui/Ruler.cpp"/>
         <FILE id="dEwQsp" name="Ruler.h" compile="0" resource="0" file="Source/gui/Ruler.h"/>
@@ -239,6 +244,8 @@
         <FILE id="qAORvT" name="ColoursEditor.h" compile="0" resource="0" file="Source/gui/ColoursEditor.h"/>
         <FILE id="rYjSBg" name="BgImage.cpp" compile="1" resource="0" file="Source/gui/BgImage.cpp"/>
         <FILE id="XnUFHl" name="BgImage.h" compile="0" resource="0" file="Source/gui/BgImage.h"/>
+        <FILE id="QmMPIV" name="ButtonPower.cpp" compile="1" resource="0" file="Source/gui/ButtonPower.cpp"/>
+        <FILE id="MfsoRV" name="ButtonPower.h" compile="0" resource="0" file="Source/gui/ButtonPower.h"/>
         <FILE id="kKaRcj" name="Button.cpp" compile="1" resource="0" file="Source/gui/Button.cpp"/>
         <FILE id="FF2ejy" name="Button.h" compile="0" resource="0" file="Source/gui/Button.h"/>
         <FILE id="r7VpBE" name="Colours.cpp" compile="1" resource="0" file="Source/gui/Colours.cpp"/>

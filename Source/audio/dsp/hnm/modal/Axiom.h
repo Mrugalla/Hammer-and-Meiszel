@@ -2,7 +2,7 @@
 
 namespace dsp
 {
-	namespace modal2
+	namespace modal
 	{
 		static constexpr int NumFilters = 12;
 		static constexpr double NumFiltersD = static_cast<double>(NumFilters);

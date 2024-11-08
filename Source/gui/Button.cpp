@@ -96,7 +96,7 @@ namespace gui
 
 	void Button::resized()
 	{
-		label.setBounds(getLocalBounds().toFloat().reduced(utils.thicc).toNearestInt());
+		label.setBounds(getLocalBounds());
 		if(label.type == Label::Type::Text)
 			label.setMaxHeight();
 	}
@@ -180,7 +180,7 @@ namespace gui
 			const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
 
 			const auto lineThiccness = thicc + togglePhase * (thicc2 - thicc);
-			const auto margin = 1.25f * thicc4 - lineThiccness - hoverPhase * thicc;
+			const auto margin = 1.75f * thicc4 - lineThiccness - hoverPhase * thicc;
 			const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
 			const auto x = bounds.getX();
@@ -233,7 +233,7 @@ namespace gui
 			const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
 
 			const auto lineThiccness = thicc + togglePhase * (thicc2 - thicc);
-			const auto margin = 2.5f * thicc2 - lineThiccness - hoverPhase * thicc;
+			const auto margin = 3.5f * thicc2 - lineThiccness - hoverPhase * thicc;
 			const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
 			auto linesColour = getColour(CID::Interact).overlaidWith(getColour(CID::Txt).withAlpha(clickPhase));

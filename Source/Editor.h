@@ -4,7 +4,8 @@
 #include "gui/IOEditor.h"
 #include "gui/Tooltip.h"
 #include "gui/EnvelopeGeneratorEditor.h"
-#include "gui/ModalModuleEditor.h"
+#include "gui/hnm/ModalModuleEditor.h"
+#include "gui/hnm/FlangerEditor.h"
 #include "gui/ColoursEditor.h"
 #include "gui/ManifestOfWisdom.h"
 #include "gui/KeySelector.h"
@@ -29,6 +30,7 @@ namespace gui
         Utils utils;
         Layout layout;
         evt::Member evtMember;
+        CompPower compPower;
         Tooltip tooltip;
         GenAniGrowTrees genAni;
 		ModalParamsEditor modParamsEditor;
@@ -44,6 +46,8 @@ namespace gui
 		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
 		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
 		ModalModuleEditor modalEditor;
+        FlangerEditor flangerEditor;
+        Button buttonModalTab, buttonFlangerTab;
         ButtonColours buttonColours;
         ButtonWisdom manifestOfWisdomButton;
     };

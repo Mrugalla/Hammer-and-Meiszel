@@ -1,5 +1,4 @@
 #pragma once
-
 #include <stdint.h>
 #include <array>
 #include "Util.h"
@@ -185,7 +184,7 @@ namespace moog
 		}
 	};
 
-	template<size_t MaxSlope>
+	template<int MaxSlope>
 	struct BiquadFilterSlope
 	{
 		using Filters = std::array<BiquadFilter, MaxSlope>;

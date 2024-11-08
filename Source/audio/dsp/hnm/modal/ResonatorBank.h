@@ -1,11 +1,11 @@
 #pragma once
-#include "../../../arch/XenManager.h"
+#include "../../../../arch/XenManager.h"
 #include "Material.h"
-#include "../Resonator.h"
+#include "../../Resonator.h"
 
 namespace dsp
 {
-	namespace modal2
+	namespace modal
 	{
 		class ResonatorBank
 		{

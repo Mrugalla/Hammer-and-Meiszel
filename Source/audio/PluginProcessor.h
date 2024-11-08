@@ -8,8 +8,8 @@
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
 #include "dsp/NoiseSynth.h"
-#include "dsp/modal2/ModalFilter.h"
-#include "dsp/flanger/flanger.h"
+#include "dsp/hnm/modal/ModalFilter.h"
+#include "dsp/hnm/comb/Comb.h"
 
 //This is where this plugin's custom dsp is implemented
 namespace audio
@@ -51,8 +51,8 @@ namespace audio
 		dsp::EnvGenMultiVoice envGensAmp, envGensMod;
 
 		dsp::NoiseSynth noiseSynth;
-		dsp::modal2::ModalFilter modalFilter;
-		dsp::flanger::Flanger flanger;
+		dsp::modal::ModalFilter modalFilter;
+		dsp::hnm::Comb combFilter;
 		std::atomic<bool> editorExists;
 
 		std::atomic<int> recording;

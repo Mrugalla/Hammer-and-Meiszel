@@ -10,7 +10,7 @@ namespace audio
 		autoMPE(), voiceSplit(), parallelProcessor(),
 		envGensAmp(), envGensMod(),
 		noiseSynth(),
-		modalFilter(), flanger(xen),
+		modalFilter(), combFilter(),
 		editorExists(false),
 		recording(-1),
 		recSampleIndex(0)
@@ -27,7 +27,7 @@ namespace audio
 	{
 		sampleRate = _sampleRate;
 		modalFilter.prepare(sampleRate);
-		flanger.prepare(sampleRate);
+		combFilter.prepare(sampleRate);
 		envGensAmp.prepare(sampleRate);
 		envGensMod.prepare(sampleRate);
 	}
@@ -36,6 +36,29 @@ namespace audio
 		dsp::MidiBuffer& midi, int numChannels, int numSamples,
 		bool playing) noexcept
 	{
+		{
+			const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
+			const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
+			const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
+			const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
+			const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
+			const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
+			const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
+			const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
+
+			const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
+			const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
+			const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
+			const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
+			const auto& envGenModSustainParam = params(PID::EnvGenModSustain);
+			const auto envGenModSustain = static_cast<double>(envGenModSustainParam.getValModDenorm());
+			const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
+			const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
+
+			envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
+			envGensMod.updateParameters({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
+		}
+
 		const auto& noiseBlendParam = params(PID::NoiseBlend);
 		const auto noiseBlend = noiseBlendParam.getValMod();
 		noiseSynth(samples, noiseBlend, numChannels, numSamples);
@@ -132,7 +155,15 @@ namespace audio
 		const auto& modalResoDampBreiteParam = params(PID::ModalResoDampBreite);
 		const auto modalResoDampBreite = static_cast<double>(modalResoDampBreiteParam.getValModDenorm());
 
-		/*
+		const dsp::modal::Voice::Parameters modalVoiceParams
+		(
+			modalSmartKeytrack, modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso, modalResoDamp,
+			modalSmartKeytrackEnv, modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv, modalResoDampEnv,
+			modalSmartKeytrackBreite, modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite, modalResoDampBreite
+		);
+
+		modalFilter();
+		
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
 
@@ -140,53 +171,22 @@ namespace audio
 		auto combSemi = static_cast<double>(std::round(combSemiParam.getValModDenorm()));
 		combSemi += combOct * xen.getXen();
 
-		const auto& combFeedbackParam = params(PID::CombRueckkopplung);
+		const auto& combFeedbackParam = params(PID::CombFeedback);
 		auto combFeedback = static_cast<double>(combFeedbackParam.getValMod());
 		if (combSemi > 0.)
 			combFeedback *= -1.;
 
-		const auto& combAPResonanzParam = params(PID::CombAPResonanz);
-		const auto combAPResonanz = static_cast<double>(combAPResonanzParam.getValModDenorm());
+		const auto& combAPResoParam = params(PID::CombAPReso);
+		const auto combAPReso = static_cast<double>(combAPResoParam.getValModDenorm());
 
 		const auto& combAPShapeParam = params(PID::CombAPShape);
 		const auto combAPShape = static_cast<double>(combAPShapeParam.getValMod());
-		*/
-
-		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
-		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
-		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
-		const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
-		const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
-		const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
-		const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
-		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
-
-		const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
-		const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
-		const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
-		const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
-		const auto& envGenModSustainParam = params(PID::EnvGenModSustain);
-		const auto envGenModSustain = static_cast<double>(envGenModSustainParam.getValModDenorm());
-		const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
-		const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
-
-		const dsp::modal2::Voice::Parameters modalVoiceParams
+		
+		combFilter.synthesizeWHead(numSamples);
+		combFilter.updateParameters
 		(
-			modalSmartKeytrack, modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso, modalResoDamp,
-			modalSmartKeytrackEnv, modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv, modalResoDampEnv,
-			modalSmartKeytrackBreite, modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite, modalResoDampBreite
+			xen, combFeedback, combAPShape, numChannels
 		);
-
-		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
-		envGensMod.updateParameters({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
-
-		modalFilter();
-
-		//flanger.synthesizeWHead(numSamples);
-		//flanger.updateParameters
-		//(
-		//	combFeedback, combAPShape, numChannels
-		//);
 		
 		const auto samplesInput = const_cast<const double**>(samples);
 		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
@@ -219,15 +219,13 @@ namespace audio
 				v
 			);
 			
-			/*
-			flanger
+			combFilter
 			(
-				samplesVoice, midiVoice, combSemi,
-				combAPResonanz,
+				samplesVoice, midiVoice, xen,
+				combSemi, combAPReso,
 				numChannels, numSamples,
 				v
 			);
-			*/
 
 			const bool voiceSilent = false;// math::bufferSilent(samplesVoice, numChannels, numSamples);
 			const bool sleepy = !envGenAmpInfo.active && voiceSilent;
@@ -260,7 +258,7 @@ namespace audio
 		{
 			auto& material = modalFilter.getMaterial(i);
 			const auto matStr = "mat" + juce::String(i);
-			for (auto j = 0; j < dsp::modal2::NumFilters; ++j)
+			for (auto j = 0; j < dsp::modal::NumFilters; ++j)
 			{
 				auto& peakInfo = material.peakInfos[j];
 				const auto peakStr = matStr + "pk" + juce::String(j);
@@ -287,7 +285,7 @@ namespace audio
 		{
 			auto& material = modalFilter.getMaterial(i);
 			auto& status = material.status;
-			status.store(dsp::modal2::StatusMat::Processing);
+			status.store(dsp::modal::StatusMat::Processing);
 		}
 	}
 }
