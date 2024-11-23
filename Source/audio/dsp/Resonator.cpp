@@ -112,6 +112,13 @@ namespace dsp
 	{}
 
 	template<class ResoClass>
+	void ResonatorStereo<ResoClass>::reset() noexcept
+	{
+		reset(0);
+		reset(1);
+	}
+
+	template<class ResoClass>
 	void ResonatorStereo<ResoClass>::reset(int ch) noexcept
 	{
 		resonators[ch].reset();
@@ -133,6 +140,13 @@ namespace dsp
 	void ResonatorStereo<ResoClass>::setGain(double _gain, int ch) noexcept
 	{
 		resonators[ch].setGain(_gain);
+	}
+
+	template<class ResoClass>
+	void ResonatorStereo<ResoClass>::setGain(double _gain) noexcept
+	{
+		for (auto ch = 0; ch < 2; ++ch)
+			setGain(_gain, ch);
 	}
 
 	template<class ResoClass>

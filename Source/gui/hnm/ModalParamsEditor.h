@@ -1,7 +1,6 @@
 #pragma once
 #include "../../audio/dsp/hnm/modal/Axiom.h"
-#include "../Knob.h"
-#include "../Button.h"
+#include "KnobHnM.h"
 
 namespace gui
 {
@@ -64,8 +63,7 @@ namespace gui
 		public Comp
 	{
 		using kParam = dsp::modal::kParam;
-		enum kTab { kMain, kEnv, kWidth, kNumTabs };
-		
+
 		struct OctSemiSlider :
 			public Comp
 		{
@@ -103,148 +101,39 @@ namespace gui
 			ModDial modDial;
 		};
 
-		struct TabButtons :
-			public Comp
-		{
-			enum kAnis { kAniTabChange, kNumAnis };
-
-			TabButtons(Utils& u, int defaultTab) :
-				Comp(u),
-				buttons{ Button(u), Button(u), Button(u) },
-				labelGroup(),
-				tabLast(defaultTab),
-				tabCur(defaultTab)
-			{
-				makeTextButton(buttons[kTab::kMain], "Main", "Click here to adjust the parameters of the modal filter!", CID::Interact);
-				makeTextButton(buttons[kTab::kEnv], "Env", "Click here to adjust the envelope depths of the modal filter!", CID::Interact);
-				makeTextButton(buttons[kTab::kWidth], "Width", "Click here to adjust the stereo width of the modal filter!", CID::Interact);
-
-				for (auto& button : buttons)
-				{
-					addAndMakeVisible(button);
-					button.label.autoMaxHeight = false;
-					labelGroup.add(button.label);
-				}
-				
-				for (auto& button : buttons)
-				{
-					button.type = Button::Type::kToggle;
-					button.value = 0.f;
-				}
-				buttons[defaultTab].value = 1.f;
-
-				for (auto i = 0; i < kNumTabs; ++i)
-				{
-					buttons[i].onClick = [this, i](const Mouse&)
-					{
-						if (buttons[i].value > .5f)
-							return;
-
-						for (auto& tabButton : buttons)
-							tabButton.value = 0.f;
-						buttons[i].value = 1.f;
-						for (auto& tabButton : buttons)
-							tabButton.repaint();
-
-						tabCur = i;
-						callbacks[kAniTabChange].start(0.f);
-					};
-				}
-
-				const auto fps = cbFPS::k60;
-				const auto speed = msToInc(AniLengthMs, fps);
-
-				add(Callback([&, speed]()
-				{
-					auto& phase = callbacks[kAniTabChange].phase;
-					phase += speed;
-					if (phase >= 1.f)
-					{
-						phase = 1.f;
-						callbacks[kAniTabChange].active = false;
-						for (auto i = 0; i < kNumTabs; ++i)
-							if (buttons[i].value > .5f)
-								tabLast = i;
-					}
-					getParentComponent()->resized();
-				}, kAniTabChange, fps, false));
-			}
-
-			void resized() override
-			{
-				const auto area = getLocalBounds().toFloat();
-				const auto x = 0.f;
-				const auto w = area.getWidth();
-				const auto h = area.getHeight();
-				const auto hButton = h / static_cast<float>(kNumTabs);
-				auto y = area.getY();
-				for (auto& button : buttons)
-				{
-					button.setBounds(BoundsF(x, y, w, hButton).toNearestInt());
-					y += hButton;
-				}
-				labelGroup.setMaxHeight(utils.thicc);
-			}
-
-			float getAnimationPhase() const noexcept
-			{
-				return callbacks[kAniTabChange].phase;
-			}
-
-		protected:
-			std::array<Button, kNumTabs> buttons;
-			LabelGroup labelGroup;
-		public:
-			int tabLast, tabCur;
-		};
-
 		ModalParamsEditor(Utils& u) :
 			Comp(u),
-			tabButtons(u, 0),
-			params
-			{
-				ModalMainParams(u, PID::ModalSmartKeytrack, PID::ModalBlend,
-					PID::ModalSpreizung, PID::ModalHarmonie, PID::ModalKraft, PID::ModalResonanz, PID::ModalResoDamp),
-				ModalMainParams(u, PID::ModalSmartKeytrackEnv, PID::ModalBlendEnv,
-					PID::ModalSpreizungEnv, PID::ModalHarmonieEnv, PID::ModalKraftEnv, PID::ModalResonanzEnv, PID::ModalResoDampEnv),
-				ModalMainParams(u, PID::ModalSmartKeytrackBreite, PID::ModalBlendBreite,
-					PID::ModalSpreizungBreite, PID::ModalHarmonieBreite, PID::ModalKraftBreite, PID::ModalResonanzBreite, PID::ModalResoDampBreite)
-			},
-			oct(u, PID::ModalOct, "Oct"),
-			semi(u, PID::ModalSemi, "Semi"),
-			labels{ Label(u), Label(u), Label(u), Label(u), Label(u), Label(u), Label(u) },
-			labelGroup(),
+			oct(u, PID::CombOct, "Oct"),
+			semi(u, PID::CombSemi, "Semi"),
+			smartKeytrack(u, PID::ModalSmartKeytrack, PID::ModalSmartKeytrackEnv, PID::ModalSmartKeytrackBreite, "Keytrack++"),
+			blend(u, PID::ModalBlend, PID::ModalBlendEnv, PID::ModalBlendBreite, "Blend"),
+			spreizung(u, PID::ModalSpreizung, PID::ModalSpreizungEnv, PID::ModalSpreizungBreite, "Spreizung"),
+			harmonie(u, PID::ModalHarmonie, PID::ModalHarmonieEnv, PID::ModalHarmonieBreite, "Harmonie"),
+			kraft(u, PID::ModalKraft, PID::ModalKraftEnv, PID::ModalKraftBreite, "Kraft"),
+			reso(u, PID::ModalResonanz, PID::ModalResonanzEnv, PID::ModalResonanzBreite, "Reso"),
+			resoDamp(u, PID::ModalResoDamp, PID::ModalResoDampEnv, PID::ModalResoDampBreite, "Reso Damp"),
+			feedback(u, PID::CombFeedback, PID::CombFeedbackEnv, PID::CombFeedbackWidth, "Feedback"),
 			octSemiGroup()
 		{
 			layout.init
 			(
 				{ 1, 1, 1, 1, 1, 1, 1, 1 },
-				{ 3, 13, 2 }
+				{ 1, 8 }
 			);
 
 			addAndMakeVisible(oct);
 			addAndMakeVisible(semi);
-			for (auto& label : labels)
-				addAndMakeVisible(label);
-			for (auto& p : params)
-				addAndMakeVisible(p);
-			addAndMakeVisible(tabButtons);
-
-			const auto fontKnobs = font::dosisBold();
-			const auto just = Just::centred;
-
-			makeTextLabel(labels[kParam::kSmartKeytrack], "Keytrack+", fontKnobs, just, CID::Txt);
-			makeTextLabel(labels[kParam::kBlend], "Blend", fontKnobs, just, CID::Txt);
-			makeTextLabel(labels[kParam::kSpreizung], "Spreizung", fontKnobs, just, CID::Txt);
-			makeTextLabel(labels[kParam::kHarmonie], "Harmonie", fontKnobs, just, CID::Txt);
-			makeTextLabel(labels[kParam::kKraft], "Kraft", fontKnobs, just, CID::Txt);
-			makeTextLabel(labels[kParam::kReso], "Reso", fontKnobs, just, CID::Txt);
-			makeTextLabel(labels[kParam::kResoDamp], "Reso Damp", fontKnobs, just, CID::Txt);
-
-			for (auto& label : labels)
-				labelGroup.add(label);
 			octSemiGroup.add(oct.label);
 			octSemiGroup.add(semi.label);
+
+			addAndMakeVisible(smartKeytrack);
+			addAndMakeVisible(blend);
+			addAndMakeVisible(spreizung);
+			addAndMakeVisible(harmonie);
+			addAndMakeVisible(kraft);
+			addAndMakeVisible(reso);
+			addAndMakeVisible(resoDamp);
+			addAndMakeVisible(feedback);
 		}
 
 		void resized() override
@@ -252,38 +141,29 @@ namespace gui
 			layout.resized(getLocalBounds());
 			layout.place(oct, 0, 0, 2, 1);
 			layout.place(semi, 2, 0, 2, 1);
-			layout.place(tabButtons, 7, 1, 1, 2);
-			
-			{
-				const auto area = layout(0, 1, 7, 1).toNearestInt();
-				const auto w = area.getWidth();
-				const auto wKnob = w / static_cast<float>(kParam::kNumParams);
-
-				const auto phase = tabButtons.getAnimationPhase();
-				const auto xLast = w * tabButtons.tabLast + tabButtons.tabLast * wKnob;
-				const auto xCur = w * tabButtons.tabCur + tabButtons.tabCur * wKnob;
-				const auto xNow = xLast + phase * (xCur - xLast);
-
-				const auto wInc = w + wKnob;
-				auto xPos = 0.f;
-				for (auto i = 0; i < kNumTabs; ++i)
-				{
-					params[i].setBounds(area.withX(static_cast<int>(xPos - xNow)));
-					xPos += wInc;
-				}
-			}
-			for (auto i = 0; i < kParam::kNumParams; ++i)
-				layout.place(labels[i], i, 2, 1, 1);
-			labelGroup.setMaxHeight();
 			octSemiGroup.setMaxHeight();
+
+			layout.place(smartKeytrack, 0, 1, 1, 1);
+			layout.place(blend, 1, 1, 1, 1);
+			layout.place(spreizung, 2, 1, 1, 1);
+			layout.place(harmonie, 3, 1, 1, 1);
+			layout.place(kraft, 4, 1, 1, 1);
+			layout.place(reso, 5, 1, 1, 1);
+			layout.place(resoDamp, 6, 1, 1, 1);
+			layout.place(feedback, 7, 1, 1, 1);
 		}
 
 	protected:
-		TabButtons tabButtons;
-		std::array<ModalMainParams, kNumTabs> params;
 		OctSemiSlider oct, semi;
-		std::array<Label, dsp::modal::kNumParams> labels;
-		LabelGroup labelGroup;
+		KnobHnM smartKeytrack, blend, spreizung, harmonie, kraft, reso, resoDamp, feedback;
 		LabelGroup octSemiGroup;
 	};
 }
+
+/*
+
+todo:
+
+oct and semi of comb filter not on interface rn
+
+*/

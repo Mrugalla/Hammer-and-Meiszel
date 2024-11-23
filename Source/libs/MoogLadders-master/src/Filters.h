@@ -27,6 +27,7 @@ namespace moog
 		void prepare() noexcept
 		{
 			update();
+			reset();
 		}
 
 		void operator()(double* samples, int numSamples) noexcept
@@ -202,6 +203,7 @@ namespace moog
 		{
 			for(auto& f: filters)
 				f.prepare();
+			reset();
 		}
 
 		void operator()(double* samples, int numSamples) noexcept
@@ -218,7 +220,7 @@ namespace moog
 			return y;
 		}
 
-		/* fc = hz / sampleRate */
+		// fc = hz/sampleRate
 		void setCutoffFc(double fc) noexcept
 		{
 			cutoffFc = fc;

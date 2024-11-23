@@ -1,5 +1,6 @@
 #pragma once
 #include "LadderFilterBase.h"
+#include "../Source/arch/Math.h"
 
 /*
 This class implements Tim Stilson's MoogVCF filter
@@ -40,7 +41,7 @@ namespace moog
 
 		double operator()(double sample) noexcept override
 		{
-			state[0] = tanh(drive * (sample - 4. * gRes * (state[4] - gComp * sample)));
+			state[0] = math::tanhApprox(drive * (sample - 4. * gRes * (state[4] - gComp * sample)));
 
 			for (int i = 0; i < 4; i++)
 			{
@@ -62,7 +63,6 @@ namespace moog
 			wc = MOOG_TAU * cutoff / sampleRate;
 			g = 0.9892 * wc - .4342 * pow(wc, 2.) + .1381 * pow(wc, 3.) - .0202 * pow(wc, 4.);
 		}
-
 	private:
 		double state[5];
 		double delay[5];

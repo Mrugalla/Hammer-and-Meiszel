@@ -18,8 +18,18 @@ namespace dsp
 	template<typename Float>
 	void PRMInfo<Float>::copyToBuffer(int numSamples) noexcept
 	{
-		if (!smoothing)
-			SIMD::fill(buf, val, numSamples);
+		if (smoothing)
+			return;
+		SIMD::fill(buf, val, numSamples);
+	}
+
+	template<typename Float>
+	void PRMInfo<Float>::copyToBuffer(int startIdx, int endIdx) noexcept
+	{
+		if (smoothing)
+			return;
+		const auto numSamples = endIdx - startIdx;
+		SIMD::fill(&buf[startIdx], val, numSamples);
 	}
 
 	template<typename Float>

@@ -74,9 +74,6 @@ namespace gui
             )
         },
         modalEditor(utils),
-        flangerEditor(utils),
-        buttonModalTab(utils),
-		buttonFlangerTab(utils),
         buttonColours(coloursEditor),
         manifestOfWisdomButton(utils, manifestOfWisdom)
     {
@@ -98,9 +95,6 @@ namespace gui
 		for (auto& envGen : envGens)
 			addAndMakeVisible(envGen);
 		addAndMakeVisible(modalEditor);
-        addChildComponent(flangerEditor);
-		addAndMakeVisible(buttonModalTab);
-		addAndMakeVisible(buttonFlangerTab);
         addAndMakeVisible(buttonColours);
         addAndMakeVisible(manifestOfWisdomButton);
 		addChildComponent(coloursEditor);
@@ -129,33 +123,6 @@ namespace gui
                 if (name[i] == 's' && name[i + 1] == 'z')
                     name = name.replaceSection(i, 2, sz);
             makeTextLabel(labelTitle, name, titleFont, Just::centred, CID::Txt);
-        }
-
-        {
-			makeTextButton(buttonModalTab, "Modal", "Click here to open the modal module.", CID::Interact);
-            buttonModalTab.type = Button::Type::kToggle;
-			buttonModalTab.onClick = [&](const Mouse&)
-            {
-				modalEditor.setVisible(true);
-				flangerEditor.setVisible(false);
-                buttonModalTab.value = 1.f;
-				buttonFlangerTab.value = 0.f;
-                buttonModalTab.repaint();
-				buttonFlangerTab.repaint();
-			};
-            buttonModalTab.value = 1.f;
-
-			makeTextButton(buttonFlangerTab, "Flanger", "Click here to open the flanger module.", CID::Interact);
-			buttonFlangerTab.type = Button::Type::kToggle;
-            buttonFlangerTab.onClick = [&](const Mouse&)
-            {
-                modalEditor.setVisible(false);
-                flangerEditor.setVisible(true);
-                buttonModalTab.value = 0.f;
-                buttonFlangerTab.value = 1.f;
-                buttonModalTab.repaint();
-            };
-			buttonFlangerTab.value = 0.f;
         }
 
         loadBounds(*this);
@@ -267,12 +234,9 @@ namespace gui
 
         // center panel
         layout.place(keySelector, 1, 1, 1, 1);
-        layout.place(modalEditor, 1, 2, 1, 1);
-		layout.place(flangerEditor, 1, 2, 1, 1);
+        layout.place(modalEditor, 1, 2, 1, 2);
         layout.place(coloursEditor, 1, 2, 1, 1);
         layout.place(manifestOfWisdom, 1, 2, 1, 1);
-        layout.place(buttonModalTab, 1.f, 3, .5f, 1);
-		layout.place(buttonFlangerTab, 1.5f, 3, .5f, 1);
 
         // bottom panel
         tooltip.setBounds(layout.bottom().toNearestInt());

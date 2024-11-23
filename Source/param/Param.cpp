@@ -2,7 +2,7 @@
 #include "../arch/FormulaParser.h"
 #include "../arch/Math.h"
 #include "../arch/Range.h"
-#include "../audio/dsp/modal2/Axiom.h"
+#include "../audio/dsp/hnm/modal/Axiom.h"
 
 namespace param
 {
@@ -101,13 +101,6 @@ namespace param
 		case PID::CombFeedback: return "Comb Feedback";
 		case PID::CombFeedbackEnv: return "Comb Feedback Env";
 		case PID::CombFeedbackWidth: return "Comb Feedback Width";
-		case PID::CombAPReso: return "Comb AP Resonance";
-		case PID::CombAPResoEnv: return "Comb AP Reso Env";
-		case PID::CombAPResoWidth: return "Comb AP Reso Width";
-		case PID::CombAPShape: return "Comb AP Shape";
-		case PID::CombAPShapeEnv: return "Comb AP Shape Env";
-		case PID::CombAPShapeWidth: return "Comb AP Shape Width";
-
 		default: return "Invalid Parameter Name";
 		}
 	}
@@ -212,13 +205,6 @@ namespace param
 		case PID::CombFeedback: return "The feedback of the comb filter's feedback delay.";
 		case PID::CombFeedbackEnv: return "The envelope generator's depth on the comb filter's feedback.";
 		case PID::CombFeedbackWidth: return "The stereo width of the comb filter's feedback.";
-		case PID::CombAPReso: return "The resonance of the allpass filters in the comb filter's feedback loop.";
-		case PID::CombAPResoEnv: return "The envelope generator's depth on the comb filter's resonance.";
-		case PID::CombAPResoWidth: return "The stereo width of the comb filter's resonance.";
-		case PID::CombAPShape: return "Shape the relationship between the allpass filters for different textures.";
-		case PID::CombAPShapeEnv: return "The envelope generator's depth on the allpass filters' shape.";
-		case PID::CombAPShapeWidth: return "The stereo width of the allpass filters' shape.";
-
 		default: return "Invalid Tooltip.";
 		}
 	}
@@ -1386,8 +1372,8 @@ namespace param
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
 		}
 
-		const auto SpreizungMin = dsp::modal2::SpreizungMin;
-		const auto SpreizungMax = dsp::modal2::SpreizungMax;
+		const auto SpreizungMin = dsp::modal::SpreizungMin;
+		const auto SpreizungMax = dsp::modal::SpreizungMax;
 
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::NoiseBlend, 0.f));
@@ -1433,12 +1419,6 @@ namespace param
 		params.push_back(makeParam(PID::CombFeedback, 0.f));
 		params.push_back(makeParam(PID::CombFeedbackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::CombAPReso, 2.f, makeRange::withCentre(1., 16., 2.), Unit::Q));
-		params.push_back(makeParam(PID::CombAPResoEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::CombAPResoWidth, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::CombAPShape, 0.f));
-		params.push_back(makeParam(PID::CombAPShapeEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::CombAPShapeWidth, 0.f, makeRange::lin(-1.f, 1.f)));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

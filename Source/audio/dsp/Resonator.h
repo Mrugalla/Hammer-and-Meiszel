@@ -71,6 +71,8 @@ namespace dsp
 	{
 		ResonatorStereo();
 
+		void reset() noexcept;
+
 		// ch
 		void reset(int) noexcept;
 
@@ -82,6 +84,9 @@ namespace dsp
 
 		// gain [0, 1], ch
 		void setGain(double, int) noexcept;
+
+		// gain [0, 1]
+		void setGain(double) noexcept;
 
 		// ch
 		void update(int) noexcept;

@@ -359,8 +359,10 @@ namespace gui
 	{
 		const auto cID = CID::Interact;
 		notify(evt::Type::ToastColour, &cID);
-		const auto bounds = getBounds();
-		notify(evt::Type::ToastShowUp, &bounds);
+		const auto screenBoundsPlugin = utils.pluginTop.getScreenBounds();
+		const auto screenBounds = getScreenBounds();
+		const auto boundsInPlugin = screenBounds - screenBoundsPlugin.getTopLeft();
+		notify(evt::Type::ToastShowUp, &boundsInPlugin);
 		updateInfoLabel();
 	}
 
@@ -414,6 +416,8 @@ namespace gui
 		const auto yDepth = .4f * (sensitive ? Sensitive : 1.f);
 		const auto xDepth = yDepth * freqRatioRange * .5f;
 
+		const auto snapEnabled = mouse.mods.isAltDown();
+
 		if (status == Status::Processing)
 		{
 			if (draggerfall.isSelected(0))
@@ -428,12 +432,29 @@ namespace gui
 				{
 					auto& peakInfo = material.peakInfos[i];
 					peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
-					peakInfo.ratio = juce::jlimit(1., 100., peakInfo.ratio + dragDist.x * xDepth);
+
+					auto ratio = peakInfo.ratio;
+					if (snapEnabled)
+					{
+						const auto sensitivity = .004;
+						const auto dragDistAbs = dragDist.x * dragDist.x;
+						if (dragDistAbs > sensitivity)
+						{
+							if (dragDist.x > 0.)
+								ratio = ruler.getNextHigherSnapped(ratio);
+							else
+								ratio = ruler.getNextLowerSnapped(ratio);
+						}
+					}
+					else
+						ratio += dragDist.x * xDepth;
+					peakInfo.ratio = juce::jlimit(1., 100., ratio);
 				}
 			}
 			material.updatePeakInfosFromGUI();
 			updateInfoLabel();
 		}
+
 		dragXY = mouse.position;
 	}
 

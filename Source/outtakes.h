@@ -371,3 +371,169 @@ KnobPainterSpirograph(int numArms = 2,
 /////////////////////////////////////
 /////////////////////////////////////
 */
+
+/*
+
+//this was from an attempt to add allpass filters to the comb filter:
+
+struct AllpassTransposedDirectFormII
+		{
+			AllpassTransposedDirectFormII() :
+				a0(0.), a1(0.), a2(0.), b1(0.), b2(0.),
+				z1(0.), z2(0.), fsInv(1.)
+			{}
+
+			void reset() noexcept
+			{
+				z1 = 0.;
+				z2 = 0.;
+			}
+
+			void copyFrom(const AllpassTransposedDirectFormII& other) noexcept
+			{
+				a0 = other.a0;
+				a1 = other.a1;
+				a2 = other.a2;
+				b1 = other.b1;
+				b2 = other.b2;
+			}
+
+			// freqFc, qHz
+			void updateParameters(double fc, double q) noexcept
+			{
+				const auto k = std::tan(math::Pi * fc);
+				const auto kk = k * k;
+				const auto kq = k / q;
+				const auto norm = 1. / (1. + kq + kk);
+				a0 = (1. - kq + kk) * norm;
+				a1 = 2. * (kk - 1.) * norm;
+				a2 = 1.;
+				b1 = a1;
+				b2 = a0;
+			}
+
+			double operator()(double x) noexcept
+			{
+				const auto y = a0 * x + z1;
+				z1 = a1 * x + b1 * y + z2;
+				z2 = a2 * x + b2 * y;
+				return y;
+			}
+
+		private:
+			double a0, a1, a2, b1, b2;
+			double z1, z2, fsInv;
+		};
+
+		struct AllpassStereo
+		{
+			AllpassStereo() :
+				filters()
+			{
+			}
+
+			void reset() noexcept
+			{
+				for (auto& filter : filters)
+					filter.reset();
+			}
+
+			void copyFrom(const AllpassStereo& other) noexcept
+			{
+				for (auto i = 0; i < filters.size(); ++i)
+					filters[i].copyFrom(other.filters[i]);
+			}
+
+			// freqFc, qHz, ch
+			void updateParameters(double fc, double q, int ch) noexcept
+			{
+				filters[ch].updateParameters(fc, q);
+			}
+
+			// freqFc, qHz
+			void updateParameters(double fc, double q) noexcept
+			{
+				updateParameters(fc, q, 0);
+				filters[1].copyFrom(filters[0]);
+			}
+
+			// smpl, ch
+			double operator()(double x, int ch) noexcept
+			{
+				return filters[ch](x);
+			}
+
+		private:
+			std::array<AllpassTransposedDirectFormII, 2> filters;
+		};
+
+		struct Disperser
+		{
+			Disperser(Parameters& _params) :
+				params(_params),
+				filters(),
+				freqFc(-1.)
+			{
+			}
+
+			void prepare()
+			{
+				for (auto& filter : filters)
+					filter.reset();
+				freqFc = -1.;
+			}
+
+			// freqFc, ch
+			void setFreqFc(double _freqFc, int ch) noexcept
+			{
+				if (freqFc == _freqFc)
+					return;
+				freqFc = _freqFc;
+				updateFreqFc(ch);
+			}
+
+			void updateFreqFc(int ch) noexcept
+			{
+				for (auto i = 0; i < SequenceSize; ++i)
+				{
+					const auto sequenceVal = params.getSequenceVal(i);
+					auto& filter = filters[i];
+					auto fc = sequenceVal * freqFc;
+					if (fc >= .5)
+						fc = .5 - std::numeric_limits<double>::epsilon();
+					while (fc >= .5)
+						fc -= .5;
+					filter.updateParameters(fc, .01, ch);
+				}
+			}
+
+			void updateAPReso(int numChannels) noexcept
+			{
+				const auto apReso = params.getAPReso();
+				for (auto& apSlopeChannels : filters)
+				{
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						//auto& filter = filters[ch];
+						//filter.updateParameters(100., apReso);
+					}
+				}
+			}
+
+			double operator()(double smpl, int ch) noexcept
+			{
+				auto y = smpl;
+				for (auto i = 0; i < SequenceSize; ++i)
+				{
+					auto& filter = filters[i];
+					y = filter(y, ch);
+				}
+				return y;
+			}
+		protected:
+			Parameters& params;
+			std::array<AllpassStereo, SequenceSize> filters;
+			double freqFc;
+		};
+
+*/

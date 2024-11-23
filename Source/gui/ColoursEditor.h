@@ -29,7 +29,5 @@ namespace gui
 		void resized() override;
 	private:
 		Image img;
-
-		
 	};
 }

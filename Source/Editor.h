@@ -5,10 +5,9 @@
 #include "gui/Tooltip.h"
 #include "gui/EnvelopeGeneratorEditor.h"
 #include "gui/hnm/ModalModuleEditor.h"
-#include "gui/hnm/FlangerEditor.h"
 #include "gui/ColoursEditor.h"
 #include "gui/ManifestOfWisdom.h"
-#include "gui/KeySelector.h"
+#include "gui/KeySelectorEditor.h"
 
 namespace gui
 {
@@ -41,13 +40,11 @@ namespace gui
         Label labelDev, labelTitle, labelNoiseBlend;
         Knob noiseBlend;
 		ModDial modDialNoiseBlend;
-        KeySelector keySelector;
+        KeySelectorEditor keySelector;
 		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
 		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
 		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
 		ModalModuleEditor modalEditor;
-        FlangerEditor flangerEditor;
-        Button buttonModalTab, buttonFlangerTab;
         ButtonColours buttonColours;
         ButtonWisdom manifestOfWisdomButton;
     };

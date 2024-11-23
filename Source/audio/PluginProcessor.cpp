@@ -175,18 +175,12 @@ namespace audio
 		auto combFeedback = static_cast<double>(combFeedbackParam.getValMod());
 		if (combSemi > 0.)
 			combFeedback *= -1.;
-
-		const auto& combAPResoParam = params(PID::CombAPReso);
-		const auto combAPReso = static_cast<double>(combAPResoParam.getValModDenorm());
-
-		const auto& combAPShapeParam = params(PID::CombAPShape);
-		const auto combAPShape = static_cast<double>(combAPShapeParam.getValMod());
 		
-		combFilter.synthesizeWHead(numSamples);
 		combFilter.updateParameters
 		(
-			xen, combFeedback, combAPShape, numChannels
+			combFeedback
 		);
+		combFilter(numSamples);
 		
 		const auto samplesInput = const_cast<const double**>(samples);
 		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
@@ -222,7 +216,7 @@ namespace audio
 			combFilter
 			(
 				samplesVoice, midiVoice, xen,
-				combSemi, combAPReso,
+				combSemi,
 				numChannels, numSamples,
 				v
 			);

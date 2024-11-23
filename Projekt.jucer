@@ -208,9 +208,8 @@
       </GROUP>
       <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui">
         <GROUP id="{CB8E511A-D334-CF7D-14D8-0399BA4D0D21}" name="hnm">
-          <FILE id="mH4GTZ" name="FlangerEditor.cpp" compile="1" resource="0"
-                file="Source/gui/hnm/FlangerEditor.cpp"/>
-          <FILE id="wfG802" name="FlangerEditor.h" compile="0" resource="0" file="Source/gui/hnm/FlangerEditor.h"/>
+          <FILE id="SpT3D3" name="KnobHnM.cpp" compile="1" resource="0" file="Source/gui/hnm/KnobHnM.cpp"/>
+          <FILE id="bZ3fGt" name="KnobHnM.h" compile="0" resource="0" file="Source/gui/hnm/KnobHnM.h"/>
           <FILE id="wdsqg1" name="ModalFilterMaterialEditor.cpp" compile="1"
                 resource="0" file="Source/gui/hnm/ModalFilterMaterialEditor.cpp"/>
           <FILE id="MYz8nd" name="ModalFilterMaterialEditor.h" compile="0" resource="0"
@@ -254,8 +253,10 @@
         <FILE id="HeCvCp" name="Comp.h" compile="0" resource="0" file="Source/gui/Comp.h"/>
         <FILE id="DxY7bF" name="Events.cpp" compile="1" resource="0" file="Source/gui/Events.cpp"/>
         <FILE id="sGl3Zw" name="Events.h" compile="0" resource="0" file="Source/gui/Events.h"/>
-        <FILE id="hUPXyZ" name="KeySelector.cpp" compile="1" resource="0" file="Source/gui/KeySelector.cpp"/>
-        <FILE id="MM1M37" name="KeySelector.h" compile="0" resource="0" file="Source/gui/KeySelector.h"/>
+        <FILE id="hUPXyZ" name="KeySelectorEditor.cpp" compile="1" resource="0"
+              file="Source/gui/KeySelectorEditor.cpp"/>
+        <FILE id="MM1M37" name="KeySelectorEditor.h" compile="0" resource="0"
+              file="Source/gui/KeySelectorEditor.h"/>
         <FILE id="g2Upin" name="Knob.cpp" compile="1" resource="0" file="Source/gui/Knob.cpp"/>
         <FILE id="tWuWsL" name="Knob.h" compile="0" resource="0" file="Source/gui/Knob.h"/>
         <FILE id="rOzncV" name="Label.cpp" compile="1" resource="0" file="Source/gui/Label.cpp"/>

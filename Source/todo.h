@@ -4,10 +4,11 @@
 
 ~~~ todo ~~~
 
-modal material editor
-    snap partial to grid horizontally
+feedback oct,semi fehlt
+feedback env, width fehlt
+width parameter klingen nicht als ob sie den effekt auf einzelne boxen pannen
 
-parameter smoothing im flanger katastrophal
+parameter smoothing im comb filter
 
 m/s button zu dicke schrift
 
@@ -22,7 +23,8 @@ write new sleepy state mechanism for modal resonator filter.
     but quietness can also come from low sustain values on the envelope
     or from low audio input values, but it should only trigger when nothing's playing anymore
 
-rescue overlaps funzt noch nicht gut genug, manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar
+rescue overlaps funzt noch nicht gut genug
+    manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar
 
 hold down note, then press other notes to trigger the dry through bug
 
@@ -32,15 +34,11 @@ remap frequencies of partials with a MSEG curve, like mtransformer
 
 map velocity to certain parameters
 
-toast wrong place when hovering modal material editor
-
 buttons ohne bg colour
 
 preset browser
 
 drag last created sound to DAW as audio
-
-modal > comb > post sequence thing
 
 smoothing-zeiten von modal voice sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
 
@@ -54,10 +52,8 @@ optimize CPU with SIMD filters
 
 all tooltips in english
 
-everything from breite to width
-
 Material
-    import von samples erzeugt oft keine geilen magnitudes
+    import von samples erzeugt nicht immer geile magnitudes
     material editor solve instrument imports where fundamental not highest peak
 
 Param db valToStr can be -inf (gain wet [-inf, 0])

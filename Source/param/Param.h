@@ -57,7 +57,7 @@ namespace param
 		EnvGenModDecay,
 		EnvGenModSustain,
 		EnvGenModRelease,
-		// modal
+		// modal:
 		ModalOct,
 		ModalSemi,
 		ModalSmartKeytrack,
@@ -87,12 +87,6 @@ namespace param
 		CombFeedback,
 		CombFeedbackEnv,
 		CombFeedbackWidth,
-		CombAPReso,
-		CombAPResoEnv,
-		CombAPResoWidth,
-		CombAPShape,
-		CombAPShapeEnv,
-		CombAPShapeWidth,
 		//
 		NumParams
 	};

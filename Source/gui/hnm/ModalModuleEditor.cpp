@@ -283,7 +283,7 @@ namespace gui
 			"Record Input", "Records the input signal for modal analysis."
 		);
 
-		// Rescure Overlaps
+		// Rescue Overlaps
 		dropDown.add
 		(
 			[&](const Mouse&)
@@ -315,7 +315,7 @@ namespace gui
 						}
 					}
 					if (!duplicateFound)
-						return;
+						break;
 
 					const auto dIdx1 = duplicate.y;
 					const auto d1Mag = peakInfos[dIdx1].mag;
@@ -330,11 +330,10 @@ namespace gui
 
 					const auto maxRatio = peakInfos[numFilters - 1].ratio;
 					peakInfos[numFilters - 1].ratio = maxRatio + 1.f;
-
-					material.reportUpdate();
 				}
+				material.reportUpdate();
 			},
-			"Rescure Overlaps", "Rescures overlapping partials."
+			"Rescue Overlaps", "Puts overlapping partials somewhere else."
 		);
 
 		dropDown.init();

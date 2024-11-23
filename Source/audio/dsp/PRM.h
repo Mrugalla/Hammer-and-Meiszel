@@ -6,13 +6,17 @@ namespace dsp
 	template<typename Float>
 	struct PRMInfo
 	{
-		/* buf, val, smoothing */
+		// buf, val, smoothing
 		PRMInfo(Float*, Float, bool);
 
-		/* idx */
+		// idx
 		Float operator[](int) const noexcept;
 
+		// numSamples
 		void copyToBuffer(int) noexcept;
+
+		// startIdx, endIdx
+		void copyToBuffer(int, int) noexcept;
 
 		operator Float() const noexcept;
 

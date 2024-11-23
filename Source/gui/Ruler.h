@@ -161,6 +161,26 @@ namespace gui
 			}
 		}
 
+		double getSnappedToGrid(double val, double inc) const noexcept
+		{
+			const auto a = std::round((val - 1.) / inc);
+			return a * inc + 1.;
+		}
+
+		double getNextHigherSnapped(double val) const noexcept
+		{
+			const auto inc = getIncFunc(length);
+			val += inc;
+			return getSnappedToGrid(val, inc);
+		}
+
+		double getNextLowerSnapped(double val) const noexcept
+		{
+			const auto inc = getIncFunc(length);
+			val -= inc;
+			return getSnappedToGrid(val, inc);
+		}
+
 	protected:
 		Labels labels;
 		std::function<float(float)> getIncFunc;
