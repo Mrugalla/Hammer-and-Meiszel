@@ -7,7 +7,7 @@ namespace dsp
 	struct PRMInfo
 	{
 		// buf, val, smoothing
-		PRMInfo(Float*, Float, bool);
+		PRMInfo(Float* = nullptr, Float = 0., bool = false);
 
 		// idx
 		Float operator[](int) const noexcept;

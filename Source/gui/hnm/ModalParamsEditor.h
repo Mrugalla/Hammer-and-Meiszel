@@ -103,8 +103,11 @@ namespace gui
 
 		ModalParamsEditor(Utils& u) :
 			Comp(u),
-			oct(u, PID::CombOct, "Oct"),
-			semi(u, PID::CombSemi, "Semi"),
+			octModal(u, PID::ModalOct, "M Oct"),
+			semiModal(u, PID::ModalSemi, "M Semi"),
+			octComb(u, PID::CombOct, "C Oct"),
+			semiComb(u, PID::CombSemi, "C Semi"),
+			unisonComb(u, PID::CombUnison, "C Unison"),
 			smartKeytrack(u, PID::ModalSmartKeytrack, PID::ModalSmartKeytrackEnv, PID::ModalSmartKeytrackBreite, "Keytrack++"),
 			blend(u, PID::ModalBlend, PID::ModalBlendEnv, PID::ModalBlendBreite, "Blend"),
 			spreizung(u, PID::ModalSpreizung, PID::ModalSpreizungEnv, PID::ModalSpreizungBreite, "Spreizung"),
@@ -121,10 +124,16 @@ namespace gui
 				{ 1, 8 }
 			);
 
-			addAndMakeVisible(oct);
-			addAndMakeVisible(semi);
-			octSemiGroup.add(oct.label);
-			octSemiGroup.add(semi.label);
+			addAndMakeVisible(octModal);
+			addAndMakeVisible(semiModal);
+			addAndMakeVisible(octComb);
+			addAndMakeVisible(semiComb);
+			addAndMakeVisible(unisonComb);
+			octSemiGroup.add(octModal.label);
+			octSemiGroup.add(semiModal.label);
+			octSemiGroup.add(octComb.label);
+			octSemiGroup.add(semiComb.label);
+			octSemiGroup.add(unisonComb.label);
 
 			addAndMakeVisible(smartKeytrack);
 			addAndMakeVisible(blend);
@@ -139,8 +148,22 @@ namespace gui
 		void resized() override
 		{
 			layout.resized(getLocalBounds());
-			layout.place(oct, 0, 0, 2, 1);
-			layout.place(semi, 2, 0, 2, 1);
+			{
+				const auto sliderArea = layout.top();
+				const auto y = sliderArea.getY();
+				const auto w = sliderArea.getWidth() / 5.f;
+				const auto h = sliderArea.getHeight();
+				auto x = 0.f;
+				octModal.setBounds(BoundsF(x, y, w, h).toNearestInt());
+				x += w;
+				semiModal.setBounds(BoundsF(x, y, w, h).toNearestInt());
+				x += w;
+				octComb.setBounds(BoundsF(x, y, w, h).toNearestInt());
+				x += w;
+				semiComb.setBounds(BoundsF(x, y, w, h).toNearestInt());
+				x += w;
+				unisonComb.setBounds(BoundsF(x, y, w, h).toNearestInt());
+			}
 			octSemiGroup.setMaxHeight();
 
 			layout.place(smartKeytrack, 0, 1, 1, 1);
@@ -154,7 +177,7 @@ namespace gui
 		}
 
 	protected:
-		OctSemiSlider oct, semi;
+		OctSemiSlider octModal, semiModal, octComb, semiComb, unisonComb;
 		KnobHnM smartKeytrack, blend, spreizung, harmonie, kraft, reso, resoDamp, feedback;
 		LabelGroup octSemiGroup;
 	};

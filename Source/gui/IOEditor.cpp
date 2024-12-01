@@ -71,6 +71,7 @@ namespace gui
 			Button(u),
 			Button(u),
 			Button(u),
+			Button(u),
 			Button(u)
 		},
 		buttonPower(u),
@@ -122,6 +123,7 @@ namespace gui
 			auto x = tuningArea.getX();
 			xen.setBounds(BoundsF(x, y, w1, h1).toNearestInt());
 			titleXen.setBounds(BoundsF(x, y1, w1, h2).toNearestInt());
+			buttons[kXenSnap].setBounds(BoundsF(x, y1 + h2, w1, h2).toNearestInt());
 			x += w1;
 			anchor.setBounds(BoundsF(x, y, w1, h1).toNearestInt());
 			titleAnchor.setBounds(BoundsF(x, y1, w1, h2).toNearestInt());
@@ -150,7 +152,7 @@ namespace gui
 			spp.setBounds(bounds);
 		}
 		layout.place(buttonPower, 0, -3, 1, 1);
-		for (auto i = 2; i < buttons.size(); ++i)
+		for (auto i = 2; i < buttons.size() - 1; ++i)
 		{
 			auto& btn = buttons[i];
 			layout.place(btn, i - 1, -3, 1, 1);
@@ -297,5 +299,8 @@ namespace gui
 		// MID/SIDE BUTTON
 		auto& midSideButton = buttons[kMidSide];
 		makeParameter(midSideButton, PID::StereoConfig, Button::Type::kChoice, "L/R;M/S");
+		// XEN SNAP BUTTON
+		auto& xenSnapButton = buttons[kXenSnap];
+		makeParameter(xenSnapButton, PID::XenSnap, Button::Type::kToggle, "X;X");
 	}
 }

@@ -59,18 +59,18 @@ namespace dsp
 			const auto env = p.env * envGenVal;
 
 			auto lastVal = vals[0];
-			auto nVal = p.val + p.breite;
+			auto nVal = p.val - p.breite;
 			auto smVal = prms[0](nVal);
 			vals[0] = math::limit(min, max, smVal + env);
 			auto dif = vals[0] - lastVal;
 			auto distSquared = dif * dif;
 			if (distSquared > 1e-4)
 				smooth = true;
-			if (numChannels != 2)
+			if (numChannels == 1)
 				return smooth;
 
 			lastVal = vals[1];
-			nVal = p.val - p.breite;
+			nVal = p.val + p.breite;
 			smVal = prms[1](nVal);
 			vals[1] = math::limit(min, max, smVal + env);
 			dif = vals[1] - lastVal;

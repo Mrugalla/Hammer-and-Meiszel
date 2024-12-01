@@ -19,47 +19,18 @@ namespace dsp
 				freqHz(0.),
 				pitchNote(0.),
 				pitchParam(0.),
-				pb(0.)
+				pb(0.),
+				delaySamples(0.)
 			{}
 
 			double getDelaySamples(const XenManager& xen, double Fs) noexcept
 			{
 				freqHz = xen.noteToFreqHzWithWrap(pitchNote + pitchParam + pb, LowestFrequencyHz);
-				return math::freqHzToSamples(freqHz, Fs);
+				delaySamples = math::freqHzToSamples(freqHz, Fs);
+				return delaySamples;
 			}
 
-			double freqHz, pitchNote, pitchParam, pb;
-		};
-
-		struct Parameters
-		{
-			Parameters() :
-				feedback(-0.),
-				fbRemapped(-0.)
-			{
-			}
-
-			void prepare()
-			{
-				feedback = -0.;
-				fbRemapped = 0.;
-			}
-
-			// feedback[-1,1]
-			void updateFeedback(double _feedback) noexcept
-			{
-				if (feedback == _feedback)
-					return;
-				feedback = _feedback;
-				fbRemapped = math::sinApprox(feedback * PiHalf);
-			}
-
-			double getFeedback() const noexcept
-			{
-				return fbRemapped;
-			}
-		protected:
-			double feedback, fbRemapped;
+			double freqHz, pitchNote, pitchParam, pb, delaySamples;
 		};
 
 		inline double foldFc(double x) noexcept
@@ -75,8 +46,7 @@ namespace dsp
 
 		struct DelayFeedback
 		{
-			DelayFeedback(Parameters& _params) :
-				params(_params),
+			DelayFeedback() :
 				ringBuffer(),
 				size(0)
 			{
@@ -89,37 +59,33 @@ namespace dsp
 				ringBuffer.setSize(2, size, false, true, false);
 			}
 
-			// samples, wHead, rHead, numChannels, numSamples
+			// samples, wHead, rHead, feedbackBuffer, numSamples, ch
 			void operator()(double** samples, const int* wHead, const double* rHead,
-				int numChannels, int numSamples) noexcept
+				const double* fbBuffer, int numSamples, int ch) noexcept
 			{
 				auto ringBuf = ringBuffer.getArrayOfWritePointers();
-				const auto fb = params.getFeedback();
 
-				for (auto ch = 0; ch < numChannels; ++ch)
+				auto smpls = samples[ch];
+				auto ring = ringBuf[ch];
+
+				for (auto s = 0; s < numSamples; ++s)
 				{
-					auto smpls = samples[ch];
-					auto ring = ringBuf[ch];
+					const auto w = wHead[s];
+					const auto r = rHead[s];
+					const auto fb = fbBuffer[s];
 
-					for (auto s = 0; s < numSamples; ++s)
-					{
-						const auto w = wHead[s];
-						const auto r = rHead[s];
+					const auto smplPresent = smpls[s];
+					const auto smplDelayed = math::cubicHermiteSpline(ring, r, size);
 
-						const auto smplPresent = smpls[s];
-						const auto smplDelayed = math::cubicHermiteSpline(ring, r, size);
+					const auto sOut = math::tanhApprox(smplDelayed * fb) + smplPresent;
+					const auto sIn = sOut;
 
-						const auto sOut = math::tanhApprox(smplDelayed * fb) + smplPresent;
-						const auto sIn = sOut;
-
-						ring[w] = sIn;
-						smpls[s] = sOut;
-					}
+					ring[w] = sIn;
+					smpls[s] = sOut;
 				}
 			}
 
 		protected:
-			Parameters& params;
 			AudioBuffer ringBuffer;
 			int size;
 		};
@@ -154,14 +120,14 @@ namespace dsp
 
 		struct Voice
 		{
-			Voice(Parameters& _params) :
-				params(_params),
-				delayPRM(0.),
-				//delayBuffer(),
+			Voice() :
+				delayPRMs{ 0.,0. },
+				feedbackPRMs{ 0., 0. },
+				feedbackInfos(),
 				readHead(),
-				delay(params),
-				val(),
-				Fs(0.), curDelay(0.),
+				delay(),
+				vals(),
+				Fs(0.),
 				size(0)
 			{
 			}
@@ -170,56 +136,111 @@ namespace dsp
 			void prepare(double sampleRate)
 			{
 				Fs = sampleRate;
+				for (auto& delayPRM : delayPRMs)
+					delayPRM.prepare(Fs, 3.);
+				for (auto& feedbackPRM : feedbackPRMs)
+					feedbackPRM.prepare(sampleRate, 1.);
 				const auto sizeD = std::ceil(math::freqHzToSamples(LowestFrequencyHz, Fs));
 				size = static_cast<int>(sizeD);
 				readHead.prepare(sizeD);
 				delay.prepare(size);
-				curDelay = 0.;
+				for (auto& val : vals)
+					val.delaySamples = 0.;
 			}
 
-			// samples, midi, wHead, xen, retune[-n,n]semi, numChannels, numSamples
+			// samples, midi, wHead, xen,
+			// retune[-n,n]semi, retuneWidth[-1,1],
+			// feedback[-1,1], feedbackEnv[-2,2], feedbackWidth[-2,2],
+			// envGenMod[-1,1], numChannels, numSamples
 			void operator()(double** samples, const MidiBuffer& midi,
-				const int* wHead, const XenManager& xenManager, double retune,
+				const int* wHead, const XenManager& xenManager,
+				double retune, double retuneWidth,
+				double fb, double fbEnv, double fbWidth, double envGenMod,
 				int numChannels, int numSamples) noexcept
 			{
-				if (val.pitchParam != retune)
+				updateRetuneParams(xenManager, retune, retuneWidth, numChannels);
+				updateFeedbackParams(fb, fbWidth, fbEnv, envGenMod, numChannels, numSamples);
+				processMIDI(midi, xenManager, numChannels, numSamples);
+				
+				for (auto ch = 0; ch < numChannels; ++ch)
 				{
-					val.pitchParam = retune;
-					updatePitch(xenManager);
+					const auto feedbackBuffer = feedbackInfos[ch].buf;
+					auto delayBuffer = delayPRMs[ch].buf.data();
+
+					readHead
+					(
+						delayBuffer,
+						wHead,
+						numSamples
+					);
+
+
+					delay
+					(
+						samples,
+						wHead,
+						delayBuffer,
+						feedbackBuffer,
+						numSamples,
+						ch
+					);
 				}
-
-				processMIDI(midi, xenManager, numSamples);
-				
-				auto delayBuf = delayPRM.buf.data();
-
-				readHead
-				(
-					delayBuf,
-					wHead,
-					numSamples
-				);
-				
-				delay
-				(
-					samples,
-					wHead, delayBuf,
-					numChannels, numSamples
-				);
 			}
 
 		protected:
-			Parameters& params;
-			PRMD delayPRM;
+			std::array<PRMD, 2> delayPRMs, feedbackPRMs;
+			std::array<PRMInfoD, 2> feedbackInfos;
 			ReadHead readHead;
 			DelayFeedback delay;
-			Val val;
-			double Fs, curDelay;
+			std::array<Val, 2> vals;
+			double Fs;
 		public:
 			int size;
 		private:
-			// midi, xenManager, numSamples
+			// xen, retune, retuneWidth, numChannels
+			void updateRetuneParams(const XenManager& xenManager,
+				double retune, double retuneWidth, int numChannels) noexcept
+			{
+				const auto retuneWidthHalf = retuneWidth * .5;
+				double retunes[2] =
+				{
+					retune + retuneWidthHalf,
+					retune - retuneWidthHalf
+				};
+
+				for (auto ch = 0; ch < numChannels; ++ch)
+					if (vals[ch].pitchParam != retunes[ch])
+					{
+						vals[ch].pitchParam = retunes[ch];
+						updatePitch(xenManager, ch);
+					}
+			}
+
+			// fb, fbWidth, fbEnv, envGenMod, numChannels, numSamples
+			void updateFeedbackParams(double fb, double fbWidth,
+				double fbEnv, double envGenMod,
+				int numChannels, int numSamples) noexcept
+			{
+				const auto fbWidthHalf = fbWidth * .5;
+				const double fbWidths[2] =
+				{
+					fb - fbWidthHalf,
+					fb + fbWidthHalf
+				};
+
+				for (auto ch = 0; ch < numChannels; ++ch)
+				{
+					const auto fbModulated = math::limit(-1., 1., fbWidths[ch] + envGenMod * fbEnv);
+					const auto fbRemapped = math::sinApprox(fbModulated * PiHalf);
+					feedbackInfos[ch] = feedbackPRMs[ch](fbRemapped, numSamples);
+					feedbackInfos[ch].copyToBuffer(numSamples);
+				}
+			}
+
+			// midi, xenManager, numChannels, numSamples
 			void processMIDI(const MidiBuffer& midi,
-				const XenManager& xenManager, int numSamples) noexcept
+				const XenManager& xenManager,
+				int numChannels, int numSamples) noexcept
 			{
 				auto s = 0;
 
@@ -230,34 +251,42 @@ namespace dsp
 					{
 						const auto ts = it.samplePosition;
 						const auto note = msg.getNoteNumber();
-						val.pitchNote = static_cast<double>(note);
-						updatePitch(xenManager, s, ts);
+						const auto noteD = static_cast<double>(note);
+						for(auto& val: vals)
+							val.pitchNote = noteD;
+						updatePitch(xenManager, numChannels, s, ts);
 						s = ts;
 					}
 					else if (msg.isPitchWheel())
 					{
 						const auto ts = it.samplePosition;
-						val.pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xenManager.getPitchbendRange() * 2.;
-						updatePitch(xenManager, s, ts);
+						const auto pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xenManager.getPitchbendRange() * 2.;
+						for (auto& val : vals)
+							val.pb = pb;
+						updatePitch(xenManager, numChannels, s, ts);
 						s = ts;
 					}
 				}
 
-				updatePitch(xenManager, s, numSamples);
+				updatePitch(xenManager, numChannels, s, numSamples);
 			}
 
-			// xenManager, startIdx, endIdx
-			void updatePitch(const XenManager& xenManager, int s, int ts) noexcept
+			// xenManager, numChannels, startIdx, endIdx
+			void updatePitch(const XenManager& xenManager, int numChannels, int s, int ts) noexcept
 			{
-				auto delayInfo = delayPRM(curDelay, s, ts);
-				delayInfo.copyToBuffer(s, ts);
-				updatePitch(xenManager);
+				for (auto ch = 0; ch < numChannels; ++ch)
+				{
+					const auto curDelay = vals[ch].delaySamples;
+					auto delayInfo = delayPRMs[ch](curDelay, s, ts);
+					delayInfo.copyToBuffer(s, ts);
+					updatePitch(xenManager, ch);
+				}
 			}
 
-			// xenManager
-			void updatePitch(const XenManager& xenManager) noexcept
+			// xenManager, ch
+			void updatePitch(const XenManager& xenManager, int ch) noexcept
 			{
-				curDelay = val.getDelaySamples(xenManager, Fs);
+				vals[ch].getDelaySamples(xenManager, Fs);
 			}
 		};
 
@@ -266,17 +295,11 @@ namespace dsp
 		struct Comb
 		{
 			Comb() :
-				params(),
 				wHead(),
-				voices
-				{
-					Voice(params), Voice(params), Voice(params), Voice(params), Voice(params),
-					Voice(params), Voice(params), Voice(params), Voice(params), Voice(params),
-					Voice(params), Voice(params), Voice(params), Voice(params), Voice(params)
-				}
+				voices()
 			{}
 
-			// Fs
+			// sampleRate
 			void prepare(double sampleRate)
 			{
 				for (auto i = 0; i < voices.size(); ++i)
@@ -290,26 +313,24 @@ namespace dsp
 				wHead(numSamples);
 			}
 
-			// feedback[-1,1]
-			void updateParameters(double feedback) noexcept
-			{
-				params.updateFeedback(feedback);
-			}
-
-			// samples, midi, xen, retune, numChannels, numSamples, voiceIdx
+			// samples, midi, xen, retune, feedback, feedbackEnv, feedbackWidth,
+			// numChannels, numSamples, voiceIdx
 			void operator()(double** samples, const MidiBuffer& midi,
-				const arch::XenManager& xen, double retune,
+				const arch::XenManager& xen,
+				double retune, double retuneWidth,
+				double fb, double fbEnv, double fbWidth,
+				double envGenMod,
 				int numChannels, int numSamples, int v) noexcept
 			{
 				voices[v]
 				(
-					samples, midi, wHead.data(), xen, retune,
+					samples, midi, wHead.data(), xen,
+					retune, retuneWidth, fb, fbEnv, fbWidth, envGenMod,
 					numChannels, numSamples
 				);
 			}
 
 		protected:
-			Parameters params;
 			WHead1x wHead;
 			VoicesArray voices;
 		};

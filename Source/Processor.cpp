@@ -329,7 +329,10 @@ namespace audio
         midiOutBuffer.clear();
 
 #if PPDHasTuningEditor
-        const auto xen = std::round(params(PID::Xen).getValModDenorm());
+        auto xen = params(PID::Xen).getValModDenorm();
+		const auto xenSnap = params(PID::XenSnap).getValMod() > .5f;
+        if(xenSnap)
+			xen = std::round(xen);
         const auto masterTune = std::round(params(PID::MasterTune).getValModDenorm());
         const auto anchor = std::round(params(PID::AnchorPitch).getValModDenorm());
         const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
@@ -433,7 +436,7 @@ namespace audio
 			dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
 
-#if JUCE_DEBUG
+#if JUCE_DEBUG && false
         for (auto ch = 0; ch < numChannels; ++ch)
         {
             auto smpls = samplesMain[ch];

@@ -9,7 +9,7 @@ namespace gui
 		public Comp
 	{
 		enum { kWet, kMix, kOut, kMacro, kSidePanelParams };
-		enum { kMacroRel, kMacroSwap, kDelta, kMidSide, kNumButtons };
+		enum { kMacroRel, kMacroSwap, kDelta, kMidSide, kXenSnap, kNumButtons };
 		enum { cbMacroRel };
 
 		struct SidePanelParam

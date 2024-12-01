@@ -96,9 +96,10 @@ namespace gui
 
 	void Button::resized()
 	{
+		const auto thicc = utils.thicc;
 		label.setBounds(getLocalBounds());
 		if(label.type == Label::Type::Text)
-			label.setMaxHeight();
+			label.setMaxHeight(thicc * 5.f);
 	}
 
 	void Button::mouseEnter(const Mouse& mouse)
@@ -454,7 +455,6 @@ namespace gui
 
 			btn.value = val;
 			btn.label.setText(valToNameFunc());
-			btn.repaint();
 		}, Button::kUpdateParameterCB, cbFPS::k15, true));
 	}
 

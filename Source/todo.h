@@ -4,13 +4,8 @@
 
 ~~~ todo ~~~
 
-feedback oct,semi fehlt
-feedback env, width fehlt
-width parameter klingen nicht als ob sie den effekt auf einzelne boxen pannen
-
-parameter smoothing im comb filter
-
-m/s button zu dicke schrift
+manchmal wenn man plugin mit projekt öffnet zeigt modal material editro nicht direkt das richtige material an
+    sondern das default material
 
 prevent some colours from having transparency
 
@@ -24,7 +19,7 @@ write new sleepy state mechanism for modal resonator filter.
     or from low audio input values, but it should only trigger when nothing's playing anymore
 
 rescue overlaps funzt noch nicht gut genug
-    manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar
+    manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar weil zu nah
 
 hold down note, then press other notes to trigger the dry through bug
 

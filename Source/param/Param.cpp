@@ -53,6 +53,7 @@ namespace param
 #if PPDHasTuningEditor
 			// TUNING PARAM:
 		case PID::Xen: return "Xen";
+		case PID::XenSnap: return "Xen Snap";
 		case PID::MasterTune: return "Master Tune";
 		case PID::AnchorPitch: return "Anchor Pitch";
 		case PID::PitchbendRange: return "Pitchbend Range";
@@ -98,6 +99,7 @@ namespace param
 		//
 		case PID::CombOct: return "Comb Oct";
 		case PID::CombSemi: return "Comb Semi";
+		case PID::CombUnison: return "Comb Unison";
 		case PID::CombFeedback: return "Comb Feedback";
 		case PID::CombFeedbackEnv: return "Comb Feedback Env";
 		case PID::CombFeedbackWidth: return "Comb Feedback Width";
@@ -158,7 +160,8 @@ namespace param
 #endif
 #if PPDHasTuningEditor
 		// TUNING PARAMS:
-		case PID::Xen: return "The xenharmony describes how many pitches per octave exist. Higher values = Smaller intervals.";
+		case PID::Xen: return "The xenharmony describes how many pitches per octave exist. Higher edo = smaller intervals.";
+		case PID::XenSnap: return "If disabled you can explore xen scales that have less or no octaves.";
 		case PID::MasterTune: return "This is the frequency the anchor pitch refers to. (Chamber Frequency)";
 		case PID::AnchorPitch: return "The anchor pitch refers to the same frequency regardless of xen scale.";
 		case PID::PitchbendRange: return "The pitchbend range in semitones describes how many pitches you can bend.";
@@ -202,6 +205,7 @@ namespace param
 		
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
 		case PID::CombSemi: return "Transposes the comb filter in semitones.";
+		case PID::CombUnison: return "Applies unison of maximally 1 semitone to the comb filter.";
 		case PID::CombFeedback: return "The feedback of the comb filter's feedback delay.";
 		case PID::CombFeedbackEnv: return "The envelope generator's depth on the comb filter's feedback.";
 		case PID::CombFeedbackWidth: return "The stereo width of the comb filter's feedback.";
@@ -1076,11 +1080,17 @@ namespace param::valToStr
 		};
 	}
 
-	ValToStrFunc xen()
+	ValToStrFunc xen(const Params& params)
 	{
-		return [](float v)
+		return [&prms = params](float v)
 		{
-			return String(std::round(v)) + " " + toString(Unit::Xen);
+			const auto& snapParam = prms(PID::XenSnap);
+			const auto snap = snapParam.getValMod() > .5f;
+			if (snap)
+				v = std::round(v);
+			else
+				v = std::round(v * 100.f) * .01f;
+			return String(v) + " " + toString(Unit::Xen);
 		};
 	}
 
@@ -1190,7 +1200,7 @@ namespace param::valToStr
 
 namespace param
 {
-	/* pID, valDenormDefault, range, Unit */
+	// pID, valDenormDefault, range, Unit
 	extern Param* makeParam(PID id, float valDenormDefault = 1.f,
 		const Range& range = { 0.f, 1.f }, Unit unit = Unit::Percent)
 	{
@@ -1255,10 +1265,6 @@ namespace param
 			valToStrFunc = valToStr::voices();
 			strToValFunc = strToVal::voices();
 			break;
-		case Unit::Xen:
-			valToStrFunc = valToStr::xen();
-			strToValFunc = strToVal::xen();
-			break;
 		case Unit::Note:
 			valToStrFunc = valToStr::note();
 			strToValFunc = strToVal::note();
@@ -1295,7 +1301,7 @@ namespace param
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, unit);
 	}
 
-	/* pID, params */
+	// pID, params
 	extern Param* makeParamPan(PID id, const Params& params)
 	{
 		ValToStrFunc valToStrFunc = valToStr::pan(params);
@@ -1304,7 +1310,7 @@ namespace param
 		return new Param(id, { -1.f, 1.f }, 0.f, valToStrFunc, strToValFunc, Unit::Pan);
 	}
 
-	/* pID, state, valDenormDefault, range, Xen */
+	// pID, valDenormDefault, range, Xen
 	extern Param* makeParamPitch(PID id, float valDenormDefault,
 		const Range& range, const Xen& xen)
 	{
@@ -1312,6 +1318,16 @@ namespace param
 		StrToValFunc strToValFunc = strToVal::pitch(xen);
 
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Pitch);
+	}
+
+	extern Param* makeParamXen(const Params& params)
+	{
+		constexpr auto MaxXen = static_cast<float>(PPDMaxXen);
+		constexpr auto DefaultXen = 12.f;
+		const auto range = makeRange::withCentre(3.f, MaxXen, DefaultXen);
+		ValToStrFunc valToStrFunc = valToStr::xen(params);
+		StrToValFunc strToValFunc = strToVal::xen();
+		return new Param(PID::Xen, range, DefaultXen, valToStrFunc, strToValFunc, Unit::Xen);
 	}
 
 	extern Param* makeParam(PID id, float valDenormDefault, const Range& range,
@@ -1363,8 +1379,8 @@ namespace param
 #endif
 #if PPDHasTuningEditor
 			// TUNING PARAMS:
-			const auto maxXen = static_cast<float>(PPDMaxXen);
-			params.push_back(makeParam(PID::Xen, 12.f, makeRange::withCentre(3.f, maxXen, 12.f), Unit::Xen));
+			params.push_back(makeParamXen(*this));
+			params.push_back(makeParam(PID::XenSnap, 1.f, makeRange::toggle(), Unit::Power));
 			params.push_back(makeParam(PID::MasterTune, 440.f, makeRange::withCentre(420.f, 460.f, 440.f), Unit::Hz));
 			params.push_back(makeParam(PID::AnchorPitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
 			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(1.f, 48.f), Unit::Semi));
@@ -1413,12 +1429,12 @@ namespace param
 		params.push_back(makeParam(PID::ModalResoDampEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResoDampBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 
-		
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
-		params.push_back(makeParam(PID::CombFeedback, 0.f));
-		params.push_back(makeParam(PID::CombFeedbackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombUnison, 0.f, makeRange::lin(0.f, 1.f)));
+		params.push_back(makeParam(PID::CombFeedback, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::CombFeedbackEnv, 0.f, makeRange::lin(-2.f, 2.f)));
+		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-2.f, 2.f)));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

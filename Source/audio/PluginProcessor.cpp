@@ -171,15 +171,17 @@ namespace audio
 		auto combSemi = static_cast<double>(std::round(combSemiParam.getValModDenorm()));
 		combSemi += combOct * xen.getXen();
 
+		const auto& combUnisonParam = params(PID::CombUnison);
+		const auto combUnison = static_cast<double>(combUnisonParam.getValMod());
+
 		const auto& combFeedbackParam = params(PID::CombFeedback);
-		auto combFeedback = static_cast<double>(combFeedbackParam.getValMod());
-		if (combSemi > 0.)
-			combFeedback *= -1.;
+		const auto combFeedback = static_cast<double>(combFeedbackParam.getValModDenorm());
+
+		const auto& combFeedbackEnvParam = params(PID::CombFeedbackEnv);
+		const auto combFeedbackEnv = static_cast<double>(combFeedbackEnvParam.getValModDenorm());
+		const auto& combFeedbackWidthParam = params(PID::CombFeedbackWidth);
+		const auto combFeedbackWidth = static_cast<double>(combFeedbackWidthParam.getValModDenorm());
 		
-		combFilter.updateParameters
-		(
-			combFeedback
-		);
 		combFilter(numSamples);
 		
 		const auto samplesInput = const_cast<const double**>(samples);
@@ -216,7 +218,9 @@ namespace audio
 			combFilter
 			(
 				samplesVoice, midiVoice, xen,
-				combSemi,
+				combSemi, combUnison,
+				combFeedback, combFeedbackEnv, combFeedbackWidth,
+				envGenModVal,
 				numChannels, numSamples,
 				v
 			);
@@ -242,7 +246,6 @@ namespace audio
 			const auto& material = modalFilter.getMaterial(i);
 			material.savePatch(state, "mat" + juce::String(i));
 		}
-
 	}
 
 	void PluginProcessor::loadPatch(const arch::State& state)
@@ -266,7 +269,12 @@ namespace audio
 				if (freqVal != nullptr)
 					peakInfo.freqHz = static_cast<double>(*freqVal);
 			}
-			material.reportUpdate();
+			for (auto k = 0; k < 1000000; ++k)
+				if (material.status.load() == dsp::modal::StatusMat::Processing)
+				{
+					material.reportUpdate();
+					return;
+				}
 		}
 	}
 

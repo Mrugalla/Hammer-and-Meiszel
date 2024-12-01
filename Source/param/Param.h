@@ -39,6 +39,7 @@ namespace param
 		// tuning parameters:
 #if PPDHasTuningEditor
 		Xen,
+		XenSnap,
 		MasterTune,
 		AnchorPitch,
 		PitchbendRange,
@@ -84,6 +85,7 @@ namespace param
 		// comb:
 		CombOct,
 		CombSemi,
+		CombUnison,
 		CombFeedback,
 		CombFeedbackEnv,
 		CombFeedbackWidth,
