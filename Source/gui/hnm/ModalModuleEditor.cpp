@@ -4,11 +4,10 @@ namespace gui
 {
 	ModalModuleEditor::ModalModuleEditor(Utils& u) :
 		Comp(u),
-		title(u),
-		buttonA(u),
-		buttonB(u),
+		buttonAB(u),
 		buttonSolo(u),
-		buttonDropDown(u),
+		buttonDropDownGens(u),
+		buttonDropDownMisc(u),
 		materialEditors
 		{
 			ModalMaterialEditor
@@ -25,7 +24,8 @@ namespace gui
 			)
 		},
 		params(u),
-		dropDown(u)
+		dropDownGens(u),
+		dropDownMisc(u)
 	{
 		layout.init
 		(
@@ -33,18 +33,17 @@ namespace gui
 			{ 1, 13, 8 }
 		);
 
-		addAndMakeVisible(title);
-		addAndMakeVisible(buttonA);
-		addAndMakeVisible(buttonB);
+		addAndMakeVisible(buttonAB);
 		addAndMakeVisible(buttonSolo);
-		addAndMakeVisible(buttonDropDown);
+		addAndMakeVisible(buttonDropDownGens);
+		addAndMakeVisible(buttonDropDownMisc);
 		for (auto& m : materialEditors)
 			addChildComponent(m);
 		materialEditors[0].setVisible(true);
 		addAndMakeVisible(params);
-		addChildComponent(dropDown);
+		addChildComponent(dropDownGens);
+		addChildComponent(dropDownMisc);
 
-		initTitle();
 		initButtonAB();
 		initButtonSolo();
 		initDropDown();
@@ -68,63 +67,44 @@ namespace gui
 			const auto y = top.getY();
 			const auto w = top.getWidth();
 			const auto h = top.getHeight();
-			const auto buttonWidth = w / 5.f;
-			title.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
-			title.setMaxHeight(thicc * 2.f);
-			x += buttonWidth;
-			buttonA.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
-			x += buttonWidth;
-			buttonB.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
+			const auto buttonWidth = w * .25f;
+			buttonAB.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
 			buttonSolo.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
-			buttonDropDown.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
+			buttonDropDownGens.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
+			x += buttonWidth;
+			buttonDropDownMisc.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 		}
 		for (auto& m : materialEditors)
 			layout.place(m, 0, 1, 1, 1);
 		params.setBounds(layout.bottom().toNearestInt());
-		layout.place(dropDown, 0, 1, 1, 1, thicc);
-	}
-
-	void ModalModuleEditor::initTitle()
-	{
-		auto titleFont = font::dosisRegular();
-		makeTextLabel(title, "Modal Filter:", titleFont, Just::centred, CID::Txt, "This is the module of the modal filter.");
+		const auto dropDownsBounds = layout(0, 1, 1, 1, thicc).toNearestInt();
+		dropDownGens.setBounds(dropDownsBounds);
+		dropDownMisc.setBounds(dropDownsBounds);
 	}
 
 	void ModalModuleEditor::initButtonAB()
 	{
-		makeTextButton(buttonA, "A", "Observe and edit Material A!", CID::Interact);
-		buttonA.type = Button::Type::kToggle;
-		buttonA.onClick = [&](const Mouse&)
+		makeTextButton(buttonAB, "A/B: A", "Observe and edit Materials A/B! (Blend them with the blend parameter below)", CID::Interact);
+		buttonAB.type = Button::Type::kToggle;
+		buttonAB.onClick = [&](const Mouse&)
 		{
-			materialEditors[0].setVisible(true);
-			materialEditors[1].setVisible(false);
-			buttonA.value = 1.f;
-			buttonB.value = 0.f;
-			buttonA.repaint();
-			buttonB.repaint();
+			const auto nVal = buttonAB.value > .5f ? 0.f : 1.f;
+			buttonAB.value = nVal;
+			const auto e = nVal > .5f;
+			buttonAB.label.setText(e ? "A/B: B" : "A/B: A");
+			buttonAB.repaint();
+			materialEditors[0].setVisible(!e);
+			materialEditors[1].setVisible(e);
 		};
-
-		makeTextButton(buttonB, "B", "Observe and edit Material B!", CID::Interact);
-		buttonB.type = Button::Type::kToggle;
-		buttonB.onClick = [&](const Mouse&)
-			{
-				materialEditors[0].setVisible(false);
-				materialEditors[1].setVisible(true);
-				buttonA.value = 0.f;
-				buttonB.value = 1.f;
-				buttonA.repaint();
-				buttonB.repaint();
-			};
-
-		buttonA.value = 1.f;
+		buttonAB.value = 0.f;
 	}
 
 	void ModalModuleEditor::initButtonSolo()
 	{
 		addAndMakeVisible(buttonSolo);
-		makeTextButton(buttonSolo, "S", "Listen to partials in isolation with the solo button!", CID::Interact);
+		makeTextButton(buttonSolo, "Solo", "Listen to partials in isolation with the solo button!", CID::Interact);
 		buttonSolo.value = 0.f;
 		buttonSolo.type = Button::Type::kToggle;
 		buttonSolo.onClick = [&](const Mouse&)
@@ -145,72 +125,72 @@ namespace gui
 	void ModalModuleEditor::initDropDown()
 	{
 		// GEN: SINE
-		dropDown.add
+		dropDownGens.add
 		(
 			[&](const Mouse&)
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+				auto& material = modalFilter.getMaterial(buttonAB.value > .5f ? 1 : 0);
 				dsp::modal::generateSine(material);
 			},
 			"Gen: Sine", "Generates a modal material with a single partial."
 		);
 
 		// GEN: SAW
-		dropDown.add
+		dropDownGens.add
 		(
 			[&](const Mouse&)
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+				auto& material = modalFilter.getMaterial(buttonAB.value > .5f ? 1 : 0);
 				dsp::modal::generateSaw(material);
 			},
 			"Gen: Saw", "Generates a sawtooth-shaped modal material."
 		);
 
 		// GEN: SQUARE
-		dropDown.add
+		dropDownGens.add
 		(
 			[&](const Mouse&)
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+				auto& material = modalFilter.getMaterial(buttonAB.value > .5f ? 1 : 0);
 				dsp::modal::generateSquare(material);
 			},
 			"Gen: Square", "Generates a square-shaped modal material."
 		);
 
 		// GEN: FIBONACCI
-		dropDown.add
+		dropDownGens.add
 		(
 			[&](const Mouse&)
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+				auto& material = modalFilter.getMaterial(buttonAB.value > .5f ? 1 : 0);
 				dsp::modal::generateFibonacci(material);
 			},
 			"Gen: Fibonacci", "Generates a modal material with Fibonacci ratios."
 		);
 
 		// GEN: PRIME
-		dropDown.add
+		dropDownGens.add
 		(
 			[&](const Mouse&)
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+				auto& material = modalFilter.getMaterial(buttonAB.value > .5f ? 1 : 0);
 				dsp::modal::generatePrime(material);
 			},
 			"Gen: Prime", "Generates a modal material with prime ratios."
 		);
 
 		// Copy To Other Material
-		dropDown.add
+		dropDownMisc.add
 		(
 			[&](const Mouse&)
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				const auto thisIdx = buttonA.value > .5f ? 0 : 1;
+				const auto thisIdx = buttonAB.value > .5f ? 1 : 0;
 				const auto& materialThis = modalFilter.getMaterial(thisIdx);
 				auto& materialThat = modalFilter.getMaterial(1 - thisIdx);
 				materialThat.peakInfos = materialThis.peakInfos;
@@ -220,13 +200,13 @@ namespace gui
 		);
 
 		// Proc: Vertical Flip
-		dropDown.add
+		dropDownMisc.add
 		(
 			[&](const Mouse&)
 			{
 				const auto numFilters = dsp::modal::NumFilters;
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				const auto matIdx = buttonA.value > .5f ? 0 : 1;
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				auto& material = modalFilter.getMaterial(matIdx);
 				auto& peaks = material.peakInfos;
 
@@ -252,13 +232,13 @@ namespace gui
 		);
 
 		// Proc: Horizontal Flip
-		dropDown.add
+		dropDownMisc.add
 		(
 			[&](const Mouse&)
 			{
 				const auto numFilters = dsp::modal::NumFilters;
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				const auto matIdx = buttonA.value > .5f ? 0 : 1;
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				auto& material = modalFilter.getMaterial(matIdx);
 				auto& peaks = material.peakInfos;
 				for (auto i = 0; i < numFilters; ++i)
@@ -272,24 +252,24 @@ namespace gui
 		);
 
 		// Record Input
-		dropDown.add
+		dropDownMisc.add
 		(
 			[&](const Mouse&)
 			{
 				auto& processor = utils.audioProcessor.pluginProcessor;
-				processor.recording.store(buttonA.value > .5f ? 0 : 1);
+				processor.recording.store(buttonAB.value > .5f ? 1 : 0);
 				processor.recSampleIndex = 0;
 			},
 			"Record Input", "Records the input signal for modal analysis."
 		);
 
 		// Rescue Overlaps
-		dropDown.add
+		dropDownMisc.add
 		(
 			[&](const Mouse&)
 			{
 				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				auto& material = modalFilter.getMaterial(buttonA.value > .5f ? 0 : 1);
+				auto& material = modalFilter.getMaterial(buttonAB.value > .5f ? 1 : 0);
 				auto& peakInfos = material.peakInfos;
 				const auto numFilters = dsp::modal::NumFilters;
 				while (true)
@@ -304,7 +284,9 @@ namespace gui
 							if (i != j)
 							{
 								const auto r1 = peakInfos[j].ratio;
-								if (r0 == r1)
+								const auto dif = std::abs(r1 - r0);
+								const auto threshold = 0.001f;
+								if (dif < threshold)
 								{
 									duplicate = { i, j };
 									duplicateFound = true;
@@ -336,7 +318,9 @@ namespace gui
 			"Rescue Overlaps", "Puts overlapping partials somewhere else."
 		);
 
-		dropDown.init();
-		buttonDropDown.init(dropDown, "Here you can find additional modal material features.");
+		dropDownGens.init();
+		dropDownMisc.init();
+		buttonDropDownGens.init(dropDownGens, "Generators", "Generate modal materials from magic! (math)");
+		buttonDropDownMisc.init(dropDownMisc, "Misc", "Here you can find additional modal material features.");
 	}
 }

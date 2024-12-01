@@ -561,7 +561,7 @@ namespace dsp
 			{
 				auto& peak = peaks[i];
 
-				const auto fibonacci = math::fibonacci(i + 1);
+				const auto fibonacci = math::fibonacci(i + 2);
 				const auto fibD = static_cast<double>(fibonacci);
 
 				peak.ratio = fibD;

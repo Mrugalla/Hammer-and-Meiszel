@@ -4,7 +4,7 @@ namespace gui
 {
 	ColoursEditor::ColoursEditor(Utils& u) :
 		Comp(u),
-		selector(27, 4, 7),
+		selector(std::make_unique<ColourSelector>(26, 4, 7)),
 		buttonsColour
 		{
 			Button(u),
@@ -27,7 +27,7 @@ namespace gui
 			{ 8, 1 }
 		);
 
-		addAndMakeVisible(selector);
+		addAndMakeVisible(*selector);
 		for (auto i = 0; i < NumColours; ++i)
 		{
 			auto& button = buttonsColour[i];
@@ -40,17 +40,34 @@ namespace gui
 			button.type = Button::Type::kChoice;
 			button.value = 0.f;
 			button.onClick = [&, i](const Mouse&)
+			{
+				cIdx = i;
+				lastColour = Colours::c(cIdx);
+				removeChildComponent(selector.get());
+				const auto cID = static_cast<CID>(cIdx);
+				switch (cID)
 				{
-					cIdx = i;
-					lastColour = Colours::c(cIdx);
-					selector.setCurrentColour(Colours::c(cIdx));
-					for (auto& button : buttonsColour)
-						button.value = 0.f;
-					buttonsColour[cIdx].value = 1.f;
-				};
+				case CID::Bg:
+				case CID::Txt:
+				case CID::Interact:
+				case CID::Mod:
+					selector = std::make_unique<ColourSelector>(26, 4, 7);
+					break;
+				case CID::Hover:
+				case CID::Darken:
+					selector = std::make_unique<ColourSelector>(27, 4, 7);
+					break;
+				}
+				addAndMakeVisible(*selector);
+				selector->setCurrentColour(Colours::c(cIdx));
+				for (auto& button : buttonsColour)
+					button.value = 0.f;
+				buttonsColour[cIdx].value = 1.f;
+				resized();
+			};
 		}
 		buttonsColour[cIdx].value = 1.f;
-		selector.setCurrentColour(Colours::c(cIdx));
+		selector->setCurrentColour(Colours::c(cIdx));
 
 		addAndMakeVisible(buttonRevert);
 		addAndMakeVisible(buttonDefault);
@@ -59,32 +76,32 @@ namespace gui
 		makeTextButton(buttonDefault, "Default", "Revert to the default colour settings.", CID::Interact);
 
 		buttonRevert.onClick = [&](const Mouse&)
-			{
-				Colours::c.set(lastColour, static_cast<CID>(cIdx));
-				selector.setCurrentColour(lastColour);
-				utils.pluginTop.repaint();
-			};
+		{
+			Colours::c.set(lastColour, static_cast<CID>(cIdx));
+			selector->setCurrentColour(lastColour);
+			utils.pluginTop.repaint();
+		};
 
 		buttonDefault.onClick = [&](const Mouse&)
-			{
-				const auto cID = static_cast<CID>(cIdx);
-				const auto col = toDefault(cID);
-				Colours::c.set(col, cID);
-				selector.setCurrentColour(col);
-				utils.pluginTop.repaint();
-			};
+		{
+			const auto cID = static_cast<CID>(cIdx);
+			const auto col = toDefault(cID);
+			Colours::c.set(col, cID);
+			selector->setCurrentColour(col);
+			utils.pluginTop.repaint();
+		};
 
 		const auto fps = cbFPS::k7_5;
 		const auto speed = msToInc(AniLengthMs, fps);
 		add(Callback([&, speed]()
-			{
-				const auto selectorCol = selector.getCurrentColour();
-				const auto curCol = Colours::c(cIdx);
-				if (selectorCol == curCol)
-					return;
-				Colours::c.set(selectorCol, static_cast<CID>(cIdx));
-				u.pluginTop.repaint();
-			}, 0, fps, true));
+		{
+			const auto selectorCol = selector->getCurrentColour();
+			const auto curCol = Colours::c(cIdx);
+			if (selectorCol == curCol)
+				return;
+			Colours::c.set(selectorCol, static_cast<CID>(cIdx));
+			u.pluginTop.repaint();
+		}, 0, fps, true));
 	}
 
 	void ColoursEditor::resized()
@@ -102,11 +119,12 @@ namespace gui
 			{
 				const auto bounds = BoundsF(x, y, w, hButton);
 				button.setBounds(bounds.toNearestInt());
+				button.label.setMaxHeight(utils.thicc);
 				y += hButton;
 			}
 		}
 
-		layout.place(selector, 1, 0, 1, 1);
+		layout.place(*selector, 1, 0, 1, 1);
 
 		const auto buttonsBottomBounds = layout(1, 1, 1, 1);
 		{
@@ -135,40 +153,40 @@ namespace gui
 		const auto paintVisor = makeButtonOnPaintVisor(2);
 
 		makePaintButton(*this, [&, paintVisor](Graphics& g, const Button& b)
-			{
-				if (!img.isValid())
-					return;
+		{
+			if (!img.isValid())
+				return;
 
-				paintVisor(g, b);
+			paintVisor(g, b);
 
-				const auto phaseHover = callbacks[kHoverAniCB].phase;
+			const auto phaseHover = callbacks[kHoverAniCB].phase;
 
-				const auto w = static_cast<float>(img.getWidth());
-				const auto h = static_cast<float>(img.getHeight());
-				const auto maniSizeRel = Pi * .25f;
-				const auto wNoHover = w * maniSizeRel;
-				const auto hNoHover = h * maniSizeRel;
-				const auto x = wNoHover + phaseHover * (w - wNoHover);
-				const auto y = hNoHover + phaseHover * (h - hNoHover);
+			const auto w = static_cast<float>(img.getWidth());
+			const auto h = static_cast<float>(img.getHeight());
+			const auto maniSizeRel = Pi * .25f;
+			const auto wNoHover = w * maniSizeRel;
+			const auto hNoHover = h * maniSizeRel;
+			const auto x = wNoHover + phaseHover * (w - wNoHover);
+			const auto y = hNoHover + phaseHover * (h - hNoHover);
 
-				g.drawImage
-				(
-					img.rescaled(static_cast<int>(x), static_cast<int>(y), ResamplingQuality::lowResamplingQuality),
-					getLocalBounds().toFloat(),
-					RectanglePlacement::doNotResize,
-					false
-				);
-			}
+			g.drawImage
+			(
+				img.rescaled(static_cast<int>(x), static_cast<int>(y), ResamplingQuality::lowResamplingQuality),
+				getLocalBounds().toFloat(),
+				RectanglePlacement::doNotResize,
+				false
+			);
+		}
 		, "Click here to customize the visual style of the plugin.");
 		notify(evt::Type::TooltipUpdated, &tooltip);
 		onClick = [&](const Mouse&)
-			{
-				const auto e = value < .5f;
-				if (e)
-					utils.eventSystem.notify(evt::Type::ClickedEmpty);
-				menu.setVisible(e);
-				value = std::round(1.f - value);
-			};
+		{
+			const auto e = value < .5f;
+			if (e)
+				utils.eventSystem.notify(evt::Type::ClickedEmpty);
+			menu.setVisible(e);
+			value = std::round(1.f - value);
+		};
 	}
 
 	void ButtonColours::resized()

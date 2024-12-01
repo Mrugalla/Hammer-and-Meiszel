@@ -4,26 +4,23 @@
 
 ~~~ todo ~~~
 
+randomizer button
+
 manchmal wenn man plugin mit projekt öffnet zeigt modal material editro nicht direkt das richtige material an
     sondern das default material
 
-prevent some colours from having transparency
-
-polyphony parameter
-    monophonic mode with portamento and stuff
-    reset mod envelope on note on (or not)
+generated saw and sqr acts weird with keytrack+ when you drag partials away from harmonic series
 
 write new sleepy state mechanism for modal resonator filter.
     problem was: it turned off the modal filter when it got too quiet
     but quietness can also come from low sustain values on the envelope
     or from low audio input values, but it should only trigger when nothing's playing anymore
 
-rescue overlaps funzt noch nicht gut genug
-    manchmal overlappen sie nicht aber sind nicht einzeln ansprechbar weil zu nah
+polyphony parameter
+    monophonic mode with portamento and stuff
+    reset mod envelope on note on (or not)
 
 hold down note, then press other notes to trigger the dry through bug
-
-generated saw and sqr acts weird with keytrack+ when you drag partials away from harmonic series
 
 remap frequencies of partials with a MSEG curve, like mtransformer
 

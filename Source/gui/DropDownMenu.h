@@ -30,9 +30,9 @@ namespace gui
 			Button(u)
 		{}
 
-		void init(DropDownMenu& dropDown, const String& _tooltip)
+		void init(DropDownMenu& dropDown, const String& title, const String& _tooltip)
 		{
-			makeTextButton(*this, "V", _tooltip, CID::Interact);
+			makeTextButton(*this, title, _tooltip, CID::Interact);
 			type = Button::Type::kToggle;
 			onPaint = makeButtonOnPaint(true, getColour(CID::Bg));
 			onClick = [&m = dropDown](const Mouse&)

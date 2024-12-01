@@ -14,16 +14,13 @@ namespace gui
 
 		void resized() override;
 
-		Label title;
-		Button buttonA, buttonB, buttonSolo;
-		ButtonDropDown buttonDropDown;
+		Button buttonAB, buttonSolo;
+		ButtonDropDown buttonDropDownGens, buttonDropDownMisc;
 		std::array<ModalMaterialEditor, 2> materialEditors;
 		ModalParamsEditor params;
-		DropDownMenu dropDown;
+		DropDownMenu dropDownGens, dropDownMisc;
 
 	private:
-		void initTitle();
-
 		void initButtonAB();
 
 		void initButtonSolo();
