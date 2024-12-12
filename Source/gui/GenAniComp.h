@@ -9,15 +9,19 @@ namespace gui
 		GenAniComp(Utils& u, String&& _tooltip) :
 			Comp(u, _tooltip),
 			img(),
-			onResize([](){})
+			onResize([](){}),
+			active(utils.getProps().getBoolValue("genaniactive", true))
 		{
 			setOpaque(true);
 		}
 
+		~GenAniComp()
+		{
+			saveImage();
+		}
+
 		void init()
 		{
-			const auto& user = utils.getProps();
-			const auto active = user.getBoolValue("genanicomp", true);
 			callbacks[0].active = active;
 		}
 
@@ -26,30 +30,71 @@ namespace gui
 			g.drawImageAt(img, 0, 0);
 		}
 
-		void resized() override
+		bool loadImage()
 		{
-			if(img.isValid())
-				img = img.rescaled(getWidth(), getHeight(), Graphics::lowResamplingQuality);
-			else
-				img = Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
-			fixStupidJUCEImageThingie(img);
-			onResize();
+			auto& user = utils.getProps();
+			const auto& file = user.getFile();
+			const auto directory = file.getParentDirectory();
+			const auto path = directory.getFullPathName() + File::getSeparatorString() + "genani.png";
+			const auto findFiles = File::TypesOfFileToFind::findFiles;
+			const auto wildCard = "*.png";
+			for (auto f : directory.findChildFiles(findFiles, true, wildCard))
+			{
+				if (f.getFileName() == "genani.png")
+				{
+					const auto nImg = juce::ImageFileFormat::loadFrom(f);
+					if (nImg.isValid())
+					{
+						img = nImg;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		void saveImage()
+		{
+			auto& user = utils.getProps();
+			const auto directory = user.getFile().getParentDirectory();
+			auto file = directory.getChildFile("genani.png");
+			if (file.existsAsFile())
+				file.deleteFile();
+			juce::FileOutputStream stream(file);
+			juce::PNGImageFormat pngWriter;
+			pngWriter.writeImageToStream(img, stream);
 		}
 
 		void mouseUp(const Mouse& mouse) override
 		{
 			if (mouse.mouseWasDraggedSinceMouseDown())
 				return;
-
-			auto& active = callbacks[0].active;
 			active = !active;
+			callbacks[0].active = active;
+			if (!active)
+				saveImage();
 			auto& user = utils.getProps();
-			user.setValue("genanicomp", active);
+			user.setValue("genaniactive", active);
 		}
 
+		void resized() override
+		{
+			if (img.isValid())
+				img = img.rescaled(getWidth(), getHeight(), Graphics::lowResamplingQuality);
+			else
+			{
+				if(!loadImage())
+					img = Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+			}
+			fixStupidJUCEImageThingie(img);
+			onResize();
+		}
 	protected:
 		Image img;
 		std::function<void()> onResize;
+		bool active;
+
+		
 	};
 
 	struct GenAniGrowTrees :

@@ -91,6 +91,8 @@ namespace gui
 		initSidePanels();
 		initButtons();
 		initVoiceGrid();
+
+		setInterceptsMouseClicks(false, true);
 	}
 
 	void IOEditor::paint(Graphics& g)
