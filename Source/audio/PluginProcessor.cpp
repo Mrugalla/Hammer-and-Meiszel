@@ -254,21 +254,7 @@ namespace audio
 		for (auto i = 0; i < 2; ++i)
 		{
 			auto& material = modalFilter.getMaterial(i);
-			const auto matStr = "mat" + juce::String(i);
-			for (auto j = 0; j < dsp::modal::NumFilters; ++j)
-			{
-				auto& peakInfo = material.peakInfos[j];
-				const auto peakStr = matStr + "pk" + juce::String(j);
-				const auto magVal = state.get(peakStr + "mg");
-				if (magVal != nullptr)
-					peakInfo.mag = static_cast<double>(*magVal);
-				const auto ratioVal = state.get(peakStr + "rt");
-				if (ratioVal != nullptr)
-					peakInfo.ratio = static_cast<double>(*ratioVal);
-				const auto freqVal = state.get(peakStr + "fr");
-				if (freqVal != nullptr)
-					peakInfo.freqHz = static_cast<double>(*freqVal);
-			}
+			material.loadPatch(state, "mat" + juce::String(i));
 			for (auto k = 0; k < 1000000; ++k)
 				if (material.status.load() == dsp::modal::StatusMat::Processing)
 				{

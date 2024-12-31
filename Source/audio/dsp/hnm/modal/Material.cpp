@@ -57,10 +57,21 @@ namespace dsp
 				magMax = std::max(magMax, peakInfos[i].mag);
 			if (magMax != 1.f)
 			{
-				auto g = 1.f / magMax;
+				const auto g = 1.f / magMax;
 				for (auto p = 0; p < NumFilters; ++p)
 					peakInfos[p].mag *= g;
 			}
+
+			auto ktMax = peakInfos[0].keytrack;
+			for (int i = 1; i < NumFilters; ++i)
+				ktMax = std::max(ktMax, peakInfos[i].keytrack);
+			if (ktMax != 1.f)
+			{
+				const auto g = 1.f / ktMax;
+				for (auto p = 0; p < NumFilters; ++p)
+					peakInfos[p].keytrack *= g;
+			}
+
 			reportUpdate();
 		}
 
@@ -504,7 +515,7 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = 0.;
+				peak.freqHz = static_cast<double>(i);
 				peak.keytrack = 1.;
 				peak.mag = 0.;
 				peak.ratio = 1. + static_cast<float>(i);
@@ -520,7 +531,7 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = 0.;
+				peak.freqHz = static_cast<double>(i);
 				peak.keytrack = 1.;
 
 				const auto iF = static_cast<double>(i);
@@ -539,7 +550,7 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = 0.;
+				peak.freqHz = static_cast<double>(i);
 				peak.keytrack = 1.f;
 
 				const auto iF = static_cast<double>(i);
@@ -564,7 +575,7 @@ namespace dsp
 
 				peak.ratio = fibD;
 				peak.mag = 1. / fibD;
-				peak.freqHz = 0.;
+				peak.freqHz = static_cast<double>(i);
 				peak.keytrack = 1.;
 			}
 			material.reportUpdate();
@@ -583,7 +594,7 @@ namespace dsp
 
 				peak.ratio = fibD;
 				peak.mag = 1. / fibD;
-				peak.freqHz = 0.;
+				peak.freqHz = static_cast<double>(i);
 				peak.keytrack = 1.;
 			}
 			material.reportUpdate();

@@ -9,7 +9,7 @@ namespace gui
 		public Comp,
 		public FileDragAndDropTarget
 	{
-		static constexpr float Sensitive = .1f;
+		static constexpr double Sensitive = .1;
 
 		using Status = dsp::modal::StatusMat;
 		using Material = dsp::modal::Material;
@@ -109,6 +109,10 @@ namespace gui
 
 		void updatePartials();
 
+		void updatePartialsRatios();
+
+		void updatePartialsFreqs();
+
 		void mouseEnter(const Mouse&) override;
 
 		void mouseExit(const Mouse&) override;
@@ -118,6 +122,10 @@ namespace gui
 		void mouseDown(const Mouse&) override;
 
 		void mouseDrag(const Mouse&) override;
+
+		void mouseDragRatios(PointD, double, double, bool);
+
+		void mouseDragFreqs(PointD, double, double, bool);
 
 		void mouseUp(const Mouse&) override;
 

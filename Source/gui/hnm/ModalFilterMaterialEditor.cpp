@@ -209,7 +209,7 @@ namespace gui
 	void ModalMaterialEditor::setShowRatios(bool e)
 	{
 		showsRatios = e;
-		updateInfoLabel("");
+		updatePartials();
 		repaint();
 	}
 
@@ -306,6 +306,29 @@ namespace gui
 
 	void ModalMaterialEditor::updatePartials()
 	{
+		if(showsRatios)
+			updatePartialsRatios();
+		else
+			updatePartialsFreqs();
+
+		material.status.store(Status::Processing);
+
+		auto freqRatioMin = 44100.f;
+		auto freqRatioMax = 0.f;
+		for (auto p = 0; p < NumFilters; ++p)
+		{
+			const auto& peakInfo = material.peakInfos[p];
+			const auto ratio = static_cast<float>(peakInfo.ratio);
+			freqRatioMin = std::min(freqRatioMin, ratio);
+			freqRatioMax = std::max(freqRatioMax, ratio);
+		}
+
+		freqRatioRange = freqRatioMax - freqRatioMin;
+		updateRuler();
+	}
+
+	void ModalMaterialEditor::updatePartialsRatios()
+	{
 		auto const w = static_cast<float>(getWidth());
 		auto const h = static_cast<float>(getHeight());
 
@@ -329,21 +352,34 @@ namespace gui
 			partials[i].x = x;
 			partials[i].y = y;
 		}
+	}
 
-		material.status.store(Status::Processing);
+	void ModalMaterialEditor::updatePartialsFreqs()
+	{
+		auto const w = static_cast<float>(getWidth());
+		auto const h = static_cast<float>(getHeight());
 
-		auto freqRatioMin = 44100.f;
-		auto freqRatioMax = 0.f;
+		auto maxFreq = 0.f;
 		for (auto p = 0; p < NumFilters; ++p)
 		{
 			const auto& peakInfo = material.peakInfos[p];
-			const auto ratio = static_cast<float>(peakInfo.ratio);
-			freqRatioMin = std::min(freqRatioMin, ratio);
-			freqRatioMax = std::max(freqRatioMax, ratio);
+			const auto ratio = static_cast<float>(peakInfo.freqHz);
+			maxFreq = std::max(maxFreq, ratio);
 		}
-			
-		freqRatioRange = freqRatioMax - freqRatioMin;
-		updateRuler();
+		if(maxFreq < 1.f)
+			maxFreq = 1.f;
+		const auto maxFreqInv = 1.f / maxFreq;
+
+		for (auto i = 0; i < NumFilters; ++i)
+		{
+			auto& peakInfo = material.peakInfos[i];
+
+			auto const x = ((static_cast<float>(peakInfo.freqHz) - 1.f)) * maxFreqInv * w;
+			auto const y = h - static_cast<float>(peakInfo.keytrack) * h;
+
+			partials[i].x = x;
+			partials[i].y = y;
+		}
 	}
 
 	void ModalMaterialEditor::updateRuler()
@@ -415,54 +451,99 @@ namespace gui
 		hideCursor();
 
 		const auto minDimen = static_cast<float>(std::min(getWidth(), getHeight()));
-		const auto speed = 3.f * utils.thicc / minDimen;
+		const auto speed = 4.f * utils.thicc / minDimen;
 		const auto dragDist = ((mouse.position - dragXY) * speed).toDouble();
 
 		const auto status = material.status.load();
 		const auto sensitive = juce::ComponentPeer::getCurrentModifiersRealtime().isShiftDown();
-		const auto yDepth = .4f * (sensitive ? Sensitive : 1.f);
+		const auto yDepth = .4 * (sensitive ? Sensitive : 1.);
 		const auto xDepth = yDepth * freqRatioRange * .5f;
 
 		const auto snapEnabled = mouse.mods.isAltDown();
 
 		if (status == Status::Processing)
 		{
-			if (draggerfall.isSelected(0))
-			{
-				auto& peakInfo = material.peakInfos[0];
-				peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
-			}
-			for (auto i = 1; i < NumFilters; ++i)
-			{
-				const bool selected = draggerfall.isSelected(i);
-				if (selected)
-				{
-					auto& peakInfo = material.peakInfos[i];
-					peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
-
-					auto ratio = peakInfo.ratio;
-					if (snapEnabled)
-					{
-						const auto sensitivity = .004;
-						const auto dragDistAbs = dragDist.x * dragDist.x;
-						if (dragDistAbs > sensitivity)
-						{
-							if (dragDist.x > 0.)
-								ratio = ruler.getNextHigherSnapped(ratio);
-							else
-								ratio = ruler.getNextLowerSnapped(ratio);
-						}
-					}
-					else
-						ratio += dragDist.x * xDepth;
-					peakInfo.ratio = juce::jlimit(1., 420., ratio);
-				}
-			}
+			if (showsRatios)
+				mouseDragRatios(dragDist, xDepth, yDepth, snapEnabled);
+			else
+				mouseDragFreqs(dragDist, xDepth, yDepth, snapEnabled);
 			material.updatePeakInfosFromGUI();
 			updateInfoLabel();
 		}
 
 		dragXY = mouse.position;
+	}
+
+	void ModalMaterialEditor::mouseDragRatios(PointD dragDist,
+		double xDepth, double yDepth,
+		bool snapEnabled)
+	{
+		if (draggerfall.isSelected(0))
+		{
+			auto& peakInfo = material.peakInfos[0];
+			peakInfo.mag = juce::jlimit(0., 2., peakInfo.mag - dragDist.y * yDepth);
+		}
+		for (auto i = 1; i < NumFilters; ++i)
+		{
+			const bool selected = draggerfall.isSelected(i);
+			if (selected)
+			{
+				auto& peakInfo = material.peakInfos[i];
+				peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
+
+				auto ratio = peakInfo.ratio;
+				if (snapEnabled)
+				{
+					const auto sensitivity = .004;
+					const auto dragDistAbs = dragDist.x * dragDist.x;
+					if (dragDistAbs > sensitivity)
+					{
+						if (dragDist.x > 0.)
+							ratio = ruler.getNextHigherSnapped(ratio);
+						else
+							ratio = ruler.getNextLowerSnapped(ratio);
+					}
+				}
+				else
+					ratio += dragDist.x * xDepth;
+				peakInfo.ratio = juce::jlimit(1., 420., ratio);
+			}
+		}
+	}
+
+	void ModalMaterialEditor::mouseDragFreqs(PointD dragDist,
+		double xDepth, double yDepth,
+		bool snapEnabled)
+	{
+		for (auto i = 0; i < NumFilters; ++i)
+		{
+			const bool selected = draggerfall.isSelected(i);
+			if (selected)
+			{
+				auto& peakInfo = material.peakInfos[i];
+				peakInfo.keytrack = juce::jlimit(0., 2., peakInfo.keytrack - dragDist.y * yDepth);
+
+				auto freqHz = peakInfo.freqHz;
+				if (snapEnabled)
+				{
+					const auto sensitivity = .004;
+					const auto dragDistAbs = dragDist.x * dragDist.x;
+					if (dragDistAbs > sensitivity)
+					{
+						const auto pitch = utils.audioProcessor.xenManager.freqHzToNote(freqHz);
+						const auto pRound = dragDist.x > .0 ? pitch + 1.f : pitch - 1.f;
+						freqHz = utils.audioProcessor.xenManager.noteToFreqHz(std::round(pRound));
+					}
+				}
+				else
+				{
+					auto pitch = utils.audioProcessor.xenManager.freqHzToNote(freqHz);
+					pitch += dragDist.x * xDepth;
+					freqHz = utils.audioProcessor.xenManager.noteToFreqHz(pitch);
+				}
+				peakInfo.freqHz = juce::jlimit(1., 22050., freqHz);
+			}
+		}
 	}
 
 	void ModalMaterialEditor::mouseUp(const Mouse& mouse)
@@ -496,8 +577,8 @@ namespace gui
 	{
 		const auto sensitive = mouse.mods.isShiftDown();
 		const auto y = wheel.deltaY * (wheel.isReversed ? -1.f : 1.f);
-		const auto depth = .2f * (sensitive ? Sensitive : 1.f);
-		draggerfall.addLength(partials, y * depth);
+		const auto depth = .15 * (sensitive ? Sensitive : 1.);
+		draggerfall.addLength(partials, y * static_cast<float>(depth));
 		repaint();
 	}
 
@@ -588,7 +669,7 @@ namespace gui
 				{
 					const auto mag = material.peakInfos[i].mag;
 					const auto rat = material.peakInfos[i].ratio;
-					txt += "MG: " + String(mag, 1) + "\nFC : " + String(rat, 1) + "\n";
+					txt += "MG: " + String(std::round(mag * 100.f)) + "%\nFC : " + String(rat, 1) + "\n";
 					i = NumFilters;
 				}
 		}
@@ -598,7 +679,7 @@ namespace gui
 				{
 					const auto keytrack = material.peakInfos[i].keytrack;
 					const auto freqHz = material.peakInfos[i].freqHz;
-					txt += "KT: " + String(keytrack, 1) + "\nHZ : " + String(freqHz, 1) + "\n";
+					txt += "KT: " + String(std::round(keytrack * 100.f)) + "%\n" + String(freqHz, 1) + "hz\n";
 					i = NumFilters;
 				}
 
