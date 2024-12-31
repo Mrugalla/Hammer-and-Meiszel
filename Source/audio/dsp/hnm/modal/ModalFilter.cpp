@@ -21,12 +21,12 @@ namespace dsp
 
 		void ModalFilter::operator()() noexcept
 		{
-			if (materials.updated())
-			{
-				for (auto& voice : voices)
-					voice.reportMaterialUpdate();
-				materials.reportUpdate();
-			}
+			if (!materials.updated())
+				return;
+
+			for (auto& voice : voices)
+				voice.reportMaterialUpdate();
+			materials.reportUpdate();
 		}
 
 		void ModalFilter::operator()(double** samples,

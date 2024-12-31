@@ -84,6 +84,7 @@ namespace dsp
 					state.set(peakStr + "mg", peakInfo.mag);
 					state.set(peakStr + "rt", peakInfo.ratio);
 					state.set(peakStr + "fr", peakInfo.freqHz);
+					state.set(peakStr + "kt", peakInfo.keytrack);
 				}
 			}
 
@@ -102,6 +103,9 @@ namespace dsp
 					const auto freqVal = state.get(peakStr + "fr");
 					if (freqVal != nullptr)
 						peakInfo.freqHz = static_cast<double>(*freqVal);
+					const auto ktVal = state.get(peakStr + "kt");
+					if (ktVal != nullptr)
+						peakInfo.keytrack = static_cast<double>(*ktVal);
 				}
 				updatePeakInfosFromGUI();
 			}

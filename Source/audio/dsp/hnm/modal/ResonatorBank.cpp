@@ -143,7 +143,6 @@ namespace dsp
 				const auto pKeytrack = material.getKeytrack(i);
 
 				const auto freqKeytracked = freqHz * pRatio;
-
 				const auto freqFilter = pFreqHz + pKeytrack * (freqKeytracked - pFreqHz);
 				if (freqFilter < freqMax)
 				{

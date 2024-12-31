@@ -37,7 +37,9 @@ namespace gui
 			onPaint = makeButtonOnPaint(true, getColour(CID::Bg));
 			onClick = [&m = dropDown](const Mouse&)
 			{
-				m.setVisible(!m.isVisible());
+				auto e = !m.isVisible();
+				m.notify(evt::Type::ClickedEmpty);
+				m.setVisible(e);
 			};
 			add(Callback([&]()
 			{

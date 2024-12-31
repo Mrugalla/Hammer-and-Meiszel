@@ -7,10 +7,10 @@ namespace gui
 		buttons()
 	{
 		addEvt([&](evt::Type type, const void*)
-			{
-				if (type == evt::Type::ClickedEmpty)
-					setVisible(false);
-			});
+		{
+			if (type == evt::Type::ClickedEmpty)
+				setVisible(false);
+		});
 	}
 
 	void DropDownMenu::paint(Graphics& g)

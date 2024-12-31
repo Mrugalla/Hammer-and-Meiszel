@@ -2,6 +2,7 @@
 #include "ModalFilterMaterialEditor.h"
 #include "ModalParamsEditor.h"
 #include "../DropDownMenu.h"
+#include <functional>
 
 namespace gui
 {
@@ -14,14 +15,18 @@ namespace gui
 
 		void resized() override;
 
-		Button buttonAB, buttonSolo;
+		Button buttonAB, buttonRatioFreqs, buttonSolo;
 		ButtonDropDown buttonDropDownGens, buttonDropDownMisc;
 		std::array<ModalMaterialEditor, 2> materialEditors;
 		ModalParamsEditor params;
 		DropDownMenu dropDownGens, dropDownMisc;
 
+		std::function<void()> updateMaterialFunc;
+		int wannaUpdate;
 	private:
 		void initButtonAB();
+
+		void initButtonRatioFreqs();
 
 		void initButtonSolo();
 

@@ -168,7 +168,8 @@ namespace gui
 		dragAniComp(u),
 		draggerfall(),
 		dragXY(),
-		freqRatioRange(1.f)
+		freqRatioRange(1.f),
+		showsRatios(true)
 	{
 		layout.init
 		(
@@ -180,12 +181,11 @@ namespace gui
 
 		add(Callback([&]()
 		{
-			if (material.status.load() == Status::UpdatedProcessor)
-			{
-				updatePartials();
-				repaint();
-			}
-		}, kMaterialUpdatedCB, cbFPS::k30, true));
+			if (material.status.load() != Status::UpdatedProcessor)
+				return;
+			updatePartials();
+			repaint();
+		}, kMaterialUpdatedCB, cbFPS::k60, true));
 
 		const auto fps = cbFPS::k30;
 		const auto speed = msToInc(AniLengthMs, fps);
@@ -204,6 +204,13 @@ namespace gui
 			}, kStrumCB + i, fps, false));
 
 		addChildComponent(dragAniComp);
+	}
+
+	void ModalMaterialEditor::setShowRatios(bool e)
+	{
+		showsRatios = e;
+		updateInfoLabel("");
+		repaint();
 	}
 
 	void ModalMaterialEditor::initRuler()
@@ -448,7 +455,7 @@ namespace gui
 					}
 					else
 						ratio += dragDist.x * xDepth;
-					peakInfo.ratio = juce::jlimit(1., 100., ratio);
+					peakInfo.ratio = juce::jlimit(1., 420., ratio);
 				}
 			}
 			material.updatePeakInfosFromGUI();
@@ -574,14 +581,26 @@ namespace gui
 		}
 
 		String txt("");
-		for(auto i = 0; i < NumFilters; ++i)
-			if (draggerfall.isSelected(i))
-			{
-				const auto mag = material.peakInfos[i].mag;
-				const auto rat = material.peakInfos[i].ratio;
-				txt += "MG: " + String(mag, 1) + "\nFC : " + String(rat, 1) + "\n";
-				break;
-			}
+		if (showsRatios)
+		{
+			for (auto i = 0; i < NumFilters; ++i)
+				if (draggerfall.isSelected(i))
+				{
+					const auto mag = material.peakInfos[i].mag;
+					const auto rat = material.peakInfos[i].ratio;
+					txt += "MG: " + String(mag, 1) + "\nFC : " + String(rat, 1) + "\n";
+					i = NumFilters;
+				}
+		}
+		else
+			for (auto i = 0; i < NumFilters; ++i)
+				if (draggerfall.isSelected(i))
+				{
+					const auto keytrack = material.peakInfos[i].keytrack;
+					const auto freqHz = material.peakInfos[i].freqHz;
+					txt += "KT: " + String(keytrack, 1) + "\nHZ : " + String(freqHz, 1) + "\n";
+					i = NumFilters;
+				}
 
 		notify(evt::Type::ToastUpdateMessage, &txt);
 	}

@@ -80,6 +80,8 @@ namespace gui
 
 		ModalMaterialEditor(Utils&, Material&, Actives&);
 
+		void setShowRatios(bool);
+
 		void initRuler();
 
 		void updateRuler();
@@ -102,6 +104,7 @@ namespace gui
 		Draggerfall draggerfall;
 		PointF dragXY;
 		float freqRatioRange;
+		bool showsRatios;
 	private:
 
 		void updatePartials();
