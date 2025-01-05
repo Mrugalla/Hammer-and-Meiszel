@@ -111,13 +111,9 @@ namespace gui
             for (auto i = 0; i < param::NumParams; ++i)
             {
                 const auto pID = static_cast<PID>(i);
-                buttonRandomizer.add(pID);
+				if (pID != PID::KeySelectorEnabled && pID != PID::NoiseBlend)
+                    buttonRandomizer.add(pID);
             }
-            buttonRandomizer.add([&](Random&)
-            {
-                auto& keySelector = audioProcessor.pluginProcessor.params(PID::KeySelectorEnabled);
-                keySelector.setValueWithGesture(1.f);
-            });
             buttonRandomizer.add([&](Random& rand)
             {
                 auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
@@ -131,7 +127,7 @@ namespace gui
                         std::array<double, dsp::modal::NumFilters> ratios;
                         ratios[0] = 1.;
 						for (auto j = 1; j < dsp::modal::NumFilters; ++j)
-							ratios[j] = 1. + rand.nextDouble() * 64.;
+							ratios[j] = 1. + rand.nextDouble() * 32.;
                         std::sort(ratios.begin(), ratios.end());
 
 						auto& peaks = mat.peakInfos;
