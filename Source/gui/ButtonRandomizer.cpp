@@ -2,10 +2,38 @@
 
 namespace gui
 {
-    ButtonRandomizer::ButtonRandomizer(Utils& u) :
+    ButtonRandomizer::Randomizer::Randomizer(Utils& u, String&& id) :
+        rd(),
+        mt(rd()),
+        dist(0.f, 1.f),
+        seed(0)
+    {
+        auto& user = *u.audioProcessor.state.props.getUserSettings();
+        seed = user.getIntValue(id, 0);
+        if (seed == 0)
+        {
+            Random rand;
+            seed = rand.nextInt();
+            user.setValue(id, seed);
+        }
+    }
+
+    void ButtonRandomizer::Randomizer::updateSeed(bool up)
+    {
+        seed += up ? 1 : -1;
+        mt.seed(seed);
+    }
+
+    float ButtonRandomizer::Randomizer::operator()()
+    {
+        return dist(mt);
+    }
+
+    ButtonRandomizer::ButtonRandomizer(Utils& u, String&& id) :
         Button(u),
         randomizables(),
-        randFuncs()
+        randFuncs(),
+        randomizer(u, std::move(id))
     {
         const auto op = makeButtonOnPaint(false, getColour(CID::Bg));
 
@@ -50,7 +78,7 @@ namespace gui
 
 		onClick = [&](const Mouse& mouse)
         {
-            operator()(!mouse.mods.isShiftDown());
+            operator()(mouse.mods.isLeftButtonDown(), !mouse.mods.isShiftDown());
         };
     }
 
@@ -79,7 +107,7 @@ namespace gui
         randFuncs.push_back(p);
     }
 
-    void ButtonRandomizer::operator()(bool isAbsolute)
+    void ButtonRandomizer::operator()(bool seedUp, bool isAbsolute)
     {
         if(isAbsolute)
             for (auto randomizable : randomizables)
@@ -99,7 +127,9 @@ namespace gui
 			auto& xenSnapParam = utils.audioProcessor.params(PID::XenSnap);
             xenSnapParam.setValueWithGesture(0.f);
         }
-        Random rand;
+
+        randomizer.updateSeed(seedUp);
+
         for (auto randomizable : randomizables)
         {
             const auto pID = randomizable->id;
@@ -111,25 +141,25 @@ namespace gui
                 float valY, mdY, bsY;
                 if (isAbsolute)
                 {
-                    const auto v = rand.nextFloat();
+                    const auto v = randomizer();
                     const auto vD = range.convertFrom0to1(v);
                     const auto vL = range.snapToLegalValue(vD);
                     valY = range.convertTo0to1(vL);
-                    mdY = 2.f * rand.nextFloat() - 1.f;
-                    bsY = rand.nextFloat();
+                    mdY = 2.f * randomizer() - 1.f;
+                    bsY = randomizer();
                 }
                 else
                 {
                     const auto valNorm = randomizable->getValue();
-                    auto valRand = rand.nextFloat() * .05f - .025f;
+                    auto valRand = randomizer() * .05f - .025f;
                     valY = juce::jlimit(0.f, 1.f, valNorm + valRand);
                     const auto md = randomizable->getModDepth();
                     const auto bias = randomizable->getModBias();
                     if (md != 0.f)
                     {
-                        valRand = rand.nextFloat() * .05f - .025f;
+                        valRand = randomizer() * .05f - .025f;
                         mdY = juce::jlimit(-1.f, 1.f, md + valRand);
-                        valRand = rand.nextFloat() * .05f - .025f;
+                        valRand = randomizer() * .05f - .025f;
 						bsY = juce::jlimit(0.f, 1.f, bias + valRand);
 					}
                     else
@@ -144,7 +174,7 @@ namespace gui
             }
         }
         for (auto& func : randFuncs)
-            func(rand);
+            func(randomizer);
 
         setTooltip(makeTooltip());
     }

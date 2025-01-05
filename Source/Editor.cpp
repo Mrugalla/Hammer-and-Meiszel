@@ -40,7 +40,7 @@ namespace gui
         evtMember(utils.eventSystem, makeEvt(*this)),
         compPower(utils),
         tooltip(utils),
-        buttonRandomizer(utils),
+        buttonRandomizer(utils, "randomizer"),
         buttonSoftClip(utils),
         genAni(utils),
         modParamsEditor(utils),
@@ -114,7 +114,7 @@ namespace gui
 				if (pID != PID::KeySelectorEnabled && pID != PID::NoiseBlend)
                     buttonRandomizer.add(pID);
             }
-            buttonRandomizer.add([&](Random& rand)
+            buttonRandomizer.add([&](ButtonRandomizer::Randomizer& rand)
             {
                 auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 				auto& xenManager = utils.audioProcessor.xenManager;
@@ -127,23 +127,23 @@ namespace gui
                         std::array<double, dsp::modal::NumFilters> ratios;
                         ratios[0] = 1.;
 						for (auto j = 1; j < dsp::modal::NumFilters; ++j)
-							ratios[j] = 1. + rand.nextDouble() * 32.;
+							ratios[j] = 1. + static_cast<double>(rand()) * 32.;
                         std::sort(ratios.begin(), ratios.end());
 
 						auto& peaks = mat.peakInfos;
 
-						peaks[0].mag = rand.nextDouble();
+						peaks[0].mag = static_cast<double>(rand());
 						peaks[0].ratio = ratios[0];
-						peaks[0].freqHz = xenManager.noteToFreqHz(rand.nextDouble() * 127.);
+						peaks[0].freqHz = xenManager.noteToFreqHz(static_cast<double>(rand()) * 127.);
                         peaks[0].keytrack = 0.;
 
                         for (auto j = 1; j < dsp::modal::NumFilters; ++j)
                         {
                             auto& peak = peaks[j];
-                            peak.mag = rand.nextDouble();
+                            peak.mag = static_cast<double>(rand());
 							peak.ratio = ratios[j];
-							peak.freqHz = xenManager.noteToFreqHz(rand.nextDouble() * 127.);
-							peak.keytrack = rand.nextDouble();
+							peak.freqHz = xenManager.noteToFreqHz(static_cast<double>(rand()) * 127.);
+							peak.keytrack = static_cast<double>(rand());
                         }
 
                         mat.reportUpdate();
