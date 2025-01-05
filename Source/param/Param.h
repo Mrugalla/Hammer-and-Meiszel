@@ -24,7 +24,9 @@ namespace param
 #elif PPDIO == PPDIOWetMix
 		GainWet,
 		Mix,
+#if PPDHasDelta
 		Delta,
+#endif
 #endif
 		GainOut,
 #if PPDHasStereoConfig
@@ -44,6 +46,7 @@ namespace param
 		AnchorPitch,
 		PitchbendRange,
 #endif
+		SoftClip,
 		Power,
 
 		// inputs:
@@ -61,9 +64,9 @@ namespace param
 		// modal:
 		ModalOct,
 		ModalSemi,
-		ModalSmartKeytrack,
-		ModalSmartKeytrackEnv,
-		ModalSmartKeytrackBreite,
+		ModalKeytrack,
+		ModalKeytrackEnv,
+		ModalKeytrackBreite,
 		ModalBlend,
 		ModalBlendEnv,
 		ModalBlendBreite,

@@ -8,6 +8,7 @@
 #include "gui/ColoursEditor.h"
 #include "gui/ManifestOfWisdom.h"
 #include "gui/KeySelectorEditor.h"
+#include "gui/ButtonRandomizer.h"
 
 namespace gui
 {
@@ -31,6 +32,8 @@ namespace gui
         evt::Member evtMember;
         CompPower compPower;
         Tooltip tooltip;
+		ButtonRandomizer buttonRandomizer;
+        Button buttonSoftClip;
         GenAniGrowTrees genAni;
 		ModalParamsEditor modParamsEditor;
 		IOEditor ioEditor;

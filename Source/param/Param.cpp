@@ -38,7 +38,9 @@ namespace param
 #elif PPDIO == PPDIOWetMix
 		case PID::GainWet: return "Gain Wet";
 		case PID::Mix: return "Mix";
+#if PPDHasDelta
 		case PID::Delta: return "Delta";
+#endif
 #endif
 		case PID::GainOut: return "Gain Out";
 #if PPDHasStereoConfig
@@ -58,6 +60,7 @@ namespace param
 		case PID::AnchorPitch: return "Anchor Pitch";
 		case PID::PitchbendRange: return "Pitchbend Range";
 #endif
+		case PID::SoftClip: return "Soft Clip";
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
@@ -75,9 +78,9 @@ namespace param
 		//
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
-		case PID::ModalSmartKeytrack: return "Modal Smart Keytrack";
-		case PID::ModalSmartKeytrackEnv: return "Modal Smart Keytrack Env";
-		case PID::ModalSmartKeytrackBreite: return "Modal Smart Keytrack Breite";
+		case PID::ModalKeytrack: return "Modal Keytrack";
+		case PID::ModalKeytrackEnv: return "Modal Keytrack Env";
+		case PID::ModalKeytrackBreite: return "Modal Keytrack Breite";
 		case PID::ModalBlend: return "Modal Blend";
 		case PID::ModalBlendEnv: return "Modal Blend Env";
 		case PID::ModalBlendBreite: return "Modal Blend Breite";
@@ -145,7 +148,9 @@ namespace param
 #elif PPDIO == PPDIOWetMix
 		case PID::GainWet: return "Apply gain to the wet signal.";
 		case PID::Mix: return "Mix the dry with the wet signal.";
+#if PPDHasDelta
 		case PID::Delta: return "Listen to the difference between the dry and the wet signal.";
+#endif
 #endif
 		case PID::GainOut: return "Apply gain to the output signal.";
 #if PPDHasStereoConfig
@@ -166,6 +171,7 @@ namespace param
 		case PID::AnchorPitch: return "The anchor pitch refers to the same frequency regardless of xen scale.";
 		case PID::PitchbendRange: return "The pitchbend range in semitones describes how many pitches you can bend.";
 #endif
+		case PID::SoftClip: return "Dis/Enable soft clipping.";
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
@@ -181,9 +187,9 @@ namespace param
 		case PID::EnvGenModRelease: return "The modulation envelope generator's release time.";
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
-		case PID::ModalSmartKeytrack: return "When keytrack+ is dialed in partials that are not in the harmonic series will be less keytracked.";
-		case PID::ModalSmartKeytrackEnv: return "The envelope generator's depth on the modal smart keytrack.";
-		case PID::ModalSmartKeytrackBreite: return "The stereo width of the modal smart keytrack.";
+		case PID::ModalKeytrack: return "The more you dial in keytrack the less the modal material uses fixed frequencies.";
+		case PID::ModalKeytrackEnv: return "The envelope generator's depth on the modal keytrack.";
+		case PID::ModalKeytrackBreite: return "The stereo width of the modal keytrack.";
 		case PID::ModalBlend: return "Blends between the 2 modal filters.";
 		case PID::ModalBlendEnv: return "The envelope generator's depth on the modal blend.";
 		case PID::ModalBlendBreite: return "The stereo width of the modal breite.";
@@ -411,7 +417,7 @@ namespace param
 	{
 		if (isLocked())
 			return;
-
+		b = BiasEps + b * (1.f - 2.f * BiasEps);
 		b = juce::jlimit(BiasEps, 1.f - BiasEps, b);
 		mod.bias.store(b);
 	}
@@ -1364,7 +1370,9 @@ namespace param
 			const auto gainWetRange = makeRange::lin(PPDGainWetMin, PPDGainWetMax);
 			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
 			params.push_back(makeParam(PID::Mix, 1.f));
+#if PPDHasDelta
 			params.push_back(makeParam(PID::Delta, 0.f, makeRange::toggle(), Unit::Power));
+#endif
 #endif
 			const auto gainOutRange = makeRange::lin(PPDGainOutMin, PPDGainOutMax);
 			params.push_back(makeParam(PID::GainOut, 0.f, gainOutRange, Unit::Decibel));
@@ -1385,6 +1393,7 @@ namespace param
 			params.push_back(makeParam(PID::AnchorPitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
 			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(1.f, 48.f), Unit::Semi));
 #endif
+			params.push_back(makeParam(PID::SoftClip, 0.f, makeRange::toggle(), Unit::Power));
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
 		}
 
@@ -1407,9 +1416,9 @@ namespace param
 
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
-		params.push_back(makeParam(PID::ModalSmartKeytrack, 1.f));
-		params.push_back(makeParam(PID::ModalSmartKeytrackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalSmartKeytrackBreite, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalKeytrack, 0.f));
+		params.push_back(makeParam(PID::ModalKeytrackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
+		params.push_back(makeParam(PID::ModalKeytrackBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalBlend, 0.f));
 		params.push_back(makeParam(PID::ModalBlendEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalBlendBreite, 0.f, makeRange::lin(-1.f, 1.f)));

@@ -9,7 +9,7 @@ namespace gui
 	{
 		using kParam = dsp::modal::kParam;
 
-		//utils, smartKeytrack, blend, spread, harmonie, kraft, reso, resoDamp
+		//utils, keytrack, blend, spread, harmonie, kraft, reso, resoDamp
 		ModalMainParams(Utils&, PID, PID, PID, PID, PID, PID, PID);
 
 		void resized() override;
@@ -43,7 +43,7 @@ namespace gui
 
 	protected:
 		OctSemiSlider octModal, semiModal, octComb, semiComb, unisonComb;
-		KnobHnM smartKeytrack, blend, spreizung, harmonie, kraft, reso, resoDamp, feedback;
+		KnobHnM keytrack, blend, spreizung, harmonie, kraft, reso, resoDamp, feedback;
 		LabelGroup octSemiGroup;
 	};
 }

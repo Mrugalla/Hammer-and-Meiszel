@@ -322,7 +322,11 @@ namespace audio
 #elif PPDIO == PPDIOWetMix
         const auto gainWetDb = static_cast<double>(params(PID::GainWet).getValModDenorm());
         const auto mix = static_cast<double>(params(PID::Mix).getValMod());
+#if PPDHasDelta
         const auto delta = params(PID::Delta).getValMod() > .5f;
+#else
+        const bool delta = false;
+#endif
 #endif
         const auto gainOutDb = static_cast<double>(params(PID::GainOut).getValModDenorm());
 
@@ -435,6 +439,18 @@ namespace audio
 		if (midSide)
 			dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
+		const auto& softClipParam = params(PID::SoftClip);
+		const auto softClip = softClipParam.getValMod() > .5f;
+        const auto knee = .5 / dsp::Pi;
+        if(softClip)
+        {
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				auto smpls = samplesMain[ch];
+                for (auto s = 0; s < numSamplesMain; ++s)
+                    smpls[s] = dsp::softclipPrismaHeavy(smpls[s], 1., knee);
+			}
+		}
 
 #if JUCE_DEBUG && false
         for (auto ch = 0; ch < numChannels; ++ch)

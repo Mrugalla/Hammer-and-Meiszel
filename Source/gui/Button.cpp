@@ -305,6 +305,49 @@ namespace gui
 			};
 	}
 
+	Button::OnPaint makeButtonOnPaintClip()
+	{
+		return [op = makeButtonOnPaint(false, getColour(CID::Bg))](Graphics& g, const Button& b)
+		{
+			op(g, b);
+
+			const auto& utils = b.utils;
+			const auto thicc = utils.thicc;
+			const auto thicc2 = thicc * 2.f;
+			const auto thicc4 = thicc * 4.f;
+
+			const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+			const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
+			const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
+
+			const auto lineThiccness = thicc + togglePhase * (thicc2 - thicc);
+			const auto margin = 1.75f * thicc4 - lineThiccness - hoverPhase * thicc;
+			const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
+
+			Path path;
+			const auto x = bounds.getX();
+			const auto y = bounds.getY();
+			const auto w = bounds.getWidth();
+			const auto h = bounds.getHeight();
+			const auto btm = y + h;
+			const auto right = x + w;
+			path.startNewSubPath(x, btm);
+
+			const auto ctrlX0 = x;
+			const auto ctrlX1 = x + w * .5f;
+			const auto ctrlX = ctrlX0 + togglePhase * (ctrlX1 - ctrlX0);
+			const auto endX0 = right;
+			const auto endX1 = ctrlX1;
+			const auto endX = endX0 + togglePhase * (endX1 - endX0);
+			path.quadraticTo(ctrlX, y, endX, y);
+			path.quadraticTo(endX, y, right, y);
+
+			const Stroke stroke(lineThiccness, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
+			g.setColour(getColour(CID::Interact).overlaidWith(getColour(CID::Txt).withAlpha(clickPhase)));
+			g.strokePath(path, stroke);
+		};
+	}
+
 	Button::OnPaint makeButtonOnPaintVisor(int numDiagonalLines)
 	{
 		return [numDiagonalLines](Graphics& g, const Button& b)

@@ -70,7 +70,9 @@ namespace gui
 		{
 			Button(u),
 			Button(u),
+#if PPDHasDelta
 			Button(u),
+#endif
 			Button(u),
 			Button(u)
 		},
@@ -154,7 +156,8 @@ namespace gui
 			spp.setBounds(bounds);
 		}
 		layout.place(buttonPower, 0, -3, 1, 1);
-		for (auto i = 2; i < buttons.size() - 1; ++i)
+		const auto buttonMax = buttons.size() - 1;
+		for (auto i = 2; i < buttonMax; ++i)
 		{
 			auto& btn = buttons[i];
 			layout.place(btn, i - 1, -3, 1, 1);
@@ -293,11 +296,13 @@ namespace gui
 		for (auto& btn : buttons)
 			addAndMakeVisible(btn);
 		addAndMakeVisible(buttonPower);
+#if PPDHasDelta
 		// DELTA BUTTON
 		auto& deltaButton = buttons[kDelta];
 		makeParameter(deltaButton, PID::Delta, Button::Type::kToggle, makeButtonOnPaintPolarity());
 		deltaButton.type = Button::Type::kToggle;
 		deltaButton.value = std::round(utils.audioProcessor.params(PID::Delta).getValMod());
+#endif
 		// MID/SIDE BUTTON
 		auto& midSideButton = buttons[kMidSide];
 		makeParameter(midSideButton, PID::StereoConfig, Button::Type::kChoice, "L/R;M/S");

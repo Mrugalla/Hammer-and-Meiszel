@@ -6,11 +6,6 @@
 
 randomizer button
 
-manchmal wenn man plugin mit projekt öffnet zeigt modal material editro nicht direkt das richtige material an
-    sondern das default material
-
-generated saw and sqr acts weird with keytrack+ when you drag partials away from harmonic series
-
 write new sleepy state mechanism for modal resonator filter.
     problem was: it turned off the modal filter when it got too quiet
     but quietness can also come from low sustain values on the envelope
@@ -37,12 +32,7 @@ smoothing-zeiten von modal voice sind viel zu lang. sichtbar wenn man n normalis
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material
 
-keytrack
-    way to change freq of partials
-
 optimize CPU with SIMD filters
-
-all tooltips in english
 
 Material
     import von samples erzeugt nicht immer geile magnitudes

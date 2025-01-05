@@ -2,7 +2,7 @@
 
 namespace gui
 {
-	ModalMainParams::ModalMainParams(Utils& u, PID smartKeytrack, PID blend,
+	ModalMainParams::ModalMainParams(Utils& u, PID keytrack, PID blend,
 		PID spread, PID harmonie, PID kraft, PID reso, PID resoDamp) :
 		Comp(u),
 		knobs{ Knob(u), Knob(u), Knob(u), Knob(u), Knob(u), Knob(u), Knob(u) },
@@ -13,7 +13,7 @@ namespace gui
 		for (auto& modDial : modDials)
 			addAndMakeVisible(modDial);
 
-		makeKnob(smartKeytrack, knobs[kParam::kSmartKeytrack]);
+		makeKnob(keytrack, knobs[kParam::kKeytrack]);
 		makeKnob(blend, knobs[kParam::kBlend]);
 		makeKnob(spread, knobs[kParam::kSpreizung]);
 		makeKnob(harmonie, knobs[kParam::kHarmonie]);
@@ -21,7 +21,7 @@ namespace gui
 		makeKnob(reso, knobs[kParam::kReso]);
 		makeKnob(resoDamp, knobs[kParam::kResoDamp]);
 
-		modDials[kParam::kSmartKeytrack].attach(smartKeytrack);
+		modDials[kParam::kKeytrack].attach(keytrack);
 		modDials[kParam::kBlend].attach(blend);
 		modDials[kParam::kSpreizung].attach(spread);
 		modDials[kParam::kHarmonie].attach(harmonie);
@@ -42,7 +42,6 @@ namespace gui
 			knob.setBounds(BoundsF(x, y, wKnob, h).toNearestInt());
 			x += wKnob;
 		}
-
 		for (auto i = 0; i < kParam::kNumParams; ++i)
 			locateAtKnob(modDials[i], knobs[i]);
 	}
@@ -87,7 +86,7 @@ namespace gui
 		octComb(u, PID::CombOct, "C Oct"),
 		semiComb(u, PID::CombSemi, "C Semi"),
 		unisonComb(u, PID::CombUnison, "C Unison"),
-		smartKeytrack(u, PID::ModalSmartKeytrack, PID::ModalSmartKeytrackEnv, PID::ModalSmartKeytrackBreite, "Keytrack++"),
+		keytrack(u, PID::ModalKeytrack, PID::ModalKeytrackEnv, PID::ModalKeytrackBreite, "Keytrack"),
 		blend(u, PID::ModalBlend, PID::ModalBlendEnv, PID::ModalBlendBreite, "Blend"),
 		spreizung(u, PID::ModalSpreizung, PID::ModalSpreizungEnv, PID::ModalSpreizungBreite, "Spreizung"),
 		harmonie(u, PID::ModalHarmonie, PID::ModalHarmonieEnv, PID::ModalHarmonieBreite, "Harmonie"),
@@ -114,7 +113,7 @@ namespace gui
 		octSemiGroup.add(semiComb.label);
 		octSemiGroup.add(unisonComb.label);
 
-		addAndMakeVisible(smartKeytrack);
+		addAndMakeVisible(keytrack);
 		addAndMakeVisible(blend);
 		addAndMakeVisible(spreizung);
 		addAndMakeVisible(harmonie);
@@ -145,7 +144,7 @@ namespace gui
 		}
 		octSemiGroup.setMaxHeight();
 
-		layout.place(smartKeytrack, 0, 1, 1, 1);
+		layout.place(keytrack, 0, 1, 1, 1);
 		layout.place(blend, 1, 1, 1, 1);
 		layout.place(spreizung, 2, 1, 1, 1);
 		layout.place(harmonie, 3, 1, 1, 1);

@@ -122,7 +122,8 @@ namespace dsp
 			const auto s = 0;
 			const Uint8 velocity(127);
 			const auto pitch = active + anchor;
-			midi.addEvent(MidiMessage::noteOff(1, pitch, velocity), s);
+			if(pitch < 128)
+				midi.addEvent(MidiMessage::noteOff(1, pitch, velocity), s);
 		}
 
 		void generateNoteOffs(MidiBuffer& midi)
@@ -141,7 +142,8 @@ namespace dsp
 			const auto s = 0;
 			const Uint8 velocity(127);
 			const auto pitch = active + anchor;
-			midi.addEvent(MidiMessage::noteOn(1, pitch, velocity), s);
+			if(pitch < 128)
+				midi.addEvent(MidiMessage::noteOn(1, pitch, velocity), s);
 		}
 
 		void generateNoteOns(MidiBuffer& midi)

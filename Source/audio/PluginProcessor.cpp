@@ -106,12 +106,12 @@ namespace audio
 		auto modalSemi = static_cast<double>(std::round(modalSemiParam.getValModDenorm()));
 		modalSemi += static_cast<double>(std::round(modalOctParam.getValModDenorm())) * xen.getXen();
 
-		const auto& modalSmartKeytrackParam = params(PID::ModalSmartKeytrack);
-		const auto modalSmartKeytrack = static_cast<double>(modalSmartKeytrackParam.getValMod());
-		const auto& modalSmartKeytrackEnvParam = params(PID::ModalSmartKeytrackEnv);
-		const auto modalSmartKeytrackEnv = static_cast<double>(modalSmartKeytrackEnvParam.getValModDenorm());
-		const auto& modalSmartKeytrackBreiteParam = params(PID::ModalSmartKeytrackBreite);
-		const auto modalSmartKeytrackBreite = static_cast<double>(modalSmartKeytrackBreiteParam.getValModDenorm());
+		const auto& modalKeytrackParam = params(PID::ModalKeytrack);
+		const auto modalKeytrack = static_cast<double>(modalKeytrackParam.getValMod());
+		const auto& modalKeytrackEnvParam = params(PID::ModalKeytrackEnv);
+		const auto modalKeytrackEnv = static_cast<double>(modalKeytrackEnvParam.getValModDenorm());
+		const auto& modalKeytrackBreiteParam = params(PID::ModalKeytrackBreite);
+		const auto modalKeytrackBreite = static_cast<double>(modalKeytrackBreiteParam.getValModDenorm());
 
 		const auto& modalBlendParam = params(PID::ModalBlend);
 		const auto modalBlend = static_cast<double>(modalBlendParam.getValMod());
@@ -157,9 +157,9 @@ namespace audio
 
 		const dsp::modal::Voice::Parameters modalVoiceParams
 		(
-			modalSmartKeytrack, modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso, modalResoDamp,
-			modalSmartKeytrackEnv, modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv, modalResoDampEnv,
-			modalSmartKeytrackBreite, modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite, modalResoDampBreite
+			modalKeytrack, modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso, modalResoDamp,
+			modalKeytrackEnv, modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv, modalResoDampEnv,
+			modalKeytrackBreite, modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite, modalResoDampBreite
 		);
 
 		modalFilter();
@@ -231,8 +231,6 @@ namespace audio
 		}
 
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);
-
-		
 	}
 
 	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept

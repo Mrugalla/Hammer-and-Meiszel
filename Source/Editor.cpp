@@ -40,6 +40,8 @@ namespace gui
         evtMember(utils.eventSystem, makeEvt(*this)),
         compPower(utils),
         tooltip(utils),
+        buttonRandomizer(utils),
+        buttonSoftClip(utils),
         genAni(utils),
         modParamsEditor(utils),
         ioEditor(utils),
@@ -85,6 +87,8 @@ namespace gui
         addAndMakeVisible(labelDev);
         addAndMakeVisible(labelTitle);
         addAndMakeVisible(tooltip);
+		addAndMakeVisible(buttonRandomizer);
+		addAndMakeVisible(buttonSoftClip);
         addAndMakeVisible(genAni);
         addAndMakeVisible(ioEditor);
         addAndMakeVisible(modParamsEditor);
@@ -101,6 +105,56 @@ namespace gui
 		addChildComponent(manifestOfWisdom);
         addChildComponent(toast);
         addAndMakeVisible(compPower);
+
+        {
+            makeParameter(buttonSoftClip, PID::SoftClip, Button::Type::kToggle, makeButtonOnPaintClip());
+            for (auto i = 0; i < param::NumParams; ++i)
+            {
+                const auto pID = static_cast<PID>(i);
+                buttonRandomizer.add(pID);
+            }
+            buttonRandomizer.add([&](Random&)
+            {
+                auto& keySelector = audioProcessor.pluginProcessor.params(PID::KeySelectorEnabled);
+                keySelector.setValueWithGesture(1.f);
+            });
+            buttonRandomizer.add([&](Random& rand)
+            {
+                auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& xenManager = utils.audioProcessor.xenManager;
+
+                for (auto i = 0; i < 2; ++i)
+                {
+                    auto& mat = modalFilter.getMaterial(i);
+                    if (mat.status == dsp::modal::StatusMat::Processing)
+                    {
+                        std::array<double, dsp::modal::NumFilters> ratios;
+                        ratios[0] = 1.;
+						for (auto j = 1; j < dsp::modal::NumFilters; ++j)
+							ratios[j] = 1. + rand.nextDouble() * 64.;
+                        std::sort(ratios.begin(), ratios.end());
+
+						auto& peaks = mat.peakInfos;
+
+						peaks[0].mag = rand.nextDouble();
+						peaks[0].ratio = ratios[0];
+						peaks[0].freqHz = xenManager.noteToFreqHz(rand.nextDouble() * 127.);
+                        peaks[0].keytrack = 0.;
+
+                        for (auto j = 1; j < dsp::modal::NumFilters; ++j)
+                        {
+                            auto& peak = peaks[j];
+                            peak.mag = rand.nextDouble();
+							peak.ratio = ratios[j];
+							peak.freqHz = xenManager.noteToFreqHz(rand.nextDouble() * 127.);
+							peak.keytrack = rand.nextDouble();
+                        }
+
+                        mat.reportUpdate();
+                    }
+                }
+            });
+        }
 
         {
             makeSlider(noiseBlend, true);
@@ -222,6 +276,10 @@ namespace gui
         labelTitle.setMaxHeight();
 		layout.place(labelDev, 0, .5f, 1, .5f);
         labelDev.setMaxHeight();
+        // top mid panel
+        // leave some space for the preset browser
+		layout.place(buttonRandomizer, 1.5f, 0, .25f, 1);
+		layout.place(buttonSoftClip, 1.75f, 0, .25f, 1);
 
         // left panel
         resizeLeftPanel(*this, thicc2);
