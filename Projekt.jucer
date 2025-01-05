@@ -8,7 +8,7 @@
               pluginDesc="Harvests energy from unexpected sources" pluginManufacturer="Mrugalla"
               pluginManufacturerCode="Bbmr" pluginCode="Hrmz" pluginVST3Category="Filter,Fx"
               pluginAAXCategory="64" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=30.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=48"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;PPDHasDelta=false&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=30.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=48"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
@@ -241,6 +241,10 @@
         <FILE id="Zdnt0d" name="ColoursEditor.cpp" compile="1" resource="0"
               file="Source/gui/ColoursEditor.cpp"/>
         <FILE id="qAORvT" name="ColoursEditor.h" compile="0" resource="0" file="Source/gui/ColoursEditor.h"/>
+        <FILE id="c4rTBK" name="ButtonRandomizer.cpp" compile="1" resource="0"
+              file="Source/gui/ButtonRandomizer.cpp"/>
+        <FILE id="uYUsyo" name="ButtonRandomizer.h" compile="0" resource="0"
+              file="Source/gui/ButtonRandomizer.h"/>
         <FILE id="rYjSBg" name="BgImage.cpp" compile="1" resource="0" file="Source/gui/BgImage.cpp"/>
         <FILE id="XnUFHl" name="BgImage.h" compile="0" resource="0" file="Source/gui/BgImage.h"/>
         <FILE id="QmMPIV" name="ButtonPower.cpp" compile="1" resource="0" file="Source/gui/ButtonPower.cpp"/>
