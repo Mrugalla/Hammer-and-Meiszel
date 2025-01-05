@@ -45,6 +45,11 @@ namespace dsp
 			);
 		}
 
+		bool ModalFilter::isRinging(int i) const noexcept
+		{
+			return voices[i].isRinging();
+		}
+
 		Material& ModalFilter::getMaterial(int i) noexcept
 		{
 			return materials.getMaterial(i);

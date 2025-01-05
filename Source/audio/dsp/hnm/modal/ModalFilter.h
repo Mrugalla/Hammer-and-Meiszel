@@ -18,6 +18,8 @@ namespace dsp
 			void operator()(double**, const MidiBuffer&, const arch::XenManager&,
 				const Voice::Parameters&, double, double, int, int, int) noexcept;
 
+			bool isRinging(int) const noexcept;
+
 			Material& getMaterial(int) noexcept;
 
 			const Material& getMaterial(int) const noexcept;

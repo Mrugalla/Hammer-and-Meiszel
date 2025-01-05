@@ -60,6 +60,8 @@ namespace dsp
 
 			void reportMaterialUpdate() noexcept;
 
+			bool isRinging() const noexcept;
+
 		private:
 			MaterialDataStereo materialStereo;
 			std::array<ParameterProcessor, kNumParams> parameters;

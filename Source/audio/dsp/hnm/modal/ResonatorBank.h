@@ -9,8 +9,6 @@ namespace dsp
 	{
 		class ResonatorBank
 		{
-			static constexpr double MinPitch = 24;
-
 			using ResonatorArray = std::array<ResonatorStereo2, NumFilters>;
 
 			struct Val
@@ -44,6 +42,8 @@ namespace dsp
 			// bw, damp, ch
 			void setReso(double, double, int) noexcept;
 
+			bool isRinging() const noexcept;
+
 		private:
 			ResonatorArray resonators;
 			Val val;
@@ -52,7 +52,7 @@ namespace dsp
 			std::array<double, 2> gains;
 			std::array<int, 2> numFiltersBelowNyquist;
 			int sleepyTimer, sleepyTimerThreshold;
-			bool active;
+			bool ringing;
 
 			// material, numFiltersBelowNyquist, ch
 			void updateFreqRatios(const MaterialData&, int&, int) noexcept;

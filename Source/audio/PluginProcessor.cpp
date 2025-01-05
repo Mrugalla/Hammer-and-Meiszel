@@ -204,30 +204,31 @@ namespace audio
 			const auto envGenModInfo = envGensMod(midiVoice, numSamples, v);
 			const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
 
-			// process modal filter
-			modalFilter
-			(
-				samplesVoice,
-				midiVoice, xen,
-				modalVoiceParams,
-				modalSemi, envGenModVal,
-				numChannels, numSamples,
-				v
-			);
-			
-			combFilter
-			(
-				samplesVoice, midiVoice, xen,
-				combSemi, combUnison,
-				combFeedback, combFeedbackEnv, combFeedbackWidth,
-				envGenModVal,
-				numChannels, numSamples,
-				v
-			);
+			bool active = envGenModInfo.active || modalFilter.isRinging(v);
+			if (active)
+				modalFilter
+				(
+					samplesVoice,
+					midiVoice, xen,
+					modalVoiceParams,
+					modalSemi, envGenModVal,
+					numChannels, numSamples,
+					v
+				);
 
-			const bool voiceSilent = false;// math::bufferSilent(samplesVoice, numChannels, numSamples);
-			const bool sleepy = !envGenAmpInfo.active && voiceSilent;
-			parallelProcessor.setSleepy(sleepy, v);
+			active = active || combFilter.isRinging(v);
+			if(active)
+				combFilter
+				(
+					samplesVoice, midiVoice, xen,
+					combSemi, combUnison,
+					combFeedback, combFeedbackEnv, combFeedbackWidth,
+					envGenModVal,
+					numChannels, numSamples,
+					v
+				);
+
+			parallelProcessor.setSleepy(!active, v);
 		}
 
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);

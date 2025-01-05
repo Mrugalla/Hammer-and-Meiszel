@@ -8,6 +8,7 @@ namespace dsp
 		static constexpr int NumFilters = 12;
 		static constexpr double NumFiltersD = static_cast<double>(NumFilters);
 		static constexpr double NumFiltersInv = 1. / NumFiltersD;
+		static constexpr double MinPitch = 24;
 
 		enum class StatusMat
 		{

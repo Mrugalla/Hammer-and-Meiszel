@@ -48,15 +48,22 @@ namespace dsp
 		{
 			DelayFeedback() :
 				ringBuffer(),
-				size(0)
+				size(0),
+				sleepyTimer(0),
+				sleepyThreshold(0),
+				ringing(false)
 			{
 			}
 
 			// delaySize
-			void prepare(int _size)
+			void prepare(double sampleRate, int _size)
 			{
 				size = _size;
 				ringBuffer.setSize(2, size, false, true, false);
+
+				sleepyTimer = 0;
+				sleepyThreshold = static_cast<int>(sampleRate / 16.);
+				ringing = false;
 			}
 
 			// samples, wHead, rHead, feedbackBuffer, numSamples, ch
@@ -82,12 +89,31 @@ namespace dsp
 
 					ring[w] = sIn;
 					smpls[s] = sOut;
+
+					static constexpr double Eps = 1e-3;
+					const auto sOutAbs = sOut * sOut;
+					if (sOutAbs > Eps)
+					{
+						ringing = true;
+						sleepyTimer = 0;
+					}
 				}
+
+				sleepyTimer += numSamples;
+				ringing = sleepyTimer < sleepyThreshold;
+			}
+
+			bool isRinging() const noexcept
+			{
+				return ringing;
 			}
 
 		protected:
 			AudioBuffer ringBuffer;
 			int size;
+
+			int sleepyTimer, sleepyThreshold;
+			bool ringing;
 		};
 
 		struct ReadHead
@@ -143,7 +169,7 @@ namespace dsp
 				const auto sizeD = std::ceil(math::freqHzToSamples(LowestFrequencyHz, Fs));
 				size = static_cast<int>(sizeD);
 				readHead.prepare(sizeD);
-				delay.prepare(size);
+				delay.prepare(sampleRate, size);
 				for (auto& val : vals)
 					val.delaySamples = 0.;
 			}
@@ -185,6 +211,11 @@ namespace dsp
 						ch
 					);
 				}
+			}
+
+			bool isRinging() const noexcept
+			{
+				return delay.isRinging();
 			}
 
 		protected:
@@ -328,6 +359,11 @@ namespace dsp
 					retune, retuneWidth, fb, fbEnv, fbWidth, envGenMod,
 					numChannels, numSamples
 				);
+			}
+
+			bool isRinging(int v) const noexcept
+			{
+				return voices[v].isRinging();
 			}
 
 		protected:

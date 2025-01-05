@@ -115,6 +115,11 @@ namespace dsp
 			);
 		}
 
+		bool Voice::isRinging() const noexcept
+		{
+			return resonatorBank.isRinging();
+		}
+
 		void Voice::updatePartial(MaterialData& dest, const MaterialData& src0, const MaterialData& src1,
 			double keytrack, double blend, double sprezi, double harmi, int i) noexcept
 		{

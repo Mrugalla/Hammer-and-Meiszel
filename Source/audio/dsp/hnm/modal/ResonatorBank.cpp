@@ -41,7 +41,7 @@ namespace dsp
 			numFiltersBelowNyquist{ 0, 0 },
 			sleepyTimer(0),
 			sleepyTimerThreshold(0),
-			active(false)
+			ringing(false)
 		{
 		}
 
@@ -53,8 +53,7 @@ namespace dsp
 			for (auto& n : numFiltersBelowNyquist)
 				n = 0;
 			sleepyTimer = 0;
-			//active = false;
-			active = true;
+			ringing = false;
 		}
 
 		void ResonatorBank::prepare(const MaterialDataStereo& materialStereo, double _sampleRate)
@@ -67,7 +66,7 @@ namespace dsp
 			setFrequencyHz(materialStereo, 1000., 2);
 			for(auto ch = 0; ch < 2; ++ch)
 				setReso(.25, 1., ch);
-			sleepyTimerThreshold = static_cast<int>(nyquist) / 2;
+			sleepyTimerThreshold = static_cast<int>(nyquist / 8.);
 		}
 
 		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo,
@@ -80,6 +79,11 @@ namespace dsp
 				materialStereo, samples, midi, xen,
 				transposeSemi, numChannels, numSamples
 			);
+		}
+
+		bool ResonatorBank::isRinging() const noexcept
+		{
+			return ringing;
 		}
 
 		void ResonatorBank::setFrequencyHz(const MaterialDataStereo& materialStereo,
@@ -188,11 +192,6 @@ namespace dsp
 				const auto msg = it.getMessage();
 				if (msg.isNoteOn())
 				{
-					//if (!active)
-					//	for (auto ch = 0; ch < numChannels; ++ch)
-					//		for (auto i = 0; i < NumFilters; ++i)
-					//			resonators[i].reset(ch);
-					//active = true;
 					const auto ts = it.samplePosition;
 					val.pitch = static_cast<double>(msg.getNoteNumber());
 					const auto freq = val.getFreq(xen);
@@ -210,22 +209,18 @@ namespace dsp
 						val.pb = pb;
 						const auto freq = val.getFreq(xen);
 						setFrequencyHz(materialStereo, freq, numChannels);
-						//if(active)
-							applyFilter(materialStereo, samples, numChannels, s, ts);
+						applyFilter(materialStereo, samples, numChannels, s, ts);
 						s = ts;
 					}
 				}
 			}
 
-			//if(active)
-				applyFilter(materialStereo, samples, numChannels, s, numSamples);
+			applyFilter(materialStereo, samples, numChannels, s, numSamples);
 		}
 
 		void ResonatorBank::applyFilter(const MaterialDataStereo& materialStereo, double** samples,
 			int numChannels, int startIdx, int endIdx) noexcept
 		{
-			//static constexpr auto Eps = 1e-6;
-
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				const auto& material = materialStereo[ch];
@@ -250,15 +245,19 @@ namespace dsp
 						wet = 0.;
 					}
 					
-					//if (wet * wet > Eps)
-					//	sleepyTimer = 0;
+					static constexpr auto Eps = 1e-6;
+					if (wet * wet > Eps)
+					{
+						sleepyTimer = 0;
+						ringing = true;
+					}
 					smpls[i] = wet;
 				}
 			}
 
-			//const auto blockLength = endIdx - startIdx;
-			//sleepyTimer += blockLength;
-			//active = sleepyTimer < sleepyTimerThreshold;
+			const auto blockLength = endIdx - startIdx;
+			sleepyTimer += blockLength;
+			ringing = sleepyTimer < sleepyTimerThreshold;
 		}
 	}
 }
