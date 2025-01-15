@@ -119,7 +119,7 @@ namespace gui
 				pos.setXY(rand.nextFloat() * width, height);
 			};
 
-			const auto fps = cbFPS::k15;
+			const auto fps = cbFPS::k7_5;
 			const auto speed = msToInc(AniLengthMs, fps);
 
 			add(Callback([&, speed]()

@@ -98,7 +98,7 @@ namespace gui
 
 		Material& material;
 		Actives& actives;
-		Ruler ruler;
+		Ruler rulerPartials, rulerPitches;
 		Partials partials;
 		DragAnimationComp dragAniComp;
 		Draggerfall draggerfall;

@@ -8,7 +8,8 @@
 #include "gui/ColoursEditor.h"
 #include "gui/ManifestOfWisdom.h"
 #include "gui/KeySelectorEditor.h"
-#include "gui/ButtonRandomizer.h"
+#include "gui/hnm/TopEditor.h"
+#include "gui/LabelPluginRecorder.h"
 
 namespace gui
 {
@@ -32,15 +33,16 @@ namespace gui
         evt::Member evtMember;
         CompPower compPower;
         Tooltip tooltip;
-		ButtonRandomizer buttonRandomizer;
-        Button buttonSoftClip;
+        patch::Browser patchBrowser;
+        TopEditor topEditor;
         GenAniGrowTrees genAni;
 		ModalParamsEditor modParamsEditor;
 		IOEditor ioEditor;
         ColoursEditor coloursEditor;
         ManifestOfWisdom manifestOfWisdom;
         Toast toast;
-        Label labelDev, labelTitle, labelNoiseBlend;
+        LabelPluginRecorder labelTitle;
+        Label labelDev, labelNoiseBlend;
         Knob noiseBlend;
 		ModDial modDialNoiseBlend;
         KeySelectorEditor keySelector;

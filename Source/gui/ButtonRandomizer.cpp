@@ -2,13 +2,14 @@
 
 namespace gui
 {
-    ButtonRandomizer::Randomizer::Randomizer(Utils& u, String&& id) :
+    ButtonRandomizer::Randomizer::Randomizer(Utils& u, String&& _id) :
+		user(*u.audioProcessor.state.props.getUserSettings()),
+        id(_id),
         rd(),
         mt(rd()),
         dist(0.f, 1.f),
         seed(0)
     {
-        auto& user = *u.audioProcessor.state.props.getUserSettings();
         seed = user.getIntValue(id, 0);
         if (seed == 0)
         {
@@ -22,6 +23,7 @@ namespace gui
     {
         seed += up ? 1 : -1;
         mt.seed(seed);
+        user.setValue(id, seed);
     }
 
     float ButtonRandomizer::Randomizer::operator()()
@@ -118,12 +120,8 @@ namespace gui
         {
             auto& softClipParam = utils.audioProcessor.params(PID::SoftClip);
             softClipParam.setValueWithGesture(1.f);
-			auto& gainWetParam = utils.audioProcessor.params(PID::GainWet);
-            gainWetParam.setValueWithGesture(gainWetParam.range.convertTo0to1(-6.f));
 			auto& mixParam = utils.audioProcessor.params(PID::Mix);
 			mixParam.setValueWithGesture(1.f);
-			auto& gainOutParam = utils.audioProcessor.params(PID::GainOut);
-			gainOutParam.setValueWithGesture(gainOutParam.range.convertTo0to1(0.f));
 			auto& xenSnapParam = utils.audioProcessor.params(PID::XenSnap);
             xenSnapParam.setValueWithGesture(0.f);
         }
@@ -134,7 +132,8 @@ namespace gui
         {
             const auto pID = randomizable->id;
             if (pID != PID::Power && pID != PID::SoftClip && pID != PID::GainWet &&
-                pID != PID::GainOut && pID != PID::Mix && pID != PID::Macro && pID != PID::XenSnap)
+                pID != PID::GainOut && pID != PID::Mix && pID != PID::Macro &&
+                pID != PID::XenSnap && pID != PID::StereoConfig)
             {
                 const auto& range = randomizable->range;
 
@@ -188,7 +187,7 @@ namespace gui
     String ButtonRandomizer::makeTooltip()
     {
         Random rand;
-        static constexpr float count = 254.f;
+        static constexpr float count = 264.f;
         const auto v = static_cast<int>(std::round(rand.nextFloat() * count));
         switch (v)
         {
@@ -202,21 +201,21 @@ namespace gui
         case 7: return "This randomizes the parameter values. Yeah..";
         case 8: return "Born too early to explore space, born just in time to hit the randomizer.";
         case 9: return "Imagine someone sitting there writing down all these phrases.";
-        case 10: return "This will not save your snare from sucking ass.";
-        case 11: return "Producer-san >.< d.. don't tickle me there!!!";
+        case 10: return "Will this save your snare from sucking ass?";
+        case 11: return "Producer-san >.< d.. don't tickle me there!~";
         case 12: return "I mean, whatever.";
         case 13: return "Never commit. Just dream!";
         case 14: return "I wonder, what will happen if I...";
         case 15: return "Hit it for the digital warmth.";
-        case 16: return "Do you love cats? They are so cute :3";
+        case 16: return "Don't you love cats? They are so cute :3";
         case 17: return "We should collab some time, bro.";
         case 18: return "Did you just hover the button to see what's in here this time?";
         case 19: return "It's not just a phase!";
-        case 20: return "No time for figuring out parameter values manually, right?";
-        case 21: return "My cat is meowing at the door because there is a mouse.";
+        case 20: return "No time for figuring out parameter values manually, huh?";
+        case 21: return "My cat is meowing at the door because there is a mouse rn lol";
         case 22: return "Yeeeaaaaahhhh!!!! :)";
         case 23: return "Ur hacked now >:) no just kidding ^.^";
-        case 24: return "What would you do if your computer could handle 1mil phasers?";
+        case 24: return "What would you do if your computer could handle 1million phasers?";
         case 25: return "It's " + (juce::Time::getCurrentTime().getHours() < 10 ? juce::String("0") + static_cast<juce::String>(juce::Time::getCurrentTime().getHours()) : static_cast<juce::String>(juce::Time::getCurrentTime().getHours())) + ":" + (juce::Time::getCurrentTime().getMinutes() < 10 ? juce::String("0") + static_cast<juce::String>(juce::Time::getCurrentTime().getMinutes()) : static_cast<juce::String>(juce::Time::getCurrentTime().getMinutes())) + " o'clock now.";
         case 26: return "I once was a beat maker, too, but then I took a compressor to the knee.";
         case 27: return "It's worth a try.";
@@ -229,10 +228,10 @@ namespace gui
         case 34: return "Maybe...";
         case 35: return "Well.. perhaps.";
         case 36: return "Here we go again.";
-        case 37: return "What is the certainty of a certainty meaning a certain certainty?";
-        case 38: return "My favourite car is an RX7 so i found it quite funny when Izotope released that plugin.";
-        case 39: return "Do you know Echobode? It's one of my favourite plugins.";
-        case 40: return "I never managed to make a proper eurobeat even though I love that genre.";
+        case 37: return "What is the certainty of a certainty to mean a certain certainty?";
+        case 38: return "One of my favorite cars is the RX7 so i found it quite funny when Izotope released that plugin.";
+        case 39: return "Do you know Echobode? It's one of my favourite plugins!";
+        case 40: return "Have you ever tried to make eurobeat? It's really hard for some reason.";
         case 41: return "Wanna lose control?";
         case 42: return "Do you have any more of dem randomness pls?";
         case 43: return "How random do you want it to be, sir? Yes.";
@@ -242,7 +241,7 @@ namespace gui
         case 47: return "All The Award-Winning Audio-Engineers Use This Button!!";
         case 48: return "The fact that you can't undo it only makes it better.";
         case 49: return "When things are almost as fast as light, reality bends.";
-        case 50: return "I actually come from the future. Don't tell anyone pls.";
+        case 50: return "I actually come from the future. Don't tell anyone pls!";
         case 51: return "You're mad!";
         case 52: return "Your ad could be here! ;)";
         case 53: return "What colour-Scheme does your tune sound like?";
@@ -264,7 +263,7 @@ namespace gui
         case 69: return "This is actually message no. 69, haha";
         case 70: return "Who needs control anyway?";
         case 71: return "I have the feeling this time it will turn out really cool!";
-        case 72: return "Turn all parameters up right to 11.";
+        case 72: return "This turns all parameters up right to 11.";
         case 73: return "Tranquilize Your Music. Idk why, but it sounds cool.";
         case 74: return "I'm indecisive...";
         case 75: return "That's a good idea!";
@@ -277,14 +276,14 @@ namespace gui
         case 82: return "Did you remember to water your plants yet?";
         case 83: return "I'm just a simple button. Nothing special to see here.";
         case 84: return "You're using this plugin. That makes you a cool person.";
-        case 85: return "Only the greatest DSP technology in this parameter randomizer!";
+        case 85: return "Only the greatest DSP technology was used in this parameter randomizer!";
         case 86: return "I am not fun at parties indeed.";
         case 87: return "This button makes it worse!";
         case 88: return "I am not sure what this is going to do.";
         case 89: return "If your music was a mountain, what shape would it be like?";
-        case 90: return "NEL is the best Vibrato Plugin in the world. Tell all ur friends!";
+        case 90: return "NEL is the best vibrato plugin in the world. Tell all ur friends!";
         case 91: return "Do you feel the vibrations?";
-        case 92: return "Defrost or Reheat? You decide.";
+        case 92: return "Defrost or Reheat? You decide!";
         case 93: return "Don't forget to hydrate yourself, king/queen.";
         case 94: return "How long does it take to get to the next planet at this speed?";
         case 95: return "What if there is a huge wall around the whole universe?";
@@ -292,11 +291,11 @@ namespace gui
         case 97: return "I talk to the wind. My words are all carried away.";
         case 98: return "Captain, we need to warp now! There is no time.";
         case 99: return "Where are we now?";
-        case 100: return "Randomize me harder, daddy!";
+        case 100: return "Randomize me harder, daddy!~";
         case 101: return "Drama!";
         case 102: return "Turn it up! Well, this is not a knob, but you know, it's cool.";
         case 103: return "You like it dangerous, huh?";
-        case 104: return "We are under attack.";
+        case 104: return "QUICK! We are under attack!";
         case 105: return "Yes, you want this!";
         case 106: return "The randomizer is better than your presets!";
         case 107: return "Are you a decide-fan, or a random-enjoyer?";
@@ -316,7 +315,7 @@ namespace gui
         case 121: return "404 - Creative message not found. Contact our support pls.";
         case 122: return "Press jump twice to perform a doub.. oh wait, wrong app.";
         case 123: return "And now for the ultimate configuration!";
-        case 124: return "Subscribe for more random messages! Only 40$/mon";
+        case 124: return "Subscribe for more random messages! (Only 42$/mon)";
         case 125: return "I love you <3";
         case 126: return "Me? Well...";
         case 127: return "What happens if I press this?";
@@ -350,18 +349,18 @@ namespace gui
         case 155: return "There will be a netflix adaption of this plugin soon.";
         case 156: return "Studio Gib Ihm!";
         case 157: return "One Click And It's Perfect!";
-        case 158: return "Elon Musk just twittered that this plugin is cool. Wait.. is that a good thing?";
-        case 159: return "Remember to drink water, sempai!";
+        case 158: return "If you drive a Tesla I want you to remove all of my plugins from your computer.";
+        case 159: return "Remember to drink water, senpai!";
         case 160: return "Love <3";
         case 161: return "Your journey has just begun ;)";
         case 162: return "You will never be the same again...";
         case 163: return "Black holes are just functors that create this universe inside of this universe.";
         case 164: return "Feel the heat!";
-        case 165: return "There is no going back. (Literally, because I didn't implement undo/redo)";
+        case 165: return "Rightclick on the randomizer to go back to the last seed.";
         case 166: return "Tbh, that would be crazy.";
         case 167: return "Your horoscope said you'll make the best beat of all time today.";
         case 168: return "Do it again! :)";
-        case 169: return "Vibrato is not equal Vibrato, dude.";
+        case 169: return "Vibrato is not equal vibrato, dude.";
         case 170: return "This is going to be all over the place!";
         case 171: return "Pitch and time... it belongs together.";
         case 172: return "A rainbow is actually transcendence that never dies.";
@@ -406,7 +405,7 @@ namespace gui
         case 211: return "Take your phone number and add or subtract 1 from it! That's your textdoor neighbor.";
         case 212: return "Um.. ok?";
         case 213: return "I need more coffee.";
-        case 214: return "Btw if you have some spare money to share, there is a donate button in the settings :>";
+        case 214: return "If you feel like supporting me, you can find my Paypal link in my video descriptions. :>";
         case 215: return "Beware! This button causes quantum entanglement.";
         case 216: return "Pink is the craziest colour, because it's a mix between the lowest and highest perceivable frequencies of light.";
         case 217: return "You can't see mirrors. You can only see what mirrors show. What does a mirror look like?";
@@ -455,6 +454,7 @@ namespace gui
 		case 261: return "The Mazda Miata has a perfect 50/50 weight distribution.";
 		case 262: return "The Mazda Miatas is a cheap and lightweight sports cars with exceptional balance.";
 		case 263: return "What does your music sound like in a Miata?";
+        case 264: return "Click this to activate celebrity mode!";
         default: "Are you sure?";
         }
         return "You are not supposed to read this message!";

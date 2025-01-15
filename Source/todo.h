@@ -4,13 +4,6 @@
 
 ~~~ todo ~~~
 
-randomizer button
-
-write new sleepy state mechanism for modal resonator filter.
-    problem was: it turned off the modal filter when it got too quiet
-    but quietness can also come from low sustain values on the envelope
-    or from low audio input values, but it should only trigger when nothing's playing anymore
-
 polyphony parameter
     monophonic mode with portamento and stuff
     reset mod envelope on note on (or not)
@@ -23,16 +16,12 @@ map velocity to certain parameters
 
 buttons ohne bg colour
 
-preset browser
-
-drag last created sound to DAW as audio
-
-smoothing-zeiten von modal voice sind viel zu lang. sichtbar wenn man n normalisierten param auf 0 dreht mit DBG
-
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material
 
-optimize CPU with SIMD filters
+optimize modal filter CPU
+    SIMD
+    FFT
 
 Material
     import von samples erzeugt nicht immer geile magnitudes
@@ -49,7 +38,6 @@ GUI
             drag, wheel, key
         defaultvalue
             doubleclick, key
-    all parameters currently lack visible lock feature
 AUDIO
     FFT
         replace by 3rd party lib for performance (kiss fft or pffft)

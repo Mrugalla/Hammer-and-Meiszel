@@ -23,6 +23,7 @@ namespace gui
     using AppProps = juce::ApplicationProperties;
     using Cursor = juce::MouseCursor;
     using Image = juce::Image;
+	using ScaledImage = juce::ScaledImage;
     using Graphics = juce::Graphics;
     using Mouse = juce::MouseEvent;
     using MouseWheel = juce::MouseWheelDetails;
@@ -67,6 +68,9 @@ namespace gui
 	using ResamplingQuality = Graphics::ResamplingQuality;
 	using ColourSelector = juce::ColourSelector;
 	using ImageCache = juce::ImageCache;
+	using Int64 = juce::int64;
+	using WavAudioFormat = juce::WavAudioFormat;
+	using AudioFormatWriter = juce::AudioFormatWriter;
 
     using Processor = audio::Processor;
 

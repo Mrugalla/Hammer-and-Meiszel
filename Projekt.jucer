@@ -180,6 +180,10 @@
           <FILE id="vkm6Z4" name="MidSide.h" compile="0" resource="0" file="Source/audio/dsp/MidSide.h"/>
           <FILE id="RDSySh" name="NoiseSynth.cpp" compile="1" resource="0" file="Source/audio/dsp/NoiseSynth.cpp"/>
           <FILE id="SpKCIv" name="NoiseSynth.h" compile="0" resource="0" file="Source/audio/dsp/NoiseSynth.h"/>
+          <FILE id="HP3qcl" name="PluginRecorder.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/PluginRecorder.cpp"/>
+          <FILE id="tbkgGt" name="PluginRecorder.h" compile="0" resource="0"
+                file="Source/audio/dsp/PluginRecorder.h"/>
           <FILE id="pmlVdP" name="ParallelProcessor.cpp" compile="1" resource="0"
                 file="Source/audio/dsp/ParallelProcessor.cpp"/>
           <FILE id="C0s0uG" name="ParallelProcessor.h" compile="0" resource="0"
@@ -222,9 +226,14 @@
                 file="Source/gui/hnm/ModalParamsEditor.cpp"/>
           <FILE id="znBdbp" name="ModalParamsEditor.h" compile="0" resource="0"
                 file="Source/gui/hnm/ModalParamsEditor.h"/>
+          <FILE id="IqFOt1" name="TopEditor.cpp" compile="1" resource="0" file="Source/gui/hnm/TopEditor.cpp"/>
+          <FILE id="jQPRVt" name="TopEditor.h" compile="0" resource="0" file="Source/gui/hnm/TopEditor.h"/>
         </GROUP>
         <FILE id="VSJIYZ" name="Ruler.cpp" compile="1" resource="0" file="Source/gui/Ruler.cpp"/>
         <FILE id="dEwQsp" name="Ruler.h" compile="0" resource="0" file="Source/gui/Ruler.h"/>
+        <FILE id="ocVZS1" name="PatchBrowser.cpp" compile="1" resource="0"
+              file="Source/gui/PatchBrowser.cpp"/>
+        <FILE id="JsYvUs" name="PatchBrowser.h" compile="0" resource="0" file="Source/gui/PatchBrowser.h"/>
         <FILE id="cXkNEf" name="IOEditor.cpp" compile="1" resource="0" file="Source/gui/IOEditor.cpp"/>
         <FILE id="TMbi8H" name="IOEditor.h" compile="0" resource="0" file="Source/gui/IOEditor.h"/>
         <FILE id="EqK7eV" name="VoiceGrid.cpp" compile="1" resource="0" file="Source/gui/VoiceGrid.cpp"/>
@@ -265,6 +274,10 @@
         <FILE id="tWuWsL" name="Knob.h" compile="0" resource="0" file="Source/gui/Knob.h"/>
         <FILE id="rOzncV" name="Label.cpp" compile="1" resource="0" file="Source/gui/Label.cpp"/>
         <FILE id="sajJqr" name="Label.h" compile="0" resource="0" file="Source/gui/Label.h"/>
+        <FILE id="itmLPW" name="LabelPluginRecorder.cpp" compile="1" resource="0"
+              file="Source/gui/LabelPluginRecorder.cpp"/>
+        <FILE id="rhs5kQ" name="LabelPluginRecorder.h" compile="0" resource="0"
+              file="Source/gui/LabelPluginRecorder.h"/>
         <FILE id="mMfZbm" name="Layout.cpp" compile="1" resource="0" file="Source/gui/Layout.cpp"/>
         <FILE id="alJFXn" name="Layout.h" compile="0" resource="0" file="Source/gui/Layout.h"/>
         <FILE id="uQskvP" name="ManifestOfWisdom.cpp" compile="1" resource="0"

@@ -18,6 +18,8 @@ namespace gui
             float operator()();
 
         private:
+            juce::PropertiesFile& user;
+            String id;
             std::random_device rd;
             std::mt19937 mt;
             std::uniform_real_distribution<float> dist;

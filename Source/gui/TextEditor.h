@@ -8,43 +8,47 @@ namespace gui
 	{
 		enum { cbEmpty, cbKeyFocus, cbCaret };
 
-		TextEditor(Utils& u) :
+		TextEditor(Utils& u, const String& emptyString = "") :
 			Button(u),
 			labelEmpty(u),
 			txt(""),
+			txtEmpty(emptyString),
 			caret(0),
+			emptyAniIdx(0),
 			active(true)
 		{
 			addAndMakeVisible(labelEmpty);
-			makeTextLabel(labelEmpty, "", font::dosisMedium(), Just::centred, CID::Hover);
+			makeTextLabel(labelEmpty, emptyString, font::dosisMedium(), Just::centred, CID::Hover);
 			labelEmpty.setInterceptsMouseClicks(false, false);
 
-			makeTextButton(*this, "",
-				"Pro tip: Use the keyboard to enter text!", CID::Txt);
+			makeTextButton(*this, "", "Pro tip: Use the keyboard to enter text!", CID::Txt);
 
 			add(Callback([&]()
 			{
-				if (active)
+				if (txt.isEmpty())
 				{
-					if (txt.isEmpty())
+					labelEmpty.setVisible(true);
+					emptyAniIdx = (emptyAniIdx + 1) % 4;
+					switch (emptyAniIdx)
 					{
-						labelEmpty.setVisible(true);
-						if (labelEmpty.text == ".")
-							labelEmpty.text = "..";
-						else if (labelEmpty.text == "..")
-							labelEmpty.text = "...";
-						else if (labelEmpty.text == "...")
-							labelEmpty.text = "";
-						else
-							labelEmpty.text = ".";
-						labelEmpty.setMaxHeight();
-						labelEmpty.repaint();
+					case 0:
+						labelEmpty.text = txtEmpty;
+						break;
+					case 1:
+						labelEmpty.text = txtEmpty + ".";
+						break;
+					case 2:
+						labelEmpty.text = txtEmpty + "..";
+						break;
+					case 3:
+						labelEmpty.text = txtEmpty + "...";
+						break;
 					}
-					else
-					{
-						return labelEmpty.setVisible(false);
-					}
+					labelEmpty.setMaxHeight();
+					labelEmpty.repaint();
+					return;
 				}
+				labelEmpty.setVisible(false);
 			}, cbEmpty, cbFPS::k_1_875, true));
 
 			add(Callback([&]()
@@ -72,6 +76,15 @@ namespace gui
 			{
 				setActive(true);
 			};
+
+			addEvt([&](evt::Type t, const void*)
+			{
+				if (t == evt::Type::DeactivateAllTextEditors)
+				{
+					active = false;
+					giveAwayKeyboardFocus();
+				}
+			});
 
 			setWantsKeyboardFocus(true);
 		}
@@ -138,7 +151,7 @@ namespace gui
 		{
 			Button::resized();
 			const auto thicc = utils.thicc;
-			labelEmpty.setBounds(getLocalBounds().toFloat().reduced(thicc * 5.f).toNearestInt());
+			labelEmpty.setBounds(getLocalBounds().toFloat().reduced(thicc).toNearestInt());
 		}
 
 		void clear()
@@ -170,7 +183,13 @@ namespace gui
 
 		void setActive(bool e)
 		{
+			notify(evt::Type::DeactivateAllTextEditors);
 			active = e;
+			updateActive();
+		}
+
+		void updateActive()
+		{
 			if (active)
 				grabKeyboardFocus();
 			else
@@ -183,8 +202,8 @@ namespace gui
 		}
 
 		Label labelEmpty;
-		String txt;
-		int caret;
+		String txt, txtEmpty;
+		int caret, emptyAniIdx;
 		bool active;
 
 	private:
@@ -197,7 +216,6 @@ namespace gui
 				labelEmpty.setVisible(true);
 				return;
 			}
-
 			labelEmpty.setVisible(false);
 			if (callbacks[cbCaret].phase < .5f)
 				label.text = txt.substring(0, caret) + " " + txt.substring(caret);

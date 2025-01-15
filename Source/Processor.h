@@ -7,6 +7,7 @@
 #include "param/Param.h"
 #include "audio/dsp/MixProcessor.h"
 #include "audio/dsp/Oversampler.h"
+#include "audio/dsp/PluginRecorder.h"
 
 namespace audio
 {
@@ -29,6 +30,7 @@ namespace audio
         public Timer
     {
         using BusesProps = juce::AudioProcessor::BusesProperties;
+        using ValueTree = juce::ValueTree;
 
         BusesProps makeBusesProps();
         bool canAddBus(bool) const override;
@@ -75,6 +77,7 @@ namespace audio
         MidiBuffer midiSubBuffer, midiOutBuffer;
 
         dsp::MixProcessor mixProcessor;
+        dsp::PluginRecorder recorder;
 #if PPDHasHQ
         dsp::Oversampler oversampler;
 #endif

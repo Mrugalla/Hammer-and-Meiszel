@@ -11,6 +11,7 @@ namespace gui
             case evt::Type::ClickedEmpty:
 				e.coloursEditor.setVisible(false);
                 e.manifestOfWisdom.setVisible(false);
+                e.patchBrowser.setVisible(false);
                 e.buttonColours.value = 0.f;
 				e.manifestOfWisdomButton.value = 0.f;
                 e.buttonColours.repaint();
@@ -40,16 +41,16 @@ namespace gui
         evtMember(utils.eventSystem, makeEvt(*this)),
         compPower(utils),
         tooltip(utils),
-        buttonRandomizer(utils, "randomizer"),
-        buttonSoftClip(utils),
+        patchBrowser(utils),
+		topEditor(utils, patchBrowser),
         genAni(utils),
         modParamsEditor(utils),
         ioEditor(utils),
         coloursEditor(utils),
         manifestOfWisdom(utils),
         toast(utils),
-        labelDev(utils),
         labelTitle(utils),
+        labelDev(utils),
         labelNoiseBlend(utils),
         noiseBlend(utils),
 		modDialNoiseBlend(utils),
@@ -87,8 +88,7 @@ namespace gui
         addAndMakeVisible(labelDev);
         addAndMakeVisible(labelTitle);
         addAndMakeVisible(tooltip);
-		addAndMakeVisible(buttonRandomizer);
-		addAndMakeVisible(buttonSoftClip);
+        addAndMakeVisible(topEditor);
         addAndMakeVisible(genAni);
         addAndMakeVisible(ioEditor);
         addAndMakeVisible(modParamsEditor);
@@ -103,54 +103,9 @@ namespace gui
         addAndMakeVisible(manifestOfWisdomButton);
 		addChildComponent(coloursEditor);
 		addChildComponent(manifestOfWisdom);
+        addChildComponent(patchBrowser);
         addChildComponent(toast);
         addAndMakeVisible(compPower);
-
-        {
-            makeParameter(buttonSoftClip, PID::SoftClip, Button::Type::kToggle, makeButtonOnPaintClip());
-            for (auto i = 0; i < param::NumParams; ++i)
-            {
-                const auto pID = static_cast<PID>(i);
-				if (pID != PID::KeySelectorEnabled && pID != PID::NoiseBlend)
-                    buttonRandomizer.add(pID);
-            }
-            buttonRandomizer.add([&](ButtonRandomizer::Randomizer& rand)
-            {
-                auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-				auto& xenManager = utils.audioProcessor.xenManager;
-
-                for (auto i = 0; i < 2; ++i)
-                {
-                    auto& mat = modalFilter.getMaterial(i);
-                    if (mat.status == dsp::modal::StatusMat::Processing)
-                    {
-                        std::array<double, dsp::modal::NumFilters> ratios;
-                        ratios[0] = 1.;
-						for (auto j = 1; j < dsp::modal::NumFilters; ++j)
-							ratios[j] = 1. + static_cast<double>(rand()) * 32.;
-                        std::sort(ratios.begin(), ratios.end());
-
-						auto& peaks = mat.peakInfos;
-
-						peaks[0].mag = static_cast<double>(rand());
-						peaks[0].ratio = ratios[0];
-						peaks[0].freqHz = xenManager.noteToFreqHz(static_cast<double>(rand()) * 127.);
-                        peaks[0].keytrack = 0.;
-
-                        for (auto j = 1; j < dsp::modal::NumFilters; ++j)
-                        {
-                            auto& peak = peaks[j];
-                            peak.mag = static_cast<double>(rand());
-							peak.ratio = ratios[j];
-							peak.freqHz = xenManager.noteToFreqHz(static_cast<double>(rand()) * 127.);
-							peak.keytrack = static_cast<double>(rand());
-                        }
-
-                        mat.reportUpdate();
-                    }
-                }
-            });
-        }
 
         {
             makeSlider(noiseBlend, true);
@@ -165,7 +120,7 @@ namespace gui
             auto titleFont = font::flx();
             const auto devFont = titleFont;
             titleFont.setExtraKerningFactor(.2f);
-            makeTextLabel(labelDev, "crafted by Florian " + dev, devFont, Just::centred, CID::Txt);
+            makeTextLabel(labelDev, "gebastelt von Florian " + dev, devFont, Just::centred, CID::Txt);
 
             auto sz = String(juce::CharPointer_UTF8("\xc3\x9f"));
             String name(JucePlugin_Name);
@@ -272,10 +227,7 @@ namespace gui
         labelTitle.setMaxHeight();
 		layout.place(labelDev, 0, .5f, 1, .5f);
         labelDev.setMaxHeight();
-        // top mid panel
-        // leave some space for the preset browser
-		layout.place(buttonRandomizer, 1.5f, 0, .25f, 1);
-		layout.place(buttonSoftClip, 1.75f, 0, .25f, 1);
+        layout.place(topEditor, 1, 0, 1, 1);
 
         // left panel
         resizeLeftPanel(*this, thicc2);
@@ -289,8 +241,9 @@ namespace gui
         // center panel
         layout.place(keySelector, 1, 1, 1, 1);
         layout.place(modalEditor, 1, 2, 1, 2);
-        layout.place(coloursEditor, 1, 2, 1, 1);
-        layout.place(manifestOfWisdom, 1, 2, 1, 1);
+        layout.place(coloursEditor, 1, 2, 1, 2);
+        layout.place(manifestOfWisdom, 1, 2, 1, 2);
+		layout.place(patchBrowser, 1, 2, 1, 2);
 
         // bottom panel
         tooltip.setBounds(layout.bottom().toNearestInt());

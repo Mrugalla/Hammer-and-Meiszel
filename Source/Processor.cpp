@@ -49,12 +49,29 @@ namespace audio
         midiOutBuffer(),
 
         mixProcessor(),
+        recorder(),
 #if PPDHasHQ
         oversampler(),
 #endif
         sampleRateUp(0.),
         blockSizeUp(dsp::BlockSize)
     {
+        const auto& user = *state.props.getUserSettings();
+        const auto& settingsFile = user.getFile();
+        const auto settingsDirectory = settingsFile.getParentDirectory();
+		const auto patchesDirectory = settingsDirectory.getChildFile("Patches");
+		if (!patchesDirectory.exists())
+            patchesDirectory.createDirectory();
+
+        state.set("author", "factory");
+        params.savePatch(state);
+        pluginProcessor.savePatch(state);
+        const auto init = state.state.createCopy();
+        const auto initFile = patchesDirectory.getChildFile("init.txt");
+        if (initFile.existsAsFile())
+            initFile.deleteFile();
+        initFile.create();
+		initFile.replaceWithText(init.toXmlString());
     }
 
     Processor::~Processor()
@@ -155,6 +172,7 @@ namespace audio
 		blockSizeUp = dsp::BlockSize;
 #endif
         pluginProcessor.prepare(sampleRateUp);
+        recorder.prepare(sampleRate);
         setLatencySamples(latency);
         startTimerHz(4);
     }
@@ -451,6 +469,8 @@ namespace audio
                     smpls[s] = dsp::softclipPrismaHeavy(smpls[s], 1., knee);
 			}
 		}
+
+        recorder(samplesMain, numChannels, numSamplesMain);
 
 #if JUCE_DEBUG && false
         for (auto ch = 0; ch < numChannels; ++ch)

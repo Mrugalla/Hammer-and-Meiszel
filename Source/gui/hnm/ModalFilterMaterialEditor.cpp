@@ -163,7 +163,8 @@ namespace gui
 		FileDragAndDropTarget(),
 		material(_material),
 		actives(_actives),
-		ruler(u),
+		rulerPartials(u),
+		rulerPitches(u),
 		partials(),
 		dragAniComp(u),
 		draggerfall(),
@@ -215,8 +216,8 @@ namespace gui
 
 	void ModalMaterialEditor::initRuler()
 	{
-		addAndMakeVisible(ruler);
-		ruler.setGetIncFunc([](float len)
+		addAndMakeVisible(rulerPartials);
+		rulerPartials.setGetIncFunc([](float len)
 		{
 			return len < 2.f ? .1f :
 				len < 5.f ? .2f :
@@ -226,12 +227,34 @@ namespace gui
 				len < 45.f ? 4.f :
 				8.f;
 		});
-		ruler.setValToStrFunc([](float v)
+		rulerPartials.setValToStrFunc([](float v)
 		{
 			return String(v + 1.f);
 		});
-		ruler.setCID(CID::Hover);
-		ruler.setDrawFirstVal(true);
+		rulerPartials.setCID(CID::Hover);
+		rulerPartials.setDrawFirstVal(true);
+
+		addChildComponent(rulerPitches);
+		rulerPitches.setGetIncFunc([](float len)
+		{
+			return len < 1.f ? .1f :
+				len < 12.f ? 1.f :
+				len < 24.f ? 2.f :
+				len < 36.f ? 4.f :
+				len < 48.f ? 6.f
+				: 12.f;
+		});
+		rulerPitches.setValToStrFunc([](float v)
+		{
+			enum pitchclass { C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B, Num };
+
+			const auto note = static_cast<int>(std::round(v));
+			const auto octave = note / 12 - 1;
+			const auto noteName = note % 12;
+			return math::pitchclassToString(noteName) + String(octave);
+		});
+		rulerPitches.setCID(CID::Hover);
+		rulerPitches.setDrawFirstVal(true);
 	}
 
 	void ModalMaterialEditor::paint(Graphics& g)
@@ -253,7 +276,10 @@ namespace gui
 		g.setColour(Colours::c(CID::Hover).withMultipliedAlpha(.25f));
 		g.fillRect(0.f, 0.f, w, rulerTop);
 		const auto rulerBtm = h;
-		ruler.paintStripes(g, rulerTop, rulerBtm, 33);
+		if (showsRatios)
+			rulerPartials.paintStripes(g, rulerTop, rulerBtm, 33);
+		else
+			rulerPitches.paintStripes(g, rulerTop, rulerBtm, 33);
 
 		if (isMouseOver() && !isMouseButtonDownAnywhere())
 			draggerfall.paint(g);
@@ -299,7 +325,8 @@ namespace gui
 		);
 
 		layout.resized(getLocalBounds().toFloat());
-		layout.place(ruler, 0, 0, 1, 1);
+		layout.place(rulerPartials, 0, 0, 1, 1);
+		rulerPitches.setBounds(rulerPartials.getBounds());
 		dragAniComp.setBounds(getLocalBounds());
 		updatePartials();
 	}
@@ -385,15 +412,32 @@ namespace gui
 	void ModalMaterialEditor::updateRuler()
 	{
 		const auto& peakInfos = material.peakInfos;
-		const auto minFc = 1.f;
 
-		auto maxFc = minFc;
-		for (auto i = 1; i < NumFilters; ++i)
-			maxFc = std::max(maxFc, static_cast<float>(peakInfos[i].ratio));
+		rulerPartials.setVisible(showsRatios);
+		rulerPitches.setVisible(!showsRatios);
 
-		const auto fcRange = maxFc - minFc;
-		ruler.setLength(fcRange);
-		ruler.repaint();
+		if (showsRatios)
+		{
+			const auto minFc = 1.f;
+			auto maxFc = minFc;
+			for (auto i = 0; i < NumFilters; ++i)
+				maxFc = std::max(maxFc, static_cast<float>(peakInfos[i].ratio));
+
+			const auto fcRange = maxFc - minFc;
+			rulerPartials.setLength(fcRange);
+			rulerPartials.repaint();
+		}
+		else
+		{
+			const auto minFreq = 1.f;
+			auto maxFreq = minFreq;
+			for (auto i = 1; i < NumFilters; ++i)
+				maxFreq = std::max(maxFreq, static_cast<float>(peakInfos[i].freqHz));
+			const auto& xen = utils.audioProcessor.xenManager;
+			const auto maxPitch = xen.freqHzToNote(maxFreq);
+			rulerPitches.setLength(maxPitch);
+			rulerPitches.repaint();
+		}
 	}
 
 	// mouse event handling
@@ -498,6 +542,7 @@ namespace gui
 					const auto dragDistAbs = dragDist.x * dragDist.x;
 					if (dragDistAbs > sensitivity)
 					{
+						const auto& ruler = showsRatios ? rulerPartials : rulerPitches;
 						if (dragDist.x > 0.)
 							ratio = ruler.getNextHigherSnapped(ratio);
 						else

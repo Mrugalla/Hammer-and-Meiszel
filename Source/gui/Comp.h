@@ -10,7 +10,7 @@ namespace gui
 		static constexpr float LockAlpha = .5f;
 		static constexpr float AniLengthMs = 200.f;
 
-		/* utils, tooltip */
+		// utils, tooltip
 		Comp(Utils&, const String & = "");
 
 		~Comp();
@@ -23,7 +23,7 @@ namespace gui
 
 		void registerCallbacks();
 
-		/* xL, yL */
+		// xL, yL
 		void initLayout(const String&, const String&);
 
 		void addEvt(const evt::Evt&);

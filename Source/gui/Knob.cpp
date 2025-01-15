@@ -437,107 +437,107 @@ namespace gui
     void makeKnob(Knob& knob, bool showModulation)
     {
         knob.onPaint = [showModulation](Graphics& g, Knob& k)
-            {
-                static constexpr float AngleWidth = PiQuart * 3.f;
-                static constexpr float AngleRange = AngleWidth * 2.f;
+        {
+            static constexpr float AngleWidth = PiQuart * 3.f;
+            static constexpr float AngleRange = AngleWidth * 2.f;
 
-                const auto& vals = k.values;
+            const auto& vals = k.values;
 
-                const auto enterExitPhase = k.callbacks[Knob::kEnterExitCB].phase;
-                const auto downUpPhase = k.callbacks[Knob::kDownUpCB].phase;
+            const auto enterExitPhase = k.callbacks[Knob::kEnterExitCB].phase;
+            const auto downUpPhase = k.callbacks[Knob::kDownUpCB].phase;
 
-                const auto thicc = k.utils.thicc;
-                const auto thicc2 = thicc * 2.f;
-                const auto thicc3 = thicc * 3.f;
-                const auto thicc4 = thicc * 4.f;
-                const auto thicc5 = thicc * 5.f;
-                const auto knobBounds = maxQuadIn(k.getLocalBounds().toFloat()).reduced(thicc3);
+            const auto thicc = k.utils.thicc;
+            const auto thicc2 = thicc * 2.f;
+            const auto thicc3 = thicc * 3.f;
+            const auto thicc4 = thicc * 4.f;
+            const auto thicc5 = thicc * 5.f;
+            const auto knobBounds = maxQuadIn(k.getLocalBounds().toFloat()).reduced(thicc3);
 
-                const auto radius = knobBounds.getWidth() * .5f;
-                const auto radiusInner = radius * (.8f - enterExitPhase * .1f);
-                const auto radDif = (radius - radiusInner) * (.7f + downUpPhase * .3f);
-                Stroke strokeType(radDif * .5f, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
+            const auto radius = knobBounds.getWidth() * .5f;
+            const auto radiusInner = radius * (.8f - enterExitPhase * .1f);
+            const auto radDif = (radius - radiusInner) * (.7f + downUpPhase * .3f);
+            Stroke strokeType(radDif * .5f, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
 
-                PointF centre
+            PointF centre
+            (
+                radius + knobBounds.getX(),
+                radius + knobBounds.getY()
+            );
+
+            auto col = getColour(CID::Txt);
+
+            { // paint lines
+
+                Path arcOutline;
+                arcOutline.addCentredArc
                 (
-                    radius + knobBounds.getX(),
-                    radius + knobBounds.getY()
+                    centre.x, centre.y,
+                    radius, radius,
+                    0.f,
+                    -AngleWidth, AngleWidth,
+                    true
                 );
+                g.setColour(col);
+                g.strokePath(arcOutline, strokeType);
 
-                auto col = getColour(CID::Txt);
+                Path arcInline;
+                arcInline.addCentredArc
+                (
+                    centre.x, centre.y,
+                    radiusInner, radiusInner,
+                    0.f,
+                    -AngleWidth, AngleWidth,
+                    true
+                );
+                Stroke stroke2 = strokeType;
+                stroke2.setStrokeThickness(radDif);
+                g.strokePath(arcInline, stroke2);
+            };
 
-                { // paint lines
+            const auto valNormAngle = vals[Knob::Value] * AngleRange;
+            const auto valAngle = -AngleWidth + valNormAngle;
+            const auto radiusExt = radius + thicc;
 
-                    Path arcOutline;
-                    arcOutline.addCentredArc
+            // paint modulation
+            if (showModulation)
+            {
+                const auto valModAngle = vals[Knob::ValMod] * AngleRange;
+                const auto modAngle = -AngleWidth + valModAngle;
+                const auto modTick = LineF::fromStartAndAngle(centre, radiusExt, modAngle);
+                const auto shortenedModTick = modTick.withShortenedStart(radiusInner - thicc);
+
+                g.setColour(Colours::c(CID::Bg));
+                g.drawLine(shortenedModTick, thicc4);
+
+                const auto maxModDepthAngle = juce::jlimit(-AngleWidth, AngleWidth, valNormAngle + vals[Knob::ModDepth] * AngleRange - AngleWidth);
+
+                g.setColour(Colours::c(CID::Mod));
+                g.drawLine(modTick.withShortenedStart(radiusInner), thicc2);
+                {
+                    Path modPath;
+                    modPath.addCentredArc
                     (
                         centre.x, centre.y,
                         radius, radius,
                         0.f,
-                        -AngleWidth, AngleWidth,
+                        maxModDepthAngle, valAngle,
                         true
                     );
-                    g.setColour(col);
-                    g.strokePath(arcOutline, strokeType);
-
-                    Path arcInline;
-                    arcInline.addCentredArc
-                    (
-                        centre.x, centre.y,
-                        radiusInner, radiusInner,
-                        0.f,
-                        -AngleWidth, AngleWidth,
-                        true
-                    );
-                    Stroke stroke2 = strokeType;
-                    stroke2.setStrokeThickness(radDif);
-                    g.strokePath(arcInline, stroke2);
-                };
-
-                const auto valNormAngle = vals[Knob::Value] * AngleRange;
-                const auto valAngle = -AngleWidth + valNormAngle;
-                const auto radiusExt = radius + thicc;
-
-                // paint modulation
-                if (showModulation)
-                {
-                    const auto valModAngle = vals[Knob::ValMod] * AngleRange;
-                    const auto modAngle = -AngleWidth + valModAngle;
-                    const auto modTick = LineF::fromStartAndAngle(centre, radiusExt, modAngle);
-                    const auto shortenedModTick = modTick.withShortenedStart(radiusInner - thicc);
-
-                    g.setColour(Colours::c(CID::Bg));
-                    g.drawLine(shortenedModTick, thicc4);
-
-                    const auto maxModDepthAngle = juce::jlimit(-AngleWidth, AngleWidth, valNormAngle + vals[Knob::ModDepth] * AngleRange - AngleWidth);
-
-                    g.setColour(Colours::c(CID::Mod));
-                    g.drawLine(modTick.withShortenedStart(radiusInner), thicc2);
-                    {
-                        Path modPath;
-                        modPath.addCentredArc
-                        (
-                            centre.x, centre.y,
-                            radius, radius,
-                            0.f,
-                            maxModDepthAngle, valAngle,
-                            true
-                        );
-                        g.strokePath(modPath, strokeType);
-                    }
-                };
-
-                col = Colours::c(CID::Interact);
-
-                { // paint tick
-                    const auto tickLine = LineF::fromStartAndAngle(centre, radius, valAngle);
-                    const auto shortened = tickLine.withShortenedStart(radiusInner - thicc);
-                    g.setColour(Colours::c(CID::Bg));
-                    g.drawLine(shortened, thicc5);
-                    g.setColour(col);
-                    g.drawLine(shortened, thicc3);
+                    g.strokePath(modPath, strokeType);
                 }
             };
+
+            col = Colours::c(CID::Interact);
+
+            { // paint tick
+                const auto tickLine = LineF::fromStartAndAngle(centre, radius, valAngle);
+                const auto shortened = tickLine.withShortenedStart(radiusInner - thicc);
+                g.setColour(Colours::c(CID::Bg));
+                g.drawLine(shortened, thicc5);
+                g.setColour(col);
+                g.drawLine(shortened, thicc3);
+            }
+        };
     }
 
     void makeSlider(Knob& knob, bool showModulation)

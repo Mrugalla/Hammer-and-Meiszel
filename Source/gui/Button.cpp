@@ -99,7 +99,7 @@ namespace gui
 		const auto thicc = utils.thicc;
 		label.setBounds(getLocalBounds());
 		if(label.type == Label::Type::Text)
-			label.setMaxHeight(thicc * 5.f);
+			label.setMaxHeight(2.f * thicc);
 	}
 
 	void Button::mouseEnter(const Mouse& mouse)

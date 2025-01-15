@@ -14,10 +14,11 @@ namespace gui
             ToastUpdateMessage,
             ToastVanish,
             ToastColour,
+            DeactivateAllTextEditors,
             NumTypes
         };
 
-        /* type, stuff */
+        // type, stuff
         using Evt = std::function<void(const Type, const void*)>;
 
         struct System

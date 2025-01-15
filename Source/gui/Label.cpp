@@ -5,7 +5,7 @@ namespace gui
 	Label::Label(Utils& u, bool _autoMaxHeight) :
 		Comp(u),
 		text(""),
-		font(),
+		font(FontOptions()),
 		just(Just::centred),
 		onPaint([](Graphics&, const Label&) {}),
 		img(),

@@ -285,7 +285,7 @@ namespace param
 		state.set(idStr + "/mb", mb);
 	}
 
-	void Param::loadPatch(State& state)
+	void Param::loadPatch(const State& state)
 	{
 		if (isLocked())
 			return;
@@ -1450,7 +1450,7 @@ namespace param
 			audioProcessor.addParameter(param);
 	}
 
-	void Params::loadPatch(State& state)
+	void Params::loadPatch(const State& state)
 	{
 		const String idStr("params/");
 		const auto mda = state.get(idStr + "mdabs");

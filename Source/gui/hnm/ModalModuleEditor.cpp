@@ -361,10 +361,10 @@ namespace gui
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peaks = material.peakInfos;
 					Random rand;
-					for (auto i = 0; i < numFilters; ++i)
+					for (auto i = 1; i < numFilters; ++i)
 					{
 						auto& peak = peaks[i];
-						peak.ratio = 1.f * rand.nextFloat() * 16.f;
+						peak.ratio = 1.f * rand.nextFloat() * 32.f;
 					}
 					material.updatePeakInfosFromGUI();
 				};
@@ -412,7 +412,7 @@ namespace gui
 								{
 									const auto r1 = peakInfos[j].ratio;
 									const auto dif = std::abs(r1 - r0);
-									const auto threshold = 0.001f;
+									const auto threshold = 0.01f;
 									if (dif < threshold)
 									{
 										duplicate = { i, j };

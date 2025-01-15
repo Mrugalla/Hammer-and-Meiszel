@@ -177,7 +177,7 @@ namespace param
 
 		void savePatch(State&) const;
 
-		void loadPatch(State&);
+		void loadPatch(const State&);
 
 		//called by host, normalized, thread-safe
 		float getValue() const override;
@@ -280,7 +280,7 @@ namespace param
 #endif
 		);
 
-		void loadPatch(State&);
+		void loadPatch(const State&);
 
 		void savePatch(State&) const;
 
