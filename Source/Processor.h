@@ -77,6 +77,7 @@ namespace audio
         MidiBuffer midiSubBuffer, midiOutBuffer;
 
         dsp::MixProcessor mixProcessor;
+        std::array<juce::dsp::FirstOrderTPTFilter<float>, 2> highpasses;
         dsp::PluginRecorder recorder;
 #if PPDHasHQ
         dsp::Oversampler oversampler;

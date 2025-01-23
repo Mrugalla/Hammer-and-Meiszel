@@ -145,6 +145,8 @@ namespace gui
         showBias(false),
         verticalDrag(true)
     {
+		tooltip = "Left-Drag to modulate this parameter. Right-Drag to remap the modulation.";
+
         onEnter = [&]()
         {
             const auto cID = CID::Mod;

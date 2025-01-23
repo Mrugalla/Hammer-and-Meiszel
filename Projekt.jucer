@@ -12,7 +12,6 @@
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
-      <FILE id="om2vpl" name="mow.png" compile="0" resource="1" file="Source/mow.png"/>
       <GROUP id="{9465D1EC-34B9-7D70-2DC1-3218DB8AF92B}" name="unittests">
         <FILE id="cgyRcP" name="HammerUndMeiszelTests.h" compile="0" resource="0"
               file="Source/HammerUndMeiszelTests.h"/>
@@ -260,6 +259,8 @@
         <FILE id="MfsoRV" name="ButtonPower.h" compile="0" resource="0" file="Source/gui/ButtonPower.h"/>
         <FILE id="kKaRcj" name="Button.cpp" compile="1" resource="0" file="Source/gui/Button.cpp"/>
         <FILE id="FF2ejy" name="Button.h" compile="0" resource="0" file="Source/gui/Button.h"/>
+        <FILE id="jdu6Qc" name="Cursor.cpp" compile="1" resource="0" file="Source/gui/Cursor.cpp"/>
+        <FILE id="rekv7U" name="Cursor.h" compile="0" resource="0" file="Source/gui/Cursor.h"/>
         <FILE id="r7VpBE" name="Colours.cpp" compile="1" resource="0" file="Source/gui/Colours.cpp"/>
         <FILE id="uYUFj0" name="Colours.h" compile="0" resource="0" file="Source/gui/Colours.h"/>
         <FILE id="W38ixX" name="Comp.cpp" compile="1" resource="0" file="Source/gui/Comp.cpp"/>
@@ -307,7 +308,9 @@
     </GROUP>
     <FILE id="mILeaZ" name="todo.h" compile="0" resource="0" file="Source/todo.h"/>
     <FILE id="xgM4fI" name="outtakes.h" compile="0" resource="0" file="Source/outtakes.h"/>
+    <FILE id="ofVXyR" name="cursor.png" compile="0" resource="1" file="Source/cursor.png"/>
     <FILE id="cUyULO" name="marble.png" compile="0" resource="1" file="Source/marble.png"/>
+    <FILE id="om2vpl" name="mow.png" compile="0" resource="1" file="Source/mow.png"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>

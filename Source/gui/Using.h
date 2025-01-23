@@ -71,6 +71,7 @@ namespace gui
 	using Int64 = juce::int64;
 	using WavAudioFormat = juce::WavAudioFormat;
 	using AudioFormatWriter = juce::AudioFormatWriter;
+	using MouseCursor = juce::MouseCursor;
 
     using Processor = audio::Processor;
 

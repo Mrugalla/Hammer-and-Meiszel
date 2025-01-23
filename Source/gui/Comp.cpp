@@ -9,6 +9,17 @@ namespace gui
 		members(),
 		callbacks()
 	{
+		setMouseCursor(makeCursor());
+
+		addEvt([this](const evt::Type type, const void*)
+		{
+			switch (type)
+			{
+			case evt::Type::InteractColourChanged:
+				setMouseCursor(makeCursor());
+				break;
+			}
+		});
 	}
 
 	Comp::~Comp()

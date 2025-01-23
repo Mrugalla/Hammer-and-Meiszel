@@ -15,6 +15,7 @@ namespace gui
             ToastVanish,
             ToastColour,
             DeactivateAllTextEditors,
+            InteractColourChanged,
             NumTypes
         };
 

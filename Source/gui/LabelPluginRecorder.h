@@ -15,11 +15,11 @@ namespace gui
 		LabelPluginRecorder(Utils& u) :
 			Label(u),
 			recorder(u.audioProcessor.recorder),
-			dragImage(Image(Image::ARGB, 20, 20, true))//,
-			//scaledImage()
+			dragImage(Image::ARGB, 20, 20, true),
+			scaledImage(dragImage),
+			file()
 		{
 			setInterceptsMouseClicks(true, true);
-
 			Path path;
 			path.startNewSubPath(10, 0);
 			path.quadraticTo(10, 10, 20, 10);
@@ -30,47 +30,51 @@ namespace gui
 			Graphics g{ dragImage };
 			setCol(g, CID::Hover);
 			g.strokePath(path, stroke);
-			//scaledImage = ScaledImage(dragImage, 1.);
 		}
 
-		void mouseDown(const Mouse&) override
+		void mouseDown(const Mouse& mouse) override
 		{
-			const auto file = saveWav();
-			if (!file.existsAsFile())
-				return;
-			StringArray files;
-			const bool canMoveFiles = true;
-			files.add(file.getFullPathName());
-			performExternalDragDropOfFiles
-			(
-				files,
-				canMoveFiles,
-				this,
-				[]() {}
-			);
 			const Var sourceDescription(420);
-			const Point imageOffsetFromMouse(-10, -10);
-			//ScaledImage scaledImage(dragImage);
-			startDragging(sourceDescription, this, dragImage, true, &imageOffsetFromMouse, nullptr);
+			Point imageOffsetFromMouse(0, 0);
+			saveWav();
+			if (file.existsAsFile())
+				startDragging
+				(
+					sourceDescription,
+					this,
+					scaledImage,
+					true,
+					&imageOffsetFromMouse,
+					&mouse.source
+				);
+		}
+
+		bool shouldDropFilesWhenDraggedExternally(const DnDSrc&,
+			StringArray& files, bool& canMoveFiles) override
+		{
+			files.clearQuick();
+			files.add(file.getFullPathName());
+			canMoveFiles = false;
+			return true;
 		}
 
 	private:
 		Recorder& recorder;
 		Image dragImage;
-		//ScaledImage scaledImage;
+		ScaledImage scaledImage;
+		File file;
 
-		File getTheFile()
+		void getTheFile()
 		{
 			const auto& user = *utils.audioProcessor.state.props.getUserSettings();
 			const auto settingsFile = user.getFile();
 			const auto userDirectory = settingsFile.getParentDirectory();
-			const auto file = userDirectory.getChildFile("HnM.wav");
-			return file;
+			file = userDirectory.getChildFile("HnM.wav");
 		}
 
-		void saveWav(const dsp::AudioBufferF& buffer)
+		bool saveWav(const dsp::AudioBufferF& buffer)
 		{
-			const auto file = getTheFile();
+			getTheFile();
 			if(file.existsAsFile())
 				file.deleteFile();
 			file.create();
@@ -87,17 +91,20 @@ namespace gui
 			));
 			const auto numSamples = buffer.getNumSamples();
 			if (!writer)
-				return;
+				return false;
 			writer->writeFromAudioSampleBuffer(buffer, 0, numSamples);
+			return true;
 		}
 
-		File saveWav()
+		void saveWav()
 		{
 			utils.audioProcessor.suspendProcessing(true);
 			const auto& recording = recorder.getRecording();
 			utils.audioProcessor.suspendProcessing(false);
-			saveWav(recording);
-			return getTheFile();
+			const auto success = saveWav(recording);
+			if(success)
+				return getTheFile();
+			file = File();
 		}
 	};
 }

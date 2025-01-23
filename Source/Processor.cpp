@@ -49,6 +49,7 @@ namespace audio
         midiOutBuffer(),
 
         mixProcessor(),
+        highpasses(),
         recorder(),
 #if PPDHasHQ
         oversampler(),
@@ -72,6 +73,11 @@ namespace audio
             initFile.deleteFile();
         initFile.create();
 		initFile.replaceWithText(init.toXmlString());
+
+        for (auto& highpass : highpasses)
+        {
+            highpass.setType(juce::dsp::FirstOrderTPTFilterType::highpass);
+        }
     }
 
     Processor::~Processor()
@@ -160,7 +166,6 @@ namespace audio
 
         audioBufferD.setSize(2, maxBlockSize, false, true, false);
         mixProcessor.prepare(sampleRate);
-
 #if PPDHasHQ
         const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
         oversampler.prepare(sampleRate, hqEnabled);
@@ -172,6 +177,16 @@ namespace audio
 		blockSizeUp = dsp::BlockSize;
 #endif
         pluginProcessor.prepare(sampleRateUp);
+        juce::dsp::ProcessSpec spec;
+		spec.sampleRate = sampleRateUp;
+		spec.maximumBlockSize = blockSizeUp;
+		spec.numChannels = 2;
+        for (auto& highpass : highpasses)
+        {
+            highpass.reset();
+            highpass.prepare(spec);
+            highpass.setCutoffFrequency(20.f);
+        }
         recorder.prepare(sampleRate);
         setLatencySamples(latency);
         startTimerHz(4);
@@ -457,6 +472,14 @@ namespace audio
 		if (midSide)
 			dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
+        for (auto& highpass : highpasses)
+        {
+            juce::dsp::AudioBlock<double> block(buffer);
+            juce::dsp::ProcessContextReplacing<double> context(block);
+            highpass.process(context);
+        }
+
+
 		const auto& softClipParam = params(PID::SoftClip);
 		const auto softClip = softClipParam.getValMod() > .5f;
         const auto knee = .5 / dsp::Pi;
