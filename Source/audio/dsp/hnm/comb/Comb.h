@@ -17,6 +17,8 @@ namespace dsp
 		{
 			Val();
 
+			void reset() noexcept;
+
 			// xen, Fs
 			double getDelaySamples(const XenManager&, double) noexcept;
 

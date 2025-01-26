@@ -14,6 +14,15 @@ namespace dsp
 			delaySamples(0.)
 		{}
 
+		void Val::reset() noexcept
+		{
+			freqHz = 0.;
+			pitchNote = 0.;
+			pitchParam = 0.;
+			pb = 0.;
+			delaySamples = 0.;
+		}
+
 		double Val::getDelaySamples(const XenManager& xen, double Fs) noexcept
 		{
 			freqHz = xen.noteToFreqHzWithWrap(pitchNote + pitchParam + pb, LowestFrequencyHz);
@@ -49,7 +58,7 @@ namespace dsp
 			ringBuffer.setSize(2, size, false, true, false);
 
 			sleepyTimer = 0;
-			sleepyThreshold = static_cast<int>(sampleRate / 16.);
+			sleepyThreshold = static_cast<int>(sampleRate / 8.);
 			ringing = false;
 		}
 
@@ -76,7 +85,7 @@ namespace dsp
 				ring[w] = sIn;
 				smpls[s] = sOut;
 
-				static constexpr double Eps = 1e-3;
+				static constexpr double Eps = 1e-7;
 				const auto sOutAbs = sOut * sOut;
 				if (sOutAbs > Eps)
 				{
@@ -144,7 +153,7 @@ namespace dsp
 			readHead.prepare(sizeD);
 			delay.prepare(sampleRate, size);
 			for (auto& val : vals)
-				val.delaySamples = 0.;
+				val.reset();
 		}
 
 		void Voice::operator()(double** samples, const MidiBuffer& midi,

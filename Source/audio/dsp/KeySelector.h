@@ -55,6 +55,11 @@ namespace dsp
 			}
 		}
 
+		void prepare()
+		{
+			requestUpdate.store(true);
+		}
+
 		void setKey(int keyIdx, bool e) noexcept
 		{
 			keys[keyIdx] = e;

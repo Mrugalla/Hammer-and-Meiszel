@@ -15,6 +15,8 @@ namespace dsp
 			{
 				Val();
 
+				void reset() noexcept;
+
 				double getFreq(const arch::XenManager&) noexcept;
 
 				double pitch, transpose, pb, pbRange, xen;

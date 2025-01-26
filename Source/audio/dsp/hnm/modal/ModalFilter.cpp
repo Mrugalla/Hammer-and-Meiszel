@@ -12,6 +12,7 @@ namespace dsp
 
 		void ModalFilter::prepare(double sampleRate) noexcept
 		{
+			materials.reportUpdate();
 			for (auto v = 0; v < voices.size(); ++v)
 			{
 				auto& voice = voices[v];

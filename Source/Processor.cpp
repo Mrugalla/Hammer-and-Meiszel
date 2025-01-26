@@ -555,6 +555,7 @@ namespace audio
             auto pos = *posOpt;
             playing = pos.getIsPlaying();
         }
+        
         pluginProcessor(samplesUp, midi, numChannels, numSamplesUp, playing);
 
 #if PPDHasHQ

@@ -144,7 +144,11 @@ namespace gui
                     const auto vD = range.convertFrom0to1(v);
                     const auto vL = range.snapToLegalValue(vD);
                     valY = range.convertTo0to1(vL);
-                    mdY = 2.f * randomizer() - 1.f;
+					const bool up = randomizer() > .5f;
+                    if (up)
+						mdY = randomizer() * (1.f - valY);
+                    else
+						mdY = randomizer() * -valY;
                     bsY = randomizer();
                 }
                 else
@@ -187,7 +191,7 @@ namespace gui
     String ButtonRandomizer::makeTooltip()
     {
         Random rand;
-        static constexpr float count = 264.f;
+        static constexpr float count = 267.f;
         const auto v = static_cast<int>(std::round(rand.nextFloat() * count));
         switch (v)
         {
@@ -452,9 +456,12 @@ namespace gui
 		case 259: return "The best beats are made in a Miata.";
 		case 260: return "MIATA POWER!!?!";
 		case 261: return "The Mazda Miata has a perfect 50/50 weight distribution.";
-		case 262: return "The Mazda Miatas is a cheap and lightweight sports cars with exceptional balance.";
+		case 262: return "The Mazda Miatas is an affordable and lightweight sports cars with exceptional balance.";
 		case 263: return "What does your music sound like in a Miata?";
         case 264: return "Click this to activate celebrity mode!";
+        case 265: return "I don't need drugs to get high. I get high of plugins.";
+        case 266: return "I wouldn't randomize now if I were you.. but I mean, it's your music.";
+        case 267: return "This is not my final form yet.";
         default: "Are you sure?";
         }
         return "You are not supposed to read this message!";

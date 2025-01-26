@@ -1,6 +1,5 @@
 #include "PluginProcessor.h"
 #include <juce_core/juce_core.h>
-//#include "../HammerUndMeiszelTests.h"
 
 namespace audio
 {
@@ -15,17 +14,13 @@ namespace audio
 		recording(-1),
 		recSampleIndex(0)
 	{
-		//test::SpeedTestPB([&](double** samples, dsp::MidiBuffer& midi, int numChannels, int numSamples)
-		//{
-		//	prepare(44100.);
-		//	operator()(samples, midi, 2, dsp::BlockSize2x);
-		//}, 10, "i am speed");
 		startTimerHz(2);
 	}
 
 	void PluginProcessor::prepare(double _sampleRate)
 	{
 		sampleRate = _sampleRate;
+		keySelector.prepare();
 		modalFilter.prepare(sampleRate);
 		combFilter.prepare(sampleRate);
 		envGensAmp.prepare(sampleRate);

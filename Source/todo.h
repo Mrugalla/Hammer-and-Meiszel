@@ -30,7 +30,6 @@ Material
 Param db valToStr can be -inf (gain wet [-inf, 0])
     but it can also be not (gain out [-12,12])
 GUI
-    reintroduce custom mousecursor
     SharedPluginState (customizable state)
         fonts für verschiedene funktionen
             (zB knob-labels, titel, etc)
@@ -47,7 +46,7 @@ AUDIO
     sidechain
         envfol
             should appear to be added to macro
-            actually sample-accurate
+            sample-accurate
     MixProcessor
         code readability
         add latency compensation delay
@@ -79,18 +78,10 @@ https://youtu.be/v9d4Kc-c2Wg?si=6tSkd0CNFbgE_8-H
 Coding and UI/UX: How Long Is Your Envelope?
 https://youtu.be/Uo2hoLZDCSs?si=T_hQcCRwcd9ko4ul
 
-~~~ awesome beta team ~~~
+-----------------------------------------------------------------------------------------
 
-mleuc weil geilste sounddesign für neurozeug und botanica
-dash glitch, because https://www.youtube.com/watch?v=0i1LCrC7dZw
-dr. laguna weil er hat dieses geile allpass plugin gemacht
-ewan bristow weil er n geiler botanica & plugdata-typ ist
-alex reid, weil bitwig community
-peazy
-nimand
-
-open: street shaman, zayne, xantux, felix
-liraxity, signalsmith, eyalamir
+C:\Program Files\Image-Line\FL Studio 2024\FL64.exe
+C:\Program Files\Steinberg\Cubase 9.5\Cubase9.5.exe
 
 -----------------------------------------------------------------------------------------
 

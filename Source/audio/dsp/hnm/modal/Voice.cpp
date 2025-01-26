@@ -45,10 +45,13 @@ namespace dsp
 		// sampleRate, smoothLenMs
 		void Voice::ParameterProcessor::prepare(double sampleRate, double smoothLenMs) noexcept
 		{
-			for (auto& prm : prms)
+			for (auto ch = 0; ch < 2; ++ch)
+			{
+				auto& prm = prms[ch];
 				prm.prepare(sampleRate, smoothLenMs);
-			for (auto& val : vals)
-				val = 0.;
+				auto& val = vals[ch];
+				val = prm.startVal;
+			}
 		}
 
 		// p, envGenVal, min, max, numChannels
@@ -101,6 +104,7 @@ namespace dsp
 			const auto smoothLenMs = 13.;
 			for (auto i = 0; i < kNumParams; ++i)
 				parameters[i].prepare(sampleRate, smoothLenMs);
+			wantsMaterialUpdate = true;
 		}
 
 		void Voice::operator()(const DualMaterial& dualMaterial, const Parameters& _parameters,

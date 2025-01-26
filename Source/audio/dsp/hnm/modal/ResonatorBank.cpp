@@ -20,8 +20,17 @@ namespace dsp
 			transpose(0.),
 			pb(0.),
 			pbRange(2.),
-			xen(12.)
+			xen(0.)
 		{}
+
+		void ResonatorBank::Val::reset() noexcept
+		{
+			pitch = 0.;
+			transpose = 0.;
+			pb = 0.;
+			pbRange = 2.;
+			xen = 0.;
+		}
 
 		double ResonatorBank::Val::getFreq(const arch::XenManager& _xen) noexcept
 		{
@@ -53,6 +62,7 @@ namespace dsp
 			for (auto& n : numFiltersBelowNyquist)
 				n = 0;
 			sleepyTimer = 0;
+			val.reset();
 			ringing = false;
 		}
 
@@ -245,7 +255,7 @@ namespace dsp
 						wet = 0.;
 					}
 					
-					static constexpr auto Eps = 1e-6;
+					static constexpr auto Eps = 1e-7;
 					if (wet * wet > Eps)
 					{
 						sleepyTimer = 0;
