@@ -12,7 +12,7 @@ namespace gui
 	{
 		layout.init
 		(
-			{ 2, 8, 1 },
+			{ 1, 13, 2 },
 			{ 1 }
 		);
 	}
@@ -36,7 +36,7 @@ namespace gui
 	void IOEditor::SidePanelParam::setBounds(BoundsF bounds)
 	{
 		layout.resized(bounds);
-		layout.place(label, 0, 0, 1, 1);
+		layout.place(label, 0.f, 0, 1.3f, 1);
 		layout.place(param, 1, 0, 1, 1);
 		layout.place(modDial, 2, 0, 1, 1);
 	}
@@ -84,7 +84,7 @@ namespace gui
 		layout.init
 		(
 			{ 1, 1, 1 },
-			{ 3, 2, 2, 1, 2, 2, 2, 2, 8 }
+			{ 5, 3, 2, 1, 3, 3, 3, 2, 13 }
 		);
 
 		initKnobs();
@@ -143,11 +143,11 @@ namespace gui
 			locateAtKnob(modDialMasterTune, masterTune);
 			locateAtKnob(modDialPitchbend, pitchbend);
 		}
-		layout.place(titleMacro, 0, 2, 1, 1);
+		layout.place(titleMacro, .2f, 2, .8f, 1);
 		titleMacro.setMaxHeight();
-		layout.place(macro, 1, 1, 1, 2);
-		layout.place(buttons[kMacroRel], 2, 1, 1, 1);
-		layout.place(buttons[kMacroSwap], 2, 2, 1, 1);
+		layout.place(macro, 1.f, 1, 1.2f, 2);
+		layout.place(buttons[kMacroRel], 2.2f, 1.333f, .8f, .667f);
+		layout.place(buttons[kMacroSwap], 2.2f, 2, .8f, 1);
 		layout.place(voiceGrid, 0, 3, 3, 1);
 		for (auto i = 0; i < sidePanelParams.size(); ++i)
 		{
@@ -195,30 +195,69 @@ namespace gui
 	void IOEditor::initMacroRel()
 	{
 		auto& buttonMacroRel = buttons[kMacroRel];
-		makeTextButton(buttonMacroRel, "Rel", "Switch between absolute and relative macro modulation.", CID::Interact);
-		buttonMacroRel.type = Button::Type::kToggle;
-		buttonMacroRel.onPaint = makeButtonOnPaint(false, getColour(CID::Bg));
-		buttonMacroRel.onClick = [&u = utils, &b = buttonMacroRel](const Mouse&)
+		makePaintButton(buttonMacroRel, [](Graphics& g, const Button& b)
+		{
+			const auto thicc = b.utils.thicc;
+			const auto thiccHalf = thicc * .5f;
+			const auto thicc2 = thicc * 2.f;
+			const auto thicc3 = thicc * 3.f;
+			const auto thicc5 = thicc * 5.f;
+
+			const auto bounds = b.getLocalBounds().toFloat().reduced(thicc);
+				
+			const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+			const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
+
+			const auto bgColour = getColour(CID::Bg).interpolatedWith(getColour(CID::Interact), togglePhase * .3f);
+			g.setColour(bgColour);
+			const auto lineThicc = thicc + hoverPhase * thiccHalf;
+			const auto boundsBg = bounds.reduced((1.f - hoverPhase) * bounds.getWidth() * .5f);
+			g.fillRoundedRectangle(boundsBg, lineThicc);
+
+			setCol(g, CID::Interact);
+
+			const auto aWidth = togglePhase * bounds.getWidth() * .6f;
+			const auto aX0 = bounds.getX();
+			const auto aX1 = aX0 + aWidth;
+			if (togglePhase > 0.f)
 			{
-				u.audioProcessor.params.switchModDepthAbsolute();
-				b.value = u.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
-				b.label.setText(b.value > .5f ? "Rel" : "Abs");
-				b.label.repaint();
-			};
+				const auto aY = bounds.getY() + bounds.getHeight() * .5f;
+				const LineF arrow(aX0, aY, aX1, aY);
+				const auto arrowStuff = thicc5 + (1.f - togglePhase) * thicc3;
+				g.drawArrow(arrow, lineThicc, arrowStuff, arrowStuff);
+			}
+
+			const auto cX = aX1;
+			const auto cY = bounds.getY();
+			const auto cW = bounds.getWidth() - aWidth;
+			const auto cH = bounds.getHeight();
+			const auto circle = maxQuadIn(BoundsF(cX, cY, cW, cH)).reduced(thicc3);
+			g.drawEllipse(circle, lineThicc);
+
+		}, "If enabled, macro modulation depth is relative to the main value.");
+		buttonMacroRel.type = Button::Type::kToggle;
+		buttonMacroRel.onClick = [&u = utils, &b = buttonMacroRel](const Mouse&)
+		{
+			u.audioProcessor.params.switchModDepthAbsolute();
+			b.value = u.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
+			b.label.setText(b.value > .5f ? "Rel" : "Abs");
+			b.label.repaint();
+		};
+		buttonMacroRel.value = utils.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
 
 		const auto fps = cbFPS::k15;
 		const auto inc = msToInc(1000.f, fps);
 		add(Callback([&, inc]()
-			{
-				auto& phase = callbacks[cbMacroRel].phase;
-				phase += inc;
-				if (phase < 1.f)
-					return;
-				callbacks[cbMacroRel].stop(0.f);
-				buttonMacroRel.value = utils.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
-				buttonMacroRel.label.setText(buttonMacroRel.value > .5f ? "Rel" : "Abs");
-				buttonMacroRel.label.repaint();
-			}, cbMacroRel, fps, true));
+		{
+			auto& phase = callbacks[cbMacroRel].phase;
+			phase += inc;
+			if (phase < 1.f)
+				return;
+			callbacks[cbMacroRel].stop(0.f);
+			buttonMacroRel.value = utils.audioProcessor.params.isModDepthAbsolute() ? 0.f : 1.f;
+			buttonMacroRel.label.setText(buttonMacroRel.value > .5f ? "Rel" : "Abs");
+			buttonMacroRel.label.repaint();
+		}, cbMacroRel, fps, true));
 	}
 
 	void IOEditor::initKnobs()
@@ -248,7 +287,7 @@ namespace gui
 		makeKnob(PID::PitchbendRange, pitchbend);
 		makeTextLabel(titlePitchbend, "PB Range", fontKnobs, Just::centred, CID::Txt);
 		makeKnob(PID::MasterTune, masterTune);
-		makeTextLabel(titleMacro, "Macro", fontKnobs, Just::centred, CID::Txt);
+		makeTextLabel(titleMacro, "Macro", font::flx(), Just::centred, CID::Txt);
 		makeKnob(PID::Macro, macro, false);
 
 		tuningLabelGroup.add(titleXen);
@@ -275,20 +314,20 @@ namespace gui
 	{
 		addAndMakeVisible(voiceGrid);
 		voiceGrid.init([&](VoiceGrid<dsp::AutoMPE::VoicesSize>::Voices& voices)
+		{
+			bool updated = false;
+			const auto& pp = utils.audioProcessor.pluginProcessor.parallelProcessor;
+			for (auto i = 0; i < voices.size(); ++i)
 			{
-				bool updated = false;
-				const auto& pp = utils.audioProcessor.pluginProcessor.parallelProcessor;
-				for (auto i = 0; i < voices.size(); ++i)
+				const auto active = !pp.isSleepy(i);
+				if (voices[i] != active)
 				{
-					const auto active = !pp.isSleepy(i);
-					if (voices[i] != active)
-					{
-						updated = true;
-						voices[i] = active;
-					}
+					updated = true;
+					voices[i] = active;
 				}
-				return updated;
-			});
+			}
+			return updated;
+		});
 	}
 
 	void IOEditor::initButtons()
@@ -305,9 +344,9 @@ namespace gui
 #endif
 		// MID/SIDE BUTTON
 		auto& midSideButton = buttons[kMidSide];
-		makeParameter(midSideButton, PID::StereoConfig, Button::Type::kChoice, "L/R;M/S");
+		makeParameter(midSideButton, PID::StereoConfig, Button::Type::kChoice, "L / R;M / S");
 		// XEN SNAP BUTTON
 		auto& xenSnapButton = buttons[kXenSnap];
-		makeParameter(xenSnapButton, PID::XenSnap, Button::Type::kToggle, "X;X");
+		makeParameter(xenSnapButton, PID::XenSnap, Button::Type::kToggle, "x;x");
 	}
 }

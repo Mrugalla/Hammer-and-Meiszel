@@ -107,6 +107,38 @@ namespace math
 		return numerator / denominator;
     }
 
+    inline float invSqrt(float x) noexcept
+    {
+		union { float f; int i; } y;
+		y.f = x;
+		y.i = 0x5f3759df - (y.i >> 1);
+		return y.f * (1.5f - 0.5f * x * y.f * y.f);
+    }
+
+    // the quake III hack
+	inline float invSqrtQuake(float x) noexcept
+	{
+		long i;
+		float x2, y;
+		const float threehalfs = 1.5F;
+
+		x2 = x * .5F;
+		y = x;
+		i = *(long*)&y;
+		i = 0x5f3759df - (i >> 1);
+		y = *(float*)&i;
+		y = y * (threehalfs - (x2 * y * y));
+		return y;
+	}
+
+    // not smooth
+    inline float expApprox(float x) noexcept
+    {
+        union { float f; int i; } y;
+        y.i = static_cast<int>(x * 0xB5645F + 0x3F7893F5);
+        return (y.f);
+    }
+
     template <typename Float>
     inline Float slightlySmaller(Float x) noexcept
     {

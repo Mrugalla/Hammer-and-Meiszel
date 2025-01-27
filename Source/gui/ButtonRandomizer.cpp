@@ -49,13 +49,13 @@ namespace gui
                 const auto& utils = b.utils;
                 const auto thicc = utils.thicc;
                 const auto thicc2 = thicc * 2.f;
-                const auto thicc4 = thicc * 4.f;
+                const auto thicc3 = thicc * 3.f;
 
                 const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
                 const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
 
                 const auto lineThiccness = thicc + clickPhase * (thicc2 - thicc);
-                const auto margin = 1.75f * thicc4 - lineThiccness - hoverPhase * thicc;
+                const auto margin = thicc3 - lineThiccness - hoverPhase * thicc;
                 const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
                 const auto iW = bounds.getWidth() / 3.f;
@@ -116,16 +116,6 @@ namespace gui
             {
                 randomizable->setModDepth(0.f);
             }
-
-        {
-            auto& softClipParam = utils.audioProcessor.params(PID::SoftClip);
-            softClipParam.setValueWithGesture(1.f);
-			auto& mixParam = utils.audioProcessor.params(PID::Mix);
-			mixParam.setValueWithGesture(1.f);
-			auto& xenSnapParam = utils.audioProcessor.params(PID::XenSnap);
-            xenSnapParam.setValueWithGesture(0.f);
-        }
-
         randomizer.updateSeed(seedUp);
 
         for (auto randomizable : randomizables)

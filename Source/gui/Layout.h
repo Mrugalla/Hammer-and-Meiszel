@@ -238,6 +238,7 @@ namespace gui
 
 	PointF boundsOf(const Font&, const String&) noexcept;
 
+	// font, text, width, height
 	float findMaxHeight(const Font&, const String&, float, float) noexcept;
 
 	// lrud = left, right, up, down [0, 1, 2, 3]

@@ -80,10 +80,15 @@ namespace dsp
 
 	void Resonator2::update() noexcept
 	{
-		const auto freq = Tau * fc;
-		b2 = std::exp(-Tau * bw);
-		b1 = (-4. * b2 / (1. + b2)) * std::cos(freq);
-		a0 = (1. - b2) * std::sqrt(1. - b1 * b1 / (4. * b2));
+		const auto fcTau = Tau * fc;
+		const auto tauBw = -Tau * bw;
+		const auto b2_4 = 4 * b2;
+		const auto cosFc = std::cos(fcTau);
+		b2 = std::exp(tauBw);
+		b1 = (-b2_4 / (1. + b2)) * cosFc;
+		const auto sqrtVal = static_cast<float>(1. - b1 * b1 / b2_4);
+		const auto invSqrt = 1.f / math::invSqrtQuake(sqrtVal);
+		a0 = (1. - b2) * static_cast<double>(invSqrt);// *std::sqrt(sqrtVal);
 	}
 
 	void Resonator2::copyFrom(const Resonator2& other) noexcept

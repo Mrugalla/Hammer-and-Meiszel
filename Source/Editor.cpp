@@ -83,7 +83,7 @@ namespace gui
         layout.init
         (
             { 5, 13, 5 },
-            { 2, 2, 13, 1, 1 }
+            { 1, 1, 13, 1, 1 }
         );
         addAndMakeVisible(labelDev);
         addAndMakeVisible(labelTitle);
@@ -181,11 +181,14 @@ namespace gui
 
     void resizeLeftPanel(Editor& e, float envGenMargin)
     {
-        e.layout.place(e.labelNoiseBlend, 0.f, 1, .2f, 1);
+        const auto noiseSize = .1f;
+        e.layout.place(e.labelNoiseBlend, 0.f, 2.f, .2f, noiseSize);
         e.labelNoiseBlend.setMaxHeight();
-		e.layout.place(e.noiseBlend,      .2f, 1, .7f, 1);
+		e.layout.place(e.noiseBlend,      .2f, 2.f, .7f, noiseSize);
         locateAtSlider(e.modDialNoiseBlend, e.noiseBlend);
-        const auto envsArea = e.layout(0, 2, 1, 1);
+		const auto envsY = 2.f + noiseSize;
+		const auto envsH = 2.f - noiseSize * 2.f;
+        const auto envsArea = e.layout(0, envsY, 1, envsH);
 		const auto x = envsArea.getX();
 		auto y = envsArea.getY();
 		const auto w = envsArea.getWidth();
@@ -223,9 +226,9 @@ namespace gui
         layout.resized(getLocalBounds());
 
         // top panel
-		layout.place(labelTitle, 0, 0.f, 1, .5f);
+		layout.place(labelTitle, 0, 0, 1, 1);
         labelTitle.setMaxHeight();
-		layout.place(labelDev, 0, .5f, 1, .5f);
+		layout.place(labelDev, 0, 1, 1, 1);
         labelDev.setMaxHeight();
         layout.place(topEditor, 1, 0, 1, 1);
 

@@ -564,7 +564,7 @@ namespace gui
 			BrowserButton(Utils& u, Browser& browser) :
 				Button(u)
 			{
-				makeTextButton(*this, "Patch\nBrowser", "Click here to browse or manage patches.", CID::Interact);
+				makeTextButton(*this, "Patches", "Click here to save, browse or manage patches.", CID::Interact);
 				label.autoMaxHeight = true;
 				onClick = [&b = browser](const Mouse&)
 				{

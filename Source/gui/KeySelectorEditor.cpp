@@ -28,7 +28,84 @@ namespace gui
 		addAndMakeVisible(keysEnabled);
 		for (auto& btn : keyButtons)
 			addChildComponent(btn);
-		makeParameter(keysEnabled, PID::KeySelectorEnabled, Button::Type::kToggle, "KEYS");
+		makeParameter(keysEnabled, PID::KeySelectorEnabled, Button::Type::kToggle, [](Graphics& g, const Button& b)
+			{
+				const auto thicc = b.utils.thicc;
+				const auto thiccHalf = thicc * .5f;
+				const auto thicc2 = thicc * 2.f;
+				const auto thicc3 = thicc * 3.f;
+				const auto thicc5 = thicc * 5.f;
+
+				const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+				const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
+
+				const auto lineThicc = thicc;
+				const auto blackKeyThicc = thicc3 - hoverPhase * thicc;
+
+				const auto imgHeightRel = .5f;
+
+				auto bounds = b.getLocalBounds().toFloat().reduced(lineThicc);
+				auto imgBounds = bounds.withHeight(bounds.getHeight() * imgHeightRel);
+
+				setCol(g, CID::Bg);
+				g.fillRoundedRectangle(bounds, lineThicc);
+				setCol(g, CID::Interact);
+
+				// draw keys image
+				{
+					const auto x = imgBounds.getX();
+					const auto y = imgBounds.getY();
+					const auto w = imgBounds.getWidth();
+					const auto h = imgBounds.getHeight();
+
+					const auto btm0 = y + h;
+					const auto btm1 = y + h * .5f;
+					bool blackKeyMask[8] = { false, true, true, false, true, true, true, false };
+
+					const auto numKeysPerOct = 4.f + hoverPhase * (8.f - 4.f);
+					const auto maxKeysPerOct = numKeysPerOct - 1.f;
+					const auto wKey = w / maxKeysPerOct;
+					const auto maxKeysPerOctInt = static_cast<int>(maxKeysPerOct);
+					for (auto i = 1; i < maxKeysPerOctInt; ++i)
+					{
+						const auto xKey = x + i * wKey;
+						g.drawLine(xKey, y, xKey, btm0, lineThicc);
+						if (blackKeyMask[i])
+							g.drawLine(xKey, y, xKey, btm1, blackKeyThicc);
+					}
+				}
+
+				// draw arrow
+				if (togglePhase > 0.f)
+				{
+					const auto x0 = imgBounds.getX();
+					const auto x1 = imgBounds.getRight() * togglePhase * togglePhase;
+					const auto y = imgBounds.getBottom() + .5f * (bounds.getHeight() - imgBounds.getHeight());
+					const LineF arrow(x0, y, x1, y);
+					g.drawArrow(arrow, lineThicc, thicc3, thicc3);
+				}
+
+				// draw MIDI string
+				if (togglePhase < .5f)
+				{
+					const auto tp2 = 1.f - togglePhase * 2.f;
+					const String midiStr("MIDI");
+					const auto strLen = static_cast<float>(midiStr.length());
+					const auto substrLen = static_cast<int>(strLen * tp2);
+					const String substr = midiStr.substring(0, substrLen);
+
+					const auto x = bounds.getX();
+					const auto y = imgBounds.getBottom();
+					const auto w = bounds.getWidth();
+					const auto h = bounds.getHeight() - y;
+					const BoundsF textBounds(x, y, w, h);
+					const auto tFont = font::dosisBold();
+					g.setFont(tFont);
+					const auto height = findMaxHeight(tFont, substr, w, h);
+					g.setFont(height);
+					g.drawFittedText(midiStr.substring(0, substrLen), textBounds.toNearestInt(), Just::centred, 1);
+				}
+			});
 
 		initKeyButtons();
 
@@ -55,7 +132,6 @@ namespace gui
 				if (keyEnabled != btnEnabled)
 				{
 					btn.value = keyEnabled ? 1.f : 0.f;
-					//btn.callbacks[Button::kToggleStateCB].start(0.f);
 					btn.repaint();
 				}
 			}

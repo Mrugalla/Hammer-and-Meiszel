@@ -33,7 +33,7 @@ namespace gui
 		layout.init
 		(
 			{ 1 },
-			{ 1, 13, 8 }
+			{ 1, 21, 13 }
 		);
 
 		addAndMakeVisible(buttonAB);

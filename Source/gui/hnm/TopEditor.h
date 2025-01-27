@@ -115,26 +115,43 @@ namespace gui
 			buttonRandomizerNoPitch.add(randModalFunc);
 			buttonRandomizerNoEnv.add(randModalFunc);
 			buttonRandomizerNoPitchEnv.add(randModalFunc);
+
+			const auto enabledSoftclipFunc = [&](ButtonRandomizer::Randomizer&)
+			{
+				auto& param = utils.audioProcessor.params(PID::SoftClip);
+				param.setValueWithGesture(1.f);
+			};
+
+			buttonRandomizer.add(enabledSoftclipFunc);
+
+			const auto disableXenSnapFunc = [&](ButtonRandomizer::Randomizer&)
+			{
+				auto& param = utils.audioProcessor.params(PID::XenSnap);
+				param.setValueWithGesture(0.f);
+			};
+
+			buttonRandomizer.add(disableXenSnapFunc);
+			buttonRandomizerNoEnv.add(disableXenSnapFunc);
 		}
 
 		void resized() override
 		{
 			layout.resized(getLocalBounds());
 			layout.place(patchBrowserButton, 0, 1, 1, 1);
-			layout.place(titleRandomizer, 1, 0.f, 1, 1.2f);
-			layout.place(titleRandomizerNoPitch, 2, 0.f, 1, 1.2f);
-			layout.place(titleRandomizerNoEnv, 3, 0.f, 1, 1.2f);
-			layout.place(titleRandomizerNoPitchEnv, 4, 0.f, 1, 1.2f);
-			layout.place(buttonRandomizer, 1, 1, 1, 1);
-			layout.place(buttonRandomizerNoPitch, 2, 1, 1, 1);
-			layout.place(buttonRandomizerNoEnv, 3, 1, 1, 1);
-			layout.place(buttonRandomizerNoPitchEnv, 4, 1, 1, 1);
-			layout.place(buttonSoftClip, 5, 1, 1, 1);
+			layout.place(titleRandomizer, 2, 0.f, 1, 1.2f);
+			layout.place(titleRandomizerNoPitch, 3, 0.f, 1, 1.2f);
+			layout.place(titleRandomizerNoEnv, 4, 0.f, 1, 1.2f);
+			layout.place(titleRandomizerNoPitchEnv, 5, 0.f, 1, 1.2f);
+			layout.place(buttonSoftClip, 1, 1, 1, 1);
+			layout.place(buttonRandomizer, 2, 1, 1, 1);
+			layout.place(buttonRandomizerNoPitch, 3, 1, 1, 1);
+			layout.place(buttonRandomizerNoEnv, 4, 1, 1, 1);
+			layout.place(buttonRandomizerNoPitchEnv, 5, 1, 1, 1);
 		}
 
 		void paint(Graphics& g) override
 		{
-			const auto randArea = layout(1, 0, 4, 2);
+			const auto randArea = layout(2, 0, 4, 2);
 			setCol(g, CID::Darken);
 			g.fillRect(randArea);
 		}
