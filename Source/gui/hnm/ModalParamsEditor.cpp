@@ -2,52 +2,6 @@
 
 namespace gui
 {
-	ModalMainParams::ModalMainParams(Utils& u, PID keytrack, PID blend,
-		PID spread, PID harmonie, PID kraft, PID reso, PID resoDamp) :
-		Comp(u),
-		knobs{ Knob(u), Knob(u), Knob(u), Knob(u), Knob(u), Knob(u), Knob(u) },
-		modDials{ ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u), ModDial(u) }
-	{
-		for (auto& knob : knobs)
-			addAndMakeVisible(knob);
-		for (auto& modDial : modDials)
-			addAndMakeVisible(modDial);
-
-		makeKnob(keytrack, knobs[kParam::kKeytrack]);
-		makeKnob(blend, knobs[kParam::kBlend]);
-		makeKnob(spread, knobs[kParam::kSpreizung]);
-		makeKnob(harmonie, knobs[kParam::kHarmonie]);
-		makeKnob(kraft, knobs[kParam::kKraft]);
-		makeKnob(reso, knobs[kParam::kReso]);
-		makeKnob(resoDamp, knobs[kParam::kResoDamp]);
-
-		modDials[kParam::kKeytrack].attach(keytrack);
-		modDials[kParam::kBlend].attach(blend);
-		modDials[kParam::kSpreizung].attach(spread);
-		modDials[kParam::kHarmonie].attach(harmonie);
-		modDials[kParam::kKraft].attach(kraft);
-		modDials[kParam::kReso].attach(reso);
-		modDials[kParam::kResoDamp].attach(resoDamp);
-	}
-
-	void ModalMainParams::resized()
-	{
-		const auto w = static_cast<float>(getWidth());
-		const auto h = static_cast<float>(getHeight());
-		const auto y = 0.f;
-		const auto wKnob = w / static_cast<float>(knobs.size());
-		auto x = 0.f;
-		for (auto& knob : knobs)
-		{
-			knob.setBounds(BoundsF(x, y, wKnob, h).toNearestInt());
-			x += wKnob;
-		}
-		for (auto i = 0; i < kParam::kNumParams; ++i)
-			locateAtKnob(modDials[i], knobs[i]);
-	}
-
-	//
-
 	ModalParamsEditor::OctSemiSlider::OctSemiSlider(Utils& u, PID pID, String&& name) :
 		Comp(u),
 		label(u),
@@ -56,8 +10,8 @@ namespace gui
 	{
 		layout.init
 		(
-			{ 1, 3, 1 },
-			{ 1 }
+			{ 5, 1 },
+			{ 2, 1 }
 		);
 
 		addAndMakeVisible(label);
@@ -65,15 +19,15 @@ namespace gui
 		addAndMakeVisible(modDial);
 		makeSlider(pID, knob);
 		modDial.attach(pID);
-		makeTextLabel(label, name, font::dosisBold(), Just::centredRight, CID::Txt);
+		makeTextLabel(label, name, font::dosisBold(), Just::topLeft, CID::Txt);
 		modDial.verticalDrag = false;
 	}
 
 	void ModalParamsEditor::OctSemiSlider::resized()
 	{
 		layout.resized(getLocalBounds());
-		layout.place(label, 0, 0, 1, 1);
-		layout.place(knob, 1, 0, 1, 1);
+		layout.place(label, 0.1f, .5f, .5f, 1.5f);
+		layout.place(knob, 0, 0, 1, 1);
 		locateAtSlider(modDial, knob);
 	}
 
@@ -94,7 +48,8 @@ namespace gui
 		reso(u, PID::ModalResonanz, PID::ModalResonanzEnv, PID::ModalResonanzBreite, "Reso"),
 		resoDamp(u, PID::ModalResoDamp, PID::ModalResoDampEnv, PID::ModalResoDampBreite, "Reso Damp"),
 		feedback(u, PID::CombFeedback, PID::CombFeedbackEnv, PID::CombFeedbackWidth, "Feedback"),
-		octSemiGroup()
+		octSemiGroup(),
+		knobLabelsGroup()
 	{
 		layout.init
 		(
@@ -121,13 +76,22 @@ namespace gui
 		addAndMakeVisible(reso);
 		addAndMakeVisible(resoDamp);
 		addAndMakeVisible(feedback);
+
+		knobLabelsGroup.add(keytrack.labelMain);
+		knobLabelsGroup.add(blend.labelMain);
+		knobLabelsGroup.add(spreizung.labelMain);
+		knobLabelsGroup.add(harmonie.labelMain);
+		knobLabelsGroup.add(kraft.labelMain);
+		knobLabelsGroup.add(reso.labelMain);
+		knobLabelsGroup.add(resoDamp.labelMain);
+		knobLabelsGroup.add(feedback.labelMain);
 	}
 
 	void ModalParamsEditor::resized()
 	{
 		layout.resized(getLocalBounds());
 		{
-			const auto sliderArea = layout.top();
+			const auto sliderArea = layout(0, 0.f, 8, 1.1f);
 			const auto y = sliderArea.getY();
 			const auto w = sliderArea.getWidth() / 5.f;
 			const auto h = sliderArea.getHeight();
@@ -152,5 +116,7 @@ namespace gui
 		layout.place(reso, 5, 1, 1, 1);
 		layout.place(resoDamp, 6, 1, 1, 1);
 		layout.place(feedback, 7, 1, 1, 1);
+
+		knobLabelsGroup.setMaxHeight(utils.thicc);
 	}
 }

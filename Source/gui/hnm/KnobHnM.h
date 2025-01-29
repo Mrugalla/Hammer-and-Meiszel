@@ -6,7 +6,6 @@ namespace gui
 	struct KnobHnM :
 		public Comp
 	{
-		
 		static constexpr auto MainKnobHeightRel = .5f;
 		static constexpr auto MainLabelHeightRel = .2f;
 		static constexpr auto KnobLabelOverlap = .4f;
@@ -68,8 +67,6 @@ namespace gui
 			locateAtKnob(modDialMain, main);
 			locateAtKnob(modDialEnv, env);
 			locateAtKnob(modDialWidth, width);
-
-			labelMain.setMaxHeight(utils.thicc);
 			labelGroup.setMaxHeight();
 		}
 

@@ -14,7 +14,7 @@ namespace gui
 	{
 		setInterceptsMouseClicks(false, false);
 
-		const auto fps = cbFPS::k30;
+		const auto fps = cbFPS::k15;
 		add(Callback([&, speed = msToInc(5000.f, fps)]()
 		{
 			if (!isVisible())
@@ -627,70 +627,6 @@ namespace gui
 		repaint();
 	}
 
-	// related to drag n drop and audio file handling
-
-	bool ModalMaterialEditor::isAudioFile(const String& fileName) const
-	{
-		const auto ext = fileName.fromLastOccurrenceOf(".", false, false).toLowerCase();
-		return ext == "flac" || ext == "wav" || ext == "mp3" || ext == "aiff";
-	}
-
-	void ModalMaterialEditor::loadAudioFile(const File& file)
-	{
-		auto formatManager = std::make_unique<AudioFormatManager>();
-		formatManager->registerBasicFormats();
-		auto reader = formatManager->createReaderFor(file);
-		if (reader != nullptr)
-		{
-			const auto numChannels = static_cast<int>(reader->numChannels);
-			const auto numSamples = static_cast<int>(reader->lengthInSamples);
-			AudioBufferF audioBuffer(numChannels, numSamples);
-			reader->read(&audioBuffer, 0, numSamples, 0, true, true);
-			const auto samples = audioBuffer.getArrayOfReadPointers();
-			const auto sampleRate = static_cast<float>(reader->sampleRate);
-			material.fillBuffer(sampleRate, samples, numChannels, numSamples);
-		}
-		delete reader;
-	}
-
-	void ModalMaterialEditor::filesDropped(const StringArray& files, int, int)
-	{
-		dragAniComp.stop();
-		const auto status = material.status.load();
-		if (status != Status::Processing)
-			return;
-		const auto file = files[0];
-		loadAudioFile(file);
-		material.load();
-	}
-
-	void ModalMaterialEditor::fileDragEnter(const StringArray&, int, int)
-	{
-		dragAniComp.start();
-	}
-
-	void ModalMaterialEditor::fileDragExit(const StringArray&)
-	{
-		dragAniComp.stop();
-	}
-
-	bool ModalMaterialEditor::isInterestedInFileDrag(const StringArray& files)
-	{
-		bool isInterested = false;
-
-		const auto numFiles = files.size();
-		if (numFiles == 1)
-			if (isAudioFile(files[0]))
-				isInterested = true;
-			else
-				dragAniComp.error = "Accepted formats: wav, flac, mp3, aiff";
-		else
-			dragAniComp.error = "Only one file at a time, pls.";
-		dragAniComp.isInterested = isInterested;
-
-		return isInterested;
-	}
-
 	void ModalMaterialEditor::updateInfoLabel(const String& nMessage)
 	{
 		if (nMessage != "abcabcabc")
@@ -760,4 +696,115 @@ namespace gui
 		if (wantMaterialUpdate)
 			material.reportUpdate();
 	}
+
+	// FileDragAndDropTarget
+
+	bool ModalMaterialEditor::isAudioFile(const String& fileName) const
+	{
+		const auto ext = fileName.fromLastOccurrenceOf(".", false, false).toLowerCase();
+		return ext == "flac" || ext == "wav" || ext == "mp3" || ext == "aiff";
+	}
+
+	void ModalMaterialEditor::loadAudioFile(const File& file)
+	{
+		auto formatManager = std::make_unique<AudioFormatManager>();
+		formatManager->registerBasicFormats();
+		auto reader = formatManager->createReaderFor(file);
+		if (reader != nullptr)
+		{
+			const auto numChannels = static_cast<int>(reader->numChannels);
+			const auto numSamples = static_cast<int>(reader->lengthInSamples);
+			AudioBufferF audioBuffer(numChannels, numSamples);
+			reader->read(&audioBuffer, 0, numSamples, 0, true, true);
+			const auto samples = audioBuffer.getArrayOfReadPointers();
+			const auto sampleRate = static_cast<float>(reader->sampleRate);
+			material.fillBuffer(sampleRate, samples, numChannels, numSamples);
+		}
+		delete reader;
+	}
+
+	void ModalMaterialEditor::filesDropped(const StringArray& files, int, int)
+	{
+		dragAniComp.stop();
+		const auto status = material.status.load();
+		if (status != Status::Processing)
+			return;
+		const auto file = files[0];
+		loadAudioFile(file);
+		material.load();
+	}
+
+	void ModalMaterialEditor::fileDragEnter(const StringArray&, int, int)
+	{
+		dragAniComp.start();
+	}
+
+	void ModalMaterialEditor::fileDragExit(const StringArray&)
+	{
+		dragAniComp.stop();
+	}
+
+	bool ModalMaterialEditor::isInterestedInFileDrag(const StringArray& files)
+	{
+		bool isInterested = false;
+
+		const auto numFiles = files.size();
+		if (numFiles == 1)
+			if (isAudioFile(files[0]))
+				isInterested = true;
+			else
+				dragAniComp.error = "Accepted formats: wav, flac, mp3, aiff";
+		else
+			dragAniComp.error = "Only one file at a time, pls.";
+		dragAniComp.isInterested = isInterested;
+
+		return isInterested;
+	}
+
+	// DragAndDropTarget
+
+	bool ModalMaterialEditor::isInterestedInDragSource(const SourceDetails& src)
+	{
+		const auto desc = src.description.toString();
+		if (desc == "pluginrecorder")
+		{
+			const auto file = getTheDnDFile();
+			if (file.existsAsFile())
+			{
+				dragAniComp.isInterested = true;
+				dragAniComp.start();
+				return true;
+			}
+		}
+		dragAniComp.isInterested = false;
+		return false;
+	}
+
+	void ModalMaterialEditor::itemDropped(const SourceDetails& src)
+	{
+		dragAniComp.stop();
+		if (!isInterestedInDragSource(src))
+			return;
+		const auto file = getTheDnDFile();
+		if (!file.existsAsFile())
+			return;
+		loadAudioFile(file);
+		material.load();
+		dragAniComp.stop();
+	}
+
+	void ModalMaterialEditor::itemDragExit(const SourceDetails&)
+	{
+		dragAniComp.stop();
+	}
+
+	const File ModalMaterialEditor::getTheDnDFile() const
+	{
+		const auto& user = *utils.audioProcessor.state.props.getUserSettings();
+		const auto settingsFile = user.getFile();
+		const auto userDirectory = settingsFile.getParentDirectory();
+		return userDirectory.getChildFile("HnM.wav");
+	}
+
+
 }

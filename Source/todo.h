@@ -54,6 +54,9 @@ AUDIO
 
 ~~~ video releases ~~~
 
+JUCE Tutorial: Drag And Drop Audio Files
+https://www.youtube.com/watch?v=JNU8KDuLR78
+
 Fixed My Auto-Suspend Voice Bug With Breakpoints
 https://youtu.be/ycLhqMkX4lk?si=RMXjk8sqLYwptULJ
 

@@ -60,7 +60,6 @@ namespace gui
     using PNGImageFormat = juce::PNGImageFormat;
     using FileOutputStream = juce::FileOutputStream;
     using Var = juce::var;
-    using FileDragAndDropTarget = juce::FileDragAndDropTarget;
     using StringArray = juce::StringArray;
     using AudioFormatManager = juce::AudioFormatManager;
     using AudioBufferF = juce::AudioBuffer<float>;
@@ -72,6 +71,10 @@ namespace gui
 	using WavAudioFormat = juce::WavAudioFormat;
 	using AudioFormatWriter = juce::AudioFormatWriter;
 	using MouseCursor = juce::MouseCursor;
+    using FileDragAndDropTarget = juce::FileDragAndDropTarget;
+	using DragAndDropTarget = juce::DragAndDropTarget;
+	using DragAndDropContainer = juce::DragAndDropContainer;
+    using DnDSrc = DragAndDropTarget::SourceDetails;
 
     using Processor = audio::Processor;
 
@@ -84,8 +87,8 @@ namespace gui
     static constexpr float PiHalf = Tau * .25f;
     static constexpr float PiQuart = Tau * .125f;
 
-    static constexpr int EditorWidth = 690;
-    static constexpr int EditorHeight = 420;
+    static constexpr int EditorWidth = 1082;
+    static constexpr int EditorHeight = 722;
     static constexpr int EditorMinWidth = 100;
     static constexpr int EditorMinHeight = 100;
     static constexpr int FPS = 60;

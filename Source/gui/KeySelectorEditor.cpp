@@ -31,10 +31,7 @@ namespace gui
 		makeParameter(keysEnabled, PID::KeySelectorEnabled, Button::Type::kToggle, [](Graphics& g, const Button& b)
 			{
 				const auto thicc = b.utils.thicc;
-				const auto thiccHalf = thicc * .5f;
-				const auto thicc2 = thicc * 2.f;
 				const auto thicc3 = thicc * 3.f;
-				const auto thicc5 = thicc * 5.f;
 
 				const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
 				const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;

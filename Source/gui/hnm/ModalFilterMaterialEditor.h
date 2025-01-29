@@ -7,7 +7,8 @@ namespace gui
 {
 	struct ModalMaterialEditor :
 		public Comp,
-		public FileDragAndDropTarget
+		public FileDragAndDropTarget,
+		public DragAndDropTarget
 	{
 		static constexpr double Sensitive = .1;
 
@@ -133,6 +134,10 @@ namespace gui
 
 		void loadAudioFile(const File&);
 
+		void updateInfoLabel(const String & = "abcabcabc");
+
+		// FileDragAndDropTarget
+
 		void filesDropped(const StringArray&, int, int) override;
 
 		bool isAudioFile(const String&) const;
@@ -143,6 +148,14 @@ namespace gui
 
 		bool isInterestedInFileDrag(const StringArray&) override;
 
-		void updateInfoLabel(const String& = "abcabcabc");
+		// DragAndDropTarget
+
+		bool isInterestedInDragSource(const SourceDetails&) override;
+
+		void itemDropped(const SourceDetails&) override;
+
+		void itemDragExit(const SourceDetails&) override;
+
+		const File getTheDnDFile() const;
 	};
 }

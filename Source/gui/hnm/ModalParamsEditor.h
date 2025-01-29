@@ -4,21 +4,6 @@
 
 namespace gui
 {
-	struct ModalMainParams :
-		public Comp
-	{
-		using kParam = dsp::modal::kParam;
-
-		//utils, keytrack, blend, spread, harmonie, kraft, reso, resoDamp
-		ModalMainParams(Utils&, PID, PID, PID, PID, PID, PID, PID);
-
-		void resized() override;
-
-	protected:
-		std::array<Knob, dsp::modal::kNumParams> knobs;
-		std::array<ModDial, dsp::modal::kNumParams> modDials;
-	};
-
 	struct ModalParamsEditor :
 		public Comp
 	{
@@ -44,6 +29,6 @@ namespace gui
 	protected:
 		OctSemiSlider octModal, semiModal, octComb, semiComb, unisonComb;
 		KnobHnM keytrack, blend, spreizung, harmonie, kraft, reso, resoDamp, feedback;
-		LabelGroup octSemiGroup;
+		LabelGroup octSemiGroup, knobLabelsGroup;
 	};
 }
