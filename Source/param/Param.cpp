@@ -1443,7 +1443,7 @@ namespace param
 		params.push_back(makeParam(PID::CombUnison, 0.f, makeRange::lin(0.f, 1.f)));
 		params.push_back(makeParam(PID::CombFeedback, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::CombFeedbackEnv, 0.f, makeRange::lin(-2.f, 2.f)));
-		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-2.f, 2.f)));
+		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-1.f, 1.f)));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

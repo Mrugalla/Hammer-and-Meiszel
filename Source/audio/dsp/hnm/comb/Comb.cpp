@@ -218,16 +218,17 @@ namespace dsp
 			double fbEnv, double envGenMod,
 			int numChannels, int numSamples) noexcept
 		{
-			const auto fbWidthHalf = fbWidth * .5;
+			//const auto fbWidthHalf = fbWidth * .5;
+			//const auto widthAmount = std::abs(fbWidth);
 			const double fbWidths[2] =
 			{
-				fb - fbWidthHalf,
-				fb + fbWidthHalf
+				fb - fbWidth,
+				fb + fbWidth
 			};
-
+			const auto envGained = envGenMod * fbEnv;
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
-				const auto fbModulated = math::limit(-1., 1., fbWidths[ch] + envGenMod * fbEnv);
+				const auto fbModulated = math::limit(-.99, .99, fbWidths[ch] + envGained);
 				const auto fbRemapped = math::sinApprox(fbModulated * PiHalf);
 				feedbackInfos[ch] = feedbackPRMs[ch](fbRemapped, numSamples);
 				feedbackInfos[ch].copyToBuffer(numSamples);

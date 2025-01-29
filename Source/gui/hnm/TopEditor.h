@@ -23,7 +23,7 @@ namespace gui
 			layout.init
 			(
 				{ 2, 1, 1, 1, 1, 1 },
-				{ 1, 5 }
+				{ 2, 5 }
 			);
 
 			addAndMakeVisible(patchBrowserButton);

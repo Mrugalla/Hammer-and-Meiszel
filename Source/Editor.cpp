@@ -133,6 +133,8 @@ namespace gui
         loadBounds(*this);
         utils.audioProcessor.pluginProcessor.editorExists.store(true);
         setOpaque(true);
+
+        setMouseCursor(makeCursor());
     }
 
     Editor::~Editor()

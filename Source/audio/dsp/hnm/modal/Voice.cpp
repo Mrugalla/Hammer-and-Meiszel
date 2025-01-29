@@ -178,7 +178,7 @@ namespace dsp
 				{
 					const auto reso = resoParam[ch];
 					const auto resoDamp = resoDampParam[ch];
-					resonatorBank.setReso(reso, resoDamp, ch);
+					resonatorBank.setReso(std::sqrt(reso), resoDamp, ch);
 				}
 			}
 
