@@ -9,6 +9,7 @@ namespace gui
 		buttonSolo(u),
 		buttonDropDownGens(u),
 		buttonDropDownMisc(u),
+		buttonRandomizer(u, "randmodal"),
 		materialEditors
 		{
 			ModalMaterialEditor
@@ -28,6 +29,8 @@ namespace gui
 		dropDownGens(u),
 		dropDownMisc(u),
 		updateMaterialFunc([](){}),
+		randSeedVertical(u.getProps(), "randvrtcl"),
+		randSeedHorizontal(u.getProps(), "randhrzntl"),
 		wannaUpdate(-1)
 	{
 		layout.init
@@ -41,6 +44,7 @@ namespace gui
 		addAndMakeVisible(buttonSolo);
 		addAndMakeVisible(buttonDropDownGens);
 		addAndMakeVisible(buttonDropDownMisc);
+		addAndMakeVisible(buttonRandomizer);
 		for (auto& m : materialEditors)
 			addChildComponent(m);
 		materialEditors[0].setVisible(true);
@@ -52,6 +56,7 @@ namespace gui
 		initButtonRatioFreqs();
 		initButtonSolo();
 		initDropDown();
+		initRandomizer();
 
 		add(Callback([&]()
 		{
@@ -84,7 +89,7 @@ namespace gui
 			const auto y = top.getY();
 			const auto w = top.getWidth();
 			const auto h = top.getHeight();
-			const auto buttonWidth = w / 5.f;
+			const auto buttonWidth = w / 6.f;
 			buttonAB.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
 			buttonRatioFreqs.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
@@ -94,6 +99,8 @@ namespace gui
 			buttonDropDownGens.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
 			buttonDropDownMisc.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
+			x += buttonWidth;
+			buttonRandomizer.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 		}
 		for (auto& m : materialEditors)
 			layout.place(m, 0, 1, 1, 1);
@@ -326,8 +333,10 @@ namespace gui
 		// Proc: Randomize Magnitudes
 		dropDownMisc.add
 		(
-			[&](const Mouse&)
+			[&](const Mouse& mouse)
 			{
+				randSeedVertical.updateSeed(mouse.mods.isLeftButtonDown());
+
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
@@ -335,11 +344,10 @@ namespace gui
 						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 						auto& material = modalFilter.getMaterial(matIdx);
 						auto& peaks = material.peakInfos;
-						Random rand;
 						for (auto i = 0; i < numFilters; ++i)
 						{
 							auto& peak = peaks[i];
-							peak.mag = rand.nextFloat();
+							peak.mag = randSeedVertical();
 						}
 						material.updatePeakInfosFromGUI();
 				};
@@ -351,8 +359,10 @@ namespace gui
 		// Proc: Randomize Frequency Ratios
 		dropDownMisc.add
 		(
-			[&](const Mouse&)
+			[&](const Mouse& mouse)
 			{
+				randSeedHorizontal.updateSeed(mouse.mods.isLeftButtonDown());
+
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
@@ -360,11 +370,10 @@ namespace gui
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peaks = material.peakInfos;
-					Random rand;
 					for (auto i = 1; i < numFilters; ++i)
 					{
 						auto& peak = peaks[i];
-						peak.ratio = 1.f * rand.nextFloat() * 32.f;
+						peak.ratio = 1.f * randSeedHorizontal() * 32.f;
 					}
 					material.updatePeakInfosFromGUI();
 				};
@@ -451,5 +460,43 @@ namespace gui
 		dropDownMisc.init();
 		buttonDropDownGens.init(dropDownGens, "Generators", "Generate modal materials from magic! (math)");
 		buttonDropDownMisc.init(dropDownMisc, "Misc", "Here you can find additional modal material features.");
+	}
+
+	void ModalModuleEditor::initRandomizer()
+	{
+		buttonRandomizer.add(PID::CombFeedback);
+		buttonRandomizer.add(PID::CombFeedbackEnv);
+		buttonRandomizer.add(PID::CombFeedbackWidth);
+		buttonRandomizer.add(PID::CombUnison);
+		buttonRandomizer.add(PID::ModalBlend);
+		buttonRandomizer.add(PID::ModalBlendEnv);
+		buttonRandomizer.add(PID::ModalBlendBreite);
+		buttonRandomizer.add(PID::ModalHarmonie);
+		buttonRandomizer.add(PID::ModalHarmonieEnv);
+		buttonRandomizer.add(PID::ModalHarmonieBreite);
+		buttonRandomizer.add(PID::ModalKeytrack);
+		buttonRandomizer.add(PID::ModalKeytrackEnv);
+		buttonRandomizer.add(PID::ModalKeytrackBreite);
+		buttonRandomizer.add(PID::ModalKraft);
+		buttonRandomizer.add(PID::ModalKraftEnv);
+		buttonRandomizer.add(PID::ModalKraftBreite);
+		buttonRandomizer.add(PID::ModalResoDamp);
+		buttonRandomizer.add(PID::ModalResoDampEnv);
+		buttonRandomizer.add(PID::ModalResoDampBreite);
+		buttonRandomizer.add(PID::ModalResonanz);
+		buttonRandomizer.add(PID::ModalResonanzEnv);
+		buttonRandomizer.add(PID::ModalResonanzBreite);
+
+		const auto randModalFunc = [&](ButtonRandomizer::RandomSeed& rand)
+		{
+			auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+			auto& xenManager = utils.audioProcessor.xenManager;
+			for (auto i = 0; i < 2; ++i)
+				modalFilter.randomizeMaterial(rand, xenManager, i);
+		};
+
+		buttonRandomizer.add(randModalFunc);
+
+
 	}
 }

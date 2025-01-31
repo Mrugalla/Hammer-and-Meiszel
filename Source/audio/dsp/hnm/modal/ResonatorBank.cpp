@@ -20,7 +20,9 @@ namespace dsp
 			transpose(0.),
 			pb(0.),
 			pbRange(2.),
-			xen(0.)
+			xen(0.),
+			masterTune(0.),
+			anchor(0.)
 		{}
 
 		void ResonatorBank::Val::reset() noexcept
@@ -184,13 +186,19 @@ namespace dsp
 			{
 				const auto pbRange = xen.getPitchbendRange(); // can be improved by being triggered from xenManager changes directly
 				const auto xenScale = xen.getXen();
+				const auto masterTune = xen.getMasterTune();
+				const auto anchorPitch = xen.getAnchor();
 				if (val.transpose != transposeSemi ||
 					val.pbRange != pbRange ||
-					val.xen != xenScale)
+					val.xen != xenScale ||
+					val.masterTune != masterTune ||
+					val.anchor != anchorPitch)
 				{
 					val.transpose = transposeSemi;
 					val.pbRange = pbRange;
 					val.xen = xenScale;
+					val.masterTune = masterTune;
+					val.anchor = anchorPitch;
 					const auto freq = val.getFreq(xen);
 					setFrequencyHz(materialStereo, freq, numChannels);
 				}

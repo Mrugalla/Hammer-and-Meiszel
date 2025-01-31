@@ -71,5 +71,35 @@ namespace dsp
 			materials.getMaterial(0).soloing = e;
 			materials.getMaterial(1).soloing = e;
 		}
+
+		void ModalFilter::randomizeMaterial(arch::RandSeed& rand, const arch::XenManager& xen, int mIdx)
+		{
+			auto& mat = materials.getMaterial(mIdx);
+			if (mat.status != dsp::modal::StatusMat::Processing)
+				return;
+			std::array<double, dsp::modal::NumFilters> ratios;
+			ratios[0] = 1.;
+			for (auto j = 1; j < dsp::modal::NumFilters; ++j)
+				ratios[j] = 1. + static_cast<double>(rand()) * 32.;
+			std::sort(ratios.begin(), ratios.end());
+
+			auto& peaks = mat.peakInfos;
+
+			peaks[0].mag = static_cast<double>(rand());
+			peaks[0].ratio = ratios[0];
+			peaks[0].freqHz = xen.noteToFreqHz(static_cast<double>(rand()) * 127.);
+			peaks[0].keytrack = 0.;
+
+			for (auto j = 1; j < dsp::modal::NumFilters; ++j)
+			{
+				auto& peak = peaks[j];
+				peak.mag = static_cast<double>(rand());
+				peak.ratio = ratios[j];
+				peak.freqHz = xen.noteToFreqHz(static_cast<double>(rand()) * 127.);
+				peak.keytrack = static_cast<double>(rand());
+			}
+
+			mat.reportUpdate();
+		}
 	}
 }

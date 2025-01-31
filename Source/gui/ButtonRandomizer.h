@@ -1,32 +1,14 @@
 #pragma once
 #include "Button.h"
-#include <random>
+#include "../arch/RandomSeed.h"
 
 namespace gui
 {
     struct ButtonRandomizer :
         public Button
     {
-        struct Randomizer
-        {
-            // utils, randomizerID
-            Randomizer(Utils&, String&&);
-
-            // seedUp
-            void updateSeed(bool);
-
-            float operator()();
-
-        private:
-            juce::PropertiesFile& user;
-            String id;
-            std::random_device rd;
-            std::mt19937 mt;
-            std::uniform_real_distribution<float> dist;
-            int seed;
-        };
-
-        using RandFunc = std::function<void(Randomizer&)>;
+        using RandomSeed = arch::RandSeed;
+        using RandFunc = arch::RandFunc;
 
         // utils, randomizerID
         ButtonRandomizer(Utils&, String&&);
@@ -46,7 +28,7 @@ namespace gui
 
         std::vector<Param*> randomizables;
         std::vector<RandFunc> randFuncs;
-        Randomizer randomizer;
+        RandomSeed randomizer;
     protected:
         void mouseEnter(const Mouse&) override;
 

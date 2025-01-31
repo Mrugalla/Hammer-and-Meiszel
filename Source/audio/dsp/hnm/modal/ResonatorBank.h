@@ -19,7 +19,7 @@ namespace dsp
 
 				double getFreq(const arch::XenManager&) noexcept;
 
-				double pitch, transpose, pb, pbRange, xen;
+				double pitch, transpose, pb, pbRange, xen, masterTune, anchor;
 			};
 
 		public:

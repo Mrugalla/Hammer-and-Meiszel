@@ -1,5 +1,6 @@
 #pragma once
 #include "Voice.h"
+#include "../../../../arch/RandomSeed.h"
 
 namespace dsp
 {
@@ -27,6 +28,9 @@ namespace dsp
 			ActivesArray& getActives() noexcept;
 
 			void setSolo(bool) noexcept;
+
+			// randSeed, xen, mIdx
+			void randomizeMaterial(arch::RandSeed&, const arch::XenManager&, int);
 
 		private:
 			DualMaterial materials;

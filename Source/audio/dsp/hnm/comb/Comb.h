@@ -85,6 +85,7 @@ namespace dsp
 			DelayFeedback delay;
 			std::array<Val, 2> vals;
 			double Fs;
+			double xen, anchor, masterTune;
 		public:
 			int size;
 		private:

@@ -71,6 +71,11 @@ namespace arch
 		return anchor;
 	}
 
+	double XenManager::getMasterTune() const noexcept
+	{
+		return masterTune;
+	}
+
 	template float XenManager::noteToFreqHz<float>(float note) const noexcept;
 	template double XenManager::noteToFreqHz<double>(double note) const noexcept;
 

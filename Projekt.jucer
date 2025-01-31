@@ -105,6 +105,8 @@
               file="Source/arch/FormulaParser.cpp"/>
         <FILE id="KUTi7M" name="FormulaParser.h" compile="0" resource="0" file="Source/arch/FormulaParser.h"/>
         <FILE id="ogBqo8" name="Math.h" compile="0" resource="0" file="Source/arch/Math.h"/>
+        <FILE id="hGdo0Y" name="RandomSeed.cpp" compile="1" resource="0" file="Source/arch/RandomSeed.cpp"/>
+        <FILE id="InIEbt" name="RandomSeed.h" compile="0" resource="0" file="Source/arch/RandomSeed.h"/>
         <FILE id="NycMT2" name="Range.cpp" compile="1" resource="0" file="Source/arch/Range.cpp"/>
         <FILE id="UpRG4O" name="Range.h" compile="0" resource="0" file="Source/arch/Range.h"/>
         <FILE id="cibuDp" name="State.cpp" compile="1" resource="0" file="Source/arch/State.cpp"/>

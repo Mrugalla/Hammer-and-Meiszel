@@ -2,40 +2,11 @@
 
 namespace gui
 {
-    ButtonRandomizer::Randomizer::Randomizer(Utils& u, String&& _id) :
-		user(*u.audioProcessor.state.props.getUserSettings()),
-        id(_id),
-        rd(),
-        mt(rd()),
-        dist(0.f, 1.f),
-        seed(0)
-    {
-        seed = user.getIntValue(id, 0);
-        if (seed == 0)
-        {
-            Random rand;
-            seed = rand.nextInt();
-            user.setValue(id, seed);
-        }
-    }
-
-    void ButtonRandomizer::Randomizer::updateSeed(bool up)
-    {
-        seed += up ? 1 : -1;
-        mt.seed(seed);
-        user.setValue(id, seed);
-    }
-
-    float ButtonRandomizer::Randomizer::operator()()
-    {
-        return dist(mt);
-    }
-
     ButtonRandomizer::ButtonRandomizer(Utils& u, String&& id) :
         Button(u),
         randomizables(),
         randFuncs(),
-        randomizer(u, std::move(id))
+        randomizer(*u.audioProcessor.state.props.getUserSettings(), std::move(id))
     {
         const auto op = makeButtonOnPaint(false, getColour(CID::Bg));
 
@@ -49,13 +20,12 @@ namespace gui
                 const auto& utils = b.utils;
                 const auto thicc = utils.thicc;
                 const auto thicc2 = thicc * 2.f;
-                const auto thicc3 = thicc * 3.f;
 
                 const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
                 const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
 
                 const auto lineThiccness = thicc + clickPhase * (thicc2 - thicc);
-                const auto margin = thicc3 - lineThiccness - hoverPhase * thicc;
+                const auto margin = thicc2 - lineThiccness - hoverPhase * thicc;
                 const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
                 const auto iW = bounds.getWidth() / 3.f;

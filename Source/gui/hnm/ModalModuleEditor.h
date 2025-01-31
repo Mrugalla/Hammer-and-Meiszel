@@ -2,6 +2,7 @@
 #include "ModalFilterMaterialEditor.h"
 #include "ModalParamsEditor.h"
 #include "../DropDownMenu.h"
+#include "../ButtonRandomizer.h"
 #include <functional>
 
 namespace gui
@@ -17,9 +18,11 @@ namespace gui
 
 		Button buttonAB, buttonRatioFreqs, buttonSolo;
 		ButtonDropDown buttonDropDownGens, buttonDropDownMisc;
+		ButtonRandomizer buttonRandomizer;
 		std::array<ModalMaterialEditor, 2> materialEditors;
 		ModalParamsEditor params;
 		DropDownMenu dropDownGens, dropDownMisc;
+		arch::RandSeed randSeedVertical, randSeedHorizontal;
 
 		std::function<void()> updateMaterialFunc;
 		int wannaUpdate;
@@ -31,5 +34,7 @@ namespace gui
 		void initButtonSolo();
 
 		void initDropDown();
+
+		void initRandomizer();
 	};
 }

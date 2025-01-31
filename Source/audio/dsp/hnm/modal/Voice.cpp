@@ -101,7 +101,7 @@ namespace dsp
 		void Voice::prepare(double sampleRate) noexcept
 		{
 			resonatorBank.prepare(materialStereo, sampleRate);
-			const auto smoothLenMs = 13.;
+			const auto smoothLenMs = 42.;
 			for (auto i = 0; i < kNumParams; ++i)
 				parameters[i].prepare(sampleRate, smoothLenMs);
 			wantsMaterialUpdate = true;

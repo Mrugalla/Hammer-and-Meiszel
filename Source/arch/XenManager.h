@@ -27,6 +27,8 @@ namespace arch
 
 		double getAnchor() const noexcept;
 
+		double getMasterTune() const noexcept;
+
 	protected:
 		double xen, masterTune, anchor, pitchbendRange;
 	};

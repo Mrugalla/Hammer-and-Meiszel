@@ -23,9 +23,9 @@ namespace dsp
 			delaySamples = 0.;
 		}
 
-		double Val::getDelaySamples(const XenManager& xen, double Fs) noexcept
+		double Val::getDelaySamples(const XenManager& xenManager, double Fs) noexcept
 		{
-			freqHz = xen.noteToFreqHzWithWrap(pitchNote + pitchParam + pb, LowestFrequencyHz);
+			freqHz = xenManager.noteToFreqHzWithWrap(pitchNote + pitchParam + pb, LowestFrequencyHz);
 			delaySamples = math::freqHzToSamples(freqHz, Fs);
 			return delaySamples;
 		}
@@ -137,6 +137,9 @@ namespace dsp
 			delay(),
 			vals(),
 			Fs(0.),
+			xen(0.),
+			anchor(0.),
+			masterTune(0.),
 			size(0)
 		{
 		}
@@ -206,6 +209,18 @@ namespace dsp
 				retune - retuneWidthHalf
 			};
 
+			const auto _xen = xenManager.getXen();
+			const auto _anchor = xenManager.getAnchor();
+			const auto _masterTune = xenManager.getMasterTune();
+			if (xen != _xen || anchor != _anchor || masterTune != _masterTune)
+			{
+				xen = _xen;
+				anchor = _anchor;
+				masterTune = _masterTune;
+				for (auto ch = 0; ch < numChannels; ++ch)
+					updatePitch(xenManager, ch);
+			}
+
 			for (auto ch = 0; ch < numChannels; ++ch)
 				if (vals[ch].pitchParam != retunes[ch])
 				{
@@ -248,7 +263,7 @@ namespace dsp
 				{
 					const auto ts = it.samplePosition;
 					const auto note = msg.getNoteNumber();
-					const auto noteD = static_cast<double>(note);
+					auto noteD = static_cast<double>(note);
 					for (auto& val : vals)
 						val.pitchNote = noteD;
 					updatePitch(xenManager, numChannels, s, ts);

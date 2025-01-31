@@ -1414,7 +1414,7 @@ namespace param
 		params.push_back(makeParam(PID::EnvGenModSustain, 0.f, makeRange::lin(0.f, .999f)));
 		params.push_back(makeParam(PID::EnvGenModRelease, 42.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 
-		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
+		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-4.f, 4.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::ModalKeytrack, 1.f));
 		params.push_back(makeParam(PID::ModalKeytrackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
@@ -1438,7 +1438,7 @@ namespace param
 		params.push_back(makeParam(PID::ModalResoDampEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResoDampBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 
-		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-3.f, 3.f), Unit::Octaves));
+		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-4.f, 4.f), Unit::Octaves));
 		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
 		params.push_back(makeParam(PID::CombUnison, 0.f, makeRange::lin(0.f, 1.f)));
 		params.push_back(makeParam(PID::CombFeedback, 0.f, makeRange::lin(-1.f, 1.f)));
