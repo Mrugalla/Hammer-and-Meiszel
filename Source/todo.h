@@ -4,17 +4,19 @@
 
 ~~~ todo ~~~
 
+explain manifest of wisdom feature better
+
+click off left to reset menu not working
+
+make default presets for common usecases
+
 polyphony parameter
     monophonic mode with portamento and stuff
     reset mod envelope on note on (or not)
 
-hold down note, then press other notes to trigger the dry through bug
-
 remap frequencies of partials with a MSEG curve, like mtransformer
 
 map velocity to certain parameters
-
-buttons ohne bg colour
 
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material

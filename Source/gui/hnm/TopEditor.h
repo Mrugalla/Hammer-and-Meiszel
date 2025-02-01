@@ -15,7 +15,6 @@ namespace gui
 
 	protected:
 		patch::BrowserButton patchBrowserButton;
-		Label titleRandomizer;
 		ButtonRandomizer buttonRandomizer;
 		Button buttonSoftClip;
 	};

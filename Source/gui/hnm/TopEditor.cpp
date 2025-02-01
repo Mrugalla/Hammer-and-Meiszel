@@ -5,25 +5,18 @@ namespace gui
 	TopEditor::TopEditor(Utils& u, patch::Browser& browser) :
 		Comp(u),
 		patchBrowserButton(u, browser),
-		titleRandomizer(u),
 		buttonRandomizer(u, "randall"),
 		buttonSoftClip(u)
 	{
 		layout.init
 		(
 			{ 2, 1, 1 },
-			{ 2, 5 }
+			{ 5, 1 }
 		);
 
 		addAndMakeVisible(patchBrowserButton);
 		addAndMakeVisible(buttonRandomizer);
 		addAndMakeVisible(buttonSoftClip);
-		addAndMakeVisible(titleRandomizer);
-
-		const auto font = font::flx();
-		const auto just = Just::centredLeft;
-		makeTextLabel(titleRandomizer, "Rand All:", font, just, CID::Txt);
-		titleRandomizer.autoMaxHeight = true;
 
 		makeParameter(buttonSoftClip, PID::SoftClip, Button::Type::kToggle, makeButtonOnPaintClip());
 		for (auto i = 0; i < param::NumParams; ++i)
@@ -65,16 +58,18 @@ namespace gui
 	void TopEditor::resized()
 	{
 		layout.resized(getLocalBounds());
-		layout.place(patchBrowserButton, 0, 1, 1, 1);
-		layout.place(titleRandomizer, 2, 0.f, 1, 1.2f);
-		layout.place(buttonSoftClip, 1, 1, 1, 1);
-		layout.place(buttonRandomizer, 2, 1, 1, 1);
+		layout.place(patchBrowserButton, 0, 0, 1, 1);
+		layout.place(buttonSoftClip, 1, 0, 1, 1);
+		layout.place(buttonRandomizer, 2, 0, 1, 1);
 	}
 
 	void TopEditor::paint(Graphics& g)
 	{
-		const auto randArea = layout(2, 0, 1, 2);
-		setCol(g, CID::Darken);
-		g.fillRect(randArea);
+		const auto bottom = layout.bottom();
+		setCol(g, CID::Bg);
+		const auto thicc = utils.thicc;
+		const auto thiccHalf = thicc * .5f;
+		const auto thicc2 = thicc * 2;
+		g.fillRoundedRectangle(bottom.reduced(thiccHalf).withX(bottom.getX() + thicc2), thicc);
 	}
 }
