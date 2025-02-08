@@ -5,7 +5,7 @@ namespace dsp
 {
 	namespace modal
 	{
-		static constexpr int NumFilters = 12;
+		static constexpr int NumFilters = 9;
 		static constexpr double NumFiltersD = static_cast<double>(NumFilters);
 		static constexpr double NumFiltersInv = 1. / NumFiltersD;
 		static constexpr double MinPitch = 24;

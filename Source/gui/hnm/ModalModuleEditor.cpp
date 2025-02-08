@@ -365,15 +365,17 @@ namespace gui
 
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
-				{
-					const auto numFilters = dsp::modal::NumFilters;
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(matIdx);
-					auto& peaks = material.peakInfos;
-					for (auto i = 1; i < numFilters; ++i)
 					{
-						auto& peak = peaks[i];
-						peak.ratio = 1.f * randSeedHorizontal() * 32.f;
+						const auto numFilters = dsp::modal::NumFilters;
+						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+						auto& material = modalFilter.getMaterial(matIdx);
+						auto& peaks = material.peakInfos;
+						for (auto i = 1; i < numFilters; ++i)
+						{
+							auto& peak = peaks[i];
+							peak.ratio = 1.f * randSeedHorizontal() * 32.f;
+							peak.freqHz = math::noteToFreqHz2(24.f + randSeedHorizontal() * 84.f);
+							peak.keytrack = randSeedHorizontal();
 					}
 					material.updatePeakInfosFromGUI();
 				};

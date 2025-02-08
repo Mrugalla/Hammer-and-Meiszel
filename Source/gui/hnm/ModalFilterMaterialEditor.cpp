@@ -170,12 +170,13 @@ namespace gui
 		draggerfall(),
 		dragXY(),
 		freqRatioRange(1.f),
-		showsRatios(true)
+		showsRatios(true),
+		xenInfo(u.audioProcessor.xenManager.getInfo())
 	{
 		layout.init
 		(
 			{ 1 },
-			{ 2, 13 }
+			{ 1, 13 }
 		);
 
 		initRuler();
@@ -204,6 +205,16 @@ namespace gui
 				repaint();
 			}, kStrumCB + i, fps, false));
 
+		add(Callback([&]()
+		{
+			const auto& nInfo = utils.audioProcessor.xenManager.getInfo();
+			if (nInfo == xenInfo)
+				return;
+			xenInfo = nInfo;
+			updateRuler();
+			repaint();
+		}, kXenUpdatedCB, cbFPS::k7_5, true));
+
 		addChildComponent(dragAniComp);
 	}
 
@@ -225,7 +236,8 @@ namespace gui
 				len < 15.f ? 1.f :
 				len < 30.f ? 2.f :
 				len < 45.f ? 4.f :
-				8.f;
+				len < 60.f ? 8.f :
+				16.f;
 		});
 		rulerPartials.setValToStrFunc([](float v)
 		{
@@ -249,8 +261,8 @@ namespace gui
 			enum pitchclass { C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B, Num };
 
 			const auto note = static_cast<int>(std::round(v));
-			const auto octave = note / 12 - 1;
-			const auto noteName = note % 12;
+			const auto octave = note / Num - 1;
+			const auto noteName = note % Num;
 			return math::pitchclassToString(noteName) + String(octave);
 		});
 		rulerPitches.setCID(CID::Hover);
@@ -273,7 +285,7 @@ namespace gui
 		g.setGradientFill(bgGradient);
 		g.fillAll();
 		const auto rulerTop = layout.getY(1);
-		g.setColour(Colours::c(CID::Hover).withMultipliedAlpha(.25f));
+		g.setColour(Colours::c(CID::Hover).withMultipliedAlpha(.15f));
 		g.fillRect(0.f, 0.f, w, rulerTop);
 		const auto rulerBtm = h;
 		if (showsRatios)
@@ -429,7 +441,7 @@ namespace gui
 		}
 		else
 		{
-			const auto minFreq = 1.f;
+			const auto minFreq = 0.f;
 			auto maxFreq = minFreq;
 			for (auto i = 1; i < NumFilters; ++i)
 				maxFreq = std::max(maxFreq, static_cast<float>(peakInfos[i].freqHz));
@@ -479,6 +491,7 @@ namespace gui
 
 	void ModalMaterialEditor::mouseDown(const Mouse& mouse)
 	{
+		notify(evt::Type::ClickedEmpty);
 		if (draggerfall.selectionEmpty())
 			return;
 

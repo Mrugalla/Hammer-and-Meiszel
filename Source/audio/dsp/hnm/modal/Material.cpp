@@ -515,7 +515,7 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = static_cast<double>(i);
+				peak.freqHz = static_cast<double>(i * 12);
 				peak.keytrack = 1.;
 				peak.mag = 0.;
 				peak.ratio = 1. + static_cast<float>(i);
@@ -531,7 +531,7 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = static_cast<double>(i);
+				peak.freqHz = static_cast<double>(i * 12);
 				peak.keytrack = 1.;
 
 				const auto iF = static_cast<double>(i);
@@ -550,7 +550,7 @@ namespace dsp
 			for (auto i = 0; i < NumFilters; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = static_cast<double>(i);
+				peak.freqHz = static_cast<double>(i * 12);
 				peak.keytrack = 1.f;
 
 				const auto iF = static_cast<double>(i);
@@ -575,7 +575,7 @@ namespace dsp
 
 				peak.ratio = fibD;
 				peak.mag = 1. / fibD;
-				peak.freqHz = static_cast<double>(i);
+				peak.freqHz = static_cast<double>(i * 12);
 				peak.keytrack = 1.;
 			}
 			material.reportUpdate();
@@ -594,7 +594,7 @@ namespace dsp
 
 				peak.ratio = fibD;
 				peak.mag = 1. / fibD;
-				peak.freqHz = static_cast<double>(i);
+				peak.freqHz = static_cast<double>(i * 12);
 				peak.keytrack = 1.;
 			}
 			material.reportUpdate();

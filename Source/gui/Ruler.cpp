@@ -81,7 +81,7 @@ namespace gui
 			removeChildComponent(label.get());
 		labels.clear();
 
-		if (length == 0.f)
+		if (length <= 0.f)
 			return;
 
 		const auto just = Just::centredLeft;

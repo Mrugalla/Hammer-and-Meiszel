@@ -4,10 +4,6 @@
 
 ~~~ todo ~~~
 
-explain manifest of wisdom feature better
-
-click off left to reset menu not working
-
 make default presets for common usecases
 
 polyphony parameter

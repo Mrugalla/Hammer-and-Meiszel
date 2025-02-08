@@ -6,6 +6,13 @@ namespace arch
 {
 	struct XenManager
 	{
+		struct Info
+		{
+			bool operator==(const Info&) const noexcept;
+
+			double xen, masterTune, anchor, pitchbendRange;
+		};
+
 		XenManager();
 
 		// xen, masterTune, anchor, pitchbendRange
@@ -21,6 +28,8 @@ namespace arch
 		template<typename Float>
 		Float freqHzToNote(Float) const noexcept;
 
+		const Info& getInfo() const noexcept;
+
 		double getXen() const noexcept;
 
 		double getPitchbendRange() const noexcept;
@@ -30,6 +39,6 @@ namespace arch
 		double getMasterTune() const noexcept;
 
 	protected:
-		double xen, masterTune, anchor, pitchbendRange;
+		Info info;
 	};
 }

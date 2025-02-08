@@ -76,6 +76,7 @@ namespace gui
 			kMaterialUpdatedCB = 0,
 			kStrumCB = 1,
 			kNumStrumsCB = kStrumCB + NumFilters,
+			kXenUpdatedCB,
 			kNumCallbacks
 		};
 
@@ -107,6 +108,7 @@ namespace gui
 		float freqRatioRange;
 		bool showsRatios;
 	private:
+		arch::XenManager::Info xenInfo;
 
 		void updatePartials();
 
