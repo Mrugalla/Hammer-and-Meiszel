@@ -40,7 +40,6 @@ namespace gui
 		octComb(u, PID::CombOct, "C Oct"),
 		semiComb(u, PID::CombSemi, "C Semi"),
 		unisonComb(u, PID::CombUnison, "C Unison"),
-		keytrack(u, PID::ModalKeytrack, PID::ModalKeytrackEnv, PID::ModalKeytrackBreite, "Keytrack"),
 		blend(u, PID::ModalBlend, PID::ModalBlendEnv, PID::ModalBlendBreite, "Blend"),
 		spreizung(u, PID::ModalSpreizung, PID::ModalSpreizungEnv, PID::ModalSpreizungBreite, "Spreizung"),
 		harmonie(u, PID::ModalHarmonie, PID::ModalHarmonieEnv, PID::ModalHarmonieBreite, "Harmonie"),
@@ -53,7 +52,7 @@ namespace gui
 	{
 		layout.init
 		(
-			{ 1, 1, 1, 1, 1, 1, 1, 1 },
+			{ 1, 1, 1, 1, 1, 1, 1 },
 			{ 1, 8 }
 		);
 
@@ -68,7 +67,6 @@ namespace gui
 		octSemiGroup.add(semiComb.label);
 		octSemiGroup.add(unisonComb.label);
 
-		addAndMakeVisible(keytrack);
 		addAndMakeVisible(blend);
 		addAndMakeVisible(spreizung);
 		addAndMakeVisible(harmonie);
@@ -77,7 +75,6 @@ namespace gui
 		addAndMakeVisible(resoDamp);
 		addAndMakeVisible(feedback);
 
-		knobLabelsGroup.add(keytrack.labelMain);
 		knobLabelsGroup.add(blend.labelMain);
 		knobLabelsGroup.add(spreizung.labelMain);
 		knobLabelsGroup.add(harmonie.labelMain);
@@ -108,14 +105,13 @@ namespace gui
 		}
 		octSemiGroup.setMaxHeight();
 
-		layout.place(keytrack, 0, 1, 1, 1);
-		layout.place(blend, 1, 1, 1, 1);
-		layout.place(spreizung, 2, 1, 1, 1);
-		layout.place(harmonie, 3, 1, 1, 1);
-		layout.place(kraft, 4, 1, 1, 1);
-		layout.place(reso, 5, 1, 1, 1);
-		layout.place(resoDamp, 6, 1, 1, 1);
-		layout.place(feedback, 7, 1, 1, 1);
+		layout.place(blend, 0, 1, 1, 1);
+		layout.place(spreizung, 1, 1, 1, 1);
+		layout.place(harmonie, 2, 1, 1, 1);
+		layout.place(kraft, 3, 1, 1, 1);
+		layout.place(reso, 4, 1, 1, 1);
+		layout.place(resoDamp, 5, 1, 1, 1);
+		layout.place(feedback, 6, 1, 1, 1);
 
 		knobLabelsGroup.setMaxHeight(utils.thicc);
 	}

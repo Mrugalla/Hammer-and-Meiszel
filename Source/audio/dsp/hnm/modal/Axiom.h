@@ -5,9 +5,9 @@ namespace dsp
 {
 	namespace modal
 	{
-		static constexpr int NumFilters = 9;
-		static constexpr double NumFiltersD = static_cast<double>(NumFilters);
-		static constexpr double NumFiltersInv = 1. / NumFiltersD;
+		static constexpr int NumPartialsKeytracked = 5;
+		static constexpr int NumPartialsFixed = 3;
+		static constexpr int NumPartials = NumPartialsKeytracked + NumPartialsFixed;
 		static constexpr double MinPitch = 24;
 
 		enum class StatusMat
@@ -24,6 +24,6 @@ namespace dsp
 		static constexpr double SpreizungMin = -2.;
 		static constexpr double SpreizungMax = 2.;
 
-		enum kParam { kKeytrack, kBlend, kSpreizung, kHarmonie, kKraft, kReso, kResoDamp, kNumParams };
+		enum kParam { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kResoDamp, kNumParams };
 	}
 }

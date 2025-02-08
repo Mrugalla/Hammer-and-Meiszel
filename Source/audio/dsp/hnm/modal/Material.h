@@ -8,30 +8,33 @@ namespace dsp
 {
 	namespace modal
 	{
-		struct PeakInfo
+		struct Partial
 		{
-			double mag, ratio, freqHz, keytrack;
+			double mag, fc;
 		};
 
 		struct MaterialData
 		{
+			using Array = std::array<Partial, NumPartials>;
+
 			MaterialData();
 
-			PeakInfo& operator[](int) noexcept;
+			// if idx >= NumPartialsKeytracked, fc is fixed frequency
+			Partial& operator[](int) noexcept;
 
-			const PeakInfo& operator[](int) const noexcept;
+			// if idx >= NumPartialsKeytracked, fc is fixed frequency
+			const Partial& operator[](int) const noexcept;
 
 			double getMag(int) const noexcept;
 
-			double getRatio(int) const noexcept;
-
-			double getFreqHz(int) const noexcept;
-
-			double getKeytrack(int) const noexcept;
+			// if idx >= NumPartialsKeytracked, fc is fixed frequency
+			double getFc(int) const noexcept;
 
 			void copy(const MaterialData&) noexcept;
+
+			Array& data() noexcept;
 		private:
-			std::array<PeakInfo, NumFilters> data;
+			std::array<Partial, NumPartials> partials;
 		};
 
 		struct MaterialDataStereo
@@ -45,16 +48,16 @@ namespace dsp
 			const MaterialData& operator[](int) const noexcept;
 
 			// ch,i
-			PeakInfo& operator()(int, int) noexcept;
+			Partial& operator()(int, int) noexcept;
 
 			// ch,i
-			const PeakInfo& operator()(int, int) const noexcept;
+			const Partial& operator()(int, int) const noexcept;
 
 			// ch,i
 			double getMag(int, int) const noexcept;
 
 			// ch,i
-			double getRatio(int, int) const noexcept;
+			double getFc(int, int) const noexcept;
 
 			// other, numChannels
 			void copy(const MaterialDataStereo&, int) noexcept;
@@ -66,49 +69,15 @@ namespace dsp
 		{
 			static constexpr int FFTOrder = 15;
 			static constexpr int FFTSize = 1 << FFTOrder;
-			static constexpr int FFTSize2 = FFTSize * 2;
-			static constexpr float FFTSizeF = static_cast<float>(FFTSize);
-			static constexpr float FFTSizeInv = 1.f / FFTSizeF;
-			static constexpr int FFTSizeHalf = FFTSize / 2;
 			using MaterialBuffer = std::array<float, FFTSize>;
-			using FFT = juce::dsp::FFT;
 
 			Material();
 
-			void savePatch(arch::State& state, String&& matStr) const
-			{
-				for (auto j = 0; j < NumFilters; ++j)
-				{
-					const auto& peakInfo = peakInfos[j];
-					const auto peakStr = matStr + "pk" + juce::String(j);
-					state.set(peakStr + "mg", peakInfo.mag);
-					state.set(peakStr + "rt", peakInfo.ratio);
-					state.set(peakStr + "fr", peakInfo.freqHz);
-					state.set(peakStr + "kt", peakInfo.keytrack);
-				}
-			}
+			// state, matStr
+			void savePatch(arch::State&, String&&) const;
 
-			void loadPatch(const arch::State& state, String&& matStr)
-			{
-				for (auto j = 0; j < NumFilters; ++j)
-				{
-					auto& peakInfo = peakInfos[j];
-					const auto peakStr = matStr + "pk" + juce::String(j);
-					const auto magVal = state.get(peakStr + "mg");
-					if (magVal != nullptr)
-						peakInfo.mag = static_cast<double>(*magVal);
-					const auto ratioVal = state.get(peakStr + "rt");
-					if (ratioVal != nullptr)
-						peakInfo.ratio = static_cast<double>(*ratioVal);
-					const auto freqVal = state.get(peakStr + "fr");
-					if (freqVal != nullptr)
-						peakInfo.freqHz = static_cast<double>(*freqVal);
-					const auto ktVal = state.get(peakStr + "kt");
-					if (ktVal != nullptr)
-						peakInfo.keytrack = static_cast<double>(*ktVal);
-				}
-				updatePeakInfosFromGUI();
-			}
+			// state, matStr
+			void loadPatch(const arch::State&, String&&);
 
 			// data, size
 			void load(const char*, int);
@@ -121,12 +90,8 @@ namespace dsp
 
 			void reportUpdate() noexcept;
 
-			void updateKeytrackValues() noexcept;
-
 			// sampleRate, samples, numChannels, numSamples
 			void fillBuffer(float, const float* const*, int, int);
-
-			void sortPeaks() noexcept;
 
 			MaterialBuffer buffer;
 			MaterialData peakInfos;
@@ -134,64 +99,15 @@ namespace dsp
 			String name;
 			float sampleRate;
 			std::atomic<bool> soloing;
-		private:
+
 			struct PeakIndexInfo
 			{
 				std::vector<int> indexes;
 			};
+		private:
 
 			// data, size
 			void fillBuffer(const char*, int);
-
-			// fifo
-			void applyFFT(float*);
-
-			// bins
-			void generateMagnitudes(float*) noexcept;
-
-			// bins
-			void normalize(float*) noexcept;
-
-			// dest, src, cutoff, bw
-			void applyLowpassFIR(float*, const float*, float, float);
-
-			// dest, src, cutoff, reso, slope
-			void applyLowpassIIR(float*, const float*, float, float, int = 1);
-
-			// bins offset
-			void applyNegativeDelay(float*, int) noexcept;
-
-			// dest, a, b, mixA
-			void divide(float*, const float*, const float*, float) noexcept;
-
-			// bins, lowerLimitIdx, upperLimitidx
-			int getMaxMagnitudeIdx(const float*, int, int) const noexcept;
-
-			// bins, lowerLimitIdx, upperLimitidx
-			int getMinMagnitudeIdx(const float*, int, int) const noexcept;
-
-			// peakGroups, binsNorm, minBinidx
-			float generatePeakGroups(std::vector<PeakIndexInfo>&, const float*, int);
-
-			// peakGroups, binsNorm, targetThresholdDb, minBinIdx
-			void applyAdaptiveThreshold(std::vector<PeakIndexInfo>&, const float*, float, int);
-
-			// peakIndexes, bins, peakIdxInfos
-			void generatePeakIndexes(std::vector<int>&, const float*,
-				const std::vector<PeakIndexInfo>&);
-
-			// fifo, peakIndexes
-			float getHarm0Idx(const float*, const int*) const noexcept;
-
-			// fifo, peakIndexes
-			int getMinPeakIdx(const float*, const int*) const noexcept;
-
-			// fifo, peakIndexes, harm0Idx
-			void generatePeakInfos(const float*, const int*, float) noexcept;
-
-			// name, buf, thresholdDb, peakIndexes, isLog
-			void drawSpectrum(const String&, const float*, float,
-				const int*, bool);
 		};
 
 		void generateSine(Material&);
@@ -200,7 +116,7 @@ namespace dsp
 		void generateFibonacci(Material&);
 		void generatePrime(Material&);
 
-		using ActivesArray = std::array<bool, NumFilters>;
+		using ActivesArray = std::array<bool, NumPartials>;
 
 		struct DualMaterial
 		{

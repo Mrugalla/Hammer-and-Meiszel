@@ -9,7 +9,7 @@ namespace dsp
 	{
 		class ResonatorBank
 		{
-			using ResonatorArray = std::array<ResonatorStereo2, NumFilters>;
+			using ResonatorArray = std::array<ResonatorStereo2, NumPartials>;
 
 			struct Val
 			{
@@ -69,7 +69,3 @@ namespace dsp
 		};
 	}
 }
-
-/*
-
-*/

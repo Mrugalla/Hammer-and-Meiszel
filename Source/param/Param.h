@@ -64,9 +64,6 @@ namespace param
 		// modal:
 		ModalOct,
 		ModalSemi,
-		ModalKeytrack,
-		ModalKeytrackEnv,
-		ModalKeytrackBreite,
 		ModalBlend,
 		ModalBlendEnv,
 		ModalBlendBreite,

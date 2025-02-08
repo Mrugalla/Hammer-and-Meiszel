@@ -59,7 +59,7 @@ namespace dsp
 		void ResonatorBank::reset(int numChannels) noexcept
 		{
 			for(auto ch = 0; ch < numChannels; ++ch)
-				for (auto i = 0; i < NumFilters; ++i)
+				for (auto i = 0; i < NumPartials; ++i)
 					resonators[i].reset(ch);
 			for (auto& n : numFiltersBelowNyquist)
 				n = 0;
@@ -125,7 +125,7 @@ namespace dsp
 			if (damp == 0.)
 			{
 				const auto bw = calcBandwidthFc(reso, sampleRateInv);
-				for (auto i = 0; i < NumFilters; ++i)
+				for (auto i = 0; i < NumPartials; ++i)
 				{
 					auto& resonator = resonators[i];
 					resonator.setBandwidth(bw, ch);
@@ -134,10 +134,11 @@ namespace dsp
 				return;
 			}
 
-			for (auto i = 0; i < NumFilters; ++i)
+			static constexpr double NumPartialsInv = 1. / static_cast<double>(NumPartials);
+			for (auto i = 0; i < NumPartialsInv; ++i)
 			{
 				const auto iF = static_cast<double>(i);
-				const auto iR = iF * NumFiltersInv;
+				const auto iR = iF * NumPartialsInv;
 				const auto iX = .5 * math::cosApprox(iR * Pi) + .5;
 				const auto iM = 1. + damp * (iX - 1.);
 				const auto resoR = reso * iM;
@@ -152,28 +153,33 @@ namespace dsp
 		void ResonatorBank::updateFreqRatios(const MaterialData& material, int& nfbn, int ch) noexcept
 		{
 			nfbn = 0;
-			for (auto i = 0; i < NumFilters; ++i)
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
-				const auto pRatio = material.getRatio(i);
-				const auto pFreqHz = material.getFreqHz(i);
-				const auto pKeytrack = material.getKeytrack(i);
-
-				const auto freqKeytracked = freqHz * pRatio;
-				const auto freqFilter = pFreqHz + pKeytrack * (freqKeytracked - pFreqHz);
-				if (freqFilter < freqMax)
+				const auto pFc = material.getFc(i);
+				const auto fcKeytracked = freqHz * pFc;
+				if (fcKeytracked < freqMax)
 				{
-					const auto fc = math::freqHzToFc(freqFilter, sampleRate);
+					const auto fc = math::freqHzToFc(fcKeytracked, sampleRate);
+					auto& resonator = resonators[i];
+					resonator.setCutoffFc(fc, ch);
+					resonator.update(ch);
+					nfbn = i + 1;
+				}
+				else
+					break;
+			}
+			
+			for (auto i = NumPartialsKeytracked; i < NumPartials; ++i)
+			{
+				const auto pFc = material.getFc(i);
+				if (pFc < freqMax)
+				{
+					const auto fc = math::freqHzToFc(pFc, sampleRate);
 					auto& resonator = resonators[i];
 					resonator.setCutoffFc(fc, ch);
 					resonator.update(ch);
 				}
-				else
-				{
-					nfbn = i;
-					return;
-				}
 			}
-			nfbn = NumFilters;
 		}
 
 		void ResonatorBank::process(const MaterialDataStereo& materialStereo, double** samples,
@@ -250,12 +256,27 @@ namespace dsp
 				{
 					const auto dry = smpls[i];
 					auto wet = 0.;
+					
 					for (auto f = 0; f < nfbn; ++f)
 					{
 						auto& resonator = resonators[f];
-						const auto bpY = resonator(dry, ch) * material.getMag(f) * gain;
+						const auto mag = material.getMag(f);
+						const auto bpY = resonator(dry, ch) * mag;
 						wet += bpY;
 					}
+
+					for (auto f = NumPartialsKeytracked; f < NumPartials; ++f)
+					{
+						auto& resonator = resonators[f];
+						const auto mag = material.getMag(f);
+						if (mag != 0.)
+						{
+							const auto bpY = resonator(dry, ch) * mag;
+							wet += bpY;
+						}
+					}
+					wet *= gain;
+
 					if (wet * wet > 4.)
 					{
 						for (auto f = 0; f < nfbn; ++f)
@@ -269,6 +290,7 @@ namespace dsp
 						sleepyTimer = 0;
 						ringing = true;
 					}
+
 					smpls[i] = wet;
 				}
 			}

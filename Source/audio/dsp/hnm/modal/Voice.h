@@ -18,9 +18,9 @@ namespace dsp
 
 			struct Parameters
 			{
-				Parameters(double = 0., double = -0., double = 0., double = 0., double = 0., double = 0.,
-					double = 0., double = 0., double = 0., double = 0., double = 0.,
-					double = 0., double = 0., double = 0., double = 0., double = 0.,
+				Parameters(double = 0., double = 0., double = 0., double = 0., double = 0.,
+					double = 0., double = 0., double = 0., double = 0.,
+					double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.);
 
 				const Parameter& operator[](int i) const noexcept;
@@ -68,8 +68,14 @@ namespace dsp
 			ResonatorBank resonatorBank;
 			bool wantsMaterialUpdate;
 
-			void updatePartial(MaterialData&, const MaterialData&, const MaterialData&,
-				double, double, double, double, int) noexcept;
+			// dest, src0 ,src1, blend, partialIdx
+			void blendMags(MaterialData&, const MaterialData&, const MaterialData&, double, int) noexcept;
+
+			// dest, src0, src1, blend, partialIdx
+			void blendRatios(MaterialData&, const MaterialData&, const MaterialData&, double, int) noexcept;
+
+			// dest, sprezi, harmi, partialIdx
+			void updatePartial(MaterialData&, double, double, int) noexcept;
 
 			// dualMaterial, parameters, envGenMod, numChannels
 			void updateParameters(const DualMaterial&,

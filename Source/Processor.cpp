@@ -75,9 +75,7 @@ namespace audio
 		initFile.replaceWithText(init.toXmlString());
 
         for (auto& highpass : highpasses)
-        {
             highpass.setType(juce::dsp::FirstOrderTPTFilterType::highpass);
-        }
     }
 
     Processor::~Processor()

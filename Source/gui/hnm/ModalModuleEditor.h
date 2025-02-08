@@ -22,7 +22,7 @@ namespace gui
 		std::array<ModalMaterialEditor, 2> materialEditors;
 		ModalParamsEditor params;
 		DropDownMenu dropDownGens, dropDownMisc;
-		arch::RandSeed randSeedVertical, randSeedHorizontal;
+		arch::RandSeed randSeedVertical, randSeedHorizontal, randSeedFixedPartials;
 
 		std::function<void()> updateMaterialFunc;
 		int wannaUpdate;

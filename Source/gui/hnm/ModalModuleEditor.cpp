@@ -31,6 +31,7 @@ namespace gui
 		updateMaterialFunc([](){}),
 		randSeedVertical(u.getProps(), "randvrtcl"),
 		randSeedHorizontal(u.getProps(), "randhrzntl"),
+		randSeedFixedPartials(u.getProps(), "randfixd"),
 		wannaUpdate(-1)
 	{
 		layout.init
@@ -138,8 +139,6 @@ namespace gui
 			const auto e = buttonRatioFreqs.value > .5f;
 			buttonRatioFreqs.label.setText(e ? "Ratios" : "Freqs");
 			buttonRatioFreqs.repaint();
-			for (auto& mv : materialEditors)
-				mv.setShowRatios(e);
 		};
 	}
 
@@ -278,27 +277,24 @@ namespace gui
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
-					const auto numFilters = dsp::modal::NumFilters;
+					const auto numPartialsKeytracked = dsp::modal::NumPartials;
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peaks = material.peakInfos;
 
-					auto maxRatio = peaks[0].ratio;
-					for (auto i = 1; i < numFilters; ++i)
-						maxRatio = std::max(maxRatio, peaks[i].ratio);
+					auto maxRatio = peaks[0].fc;
+					for (auto i = 1; i < numPartialsKeytracked; ++i)
+						maxRatio = std::max(maxRatio, peaks[i].fc);
 
 					const auto peaksCopy = peaks;
-					for (auto i = 0; i < numFilters; ++i)
+					for (auto i = 0; i < numPartialsKeytracked; ++i)
 					{
-						const auto j = numFilters - i - 1;
+						const auto j = numPartialsKeytracked - i - 1;
 						const auto& peakJ = peaksCopy[j];
 						auto& peak = peaks[i];
-						peak.ratio = maxRatio - peakJ.ratio + 1.f;
+						peak.fc = maxRatio - peakJ.fc + 1.f;
 						peak.mag = peakJ.mag;
-						peak.freqHz = peakJ.freqHz;
 					}
-
-					material.updateKeytrackValues();
 					material.reportUpdate();
 				};
 				wannaUpdate = matIdx;
@@ -314,11 +310,11 @@ namespace gui
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
-					const auto numFilters = dsp::modal::NumFilters;
+					const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peaks = material.peakInfos;
-					for (auto i = 0; i < numFilters; ++i)
+					for (auto i = 0; i < numPartialsKeytracked; ++i)
 					{
 						auto& peak = peaks[i];
 						peak.mag = 1.f - peak.mag;
@@ -340,11 +336,11 @@ namespace gui
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
-						const auto numFilters = dsp::modal::NumFilters;
+						const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
 						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 						auto& material = modalFilter.getMaterial(matIdx);
 						auto& peaks = material.peakInfos;
-						for (auto i = 0; i < numFilters; ++i)
+						for (auto i = 0; i < numPartialsKeytracked; ++i)
 						{
 							auto& peak = peaks[i];
 							peak.mag = randSeedVertical();
@@ -353,7 +349,7 @@ namespace gui
 				};
 				wannaUpdate = matIdx;
 			},
-			"Randomize Magnitudes", "Randomizes all of the modal material's magnitudes."
+			"Randomize Magnitudes", "Randomizes all of the partials' magnitudes."
 		);
 
 		// Proc: Randomize Frequency Ratios
@@ -365,17 +361,15 @@ namespace gui
 
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
+				{
+					const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					auto& material = modalFilter.getMaterial(matIdx);
+					auto& peaks = material.peakInfos;
+					for (auto i = 1; i < numPartialsKeytracked; ++i)
 					{
-						const auto numFilters = dsp::modal::NumFilters;
-						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-						auto& material = modalFilter.getMaterial(matIdx);
-						auto& peaks = material.peakInfos;
-						for (auto i = 1; i < numFilters; ++i)
-						{
-							auto& peak = peaks[i];
-							peak.ratio = 1.f * randSeedHorizontal() * 32.f;
-							peak.freqHz = math::noteToFreqHz2(24.f + randSeedHorizontal() * 84.f);
-							peak.keytrack = randSeedHorizontal();
+						auto& peak = peaks[i];
+						peak.fc = 1.f * randSeedHorizontal() * 32.f;
 					}
 					material.updatePeakInfosFromGUI();
 				};
@@ -383,6 +377,33 @@ namespace gui
 				
 			},
 			"Randomize Ratios", "Randomizes all of the modal material's ratios."
+		);
+
+		// Proc: Randomize Fixed Frequency Partials
+		dropDownMisc.add
+		(
+			[&](const Mouse& mouse)
+			{
+				randSeedFixedPartials.updateSeed(mouse.mods.isLeftButtonDown());
+
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+				updateMaterialFunc = [&, matIdx]()
+				{
+					const auto numPartialsFixed = dsp::modal::NumPartialsFixed;
+					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+					auto& material = modalFilter.getMaterial(matIdx);
+					auto& peaks = material.peakInfos;
+					for (auto i = 0; i < numPartialsFixed; ++i)
+					{
+						auto& peak = peaks[i + dsp::modal::NumPartialsKeytracked];
+						peak.fc = math::noteToFreqHz2(24.f + randSeedHorizontal() * 84.f);
+					}
+					material.updatePeakInfosFromGUI();
+				};
+				wannaUpdate = matIdx;
+
+			},
+			"Randomize Fixed Frequencies", "Randomizes all of the modal material's fixed frequencies."
 		);
 
 		// Record Input
@@ -409,19 +430,19 @@ namespace gui
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peakInfos = material.peakInfos;
-					const auto numFilters = dsp::modal::NumFilters;
+					const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
 					while (true)
 					{
 						Point duplicate;
 						bool duplicateFound = false;
-						for (auto i = 0; i < numFilters; ++i)
+						for (auto i = 0; i < numPartialsKeytracked; ++i)
 						{
-							auto r0 = peakInfos[i].ratio;
-							for (auto j = i + 1; j < numFilters; ++j)
+							auto r0 = peakInfos[i].fc;
+							for (auto j = i + 1; j < numPartialsKeytracked; ++j)
 							{
 								if (i != j)
 								{
-									const auto r1 = peakInfos[j].ratio;
+									const auto r1 = peakInfos[j].fc;
 									const auto dif = std::abs(r1 - r0);
 									const auto threshold = 0.01f;
 									if (dif < threshold)
@@ -440,16 +461,16 @@ namespace gui
 						const auto dIdx1 = duplicate.y;
 						const auto d1Mag = peakInfos[dIdx1].mag;
 
-						for (auto i = dIdx1; i < numFilters - 1; ++i)
+						for (auto i = dIdx1; i < numPartialsKeytracked - 1; ++i)
 						{
 							peakInfos[i].mag = peakInfos[i + 1].mag;
-							peakInfos[i].ratio = peakInfos[i + 1].ratio;
+							peakInfos[i].fc = peakInfos[i + 1].fc;
 						}
 
-						peakInfos[numFilters - 1].mag = d1Mag;
+						peakInfos[numPartialsKeytracked - 1].mag = d1Mag;
 
-						const auto maxRatio = peakInfos[numFilters - 1].ratio;
-						peakInfos[numFilters - 1].ratio = maxRatio + 1.f;
+						const auto maxRatio = peakInfos[numPartialsKeytracked - 1].fc;
+						peakInfos[numPartialsKeytracked - 1].fc = maxRatio + 1.f;
 					}
 					material.reportUpdate();
 				};
@@ -476,9 +497,6 @@ namespace gui
 		buttonRandomizer.add(PID::ModalHarmonie);
 		buttonRandomizer.add(PID::ModalHarmonieEnv);
 		buttonRandomizer.add(PID::ModalHarmonieBreite);
-		buttonRandomizer.add(PID::ModalKeytrack);
-		buttonRandomizer.add(PID::ModalKeytrackEnv);
-		buttonRandomizer.add(PID::ModalKeytrackBreite);
 		buttonRandomizer.add(PID::ModalKraft);
 		buttonRandomizer.add(PID::ModalKraftEnv);
 		buttonRandomizer.add(PID::ModalKraftBreite);

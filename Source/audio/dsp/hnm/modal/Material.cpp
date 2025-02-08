@@ -7,6 +7,452 @@ namespace dsp
 {
 	namespace modal
 	{
+		// MATERIALDATA
+
+		MaterialData::MaterialData() :
+			partials()
+		{}
+
+		Partial& MaterialData::operator[](int i) noexcept
+		{
+			return partials[i];
+		}
+
+		const Partial& MaterialData::operator[](int i) const noexcept
+		{
+			return partials[i];
+		}
+
+		double MaterialData::getMag(int i) const noexcept
+		{
+			return partials[i].mag;
+		}
+
+		double MaterialData::getFc(int i) const noexcept
+		{
+			return partials[i].fc;
+		}
+
+		void MaterialData::copy(const MaterialData& m) noexcept
+		{
+			for (auto i = 0; i < NumPartials; ++i)
+			{
+				partials[i].mag = m.partials[i].mag;
+				partials[i].fc = m.partials[i].fc;
+			}
+		}
+
+		MaterialData::Array& MaterialData::data() noexcept
+		{
+			return partials;
+		}
+
+		// MATERIALDATASTEREO
+
+		MaterialDataStereo::MaterialDataStereo() :
+			data()
+		{}
+
+		MaterialData& MaterialDataStereo::operator[](int ch) noexcept
+		{
+			return data[ch];
+		}
+
+		const MaterialData& MaterialDataStereo::operator[](int ch) const noexcept
+		{
+			return data[ch];
+		}
+
+		Partial& MaterialDataStereo::operator()(int ch, int i) noexcept
+		{
+			return data[ch][i];
+		}
+
+		const Partial& MaterialDataStereo::operator()(int ch, int i) const noexcept
+		{
+			return data[ch][i];
+		}
+
+		double MaterialDataStereo::getMag(int ch, int i) const noexcept
+		{
+			return data[ch][i].mag;
+		}
+
+		double MaterialDataStereo::getFc(int ch, int i) const noexcept
+		{
+			return data[ch][i].fc;
+		}
+
+		void MaterialDataStereo::copy(const MaterialDataStereo& m, int numChannels) noexcept
+		{
+			data[0].copy(m.data[0]);
+			if (numChannels == 2)
+				data[1].copy(m.data[1]);
+		}
+		
+		// MATERIAL (FREE FUNCTIONS OUTTAKES)
+
+		void divide(float* dest, const float* a, const float* b, float mixA) noexcept
+		{
+			for (auto i = 0; i < Material::FFTSize; ++i)
+				if (b[i] != 0.f)
+				{
+					const auto ab = a[i] / b[i];
+					dest[i] = ab + mixA * (a[i] - ab);
+				}
+				else
+					dest[i] = mixA * a[i];
+		}
+
+		void applyNegativeDelay(float* bins, int offset) noexcept
+		{
+			for (auto s = 0; s < Material::FFTSize; ++s)
+				bins[s] = bins[(s + offset) % Material::FFTSize];
+		}
+
+		void applyLowpassFIR(float* dest, const float* src,
+			float cutoff, float bw)
+		{
+			auto irPtr = new ImpulseResponse<float, Material::FFTSize>();
+			auto& ir = *irPtr;
+			ir.makeLowpass(44100.f, cutoff, bw, false);
+			const auto lpLen = Material::FFTSize + ir.getLatency();
+
+			std::vector<int> wHead;
+			wHead.reserve(lpLen);
+			for (auto i = 0; i < lpLen; ++i)
+				wHead.emplace_back(i);
+
+			auto convolverPtr = new dsp::Convolver<float, Material::FFTSize>(ir);
+			auto& convolver = *convolverPtr;
+			for (auto i = 0; i < lpLen; ++i)
+				dest[i] = convolver.processSample(src[i], convolver.ringBuffer[0].data(), wHead[i]);
+			applyNegativeDelay(dest, ir.getLatency());
+
+			delete irPtr;
+			delete convolverPtr;
+		}
+
+		void applyLowpassIIR(float* dest, const float* src,
+			float cutoff, float reso, int slope)
+		{
+			moog::BiquadFilter lp;
+			lp.setType(moog::BiquadFilter::Type::LP);
+			lp.setCutoffFc(cutoff / 44100.f);
+			lp.setResonance(reso);
+			lp.update();
+
+			for (auto i = Material::FFTSize - 1; i != 0; --i)
+				dest[i] = static_cast<float>(lp(static_cast<double>(src[i])));
+			for (auto i = 0; i < Material::FFTSize; ++i)
+				dest[i] = static_cast<float>(lp(static_cast<double>(dest[i])));
+
+			for (auto i = 1; i < slope; ++i)
+			{
+				for (auto j = Material::FFTSize - 1; j != 0; --j)
+					dest[j] = static_cast<float>(lp(static_cast<double>(dest[j])));
+				for (auto j = 0; j < Material::FFTSize; ++j)
+					dest[j] = static_cast<float>(lp(static_cast<double>(dest[j])));
+			}
+		}
+
+		void updateKeytrackValues(MaterialData& peakInfos) noexcept
+		{
+			for (auto i = 0; i < NumPartials; ++i)
+			{
+				const auto fc = peakInfos[i].fc;
+				auto keytrack = (1. + std::cos(Tau * fc)) * .5;
+				const auto ratioFrac = fc - std::floor(fc);
+				if (ratioFrac < .03 || ratioFrac > .97)
+					keytrack = std::round(keytrack);
+				//peakInfos[i].keytrack = keytrack;
+			}
+		}
+
+		int getMinMagnitudeIdx(const float* bins, int lowerLimitIdx, int upperLimitIdx) noexcept
+		{
+			auto idx = lowerLimitIdx;
+			auto min = bins[lowerLimitIdx];
+			for (auto b = lowerLimitIdx; b < upperLimitIdx; ++b)
+				if (min > bins[b])
+				{
+					min = bins[b];
+					idx = b;
+				}
+			return idx;
+		}
+
+		float getHarm0Idx(const float* fifo, const int* peakIndexes) noexcept
+		{
+			auto peakIdx = peakIndexes[0];
+			auto peakMag = fifo[peakIdx];
+			auto harm0Mag = peakMag;
+			auto harm0Idx = static_cast<float>(peakIdx);
+			for (auto i = 1; i < NumPartials; ++i)
+			{
+				peakIdx = peakIndexes[i];
+				peakMag = fifo[peakIdx];
+				if (harm0Mag < peakMag)
+				{
+					harm0Mag = peakMag;
+					harm0Idx = static_cast<float>(peakIdx);
+				}
+			}
+			return harm0Idx;
+		}
+
+		int getMinPeakIdx(const float* fifo, const int* peakIndexes) noexcept
+		{
+			auto j = 0;
+			auto peakIdx = peakIndexes[0];
+			auto peakMag = fifo[peakIdx];
+			for (auto i = 1; i < NumPartials; ++i)
+			{
+				const auto peakIdx1 = peakIndexes[i];
+				const auto peakMag1 = fifo[peakIdx1];
+				if (peakMag1 < peakMag)
+				{
+					peakMag = peakMag1;
+					peakIdx = peakIdx1;
+					j = i;
+				}
+			}
+			return j;
+		}
+
+		void drawSpectrum(const String& text, const float* buf, float thresholdDb,
+			const int* peakIndexes, float sampleRate, bool isLog)
+		{
+			auto numFilters = 0;
+			if (peakIndexes != nullptr)
+				for (auto i = 0; i < NumPartials; ++i)
+					numFilters += peakIndexes[i] != -1 ? 1 : 0;
+
+			makeSpectrumImage(text, buf, Material::FFTSize, thresholdDb - 6.f, false,
+				peakIndexes, numFilters, true, isLog, sampleRate);
+		}
+
+		// MATERIAL (FREE FUNCTIONS)
+
+		void applyWindow(float* fifo, const Material::MaterialBuffer& buffer) noexcept
+		{
+			const auto windowFunc = [&](float x)
+			{
+				auto w = .5f - .5f * std::cos(TauF * x);
+				return math::tanhApprox(2.f * w);
+			};
+
+			const auto fftSizeInv = 1.f / static_cast<float>(Material::FFTSize);
+
+			for (auto i = 0; i < Material::FFTSize; ++i)
+			{
+				const auto x = static_cast<float>(i) * fftSizeInv;
+				const auto wndw = windowFunc(x);
+				const auto smpl = buffer[i];
+				fifo[i] = smpl * wndw;
+			}
+		}
+
+		void removeDCOffset(float* fifo) noexcept
+		{
+			for (auto i = 0; i < 3; ++i)
+			{
+				moog::BiquadFilter hp;
+				hp.setType(moog::BiquadFilter::Type::HP);
+				hp.setCutoffFc(20. / 44100.);
+				hp.setResonance(.2);
+				hp.update();
+				for (auto j = 0; j < Material::FFTSize; ++j)
+					fifo[j] = static_cast<float>(hp(static_cast<double>(fifo[j])));
+			}
+		}
+
+		void generateMagnitudes(float* bins) noexcept
+		{
+			for (auto s = 0; s < Material::FFTSize; ++s)
+				bins[s] = std::abs(bins[s]);
+		}
+
+		void normalize(float* bins) noexcept
+		{
+			auto max = 0.f;
+			for (auto s = 0; s < Material::FFTSize; ++s)
+				if (max < bins[s])
+					max = bins[s];
+			const auto gain = 1.f / max;
+			for (auto s = 0; s < Material::FFTSize; ++s)
+				bins[s] *= gain;
+		}
+
+		void applyFFT(float* fifo, const Material::MaterialBuffer& buffer)
+		{
+			applyWindow(fifo, buffer);
+			removeDCOffset(fifo);
+			juce::dsp::FFT fft(Material::FFTOrder);
+			fft.performRealOnlyForwardTransform(fifo, true);
+			generateMagnitudes(fifo);
+			normalize(fifo);
+		}
+
+		int getMaxMagnitudeIdx(const float* bins, int lowerLimitIdx, int upperLimitIdx) noexcept
+		{
+			auto idx = lowerLimitIdx;
+			auto max = bins[lowerLimitIdx];
+			for (auto b = lowerLimitIdx; b < upperLimitIdx; ++b)
+			{
+				const auto bin = bins[b];
+				if (max < bin)
+				{
+					max = bin;
+					idx = b;
+				}
+			}
+			return idx;
+		}
+
+		void applyAdaptiveThreshold(std::vector<Material::PeakIndexInfo>& peakGroups, const float* binsNorm,
+			float targetThresholdDb, int minBinIdx)
+		{
+			const auto targetThreshold = math::dbToAmp(targetThresholdDb);
+			peakGroups.clear();
+
+			for (auto i = minBinIdx; i < Material::FFTSize; ++i)
+				if (binsNorm[i] > targetThreshold)
+				{
+					auto& peakInfo = peakGroups.emplace_back();
+					peakInfo.indexes.push_back(i);
+
+					const auto numNeighbors = 12;
+					auto j = i;
+					bool stillPeaking = false;
+					do
+					{
+						stillPeaking = false;
+
+						for (auto n = 0; n < numNeighbors; ++n)
+						{
+							++j;
+							if (j >= Material::FFTSize)
+								return;
+							if (binsNorm[j] > targetThreshold)
+							{
+								peakInfo.indexes.push_back(j);
+								stillPeaking = true;
+								n = numNeighbors;
+							}
+						}
+					} while (stillPeaking);
+
+					i = j + 1;
+				}
+		}
+
+		float generatePeakGroups(std::vector<Material::PeakIndexInfo>& peakGroups,
+			const float* binsNorm, int minBinIdx)
+		{
+			auto targetThresholdDb = 0.f;
+			do
+			{
+				targetThresholdDb -= 2.f;
+				applyAdaptiveThreshold(peakGroups, binsNorm, targetThresholdDb, minBinIdx);
+			} while (peakGroups.size() < NumPartials && targetThresholdDb > -60.f);
+
+			if (peakGroups.size() < NumPartials)
+			{
+				Material::PeakIndexInfo dummy;
+				dummy.indexes.push_back(-1);
+				peakGroups.resize(NumPartials, dummy);
+			}
+
+			return targetThresholdDb;
+		}
+
+		void generatePeakIndexes(std::vector<int>& peakIndexes, const float* bins,
+			const std::vector<Material::PeakIndexInfo>& peakIdxInfos)
+		{
+			for (auto i = 0; i < NumPartials; ++i)
+			{
+				auto& peakIndexInfo = peakIdxInfos[i];
+				if (peakIndexInfo.indexes.front() != -1)
+					peakIndexes[i] = getMaxMagnitudeIdx(bins, peakIndexInfo.indexes.front(), peakIndexInfo.indexes.back() + 1);
+				else
+					peakIndexes[i] = -1;
+			}
+
+			std::sort(peakIndexes.begin(), peakIndexes.end());
+		}
+
+		void sortByKeytrackDescending(MaterialData& peakInfos) noexcept
+		{
+			auto& partials = peakInfos.data();
+			std::sort(partials.begin(), partials.end(), [](const Partial& a, const Partial& b)
+			{
+				const auto aFc = a.fc;
+				const auto aKeytrack = (1. + std::cos(Tau * aFc)) * .5;
+
+				const auto bFc = b.fc;
+				const auto bKeytrack = (1. + std::cos(Tau * bFc)) * .5;
+
+				return aKeytrack > bKeytrack;
+			});
+		}
+
+		void generatePeakInfos(MaterialData& peakInfos, const float* bins,
+			const int* peakIndexes, float harm0Idx, float sampleRate) noexcept
+		{
+			static constexpr auto FFTSizeInv = 1.f / static_cast<float>(Material::FFTSize);
+
+			for (auto i = 0; i < NumPartials; ++i)
+			{
+				const auto peakIdx = peakIndexes[i];
+				if (peakIdx != -1)
+				{
+					const auto peakIdxD = static_cast<double>(peakIdx);
+					const auto fc = peakIdxD / static_cast<double>(harm0Idx);
+					const auto mag = static_cast<double>(bins[peakIdx]);
+					peakInfos[i].fc = fc;
+					peakInfos[i].mag = mag;
+				}
+				else
+				{
+					peakInfos[i].fc = 1.;
+					peakInfos[i].mag = 0.;
+				}
+			}
+
+			sortByKeytrackDescending(peakInfos);
+
+			for (auto i = NumPartialsKeytracked; i < NumPartials; ++i)
+			{
+				const auto peakIdx = peakIndexes[i];
+				if (peakIdx != -1)
+				{
+					const auto peakIdxD = static_cast<double>(peakIdx);
+					auto& peakInfo = peakInfos[i];
+					peakInfo.fc = .5 * peakIdxD * static_cast<double>(FFTSizeInv * sampleRate);
+				}
+			}
+		}
+
+		void sortRatios(MaterialData& peakInfos) noexcept
+		{
+			for (int i = 0; i < NumPartialsKeytracked; ++i)
+				for (int j = i + 1; j < NumPartialsKeytracked; ++j)
+					if (peakInfos[i].fc > peakInfos[j].fc)
+						std::swap(peakInfos[i], peakInfos[j]);
+		}
+
+		void normalize(MaterialData& peakInfos) noexcept
+		{
+			auto maxMag = peakInfos[0].mag;
+			for (auto i = 1; i < NumPartials; ++i)
+				if (maxMag < peakInfos[i].mag)
+					maxMag = peakInfos[i].mag;
+			const auto gain = 1.f / maxMag;
+			for (auto i = 0; i < NumPartials; ++i)
+				peakInfos[i].mag *= gain;
+		}
+
 		// MATERIAL
 
 		Material::Material() :
@@ -19,29 +465,50 @@ namespace dsp
 		{
 		}
 
+		void Material::savePatch(arch::State& state, String&& matStr) const
+		{
+			for (auto j = 0; j < NumPartials; ++j)
+			{
+				const auto& peakInfo = peakInfos[j];
+				const auto peakStr = matStr + "pk" + juce::String(j);
+				state.set(peakStr + "mg", peakInfo.mag);
+				state.set(peakStr + "fc", peakInfo.fc);
+			}
+		}
+
+		void Material::loadPatch(const arch::State& state, String&& matStr)
+		{
+			for (auto j = 0; j < NumPartials; ++j)
+			{
+				auto& peakInfo = peakInfos[j];
+				const auto peakStr = matStr + "pk" + juce::String(j);
+				const auto magVal = state.get(peakStr + "mg");
+				if (magVal != nullptr)
+					peakInfo.mag = static_cast<double>(*magVal);
+				const auto fcVal = state.get(peakStr + "fc");
+				if (fcVal != nullptr)
+					peakInfo.fc = static_cast<double>(*fcVal);
+			}
+			updatePeakInfosFromGUI();
+		}
+
 		void Material::load()
 		{
 			if (math::bufferSilent(buffer.data(), FFTSize))
 				return;
 			std::vector<float> fifo;
-			fifo.resize(FFTSize2, 0.f);
+			fifo.resize(FFTSize * 2, 0.f);
 			auto bins = fifo.data();
-			applyFFT(bins);
+			applyFFT(bins, buffer);
 			std::vector<PeakIndexInfo> peakGroups;
-			const auto harm0Idx = getMaxMagnitudeIdx(bins, 0, FFTSizeHalf);
+			const auto harm0Idx = getMaxMagnitudeIdx(bins, 0, FFTSize / 2);
 			generatePeakGroups(peakGroups, bins, harm0Idx);
 			std::vector<int> peakIndexes;
-			peakIndexes.resize(NumFilters);
+			peakIndexes.resize(NumPartials);
 			generatePeakIndexes(peakIndexes, bins, peakGroups);
-			generatePeakInfos(bins, peakIndexes.data(), static_cast<float>(harm0Idx));
-			sortPeaks();
-			auto maxMag = peakInfos[0].mag;
-			for (auto i = 1; i < NumFilters; ++i)
-				if (maxMag < peakInfos[i].mag)
-					maxMag = peakInfos[i].mag;
-			const auto gain = 1.f / maxMag;
-			for (auto i = 0; i < NumFilters; ++i)
-				peakInfos[i].mag *= gain;
+			generatePeakInfos(peakInfos, bins, peakIndexes.data(), static_cast<float>(harm0Idx), sampleRate);
+			sortRatios(peakInfos);
+			normalize(peakInfos);
 			reportUpdate();
 		}
 
@@ -52,41 +519,14 @@ namespace dsp
 
 		void Material::updatePeakInfosFromGUI() noexcept
 		{
-			auto magMax = peakInfos[0].mag;
-			for (int i = 1; i < NumFilters; ++i)
-				magMax = std::max(magMax, peakInfos[i].mag);
-			if (magMax != 1.f)
-			{
-				const auto g = 1.f / magMax;
-				for (auto p = 0; p < NumFilters; ++p)
-					peakInfos[p].mag *= g;
-			}
-
-			auto ktMax = peakInfos[0].keytrack;
-			for (int i = 1; i < NumFilters; ++i)
-				ktMax = std::max(ktMax, peakInfos[i].keytrack);
-			if (ktMax != 1.f)
-			{
-				const auto g = 1.f / ktMax;
-				for (auto p = 0; p < NumFilters; ++p)
-					peakInfos[p].keytrack *= g;
-			}
-
+			normalize(peakInfos);
 			reportUpdate();
 		}
 
 		void Material::reportEndGesture() noexcept
 		{
-			sortPeaks();
-			reportUpdate();
-		}
-
-		void Material::sortPeaks() noexcept
-		{
-			for (int i = 0; i < NumFilters - 1; ++i)
-				for (int j = i + 1; j < NumFilters; ++j)
-					if (peakInfos[i].ratio > peakInfos[j].ratio)
-						std::swap(peakInfos[i], peakInfos[j]);
+			sortRatios(peakInfos);
+			updatePeakInfosFromGUI();
 		}
 
 		void Material::load(const char* data, int size)
@@ -118,485 +558,100 @@ namespace dsp
 			SIMD::multiply(buffer.data(), gain, len);
 		}
 
-		void Material::applyFFT(float* fifo)
-		{
-			const auto windowFunc = [&](float x)
-			{
-				auto w = .5f - .5f * std::cos(TauF * x);
-				return math::tanhApprox(2.f * w);
-			};
-			for (auto i = 0; i < FFTSize; ++i)
-			{
-				const auto x = static_cast<float>(i) * FFTSizeInv;
-				const auto wndw = windowFunc(x);
-				const auto smpl = buffer[i];
-				fifo[i] = smpl * wndw;
-			}
-			for(auto i = 0; i < 3; ++i)
-			{ // dc offset filter!
-				moog::BiquadFilter hp;
-				hp.setType(moog::BiquadFilter::Type::HP);
-				hp.setCutoffFc(20. / 44100.);
-				hp.setResonance(.2);
-				hp.update();
-				for (auto j = 0; j < FFTSize; ++j)
-					fifo[j] = static_cast<float>(hp(static_cast<double>(fifo[j])));
-			}
-			FFT fft(FFTOrder);
-			fft.performRealOnlyForwardTransform(fifo, true);
-			generateMagnitudes(fifo);
-			normalize(fifo);
-		}
-
-		void Material::generateMagnitudes(float* bins) noexcept
-		{
-			for (auto s = 0; s < FFTSize; ++s)
-				bins[s] = std::abs(bins[s]);
-		}
-
-		void Material::normalize(float* bins) noexcept
-		{
-			auto max = 0.f;
-			for (auto s = 0; s < FFTSize; ++s)
-				if (max < bins[s])
-					max = bins[s];
-			const auto gain = 1.f / max;
-			for (auto s = 0; s < FFTSize; ++s)
-				bins[s] *= gain;
-		}
-
-		void Material::applyLowpassFIR(float* dest, const float* src,
-			float cutoff, float bw)
-		{
-			auto irPtr = new ImpulseResponse<float, FFTSize>();
-			auto& ir = *irPtr;
-			ir.makeLowpass(44100.f, cutoff, bw, false);
-			const auto lpLen = FFTSize + ir.getLatency();
-
-			std::vector<int> wHead;
-			wHead.reserve(lpLen);
-			for (auto i = 0; i < lpLen; ++i)
-				wHead.emplace_back(i);
-
-			auto convolverPtr = new dsp::Convolver<float, FFTSize>(ir);
-			auto& convolver = *convolverPtr;
-			for (auto i = 0; i < lpLen; ++i)
-				dest[i] = convolver.processSample(src[i], convolver.ringBuffer[0].data(), wHead[i]);
-			applyNegativeDelay(dest, ir.getLatency());
-
-			delete irPtr;
-			delete convolverPtr;
-		}
-
-		void Material::applyLowpassIIR(float* dest, const float* src,
-			float cutoff, float reso, int slope)
-		{
-			moog::BiquadFilter lp;
-			lp.setType(moog::BiquadFilter::Type::LP);
-			lp.setCutoffFc(cutoff / 44100.f);
-			lp.setResonance(reso);
-			lp.update();
-
-			for (auto i = FFTSize - 1; i != 0; --i)
-				dest[i] = static_cast<float>(lp(static_cast<double>(src[i])));
-			for (auto i = 0; i < FFTSize; ++i)
-				dest[i] = static_cast<float>(lp(static_cast<double>(dest[i])));
-
-			for (auto i = 1; i < slope; ++i)
-			{
-				for (auto j = FFTSize - 1; j != 0; --j)
-					dest[j] = static_cast<float>(lp(static_cast<double>(dest[j])));
-				for (auto j = 0; j < FFTSize; ++j)
-					dest[j] = static_cast<float>(lp(static_cast<double>(dest[j])));
-			}
-		}
-
-		void Material::applyNegativeDelay(float* bins, int offset) noexcept
-		{
-			for (auto s = 0; s < FFTSize; ++s)
-				bins[s] = bins[(s + offset) % FFTSize];
-		}
-
-		void Material::divide(float* dest, const float* a, const float* b, float mixA) noexcept
-		{
-			for (auto i = 0; i < FFTSize; ++i)
-				if (b[i] != 0.f)
-				{
-					const auto ab = a[i] / b[i];
-					dest[i] = ab + mixA * (a[i] - ab);
-				}
-				else
-					dest[i] = mixA * a[i];
-		}
-
-		int Material::getMaxMagnitudeIdx(const float* bins, int lowerLimitIdx, int upperLimitIdx) const noexcept
-		{
-			auto idx = lowerLimitIdx;
-			auto max = bins[lowerLimitIdx];
-			for (auto b = lowerLimitIdx; b < upperLimitIdx; ++b)
-			{
-				const auto bin = bins[b];
-				if (max < bin)
-				{
-					max = bin;
-					idx = b;
-				}
-			}
-				
-			return idx;
-		}
-
-		int Material::getMinMagnitudeIdx(const float* bins, int lowerLimitIdx, int upperLimitIdx) const noexcept
-		{
-			auto idx = lowerLimitIdx;
-			auto min = bins[lowerLimitIdx];
-			for (auto b = lowerLimitIdx; b < upperLimitIdx; ++b)
-				if (min > bins[b])
-				{
-					min = bins[b];
-					idx = b;
-				}
-			return idx;
-		}
-
-		float Material::generatePeakGroups(std::vector<PeakIndexInfo>& peakGroups,
-			const float* binsNorm, int minBinIdx)
-		{
-			auto targetThresholdDb = 0.f;
-			do
-			{
-				targetThresholdDb -= 2.f;
-				applyAdaptiveThreshold(peakGroups, binsNorm, targetThresholdDb, minBinIdx);
-			} while (peakGroups.size() < NumFilters && targetThresholdDb > -60.f);
-
-			if (peakGroups.size() < NumFilters)
-			{
-				PeakIndexInfo dummy;
-				dummy.indexes.push_back(-1);
-				peakGroups.resize(NumFilters, dummy);
-			}
-
-			return targetThresholdDb;
-		}
-
-		void Material::applyAdaptiveThreshold(std::vector<PeakIndexInfo>& peakGroups, const float* binsNorm,
-			float targetThresholdDb, int minBinIdx)
-		{
-			const auto targetThreshold = math::dbToAmp(targetThresholdDb);
-			peakGroups.clear();
-
-			for (auto i = minBinIdx; i < FFTSize; ++i)
-				if (binsNorm[i] > targetThreshold)
-				{
-					auto& peakInfo = peakGroups.emplace_back();
-					peakInfo.indexes.push_back(i);
-
-					const auto numNeighbors = 12;
-					auto j = i;
-					bool stillPeaking = false;
-					do
-					{
-						stillPeaking = false;
-
-						for (auto n = 0; n < numNeighbors; ++n)
-						{
-							++j;
-							if (j >= FFTSize)
-								return;
-							if (binsNorm[j] > targetThreshold)
-							{
-								peakInfo.indexes.push_back(j);
-								stillPeaking = true;
-								n = numNeighbors;
-							}
-						}
-					} while (stillPeaking);
-
-					i = j + 1;
-				}
-		}
-
-		void Material::generatePeakIndexes(std::vector<int>& peakIndexes, const float* bins,
-			const std::vector<PeakIndexInfo>& peakIdxInfos)
-		{
-			for (auto i = 0; i < NumFilters; ++i)
-			{
-				auto& peakIndexInfo = peakIdxInfos[i];
-				if (peakIndexInfo.indexes.front() != -1)
-					peakIndexes[i] = getMaxMagnitudeIdx(bins, peakIndexInfo.indexes.front(), peakIndexInfo.indexes.back() + 1);
-				else
-					peakIndexes[i] = -1;
-			}
-
-			std::sort(peakIndexes.begin(), peakIndexes.end());
-		}
-
-		float Material::getHarm0Idx(const float* fifo, const int* peakIndexes) const noexcept
-		{
-			auto peakIdx = peakIndexes[0];
-			auto peakMag = fifo[peakIdx];
-			auto harm0Mag = peakMag;
-			auto harm0Idx = static_cast<float>(peakIdx);
-			for (auto i = 1; i < NumFilters; ++i)
-			{
-				peakIdx = peakIndexes[i];
-				peakMag = fifo[peakIdx];
-				if (harm0Mag < peakMag)
-				{
-					harm0Mag = peakMag;
-					harm0Idx = static_cast<float>(peakIdx);
-				}
-			}
-			return harm0Idx;
-		}
-
-		int Material::getMinPeakIdx(const float* fifo, const int* peakIndexes) const noexcept
-		{
-			auto j = 0;
-			auto peakIdx = peakIndexes[0];
-			auto peakMag = fifo[peakIdx];
-			for (auto i = 1; i < NumFilters; ++i)
-			{
-				const auto peakIdx1 = peakIndexes[i];
-				const auto peakMag1 = fifo[peakIdx1];
-				if (peakMag1 < peakMag)
-				{
-					peakMag = peakMag1;
-					peakIdx = peakIdx1;
-					j = i;
-				}
-			}
-			return j;
-		}
-
-		void Material::updateKeytrackValues() noexcept
-		{
-			for (auto i = 0; i < NumFilters; ++i)
-			{
-				const auto ratio = peakInfos[i].ratio;
-				auto keytrack = (1. + std::cos(Tau * ratio)) * .5;
-				const auto ratioFrac = ratio - std::floor(ratio);
-				if (ratioFrac < .03 || ratioFrac > .97)
-					keytrack = std::round(keytrack);
-				peakInfos[i].keytrack = keytrack;
-			}
-		}
-
-		void Material::generatePeakInfos(const float* bins, const int* peakIndexes, float harm0Idx) noexcept
-		{
-			for (auto i = 0; i < NumFilters; ++i)
-			{
-				const auto peakIdx = peakIndexes[i];
-				if (peakIdx != -1)
-				{
-					const auto peakIdxD = static_cast<double>(peakIdx);
-					const auto ratio = peakIdxD / static_cast<double>(harm0Idx);
-					const auto mag = static_cast<double>(bins[peakIdx]);
-					peakInfos[i].ratio = ratio;
-					peakInfos[i].mag = mag;
-					peakInfos[i].freqHz = .5 * peakIdxD * static_cast<double>(FFTSizeInv * sampleRate);
-				}
-				else
-				{
-					peakInfos[i].ratio = 1.;
-					peakInfos[i].mag = 0.;
-					peakInfos[i].freqHz = 0.;
-				}
-			}
-			updateKeytrackValues();
-		}
-
-		void Material::drawSpectrum(const String& text, const float* buf, float thresholdDb,
-			const int* peakIndexes, bool isLog)
-		{
-			auto numFilters = 0;
-			if (peakIndexes != nullptr)
-				for (auto i = 0; i < NumFilters; ++i)
-					numFilters += peakIndexes[i] != -1 ? 1 : 0;
-
-			makeSpectrumImage(text, buf, FFTSize, thresholdDb - 6.f, false,
-				peakIndexes, numFilters, true, isLog, sampleRate);
-		}
-
-		// MATERIALDATA
-		
-		MaterialData::MaterialData() :
-			data()
-		{}
-
-		PeakInfo& MaterialData::operator[](int i) noexcept
-		{
-			return data[i];
-		}
-
-		const PeakInfo& MaterialData::operator[](int i) const noexcept
-		{
-			return data[i];
-		}
-
-		double MaterialData::getMag(int i) const noexcept
-		{
-			return data[i].mag;
-		}
-
-		double MaterialData::getRatio(int i) const noexcept
-		{
-			return data[i].ratio;
-		}
-
-		double MaterialData::getFreqHz(int i) const noexcept
-		{
-			return data[i].freqHz;
-		}
-
-		double MaterialData::getKeytrack(int i) const noexcept
-		{
-			return data[i].keytrack;
-		}
-
-		void MaterialData::copy(const MaterialData& m) noexcept
-		{
-			for (auto i = 0; i < NumFilters; ++i)
-			{
-				data[i].mag = m.data[i].mag;
-				data[i].ratio = m.data[i].ratio;
-			}
-		}
-
-		// MATERIALDATASTEREO
-		 
-		MaterialDataStereo::MaterialDataStereo() :
-			data()
-		{}
-
-		MaterialData& MaterialDataStereo::operator[](int ch) noexcept
-		{
-			return data[ch];
-		}
-
-		const MaterialData& MaterialDataStereo::operator[](int ch) const noexcept
-		{
-			return data[ch];
-		}
-
-		PeakInfo& MaterialDataStereo::operator()(int ch, int i) noexcept
-		{
-			return data[ch][i];
-		}
-
-		const PeakInfo& MaterialDataStereo::operator()(int ch, int i) const noexcept
-		{
-			return data[ch][i];
-		}
-
-		double MaterialDataStereo::getMag(int ch, int i) const noexcept
-		{
-			return data[ch][i].mag;
-		}
-
-		double MaterialDataStereo::getRatio(int ch, int i) const noexcept
-		{
-			return data[ch][i].ratio;
-		}
-
-		void MaterialDataStereo::copy(const MaterialDataStereo& m, int numChannels) noexcept
-		{
-			data[0].copy(m.data[0]);
-			if (numChannels == 2)
-				data[1].copy(m.data[1]);
-		}
-
 		// GENERATE
+
+		void generateFixedFrequenciesDefault(Material& material)
+		{
+			auto& peaks = material.peakInfos;
+			for (auto i = NumPartialsKeytracked; i < NumPartials; ++i)
+			{
+				auto& peak = peaks[i];
+				peak.mag = 0.;
+				peak.fc = math::noteToFreqHz2(static_cast<double>(i * 8));
+			}
+			material.reportUpdate();
+		}
 
 		void generateSine(Material& material)
 		{
-			material.sampleRate = 44100.f;
 			auto& peaks = material.peakInfos;
-			for (auto i = 0; i < NumFilters; ++i)
+			peaks[0].mag = 1.;
+			peaks[0].fc = 1.;
+			for (auto i = 1; i < NumPartialsKeytracked; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = static_cast<double>(i * 12);
-				peak.keytrack = 1.;
 				peak.mag = 0.;
-				peak.ratio = 1. + static_cast<float>(i);
+				peak.fc = 1. + static_cast<float>(i);
 			}
-			peaks[0].mag = 1.;
+			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generateSaw(Material& material)
 		{
-			material.sampleRate = 44100.f;
 			auto& peaks = material.peakInfos;
-			for (auto i = 0; i < NumFilters; ++i)
+			const auto numPartilsKeytrackedInv = 1. / static_cast<double>(NumPartialsKeytracked);
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = static_cast<double>(i * 12);
-				peak.keytrack = 1.;
-
 				const auto iF = static_cast<double>(i);
-				const auto iR = iF * NumFiltersInv;
+				const auto iR = iF * numPartilsKeytrackedInv;
 
 				peak.mag = 1. - iR;
-				peak.ratio = 1. + iF;
+				peak.fc = 1. + iF;
 			}
+			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generateSquare(Material& material)
 		{
-			material.sampleRate = 44100.f;
 			auto& peaks = material.peakInfos;
-			for (auto i = 0; i < NumFilters; ++i)
+			const auto numPartilsKeytrackedInv = 1. / static_cast<double>(NumPartialsKeytracked);
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
 				auto& peak = peaks[i];
-				peak.freqHz = static_cast<double>(i * 12);
-				peak.keytrack = 1.f;
-
 				const auto iF = static_cast<double>(i);
-				const auto iR = iF * NumFiltersInv;
+				const auto iR = iF * numPartilsKeytrackedInv;
 
 				peak.mag = 1. - iR;
-				peak.ratio = 1. + iF * 2.;
+				peak.fc = 1. + iF * 2.;
 			}
+			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generateFibonacci(Material& material)
 		{
-			material.sampleRate = 44100.f;
 			auto& peaks = material.peakInfos;
-			for (auto i = 0; i < NumFilters; ++i)
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
 				auto& peak = peaks[i];
 
 				const auto fibonacci = math::fibonacci(i + 2);
 				const auto fibD = static_cast<double>(fibonacci);
 
-				peak.ratio = fibD;
+				peak.fc = fibD;
 				peak.mag = 1. / fibD;
-				peak.freqHz = static_cast<double>(i * 12);
-				peak.keytrack = 1.;
 			}
+			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generatePrime(Material& material)
 		{
-			material.sampleRate = 44100.f;
 			auto& peaks = material.peakInfos;
-			for (auto i = 0; i < NumFilters; ++i)
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
 				auto& peak = peaks[i];
 
 				const auto fibonacci = math::prime(i + 1);
 				const auto fibD = static_cast<double>(fibonacci) * .5;
 
-				peak.ratio = fibD;
+				peak.fc = fibD;
 				peak.mag = 1. / fibD;
-				peak.freqHz = static_cast<double>(i * 12);
-				peak.keytrack = 1.;
 			}
+			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 

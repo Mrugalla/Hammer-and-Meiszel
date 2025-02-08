@@ -78,9 +78,6 @@ namespace param
 		//
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
-		case PID::ModalKeytrack: return "Modal Keytrack";
-		case PID::ModalKeytrackEnv: return "Modal Keytrack Env";
-		case PID::ModalKeytrackBreite: return "Modal Keytrack Breite";
 		case PID::ModalBlend: return "Modal Blend";
 		case PID::ModalBlendEnv: return "Modal Blend Env";
 		case PID::ModalBlendBreite: return "Modal Blend Breite";
@@ -187,9 +184,6 @@ namespace param
 		case PID::EnvGenModRelease: return "The modulation envelope generator's release time.";
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
-		case PID::ModalKeytrack: return "The more you dial in keytrack the less the modal material uses fixed frequencies.";
-		case PID::ModalKeytrackEnv: return "The envelope generator's depth on the modal keytrack.";
-		case PID::ModalKeytrackBreite: return "The stereo width of the modal keytrack.";
 		case PID::ModalBlend: return "Blends between the 2 modal filters.";
 		case PID::ModalBlendEnv: return "The envelope generator's depth on the modal blend.";
 		case PID::ModalBlendBreite: return "The stereo width of the modal breite.";
@@ -1416,9 +1410,6 @@ namespace param
 
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-4.f, 4.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
-		params.push_back(makeParam(PID::ModalKeytrack, 1.f));
-		params.push_back(makeParam(PID::ModalKeytrackEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalKeytrackBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalBlend, 0.f));
 		params.push_back(makeParam(PID::ModalBlendEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalBlendBreite, 0.f, makeRange::lin(-1.f, 1.f)));

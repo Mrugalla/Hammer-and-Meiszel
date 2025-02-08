@@ -87,8 +87,8 @@ namespace dsp
 		b2 = std::exp(tauBw);
 		b1 = (-b2_4 / (1. + b2)) * cosFc;
 		const auto sqrtVal = static_cast<float>(1. - b1 * b1 / b2_4);
-		const auto invSqrt = 1.f / math::invSqrtQuake(sqrtVal);
-		a0 = (1. - b2) * static_cast<double>(invSqrt);// *std::sqrt(sqrtVal);
+		//const auto invSqrt = 1.f / math::invSqrtQuake(sqrtVal);
+		a0 = (1. - b2) * std::sqrt(sqrtVal);// * static_cast<double>(invSqrt);//
 	}
 
 	void Resonator2::copyFrom(const Resonator2& other) noexcept

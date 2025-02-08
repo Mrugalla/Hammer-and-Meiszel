@@ -144,7 +144,7 @@ namespace gui
 	{
 		const auto lowerLimit = xAbs - lenAbsHalf;
 		const auto upperLimit = lowerLimit + lenAbs;
-		for (auto i = 0; i < NumFilters; ++i)
+		for (auto i = 0; i < NumPartialsKeytracked; ++i)
 		{
 			const auto partialX = partials[i].x;
 			selection[i] = partialX >= lowerLimit && partialX <= upperLimit;
@@ -163,14 +163,12 @@ namespace gui
 		FileDragAndDropTarget(),
 		material(_material),
 		actives(_actives),
-		rulerPartials(u),
-		rulerPitches(u),
+		ruler(u),
 		partials(),
 		dragAniComp(u),
 		draggerfall(),
 		dragXY(),
 		freqRatioRange(1.f),
-		showsRatios(true),
 		xenInfo(u.audioProcessor.xenManager.getInfo())
 	{
 		layout.init
@@ -192,7 +190,7 @@ namespace gui
 		const auto fps = cbFPS::k30;
 		const auto speed = msToInc(AniLengthMs, fps);
 
-		for (auto i = 0; i < NumFilters; ++i)
+		for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			add(Callback([&, speed, i]()
 			{
 				auto& phase = callbacks[kStrumCB + i].phase;
@@ -218,17 +216,10 @@ namespace gui
 		addChildComponent(dragAniComp);
 	}
 
-	void ModalMaterialEditor::setShowRatios(bool e)
-	{
-		showsRatios = e;
-		updatePartials();
-		repaint();
-	}
-
 	void ModalMaterialEditor::initRuler()
 	{
-		addAndMakeVisible(rulerPartials);
-		rulerPartials.setGetIncFunc([](float len)
+		addAndMakeVisible(ruler);
+		ruler.setGetIncFunc([](float len)
 		{
 			return len < 2.f ? .1f :
 				len < 5.f ? .2f :
@@ -239,34 +230,12 @@ namespace gui
 				len < 60.f ? 8.f :
 				16.f;
 		});
-		rulerPartials.setValToStrFunc([](float v)
+		ruler.setValToStrFunc([](float v)
 		{
 			return String(v + 1.f);
 		});
-		rulerPartials.setCID(CID::Hover);
-		rulerPartials.setDrawFirstVal(true);
-
-		addChildComponent(rulerPitches);
-		rulerPitches.setGetIncFunc([](float len)
-		{
-			return len < 1.f ? .1f :
-				len < 12.f ? 1.f :
-				len < 24.f ? 2.f :
-				len < 36.f ? 4.f :
-				len < 48.f ? 6.f
-				: 12.f;
-		});
-		rulerPitches.setValToStrFunc([](float v)
-		{
-			enum pitchclass { C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B, Num };
-
-			const auto note = static_cast<int>(std::round(v));
-			const auto octave = note / Num - 1;
-			const auto noteName = note % Num;
-			return math::pitchclassToString(noteName) + String(octave);
-		});
-		rulerPitches.setCID(CID::Hover);
-		rulerPitches.setDrawFirstVal(true);
+		ruler.setCID(CID::Hover);
+		ruler.setDrawFirstVal(true);
 	}
 
 	void ModalMaterialEditor::paint(Graphics& g)
@@ -288,10 +257,7 @@ namespace gui
 		g.setColour(Colours::c(CID::Hover).withMultipliedAlpha(.15f));
 		g.fillRect(0.f, 0.f, w, rulerTop);
 		const auto rulerBtm = h;
-		if (showsRatios)
-			rulerPartials.paintStripes(g, rulerTop, rulerBtm, 33);
-		else
-			rulerPitches.paintStripes(g, rulerTop, rulerBtm, 33);
+		ruler.paintStripes(g, rulerTop, rulerBtm, 33);
 
 		if (isMouseOver() && !isMouseButtonDownAnywhere())
 			draggerfall.paint(g);
@@ -301,7 +267,7 @@ namespace gui
 		if (material.soloing.load())
 			unselectedPartialsCol = unselectedPartialsCol.darker(.7f);
 
-		for (auto i = 1; i < NumFilters; ++i)
+		for (auto i = 1; i < NumPartialsKeytracked; ++i)
 			paintPartial(g, h, unselectedPartialsCol, i);
 	}
 
@@ -337,27 +303,23 @@ namespace gui
 		);
 
 		layout.resized(getLocalBounds().toFloat());
-		layout.place(rulerPartials, 0, 0, 1, 1);
-		rulerPitches.setBounds(rulerPartials.getBounds());
+		layout.place(ruler, 0, 0, 1, 1);
 		dragAniComp.setBounds(getLocalBounds());
 		updatePartials();
 	}
 
 	void ModalMaterialEditor::updatePartials()
 	{
-		if(showsRatios)
-			updatePartialsRatios();
-		else
-			updatePartialsFreqs();
+		updatePartialsRatios();
 
 		material.status.store(Status::Processing);
 
 		auto freqRatioMin = 44100.f;
 		auto freqRatioMax = 0.f;
-		for (auto p = 0; p < NumFilters; ++p)
+		for (auto p = 0; p < NumPartialsKeytracked; ++p)
 		{
 			const auto& peakInfo = material.peakInfos[p];
-			const auto ratio = static_cast<float>(peakInfo.ratio);
+			const auto ratio = static_cast<float>(peakInfo.fc);
 			freqRatioMin = std::min(freqRatioMin, ratio);
 			freqRatioMax = std::max(freqRatioMax, ratio);
 		}
@@ -372,49 +334,21 @@ namespace gui
 		auto const h = static_cast<float>(getHeight());
 
 		auto maxRatio = 0.f;
-		for (auto p = 0; p < NumFilters; ++p)
+		for (auto p = 0; p < NumPartialsKeytracked; ++p)
 		{
 			const auto& peakInfo = material.peakInfos[p];
-			const auto ratio = static_cast<float>(peakInfo.ratio);
+			const auto ratio = static_cast<float>(peakInfo.fc);
 			maxRatio = std::max(maxRatio, ratio);
 		}
 		maxRatio -= 1.f;
 		const auto maxRatioInv = 1.f / maxRatio;
 
-		for (auto i = 0; i < NumFilters; ++i)
+		for (auto i = 0; i < NumPartialsKeytracked; ++i)
 		{
 			auto& peakInfo = material.peakInfos[i];
 
-			auto const x = ((static_cast<float>(peakInfo.ratio) - 1.f)) * maxRatioInv * w;
+			auto const x = ((static_cast<float>(peakInfo.fc) - 1.f)) * maxRatioInv * w;
 			auto const y = h - static_cast<float>(peakInfo.mag) * h;
-
-			partials[i].x = x;
-			partials[i].y = y;
-		}
-	}
-
-	void ModalMaterialEditor::updatePartialsFreqs()
-	{
-		auto const w = static_cast<float>(getWidth());
-		auto const h = static_cast<float>(getHeight());
-
-		auto maxFreq = 0.f;
-		for (auto p = 0; p < NumFilters; ++p)
-		{
-			const auto& peakInfo = material.peakInfos[p];
-			const auto ratio = static_cast<float>(peakInfo.freqHz);
-			maxFreq = std::max(maxFreq, ratio);
-		}
-		if(maxFreq < 1.f)
-			maxFreq = 1.f;
-		const auto maxFreqInv = 1.f / maxFreq;
-
-		for (auto i = 0; i < NumFilters; ++i)
-		{
-			auto& peakInfo = material.peakInfos[i];
-
-			auto const x = ((static_cast<float>(peakInfo.freqHz) - 1.f)) * maxFreqInv * w;
-			auto const y = h - static_cast<float>(peakInfo.keytrack) * h;
 
 			partials[i].x = x;
 			partials[i].y = y;
@@ -424,32 +358,14 @@ namespace gui
 	void ModalMaterialEditor::updateRuler()
 	{
 		const auto& peakInfos = material.peakInfos;
+		const auto minFc = 1.f;
+		auto maxFc = minFc;
+		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			maxFc = std::max(maxFc, static_cast<float>(peakInfos[i].fc));
 
-		rulerPartials.setVisible(showsRatios);
-		rulerPitches.setVisible(!showsRatios);
-
-		if (showsRatios)
-		{
-			const auto minFc = 1.f;
-			auto maxFc = minFc;
-			for (auto i = 0; i < NumFilters; ++i)
-				maxFc = std::max(maxFc, static_cast<float>(peakInfos[i].ratio));
-
-			const auto fcRange = maxFc - minFc;
-			rulerPartials.setLength(fcRange);
-			rulerPartials.repaint();
-		}
-		else
-		{
-			const auto minFreq = 0.f;
-			auto maxFreq = minFreq;
-			for (auto i = 1; i < NumFilters; ++i)
-				maxFreq = std::max(maxFreq, static_cast<float>(peakInfos[i].freqHz));
-			const auto& xen = utils.audioProcessor.xenManager;
-			const auto maxPitch = xen.freqHzToNote(maxFreq);
-			rulerPitches.setLength(maxPitch);
-			rulerPitches.repaint();
-		}
+		const auto fcRange = maxFc - minFc;
+		ruler.setLength(fcRange);
+		ruler.repaint();
 	}
 
 	// mouse event handling
@@ -477,7 +393,7 @@ namespace gui
 	{
 		draggerfall.updateX(partials, mouse.position.x, true);
 		
-		for (auto i = 0; i < NumFilters; ++i)
+		for (auto i = 0; i < NumPartialsKeytracked; ++i)
 		{
 			const bool selected = draggerfall.isSelected(i);
 			if (selected)
@@ -520,10 +436,7 @@ namespace gui
 
 		if (status == Status::Processing)
 		{
-			if (showsRatios)
-				mouseDragRatios(dragDist, xDepth, yDepth, snapEnabled);
-			else
-				mouseDragFreqs(dragDist, xDepth, yDepth, snapEnabled);
+			mouseDragRatios(dragDist, xDepth, yDepth, snapEnabled);
 			material.updatePeakInfosFromGUI();
 			updateInfoLabel();
 		}
@@ -540,7 +453,7 @@ namespace gui
 			auto& peakInfo = material.peakInfos[0];
 			peakInfo.mag = juce::jlimit(0., 2., peakInfo.mag - dragDist.y * yDepth);
 		}
-		for (auto i = 1; i < NumFilters; ++i)
+		for (auto i = 1; i < NumPartialsKeytracked; ++i)
 		{
 			const bool selected = draggerfall.isSelected(i);
 			if (selected)
@@ -548,14 +461,13 @@ namespace gui
 				auto& peakInfo = material.peakInfos[i];
 				peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
 
-				auto ratio = peakInfo.ratio;
+				auto ratio = peakInfo.fc;
 				if (snapEnabled)
 				{
 					const auto sensitivity = .004;
 					const auto dragDistAbs = dragDist.x * dragDist.x;
 					if (dragDistAbs > sensitivity)
 					{
-						const auto& ruler = showsRatios ? rulerPartials : rulerPitches;
 						if (dragDist.x > 0.)
 							ratio = ruler.getNextHigherSnapped(ratio);
 						else
@@ -564,42 +476,7 @@ namespace gui
 				}
 				else
 					ratio += dragDist.x * xDepth;
-				peakInfo.ratio = juce::jlimit(1., 420., ratio);
-			}
-		}
-	}
-
-	void ModalMaterialEditor::mouseDragFreqs(PointD dragDist,
-		double xDepth, double yDepth,
-		bool snapEnabled)
-	{
-		for (auto i = 0; i < NumFilters; ++i)
-		{
-			const bool selected = draggerfall.isSelected(i);
-			if (selected)
-			{
-				auto& peakInfo = material.peakInfos[i];
-				peakInfo.keytrack = juce::jlimit(0., 2., peakInfo.keytrack - dragDist.y * yDepth);
-
-				auto freqHz = peakInfo.freqHz;
-				if (snapEnabled)
-				{
-					const auto sensitivity = .004;
-					const auto dragDistAbs = dragDist.x * dragDist.x;
-					if (dragDistAbs > sensitivity)
-					{
-						const auto pitch = utils.audioProcessor.xenManager.freqHzToNote(freqHz);
-						const auto pRound = dragDist.x > .0 ? pitch + 1.f : pitch - 1.f;
-						freqHz = utils.audioProcessor.xenManager.noteToFreqHz(std::round(pRound));
-					}
-				}
-				else
-				{
-					auto pitch = utils.audioProcessor.xenManager.freqHzToNote(freqHz);
-					pitch += dragDist.x * xDepth;
-					freqHz = utils.audioProcessor.xenManager.noteToFreqHz(pitch);
-				}
-				peakInfo.freqHz = juce::jlimit(1., 22050., freqHz);
+				peakInfo.fc = juce::jlimit(1., 420., ratio);
 			}
 		}
 	}
@@ -611,7 +488,7 @@ namespace gui
 			mouseDrag(mouse);
 			material.reportEndGesture();
 
-			for (auto i = 0; i < NumFilters; ++i)
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
 				const bool selected = draggerfall.isSelected(i);
 				if (selected)
@@ -656,27 +533,15 @@ namespace gui
 		}
 
 		String txt("");
-		if (showsRatios)
-		{
-			for (auto i = 0; i < NumFilters; ++i)
-				if (draggerfall.isSelected(i))
-				{
-					const auto mag = material.peakInfos[i].mag;
-					const auto rat = material.peakInfos[i].ratio;
-					txt += "MG: " + String(std::round(mag * 100.f)) + "%\nFC : " + String(rat, 1) + "\n";
-					i = NumFilters;
-				}
-		}
-		else
-			for (auto i = 0; i < NumFilters; ++i)
-				if (draggerfall.isSelected(i))
-				{
-					const auto keytrack = material.peakInfos[i].keytrack;
-					const auto freqHz = material.peakInfos[i].freqHz;
-					txt += "KT: " + String(std::round(keytrack * 100.f)) + "%\n" + String(freqHz, 1) + "hz\n";
-					i = NumFilters;
-				}
-
+		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			if (draggerfall.isSelected(i))
+			{
+				const auto mag = material.peakInfos[i].mag;
+				const auto rat = material.peakInfos[i].fc;
+				txt += "MG: " + String(std::round(mag * 100.f)) + "%\nFC : " + String(rat, 1) + "\n";
+				i = NumPartialsKeytracked;
+			}
+		
 		notify(evt::Type::ToastUpdateMessage, &txt);
 	}
 
@@ -685,7 +550,7 @@ namespace gui
 		bool wantMaterialUpdate = false;
 		if (soloActive)
 		{
-			for (auto i = 0; i < NumFilters; ++i)
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
 				const bool selected = draggerfall.isSelected(i);
 				if (actives[i] != selected)
@@ -697,7 +562,7 @@ namespace gui
 		}
 		else
 		{
-			for (auto i = 0; i < NumFilters; ++i)
+			for (auto i = 0; i < NumPartialsKeytracked; ++i)
 			{
 				if (!actives[i])
 				{
@@ -818,6 +683,4 @@ namespace gui
 		const auto userDirectory = settingsFile.getParentDirectory();
 		return userDirectory.getChildFile("HnM.wav");
 	}
-
-
 }

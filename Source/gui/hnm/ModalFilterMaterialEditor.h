@@ -14,9 +14,10 @@ namespace gui
 
 		using Status = dsp::modal::StatusMat;
 		using Material = dsp::modal::Material;
-		using PeakInfo = dsp::modal::PeakInfo;
+		using PeakInfo = dsp::modal::Partial;
 		using Actives = dsp::modal::ActivesArray;
-		static constexpr int NumFilters = dsp::modal::NumFilters;
+		static constexpr int NumPartials = dsp::modal::NumPartials;
+		static constexpr int NumPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
 		
 		struct Partial
 		{
@@ -24,7 +25,7 @@ namespace gui
 			float x, y;
 		};
 
-		using Partials = std::array<Partial, NumFilters>;
+		using Partials = std::array<Partial, NumPartialsKeytracked>;
 
 		struct DragAnimationComp :
 			public Comp
@@ -66,7 +67,7 @@ namespace gui
 
 		protected:
 			float width, height, xRel, xAbs, lenRel, lenAbs, lenAbsHalf;
-			std::array<bool, NumFilters> selection;
+			std::array<bool, NumPartialsKeytracked> selection;
 
 			void updateSelection(Partials&) noexcept;
 		};
@@ -75,14 +76,12 @@ namespace gui
 		{
 			kMaterialUpdatedCB = 0,
 			kStrumCB = 1,
-			kNumStrumsCB = kStrumCB + NumFilters,
+			kNumStrumsCB = kStrumCB + NumPartialsKeytracked,
 			kXenUpdatedCB,
 			kNumCallbacks
 		};
 
 		ModalMaterialEditor(Utils&, Material&, Actives&);
-
-		void setShowRatios(bool);
 
 		void initRuler();
 
@@ -100,21 +99,18 @@ namespace gui
 
 		Material& material;
 		Actives& actives;
-		Ruler rulerPartials, rulerPitches;
+		Ruler ruler;
 		Partials partials;
 		DragAnimationComp dragAniComp;
 		Draggerfall draggerfall;
 		PointF dragXY;
 		float freqRatioRange;
-		bool showsRatios;
 	private:
 		arch::XenManager::Info xenInfo;
 
 		void updatePartials();
 
 		void updatePartialsRatios();
-
-		void updatePartialsFreqs();
 
 		void mouseEnter(const Mouse&) override;
 
@@ -127,8 +123,6 @@ namespace gui
 		void mouseDrag(const Mouse&) override;
 
 		void mouseDragRatios(PointD, double, double, bool);
-
-		void mouseDragFreqs(PointD, double, double, bool);
 
 		void mouseUp(const Mouse&) override;
 
