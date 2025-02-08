@@ -269,7 +269,7 @@ namespace dsp
 					{
 						auto& resonator = resonators[f];
 						const auto mag = material.getMag(f);
-						if (mag != 0.)
+						//if (mag != 0.)
 						{
 							const auto bpY = resonator(dry, ch) * mag;
 							wet += bpY;
