@@ -195,45 +195,36 @@ namespace dsp
 			const bool spreziSmooth = spreziParam(_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);
 			auto& harmonieParam = parameters[kHarmonie];
 			const bool harmonieSmooth = harmonieParam(_parameters[kHarmonie], envGenValue, 0., 1., numChannels);
+			auto& kraftParam = parameters[kKraft];
+			const bool kraftSmooth = kraftParam(_parameters[kKraft], envGenValue, -1., 1., numChannels);
+			const bool spectralUpdate = blendSmooth || spreziSmooth || harmonieSmooth || wantsMaterialUpdate;
 
-			if (blendSmooth || spreziSmooth || harmonieSmooth || wantsMaterialUpdate)
+			if (kraftSmooth || spectralUpdate)
 			{
 				const auto& mat0 = dualMaterial.getMaterialData(0);
 				const auto& mat1 = dualMaterial.getMaterialData(1);
+
 				for (auto ch = 0; ch < numChannels; ++ch)
 				{
 					auto& material = materialStereo[ch];
 
 					const auto blend = blendParam[ch];
-					for (auto i = 0; i < NumPartials; ++i)
-						blendMags(material, mat0, mat1, blend, i);
-					blendRatios(material, mat0, mat1, blend, 0);
-					for (auto i = 1; i < NumPartials; ++i)
-					{
-						if (dualMaterial.isActive(i))
-							blendRatios(material, mat0, mat1, blend, i);
-						else
-							material[i].mag = 0.;
-					}
-
 					const auto spreizung = spreziParam[ch];
 					const auto sprezi = std::exp(spreizung);
 					const auto harmonie = harmonieParam[ch];
 					const auto harmi = math::tanhApprox(Pi * harmonie);
 
-					for (auto i = 1; i < NumPartialsKeytracked; ++i)
-						updatePartial(material, sprezi, harmi, i);
-				}
-				resonatorBank.updateFreqRatios(materialStereo, numChannels);
-			}
-
-			auto& kraftParam = parameters[kKraft];
-			const bool kraftSmooth = kraftParam(_parameters[kKraft], envGenValue, -1., 1., numChannels);
-			if (kraftSmooth || wantsMaterialUpdate)
-			{
-				for (auto ch = 0; ch < numChannels; ++ch)
-				{
-					auto& material = materialStereo[ch];
+					for (auto i = 0; i < NumPartials; ++i)
+					{
+						if (dualMaterial.isActive(i))
+						{
+							blendMags(material, mat0, mat1, blend, i);
+							blendRatios(material, mat0, mat1, blend, i);
+							updatePartial(material, sprezi, harmi, i);
+						}
+						else
+							material[i].mag = 0.;
+					}
 
 					const auto kraftVal = kraftParam[ch];
 					const auto kraft = (math::tanhApprox(Pi * kraftVal) + 1.) * .5;
@@ -246,6 +237,9 @@ namespace dsp
 							material[i].mag = y;
 						}
 				}
+
+				if(spectralUpdate)
+					resonatorBank.updateFreqRatios(materialStereo, numChannels);
 			}
 
 			wantsMaterialUpdate = false;

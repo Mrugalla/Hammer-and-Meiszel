@@ -74,10 +74,10 @@ namespace dsp
 			Material();
 
 			// state, matStr
-			void savePatch(arch::State&, String&&) const;
+			void savePatch(arch::State&, const String&) const;
 
 			// state, matStr
-			void loadPatch(const arch::State&, String&&);
+			void loadPatch(const arch::State&, const String&);
 
 			// data, size
 			void load(const char*, int);

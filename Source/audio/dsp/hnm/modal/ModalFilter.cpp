@@ -72,8 +72,7 @@ namespace dsp
 			materials.getMaterial(1).soloing = e;
 		}
 
-		void ModalFilter::randomizeMaterial(arch::RandSeed& rand,
-			const arch::XenManager& xen, int mIdx)
+		void ModalFilter::randomizeMaterial(arch::RandSeed& rand, int mIdx)
 		{
 			auto& mat = materials.getMaterial(mIdx);
 			if (mat.status != dsp::modal::StatusMat::Processing)
@@ -81,17 +80,11 @@ namespace dsp
 			auto& peaks = mat.peakInfos;
 			peaks[0].fc = 1.;
 			peaks[0].mag = static_cast<double>(rand());
-			for (auto j = 1; j < NumPartialsKeytracked; ++j)
+			for (auto j = 1; j < NumPartials; ++j)
 			{
 				auto& peak = peaks[j];
 				peak.mag = static_cast<double>(rand());
 				peak.fc = 1. + static_cast<double>(rand()) * 32.;
-			}
-			for (auto j = NumPartialsKeytracked; j < NumPartials; ++j)
-			{
-				auto& peak = peaks[j];
-				peak.mag = static_cast<double>(rand());
-				peak.fc = xen.noteToFreqHz(static_cast<double>(rand()) * 127.);
 			}
 			mat.reportEndGesture();
 		}

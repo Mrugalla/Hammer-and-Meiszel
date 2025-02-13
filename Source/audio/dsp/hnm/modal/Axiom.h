@@ -5,9 +5,7 @@ namespace dsp
 {
 	namespace modal
 	{
-		static constexpr int NumPartialsKeytracked = 5;
-		static constexpr int NumPartialsFixed = 3;
-		static constexpr int NumPartials = NumPartialsKeytracked + NumPartialsFixed;
+		static constexpr int NumPartials = 7;
 		static constexpr double MinPitch = 24;
 
 		enum class StatusMat

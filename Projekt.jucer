@@ -117,6 +117,13 @@
       <GROUP id="{40307200-594D-4A49-C512-2C481058424A}" name="audio">
         <GROUP id="{59EAA807-50FE-F7F8-0D20-F8E7A0503840}" name="dsp">
           <GROUP id="{4212BB2B-5BC7-EE70-E8D1-78CF49C543DD}" name="hnm">
+            <GROUP id="{0ABDEC68-2CA1-9033-AA9E-437F1148FE81}" name="formant">
+              <FILE id="MSfaSp" name="Axiom.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/formant/Axiom.cpp"/>
+              <FILE id="paTL63" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/hnm/formant/Axiom.h"/>
+              <FILE id="CHErSL" name="FormantFilter.cpp" compile="1" resource="0"
+                    file="Source/audio/dsp/hnm/formant/FormantFilter.cpp"/>
+              <FILE id="q5bu6k" name="FormantFilter.h" compile="0" resource="0" file="Source/audio/dsp/hnm/formant/FormantFilter.h"/>
+            </GROUP>
             <GROUP id="{63974B4F-B8F8-E17F-417F-A25D753477C0}" name="comb">
               <FILE id="lCR37w" name="Comb.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/comb/Comb.cpp"/>
               <FILE id="PKk4ZS" name="Comb.h" compile="0" resource="0" file="Source/audio/dsp/hnm/comb/Comb.h"/>
@@ -227,6 +234,10 @@
                 file="Source/gui/hnm/ModalParamsEditor.cpp"/>
           <FILE id="znBdbp" name="ModalParamsEditor.h" compile="0" resource="0"
                 file="Source/gui/hnm/ModalParamsEditor.h"/>
+          <FILE id="aKLGUG" name="ModalPartialsFixedEditor.cpp" compile="1" resource="0"
+                file="Source/gui/hnm/ModalPartialsFixedEditor.cpp"/>
+          <FILE id="p6mUSR" name="ModalPartialsFixedEditor.h" compile="0" resource="0"
+                file="Source/gui/hnm/ModalPartialsFixedEditor.h"/>
           <FILE id="IqFOt1" name="TopEditor.cpp" compile="1" resource="0" file="Source/gui/hnm/TopEditor.cpp"/>
           <FILE id="jQPRVt" name="TopEditor.h" compile="0" resource="0" file="Source/gui/hnm/TopEditor.h"/>
         </GROUP>

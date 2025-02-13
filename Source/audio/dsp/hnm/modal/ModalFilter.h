@@ -29,8 +29,8 @@ namespace dsp
 
 			void setSolo(bool) noexcept;
 
-			// randSeed, xen, mIdx
-			void randomizeMaterial(arch::RandSeed&, const arch::XenManager&, int);
+			// randSeed, mIdx
+			void randomizeMaterial(arch::RandSeed&, int);
 
 		private:
 			DualMaterial materials;

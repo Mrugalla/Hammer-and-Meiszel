@@ -31,9 +31,8 @@ namespace gui
 		const auto randModalFunc = [&](ButtonRandomizer::RandomSeed& rand)
 		{
 			auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-			auto& xenManager = utils.audioProcessor.xenManager;
 			for (auto i = 0; i < 2; ++i)
-				modalFilter.randomizeMaterial(rand, xenManager, i);
+				modalFilter.randomizeMaterial(rand, i);
 		};
 
 		buttonRandomizer.add(randModalFunc);

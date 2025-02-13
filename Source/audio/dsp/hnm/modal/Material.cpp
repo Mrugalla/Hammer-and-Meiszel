@@ -232,6 +232,21 @@ namespace dsp
 				peakIndexes, numFilters, true, isLog, sampleRate);
 		}
 
+		void sortByKeytrackDescending(MaterialData& peakInfos) noexcept
+		{
+			auto& partials = peakInfos.data();
+			std::sort(partials.begin(), partials.end(), [](const Partial& a, const Partial& b)
+				{
+					const auto aFc = a.fc;
+					const auto aKeytrack = (1. + std::cos(Tau * aFc)) * .5;
+
+					const auto bFc = b.fc;
+					const auto bKeytrack = (1. + std::cos(Tau * bFc)) * .5;
+
+					return aKeytrack > bKeytrack;
+				});
+		}
+
 		// MATERIAL (FREE FUNCTIONS)
 
 		void applyWindow(float* fifo, const Material::MaterialBuffer& buffer) noexcept
@@ -382,21 +397,6 @@ namespace dsp
 			std::sort(peakIndexes.begin(), peakIndexes.end());
 		}
 
-		void sortByKeytrackDescending(MaterialData& peakInfos) noexcept
-		{
-			auto& partials = peakInfos.data();
-			std::sort(partials.begin(), partials.end(), [](const Partial& a, const Partial& b)
-			{
-				const auto aFc = a.fc;
-				const auto aKeytrack = (1. + std::cos(Tau * aFc)) * .5;
-
-				const auto bFc = b.fc;
-				const auto bKeytrack = (1. + std::cos(Tau * bFc)) * .5;
-
-				return aKeytrack > bKeytrack;
-			});
-		}
-
 		void generatePeakInfos(MaterialData& peakInfos, const float* bins,
 			const int* peakIndexes, float harm0Idx, float sampleRate) noexcept
 		{
@@ -419,25 +419,12 @@ namespace dsp
 					peakInfos[i].mag = 0.;
 				}
 			}
-
-			sortByKeytrackDescending(peakInfos);
-
-			for (auto i = NumPartialsKeytracked; i < NumPartials; ++i)
-			{
-				const auto peakIdx = peakIndexes[i];
-				if (peakIdx != -1)
-				{
-					const auto peakIdxD = static_cast<double>(peakIdx);
-					auto& peakInfo = peakInfos[i];
-					peakInfo.fc = .5 * peakIdxD * static_cast<double>(FFTSizeInv * sampleRate);
-				}
-			}
 		}
 
 		void sortRatios(MaterialData& peakInfos) noexcept
 		{
-			for (int i = 0; i < NumPartialsKeytracked; ++i)
-				for (int j = i + 1; j < NumPartialsKeytracked; ++j)
+			for (int i = 0; i < NumPartials; ++i)
+				for (int j = i + 1; j < NumPartials; ++j)
 					if (peakInfos[i].fc > peakInfos[j].fc)
 						std::swap(peakInfos[i], peakInfos[j]);
 		}
@@ -448,6 +435,8 @@ namespace dsp
 			for (auto i = 1; i < NumPartials; ++i)
 				if (maxMag < peakInfos[i].mag)
 					maxMag = peakInfos[i].mag;
+			if (maxMag == 0. || maxMag == 1.f)
+				return;
 			const auto gain = 1.f / maxMag;
 			for (auto i = 0; i < NumPartials; ++i)
 				peakInfos[i].mag *= gain;
@@ -465,18 +454,18 @@ namespace dsp
 		{
 		}
 
-		void Material::savePatch(arch::State& state, String&& matStr) const
+		void Material::savePatch(arch::State& state, const String& matStr) const
 		{
 			for (auto j = 0; j < NumPartials; ++j)
 			{
 				const auto& peakInfo = peakInfos[j];
-				const auto peakStr = matStr + "pk" + juce::String(j);
+				const auto peakStr = matStr + "pk" + String(j);
 				state.set(peakStr + "mg", peakInfo.mag);
 				state.set(peakStr + "fc", peakInfo.fc);
 			}
 		}
 
-		void Material::loadPatch(const arch::State& state, String&& matStr)
+		void Material::loadPatch(const arch::State& state, const String& matStr)
 		{
 			for (auto j = 0; j < NumPartials; ++j)
 			{
@@ -560,71 +549,56 @@ namespace dsp
 
 		// GENERATE
 
-		void generateFixedFrequenciesDefault(Material& material)
-		{
-			auto& peaks = material.peakInfos;
-			for (auto i = NumPartialsKeytracked; i < NumPartials; ++i)
-			{
-				auto& peak = peaks[i];
-				peak.mag = 0.;
-				peak.fc = math::noteToFreqHz2(static_cast<double>(i * 8));
-			}
-			material.reportUpdate();
-		}
-
 		void generateSine(Material& material)
 		{
 			auto& peaks = material.peakInfos;
 			peaks[0].mag = 1.;
 			peaks[0].fc = 1.;
-			for (auto i = 1; i < NumPartialsKeytracked; ++i)
+			for (auto i = 1; i < NumPartials; ++i)
 			{
 				auto& peak = peaks[i];
 				peak.mag = 0.;
 				peak.fc = 1. + static_cast<float>(i);
 			}
-			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generateSaw(Material& material)
 		{
 			auto& peaks = material.peakInfos;
-			const auto numPartilsKeytrackedInv = 1. / static_cast<double>(NumPartialsKeytracked);
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			const auto numPartilsInv = 1. / static_cast<double>(NumPartials);
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				auto& peak = peaks[i];
 				const auto iF = static_cast<double>(i);
-				const auto iR = iF * numPartilsKeytrackedInv;
+				const auto iR = iF * numPartilsInv;
 
 				peak.mag = 1. - iR;
 				peak.fc = 1. + iF;
 			}
-			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generateSquare(Material& material)
 		{
 			auto& peaks = material.peakInfos;
-			const auto numPartilsKeytrackedInv = 1. / static_cast<double>(NumPartialsKeytracked);
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			const auto numPartilsInv = 1. / static_cast<double>(NumPartials);
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				auto& peak = peaks[i];
 				const auto iF = static_cast<double>(i);
-				const auto iR = iF * numPartilsKeytrackedInv;
+				const auto iR = iF * numPartilsInv;
 
 				peak.mag = 1. - iR;
 				peak.fc = 1. + iF * 2.;
 			}
-			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generateFibonacci(Material& material)
 		{
 			auto& peaks = material.peakInfos;
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				auto& peak = peaks[i];
 
@@ -634,14 +608,13 @@ namespace dsp
 				peak.fc = fibD;
 				peak.mag = 1. / fibD;
 			}
-			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 
 		void generatePrime(Material& material)
 		{
 			auto& peaks = material.peakInfos;
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				auto& peak = peaks[i];
 
@@ -651,7 +624,6 @@ namespace dsp
 				peak.fc = fibD;
 				peak.mag = 1. / fibD;
 			}
-			generateFixedFrequenciesDefault(material);
 			material.reportUpdate();
 		}
 

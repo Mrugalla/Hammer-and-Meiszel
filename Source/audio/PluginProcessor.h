@@ -9,6 +9,7 @@
 #include "dsp/ParallelProcessor.h"
 #include "dsp/NoiseSynth.h"
 #include "dsp/hnm/modal/ModalFilter.h"
+#include "dsp/hnm/formant/FormantFilter.h"
 #include "dsp/hnm/comb/Comb.h"
 
 //This is where this plugin's custom dsp is implemented
@@ -47,11 +48,13 @@ namespace audio
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;
 		dsp::PPMIDIBand parallelProcessor;
+		std::array<std::array<double, dsp::BlockSize>, 2> formantLayer;
 
 		dsp::EnvGenMultiVoice envGensAmp, envGensMod;
 
 		dsp::NoiseSynth noiseSynth;
 		dsp::modal::ModalFilter modalFilter;
+		dsp::formant::Filter formantFilter;
 		dsp::hnm::Comb combFilter;
 		std::atomic<bool> editorExists;
 

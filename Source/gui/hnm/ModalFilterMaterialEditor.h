@@ -17,7 +17,6 @@ namespace gui
 		using PeakInfo = dsp::modal::Partial;
 		using Actives = dsp::modal::ActivesArray;
 		static constexpr int NumPartials = dsp::modal::NumPartials;
-		static constexpr int NumPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
 		
 		struct Partial
 		{
@@ -25,7 +24,7 @@ namespace gui
 			float x, y;
 		};
 
-		using Partials = std::array<Partial, NumPartialsKeytracked>;
+		using Partials = std::array<Partial, NumPartials>;
 
 		struct DragAnimationComp :
 			public Comp
@@ -67,7 +66,7 @@ namespace gui
 
 		protected:
 			float width, height, xRel, xAbs, lenRel, lenAbs, lenAbsHalf;
-			std::array<bool, NumPartialsKeytracked> selection;
+			std::array<bool, NumPartials> selection;
 
 			void updateSelection(Partials&) noexcept;
 		};
@@ -76,7 +75,7 @@ namespace gui
 		{
 			kMaterialUpdatedCB = 0,
 			kStrumCB = 1,
-			kNumStrumsCB = kStrumCB + NumPartialsKeytracked,
+			kNumStrumsCB = kStrumCB + NumPartials,
 			kXenUpdatedCB,
 			kNumCallbacks
 		};
@@ -122,11 +121,14 @@ namespace gui
 
 		void mouseDrag(const Mouse&) override;
 
-		void mouseDragRatios(PointD, double, double, bool);
+		void mouseDragRatios(PointD, double, double);
 
 		void mouseUp(const Mouse&) override;
 
 		void mouseWheelMove(const Mouse&, const MouseWheel&) override;
+
+		// going up
+		void mouseWheelSnap(bool);
 
 		void loadAudioFile(const File&);
 

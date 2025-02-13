@@ -144,7 +144,7 @@ namespace gui
 	{
 		const auto lowerLimit = xAbs - lenAbsHalf;
 		const auto upperLimit = lowerLimit + lenAbs;
-		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+		for (auto i = 0; i < NumPartials; ++i)
 		{
 			const auto partialX = partials[i].x;
 			selection[i] = partialX >= lowerLimit && partialX <= upperLimit;
@@ -190,7 +190,7 @@ namespace gui
 		const auto fps = cbFPS::k30;
 		const auto speed = msToInc(AniLengthMs, fps);
 
-		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+		for (auto i = 0; i < NumPartials; ++i)
 			add(Callback([&, speed, i]()
 			{
 				auto& phase = callbacks[kStrumCB + i].phase;
@@ -267,7 +267,7 @@ namespace gui
 		if (material.soloing.load())
 			unselectedPartialsCol = unselectedPartialsCol.darker(.7f);
 
-		for (auto i = 1; i < NumPartialsKeytracked; ++i)
+		for (auto i = 1; i < NumPartials; ++i)
 			paintPartial(g, h, unselectedPartialsCol, i);
 	}
 
@@ -316,7 +316,7 @@ namespace gui
 
 		auto freqRatioMin = 44100.f;
 		auto freqRatioMax = 0.f;
-		for (auto p = 0; p < NumPartialsKeytracked; ++p)
+		for (auto p = 0; p < NumPartials; ++p)
 		{
 			const auto& peakInfo = material.peakInfos[p];
 			const auto ratio = static_cast<float>(peakInfo.fc);
@@ -334,7 +334,7 @@ namespace gui
 		auto const h = static_cast<float>(getHeight());
 
 		auto maxRatio = 0.f;
-		for (auto p = 0; p < NumPartialsKeytracked; ++p)
+		for (auto p = 0; p < NumPartials; ++p)
 		{
 			const auto& peakInfo = material.peakInfos[p];
 			const auto ratio = static_cast<float>(peakInfo.fc);
@@ -343,7 +343,7 @@ namespace gui
 		maxRatio -= 1.f;
 		const auto maxRatioInv = 1.f / maxRatio;
 
-		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+		for (auto i = 0; i < NumPartials; ++i)
 		{
 			auto& peakInfo = material.peakInfos[i];
 
@@ -360,7 +360,7 @@ namespace gui
 		const auto& peakInfos = material.peakInfos;
 		const auto minFc = 1.f;
 		auto maxFc = minFc;
-		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+		for (auto i = 0; i < NumPartials; ++i)
 			maxFc = std::max(maxFc, static_cast<float>(peakInfos[i].fc));
 
 		const auto fcRange = maxFc - minFc;
@@ -393,7 +393,7 @@ namespace gui
 	{
 		draggerfall.updateX(partials, mouse.position.x, true);
 		
-		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+		for (auto i = 0; i < NumPartials; ++i)
 		{
 			const bool selected = draggerfall.isSelected(i);
 			if (selected)
@@ -432,11 +432,9 @@ namespace gui
 		const auto yDepth = .4 * (sensitive ? Sensitive : 1.);
 		const auto xDepth = yDepth * freqRatioRange * .5f;
 
-		const auto snapEnabled = mouse.mods.isAltDown();
-
 		if (status == Status::Processing)
 		{
-			mouseDragRatios(dragDist, xDepth, yDepth, snapEnabled);
+			mouseDragRatios(dragDist, xDepth, yDepth);
 			material.updatePeakInfosFromGUI();
 			updateInfoLabel();
 		}
@@ -445,37 +443,22 @@ namespace gui
 	}
 
 	void ModalMaterialEditor::mouseDragRatios(PointD dragDist,
-		double xDepth, double yDepth,
-		bool snapEnabled)
+		double xDepth, double yDepth)
 	{
 		if (draggerfall.isSelected(0))
 		{
 			auto& peakInfo = material.peakInfos[0];
 			peakInfo.mag = juce::jlimit(0., 2., peakInfo.mag - dragDist.y * yDepth);
 		}
-		for (auto i = 1; i < NumPartialsKeytracked; ++i)
+		for (auto i = 1; i < NumPartials; ++i)
 		{
 			const bool selected = draggerfall.isSelected(i);
 			if (selected)
 			{
 				auto& peakInfo = material.peakInfos[i];
 				peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
-
 				auto ratio = peakInfo.fc;
-				if (snapEnabled)
-				{
-					const auto sensitivity = .004;
-					const auto dragDistAbs = dragDist.x * dragDist.x;
-					if (dragDistAbs > sensitivity)
-					{
-						if (dragDist.x > 0.)
-							ratio = ruler.getNextHigherSnapped(ratio);
-						else
-							ratio = ruler.getNextLowerSnapped(ratio);
-					}
-				}
-				else
-					ratio += dragDist.x * xDepth;
+				ratio += dragDist.x * xDepth;
 				peakInfo.fc = juce::jlimit(1., 420., ratio);
 			}
 		}
@@ -488,7 +471,7 @@ namespace gui
 			mouseDrag(mouse);
 			material.reportEndGesture();
 
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				const bool selected = draggerfall.isSelected(i);
 				if (selected)
@@ -512,9 +495,83 @@ namespace gui
 	{
 		const auto sensitive = mouse.mods.isShiftDown();
 		const auto y = wheel.deltaY * (wheel.isReversed ? -1.f : 1.f);
+		const bool snap = mouse.mods.isAltDown();
+		if (snap)
+			return mouseWheelSnap(y > 0.);
 		const auto depth = .15 * (sensitive ? Sensitive : 1.);
 		draggerfall.addLength(partials, y * static_cast<float>(depth));
 		repaint();
+	}
+
+	void ModalMaterialEditor::mouseWheelSnap(bool goingUp)
+	{
+		if (goingUp)
+		{
+			for (auto i = NumPartials - 1; i > 0; --i)
+			{
+				const bool selected = draggerfall.isSelected(i);
+				if (selected)
+				{
+					auto& peakInfo = material.peakInfos[i];
+					auto fc = peakInfo.fc;
+					bool fcBlocked;
+					do
+					{
+						fc = ruler.getNextHigherSnapped(fc);
+						fcBlocked = false;
+						for (auto j = 1; j < NumPartials; ++j)
+							if (i != j)
+							{
+								const auto& nFc = material.peakInfos[j].fc;
+								if (fc == nFc)
+								{
+									fcBlocked = true;
+									j = NumPartials;
+								}
+							}
+					} while (fcBlocked);
+
+					peakInfo.fc = juce::jlimit(1., 420., fc);
+				}
+			}
+		}
+		else
+		{
+			for (auto i = 1; i < NumPartials; ++i)
+			{
+				const bool selected = draggerfall.isSelected(i);
+				if (selected)
+				{
+					auto& peakInfo = material.peakInfos[i];
+					auto fc = peakInfo.fc;
+					bool fcBlocked;
+					do
+					{
+						const auto nFc = ruler.getNextLowerSnapped(fc);
+						if (nFc > 1.)
+						{
+							fc = nFc;
+							fcBlocked = false;
+							for (auto j = 1; j < NumPartials; ++j)
+								if (i != j)
+								{
+									const auto& nFc = material.peakInfos[j].fc;
+									if (fc == nFc)
+									{
+										fcBlocked = true;
+										j = NumPartials;
+									}
+								}
+						}
+						else
+							return;
+					} while (fcBlocked);
+					peakInfo.fc = juce::jlimit(1., 420., fc);
+				}
+			}
+		}
+		
+		material.reportEndGesture();
 	}
 
 	void ModalMaterialEditor::updateInfoLabel(const String& nMessage)
@@ -533,13 +590,13 @@ namespace gui
 		}
 
 		String txt("");
-		for (auto i = 0; i < NumPartialsKeytracked; ++i)
+		for (auto i = 0; i < NumPartials; ++i)
 			if (draggerfall.isSelected(i))
 			{
 				const auto mag = material.peakInfos[i].mag;
 				const auto rat = material.peakInfos[i].fc;
 				txt += "MG: " + String(std::round(mag * 100.f)) + "%\nFC : " + String(rat, 1) + "\n";
-				i = NumPartialsKeytracked;
+				i = NumPartials;
 			}
 		
 		notify(evt::Type::ToastUpdateMessage, &txt);
@@ -550,7 +607,7 @@ namespace gui
 		bool wantMaterialUpdate = false;
 		if (soloActive)
 		{
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				const bool selected = draggerfall.isSelected(i);
 				if (actives[i] != selected)
@@ -562,7 +619,7 @@ namespace gui
 		}
 		else
 		{
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				if (!actives[i])
 				{

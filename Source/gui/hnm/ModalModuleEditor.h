@@ -1,5 +1,6 @@
 #pragma once
 #include "ModalFilterMaterialEditor.h"
+#include "ModalPartialsFixedEditor.h"
 #include "ModalParamsEditor.h"
 #include "../DropDownMenu.h"
 #include "../ButtonRandomizer.h"
@@ -16,10 +17,11 @@ namespace gui
 
 		void resized() override;
 
-		Button buttonAB, buttonRatioFreqs, buttonSolo;
+		Button buttonAB, buttonSolo, buttonFixed;
 		ButtonDropDown buttonDropDownGens, buttonDropDownMisc;
 		ButtonRandomizer buttonRandomizer;
 		std::array<ModalMaterialEditor, 2> materialEditors;
+		std::array<ModalPartialsFixedEditor, 2> partialsFixedEditors;
 		ModalParamsEditor params;
 		DropDownMenu dropDownGens, dropDownMisc;
 		arch::RandSeed randSeedVertical, randSeedHorizontal, randSeedFixedPartials;
@@ -28,8 +30,6 @@ namespace gui
 		int wannaUpdate;
 	private:
 		void initButtonAB();
-
-		void initButtonRatioFreqs();
 
 		void initButtonSolo();
 

@@ -156,7 +156,7 @@ namespace gui
 
 	double Ruler::getSnappedToGrid(double val, double inc) const noexcept
 	{
-		const auto a = std::round((val - 1.) / inc);
+		const auto a = std::floor((val - 1.) / inc);
 		return a * inc + 1.;
 	}
 

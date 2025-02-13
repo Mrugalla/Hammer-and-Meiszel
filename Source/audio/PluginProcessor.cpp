@@ -6,10 +6,10 @@ namespace audio
 	PluginProcessor::PluginProcessor(Params& _params, const arch::XenManager& _xen) :
 		params(_params), xen(_xen), sampleRate(1.),
 		keySelector(),
-		autoMPE(), voiceSplit(), parallelProcessor(),
+		autoMPE(), voiceSplit(), parallelProcessor(), formantLayer(),
 		envGensAmp(), envGensMod(),
 		noiseSynth(),
-		modalFilter(), combFilter(),
+		modalFilter(), formantFilter(), combFilter(),
 		editorExists(false),
 		recording(-1),
 		recSampleIndex(0)
@@ -22,6 +22,7 @@ namespace audio
 		sampleRate = _sampleRate;
 		keySelector.prepare();
 		modalFilter.prepare(sampleRate);
+		formantFilter.prepare(sampleRate);
 		combFilter.prepare(sampleRate);
 		envGensAmp.prepare(sampleRate);
 		envGensMod.prepare(sampleRate);
@@ -152,6 +153,23 @@ namespace audio
 
 		modalFilter();
 		
+		const auto& formantPosParam = params(PID::FormantPos);
+		const auto formantPos = static_cast<double>(formantPosParam.getValMod());
+
+		const auto& formantQParam = params(PID::FormantQ);
+		const auto formantQ = static_cast<double>(formantQParam.getValMod());
+
+		const auto& formantGainDbParam = params(PID::FormantGain);
+		const auto formantGainDb = static_cast<double>(formantGainDbParam.getValModDenorm());
+
+		const auto& formantAParam = params(PID::FormantA);
+		const auto formantVowelA = static_cast<int>(std::round(formantAParam.getValModDenorm()));
+
+		const auto& formantBParam = params(PID::FormantB);
+		const auto formantVowelB = static_cast<int>(std::round(formantBParam.getValModDenorm()));
+
+		formantFilter(dsp::formant::Params(formantPos, formantQ, formantGainDb, formantVowelA, formantVowelB));
+
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
 
@@ -192,8 +210,18 @@ namespace audio
 			const auto envGenModInfo = envGensMod(midiVoice, numSamples, v);
 			const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
 
-			bool active = envGenModInfo.active || modalFilter.isRinging(v);
+			const bool modalRinging = modalFilter.isRinging(v);
+			bool active = envGenModInfo.active || modalRinging;
 			if (active)
+			{
+				double* layerVoice[] = { formantLayer[0].data(), formantLayer[1].data() };
+				for (auto ch = 0; ch < numChannels; ++ch)
+				{
+					const auto smplsVoice = samplesVoice[ch];
+					auto layer = layerVoice[ch];
+					dsp::SIMD::copy(layer, smplsVoice, numSamples);
+				}
+
 				modalFilter
 				(
 					samplesVoice,
@@ -204,7 +232,19 @@ namespace audio
 					v
 				);
 
-			active = active || combFilter.isRinging(v);
+				formantFilter
+				(
+					layerVoice,
+					numChannels, numSamples,
+					v
+				);
+
+				for (auto ch = 0; ch < numChannels; ++ch)
+					dsp::SIMD::add(samplesVoice[ch], layerVoice[ch], numSamples);
+			}
+
+			const bool combRinging = combFilter.isRinging(v);
+			active = active || combRinging;
 			if(active)
 				combFilter
 				(
@@ -231,7 +271,8 @@ namespace audio
 		for(auto i = 0; i < 2; ++i)
 		{
 			const auto& material = modalFilter.getMaterial(i);
-			material.savePatch(state, "mat" + juce::String(i));
+			const auto matStr = "mat" + juce::String(i);
+			material.savePatch(state, matStr);
 		}
 	}
 
@@ -241,7 +282,8 @@ namespace audio
 		for (auto i = 0; i < 2; ++i)
 		{
 			auto& material = modalFilter.getMaterial(i);
-			material.loadPatch(state, "mat" + juce::String(i));
+			const auto matStr = "mat" + juce::String(i);
+			material.loadPatch(state, matStr);
 			for (auto k = 0; k < 1000000; ++k)
 				if (material.status.load() == dsp::modal::StatusMat::Processing)
 				{

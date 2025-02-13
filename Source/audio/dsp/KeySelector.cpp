@@ -9,7 +9,7 @@ namespace dsp
 		offset(69 - 12),
 		enabled(true)
 	{
-		bool sharps[12] = { false, true, false, true, false, false, true, false, true, false, true, false };
+		bool sharps[12] = { false, true, false, false, false, true, true, false, false, false, true, false };
 		for (auto i = 0; i < 12; ++i)
 			keys[i].store(sharps[i]);
 		for (auto& active : actives)

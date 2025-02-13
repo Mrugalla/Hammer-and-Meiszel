@@ -1,8 +1,10 @@
 #pragma once
-#include <juce_core/juce_core.h>
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "../arch/XenManager.h"
 #include "../arch/State.h"
+
+#include "../audio/dsp/hnm/modal/Axiom.h"
+#include "../audio/dsp/hnm/formant/Axiom.h"
 
 namespace param
 {
@@ -82,6 +84,12 @@ namespace param
 		ModalResoDamp,
 		ModalResoDampEnv,
 		ModalResoDampBreite,
+		// formant filter:
+		FormantPos,
+		FormantA,
+		FormantB,
+		FormantQ,
+		FormantGain,
 		// comb:
 		CombOct,
 		CombSemi,
@@ -138,6 +146,7 @@ namespace param
 		Legato,
 		Custom,
 		FilterType,
+		Vowel,
 		NumUnits
 	};
 
@@ -266,11 +275,11 @@ namespace param
 		bool modDepthAbsolute;
 	};
 
-	struct Params
+	class Params
 	{
 		using AudioProcessor = juce::AudioProcessor;
 		using Parameters = std::vector<Param*>;
-
+	public:
 		Params(AudioProcessor&
 #if PPDHasTuningEditor
 			, const Xen&
@@ -310,7 +319,8 @@ namespace param
 
 	namespace strToVal
 	{
-		std::function<float(String, const float/*altVal*/)> parse();
+		// valueString, altVal
+		std::function<float(String, float)> parse();
 
 		StrToValFunc power();
 		StrToValFunc solo();
@@ -336,6 +346,7 @@ namespace param
 		StrToValFunc beats();
 		StrToValFunc legato();
 		StrToValFunc filterType();
+		StrToValFunc vowel();
 	}
 
 	namespace valToStr
@@ -366,5 +377,6 @@ namespace param
 		ValToStrFunc beats();
 		ValToStrFunc legato();
 		ValToStrFunc filterType();
+		ValToStrFunc vowel();
 	}
 }

@@ -5,11 +5,11 @@ namespace gui
 	ModalModuleEditor::ModalModuleEditor(Utils& u) :
 		Comp(u),
 		buttonAB(u),
-		buttonRatioFreqs(u),
 		buttonSolo(u),
 		buttonDropDownGens(u),
 		buttonDropDownMisc(u),
 		buttonRandomizer(u, "randmodal"),
+		buttonFixed(u),
 		materialEditors
 		{
 			ModalMaterialEditor
@@ -24,6 +24,11 @@ namespace gui
 				utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(1),
 				utils.audioProcessor.pluginProcessor.modalFilter.getActives()
 			)
+		},
+		partialsFixedEditors
+		{
+			ModalPartialsFixedEditor(utils),
+			ModalPartialsFixedEditor(utils)
 		},
 		params(u),
 		dropDownGens(u),
@@ -41,23 +46,35 @@ namespace gui
 		);
 
 		addAndMakeVisible(buttonAB);
-		addAndMakeVisible(buttonRatioFreqs);
 		addAndMakeVisible(buttonSolo);
 		addAndMakeVisible(buttonDropDownGens);
 		addAndMakeVisible(buttonDropDownMisc);
 		addAndMakeVisible(buttonRandomizer);
+		addAndMakeVisible(buttonFixed);
 		for (auto& m : materialEditors)
 			addChildComponent(m);
+		for (auto& p : partialsFixedEditors)
+			addChildComponent(p);
 		materialEditors[0].setVisible(true);
 		addAndMakeVisible(params);
 		addChildComponent(dropDownGens);
 		addChildComponent(dropDownMisc);
 
 		initButtonAB();
-		initButtonRatioFreqs();
 		initButtonSolo();
 		initDropDown();
 		initRandomizer();
+
+		buttonFixed.type = Button::Type::kToggle;
+		makeTextButton(buttonFixed, "Formants", "Click here to adjust the selected material's formants!", CID::Interact);
+		buttonFixed.onClick = [&](const Mouse&)
+		{
+			buttonFixed.value = 1.f - buttonFixed.value;
+			const bool showFixed = buttonFixed.value > .5f;
+			const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+			partialsFixedEditors[matIdx].setVisible(showFixed);
+		};
+		buttonFixed.value = 0.f;
 
 		add(Callback([&]()
 		{
@@ -93,8 +110,6 @@ namespace gui
 			const auto buttonWidth = w / 6.f;
 			buttonAB.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
-			buttonRatioFreqs.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
-			x += buttonWidth;
 			buttonSolo.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
 			buttonDropDownGens.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
@@ -102,9 +117,13 @@ namespace gui
 			buttonDropDownMisc.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
 			buttonRandomizer.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
+			x += buttonWidth;
+			buttonFixed.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 		}
 		for (auto& m : materialEditors)
 			layout.place(m, 0, 1, 1, 1);
+		for (auto& p : partialsFixedEditors)
+			layout.place(p, 0, 1, 1, 1, true);
 		params.setBounds(layout.bottom().toNearestInt());
 		const auto dropDownsBounds = layout(0, 1, 1, 1, thicc).toNearestInt();
 		dropDownGens.setBounds(dropDownsBounds);
@@ -125,20 +144,14 @@ namespace gui
 			buttonAB.repaint();
 			materialEditors[0].setVisible(!e);
 			materialEditors[1].setVisible(e);
-		};
-	}
 
-	void ModalModuleEditor::initButtonRatioFreqs()
-	{
-		makeTextButton(buttonRatioFreqs, "Ratios", "Toggle between displaying the ratio or frequencies of the modal material.", CID::Interact);
-		buttonRatioFreqs.value = 1.f;
-		buttonRatioFreqs.type = Button::Type::kToggle;
-		buttonRatioFreqs.onClick = [&](const Mouse&)
-		{
-			buttonRatioFreqs.value = buttonRatioFreqs.value > .5f ? 0.f : 1.f;
-			const auto e = buttonRatioFreqs.value > .5f;
-			buttonRatioFreqs.label.setText(e ? "Ratios" : "Freqs");
-			buttonRatioFreqs.repaint();
+			const auto fixedVisible = buttonFixed.value > .5f;
+			if (fixedVisible)
+			{
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+				partialsFixedEditors[matIdx].setVisible(true);
+				partialsFixedEditors[1 - matIdx].setVisible(false);
+			}
 		};
 	}
 
@@ -277,19 +290,19 @@ namespace gui
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
-					const auto numPartialsKeytracked = dsp::modal::NumPartials;
+					const auto numPartials = dsp::modal::NumPartials;
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peaks = material.peakInfos;
 
 					auto maxRatio = peaks[0].fc;
-					for (auto i = 1; i < numPartialsKeytracked; ++i)
+					for (auto i = 1; i < numPartials; ++i)
 						maxRatio = std::max(maxRatio, peaks[i].fc);
 
 					const auto peaksCopy = peaks;
-					for (auto i = 0; i < numPartialsKeytracked; ++i)
+					for (auto i = 0; i < numPartials; ++i)
 					{
-						const auto j = numPartialsKeytracked - i - 1;
+						const auto j = numPartials - i - 1;
 						const auto& peakJ = peaksCopy[j];
 						auto& peak = peaks[i];
 						peak.fc = maxRatio - peakJ.fc + 1.f;
@@ -310,11 +323,11 @@ namespace gui
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
-					const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
+					const auto numPartials = dsp::modal::NumPartials;
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peaks = material.peakInfos;
-					for (auto i = 0; i < numPartialsKeytracked; ++i)
+					for (auto i = 0; i < numPartials; ++i)
 					{
 						auto& peak = peaks[i];
 						peak.mag = 1.f - peak.mag;
@@ -336,11 +349,11 @@ namespace gui
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
-						const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
+						const auto numPartials = dsp::modal::NumPartials;
 						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 						auto& material = modalFilter.getMaterial(matIdx);
 						auto& peaks = material.peakInfos;
-						for (auto i = 0; i < numPartialsKeytracked; ++i)
+						for (auto i = 0; i < numPartials; ++i)
 						{
 							auto& peak = peaks[i];
 							peak.mag = randSeedVertical();
@@ -362,11 +375,11 @@ namespace gui
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
 				updateMaterialFunc = [&, matIdx]()
 				{
-					const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
+					const auto numPartials = dsp::modal::NumPartials;
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peaks = material.peakInfos;
-					for (auto i = 1; i < numPartialsKeytracked; ++i)
+					for (auto i = 1; i < numPartials; ++i)
 					{
 						auto& peak = peaks[i];
 						peak.fc = 1.f * randSeedHorizontal() * 32.f;
@@ -377,33 +390,6 @@ namespace gui
 				
 			},
 			"Randomize Ratios", "Randomizes all of the modal material's ratios."
-		);
-
-		// Proc: Randomize Fixed Frequency Partials
-		dropDownMisc.add
-		(
-			[&](const Mouse& mouse)
-			{
-				randSeedFixedPartials.updateSeed(mouse.mods.isLeftButtonDown());
-
-				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
-				{
-					const auto numPartialsFixed = dsp::modal::NumPartialsFixed;
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(matIdx);
-					auto& peaks = material.peakInfos;
-					for (auto i = 0; i < numPartialsFixed; ++i)
-					{
-						auto& peak = peaks[i + dsp::modal::NumPartialsKeytracked];
-						peak.fc = math::noteToFreqHz2(24.f + randSeedHorizontal() * 84.f);
-					}
-					material.updatePeakInfosFromGUI();
-				};
-				wannaUpdate = matIdx;
-
-			},
-			"Randomize Fixed Frequencies", "Randomizes all of the modal material's fixed frequencies."
 		);
 
 		// Record Input
@@ -430,15 +416,15 @@ namespace gui
 					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peakInfos = material.peakInfos;
-					const auto numPartialsKeytracked = dsp::modal::NumPartialsKeytracked;
+					const auto numPartials = dsp::modal::NumPartials;
 					while (true)
 					{
 						Point duplicate;
 						bool duplicateFound = false;
-						for (auto i = 0; i < numPartialsKeytracked; ++i)
+						for (auto i = 0; i < numPartials; ++i)
 						{
 							auto r0 = peakInfos[i].fc;
-							for (auto j = i + 1; j < numPartialsKeytracked; ++j)
+							for (auto j = i + 1; j < numPartials; ++j)
 							{
 								if (i != j)
 								{
@@ -461,16 +447,16 @@ namespace gui
 						const auto dIdx1 = duplicate.y;
 						const auto d1Mag = peakInfos[dIdx1].mag;
 
-						for (auto i = dIdx1; i < numPartialsKeytracked - 1; ++i)
+						for (auto i = dIdx1; i < numPartials - 1; ++i)
 						{
 							peakInfos[i].mag = peakInfos[i + 1].mag;
 							peakInfos[i].fc = peakInfos[i + 1].fc;
 						}
 
-						peakInfos[numPartialsKeytracked - 1].mag = d1Mag;
+						peakInfos[numPartials - 1].mag = d1Mag;
 
-						const auto maxRatio = peakInfos[numPartialsKeytracked - 1].fc;
-						peakInfos[numPartialsKeytracked - 1].fc = maxRatio + 1.f;
+						const auto maxRatio = peakInfos[numPartials - 1].fc;
+						peakInfos[numPartials - 1].fc = maxRatio + 1.f;
 					}
 					material.reportUpdate();
 				};
@@ -510,13 +496,10 @@ namespace gui
 		const auto randModalFunc = [&](ButtonRandomizer::RandomSeed& rand)
 		{
 			auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-			auto& xenManager = utils.audioProcessor.xenManager;
 			for (auto i = 0; i < 2; ++i)
-				modalFilter.randomizeMaterial(rand, xenManager, i);
+				modalFilter.randomizeMaterial(rand, i);
 		};
 
 		buttonRandomizer.add(randModalFunc);
-
-
 	}
 }

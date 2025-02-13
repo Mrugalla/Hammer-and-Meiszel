@@ -135,7 +135,7 @@ namespace dsp
 			}
 
 			static constexpr double NumPartialsInv = 1. / static_cast<double>(NumPartials);
-			for (auto i = 0; i < NumPartialsInv; ++i)
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				const auto iF = static_cast<double>(i);
 				const auto iR = iF * NumPartialsInv;
@@ -153,7 +153,7 @@ namespace dsp
 		void ResonatorBank::updateFreqRatios(const MaterialData& material, int& nfbn, int ch) noexcept
 		{
 			nfbn = 0;
-			for (auto i = 0; i < NumPartialsKeytracked; ++i)
+			for (auto i = 0; i < NumPartials; ++i)
 			{
 				const auto pFc = material.getFc(i);
 				const auto fcKeytracked = freqHz * pFc;
@@ -165,20 +165,7 @@ namespace dsp
 					resonator.update(ch);
 					nfbn = i + 1;
 				}
-				else
-					break;
-			}
-			
-			for (auto i = NumPartialsKeytracked; i < NumPartials; ++i)
-			{
-				const auto pFc = material.getFc(i);
-				if (pFc < freqMax)
-				{
-					const auto fc = math::freqHzToFc(pFc, sampleRate);
-					auto& resonator = resonators[i];
-					resonator.setCutoffFc(fc, ch);
-					resonator.update(ch);
-				}
+				else return;
 			}
 		}
 
@@ -265,16 +252,6 @@ namespace dsp
 						wet += bpY;
 					}
 
-					for (auto f = NumPartialsKeytracked; f < NumPartials; ++f)
-					{
-						auto& resonator = resonators[f];
-						const auto mag = material.getMag(f);
-						//if (mag != 0.)
-						{
-							const auto bpY = resonator(dry, ch) * mag;
-							wet += bpY;
-						}
-					}
 					wet *= gain;
 
 					if (wet * wet > 4.)
