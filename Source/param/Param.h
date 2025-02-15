@@ -86,10 +86,13 @@ namespace param
 		ModalResoDampBreite,
 		// formant filter:
 		FormantPos,
+		FormantPosEnv,
 		FormantA,
 		FormantB,
 		FormantQ,
+		FormantQEnv,
 		FormantGain,
+		FormantGainEnv,
 		// comb:
 		CombOct,
 		CombSemi,

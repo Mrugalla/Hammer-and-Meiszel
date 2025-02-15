@@ -2,6 +2,7 @@
 #include "../../../../arch/XenManager.h"
 #include "../../Resonator.h"
 #include "Axiom.h"
+#include "../../PRM.h"
 
 namespace dsp
 {
@@ -9,13 +10,16 @@ namespace dsp
 	{
 		struct Params
 		{
-			Params(double _vowelPos, double _q, double _gainDb, int _vowelA, int _vowelB) :
+			Params(double _vowelPos, double _q, double _gainDb,
+				double _vowelPosMod, double _qMod, double _gainMod,
+				int _vowelA, int _vowelB) :
 				vowelPos(_vowelPos), q(_q), gain(_gainDb),
+				vowelPosMod(_vowelPosMod), qMod(_qMod), gainMod(_gainMod),
 				vowelA(_vowelA), vowelB(_vowelB)
 			{
 			}
 
-			double vowelPos, q, gain;
+			double vowelPos, q, gain, vowelPosMod, qMod, gainMod;
 			int vowelA, vowelB;
 		};
 
@@ -26,7 +30,8 @@ namespace dsp
 			DualVowel() :
 				a(toVowel(VowelClass::SopranoA)),
 				b(toVowel(VowelClass::SopranoE)),
-				params(-1., -1., -120., -1, -1)
+				params(-1., -1., -120., 0., 0., 0., -1, -1),
+				updatedVowels(false)
 			{
 			}
 
@@ -35,19 +40,18 @@ namespace dsp
 				a.prepare(sampleRate);
 				b.prepare(sampleRate);
 				ab.prepare(sampleRate);
-				params = Params(-1., -1., -120., -1, -1);
+				params = Params(-1., -1., -120., 0., 0., 0., -1, -1);
+				updatedVowels = false;
 			}
 
-			bool wannaUpdate(const Params& _params) noexcept
+			void updateVowels(const Params& _params) noexcept
 			{
-				bool update = false;
-
 				if (params.vowelA != _params.vowelA)
 				{
 					params.vowelA = _params.vowelA;
 					const auto vowelClass = static_cast<VowelClass>(params.vowelA);
 					a = toVowel(vowelClass);
-					update = true;
+					updatedVowels = true;
 				}
 
 				if (params.vowelB != _params.vowelB)
@@ -55,14 +59,24 @@ namespace dsp
 					params.vowelB = _params.vowelB;
 					const auto vowelClass = static_cast<VowelClass>(params.vowelB);
 					b = toVowel(vowelClass);
-					update = true;
+					updatedVowels = true;
 				}
 
-				if (params.vowelPos != _params.vowelPos ||
-					params.q != _params.q)
+				updatedVowels = false;
+			}
+
+			bool wannaUpdate(const Params& _params, double envGenMod) noexcept
+			{
+				bool update = updatedVowels;
+
+				const auto vowelPos = math::limit(0., 1., _params.vowelPos + _params.vowelPosMod * envGenMod);
+				const auto q = math::limit(0., 1., _params.q + _params.qMod * envGenMod);
+
+				if (params.vowelPos != vowelPos ||
+					params.q != q)
 				{
-					params.vowelPos = _params.vowelPos;
-					params.q = _params.q;
+					params.vowelPos = vowelPos;
+					params.q = q;
 					update = true;
 				}
 				
@@ -79,6 +93,7 @@ namespace dsp
 		private:
 			Vowel a, b, ab;
 			Params params;
+			bool updatedVowels;
 		};
 
 		struct Voice
@@ -86,14 +101,22 @@ namespace dsp
 			using ResonatorBank = std::array<ResonatorStereo2, NumFormants>;
 
 			Voice() :
-				resonators()
+				resonators(),
+				gainPRM(0.),
+				sleepyTimer(0), sleepyThreshold(0),
+				noteOn(false), sleepy(false)
 			{
 			}
 
-			void prepare() noexcept
+			void prepare(double sampleRate) noexcept
 			{
 				for (auto& resonator : resonators)
 					resonator.reset();
+				gainPRM.prepare(sampleRate, 7.);
+				sleepyTimer = 0;
+				sleepyThreshold = static_cast<int>(sampleRate / 6.);
+				noteOn = false;
+				sleepy = false;
 			}
 
 			void updateResonators(const Vowel& vowel) noexcept
@@ -109,20 +132,57 @@ namespace dsp
 				}
 			}
 
-			void operator()(double** samples, double gain, int numChannels, int numSamples) noexcept
+			void operator()(double** samples, const MidiBuffer& midi, const Params& params,
+				const double* envGenMod, int numChannels, int numSamples) noexcept
 			{
-				if (gain == 0.)
+				auto s = 0;
+				for (const auto& it : midi)
 				{
-					for (auto ch = 0; ch < numChannels; ++ch)
-						SIMD::clear(samples[ch], numSamples);
-					return;
+					const auto msg = it.getMessage();
+					const auto ts = it.samplePosition;
+					if (msg.isNoteOn())
+					{
+						process(samples, params, envGenMod[s], numChannels, s, ts);
+						noteOn = true;
+						sleepy = false;
+					}
+					else if (msg.isNoteOff())
+					{
+						if (noteOn)
+						{
+							process(samples, params, envGenMod[s], numChannels, s, ts);
+							noteOn = false;
+						}
+					}
+					s = ts;
 				}
+				process(samples, params, envGenMod[s], numChannels, s, numSamples - s);
+			}
+		private:
+			ResonatorBank resonators;
+			PRMD gainPRM;
 
+			int sleepyTimer, sleepyThreshold;
+			bool noteOn, sleepy;
+
+			void updateGain(const Params& params, double envGenMod, int start, int end) noexcept
+			{
+				const auto gainDb = params.gain + params.gainMod * envGenMod;
+				const auto gain = math::dbToAmp(gainDb, -60.);
+				auto gainInfo = gainPRM(gain, start, end);
+				gainInfo.copyToBuffer(start, end);
+			}
+
+			void resonate(double** samples, int numChannels, int start, int end) noexcept
+			{
+				if (sleepy)
+					return;
+				const auto numSamples = end - start;
 				for (auto ch = 0; ch < numChannels; ++ch)
 				{
 					auto smpls = samples[ch];
 
-					for (auto s = 0; s < numSamples; ++s)
+					for (auto s = start; s < end; ++s)
 					{
 						const auto dry = smpls[s];
 						auto y = resonators[0](dry, ch);
@@ -135,21 +195,41 @@ namespace dsp
 
 						smpls[s] = y;
 
+						if (!noteOn)
+						{
+							const auto eps = 1e-6;
+							if (y * y > eps)
+								sleepyTimer = 0;
+							else
+							{
+								sleepyTimer += numSamples;
+								if (sleepyTimer > sleepyThreshold)
+								{
+									sleepyTimer = 0;
+									sleepy = true;
+									break;
+								}
+							}
+						}
 					}
-					SIMD::multiply(smpls, gain, numSamples);
+
+					SIMD::multiply(smpls, &gainPRM.buf[start], end - start);
 				}
 			}
-		private:
-			ResonatorBank resonators;
+
+			void process(double** samples, const Params& params,
+				double envGenMod, int numChannels, int start, int end) noexcept
+			{
+				updateGain(params, envGenMod, start, end);
+				resonate(samples, numChannels, start, end);
+			}
 		};
 
 		struct Filter
 		{
 			Filter() :
 				dualVowel(),
-				voices(),
-				gainDb(-120.),
-				gain(1.)
+				voices()
 			{
 			}
 
@@ -157,38 +237,31 @@ namespace dsp
 			{
 				dualVowel.prepare(sampleRate);
 				for (auto& voice : voices)
-					voice.prepare();
+					voice.prepare(sampleRate);
 			}
 
 			void operator()(const Params& params) noexcept
 			{
-				const auto _gainDb = params.gain;
-				if (gainDb != _gainDb)
-				{
-					gainDb = _gainDb;
-					if (gainDb <= -60.)
-						gain = 0.;
-					else
-						gain = math::dbToAmp(gainDb);
-				}
+				dualVowel.updateVowels(params);
+			}
 
-				if (dualVowel.wannaUpdate(params))
+			// samples, params, gain, envGenMod, numChannels, numSamples, v
+			void operator()(double** samples, const MidiBuffer& midi,
+				const Params& params, const double* envGenMod,
+				int numChannels, int numSamples, int v) noexcept
+			{
+				if (dualVowel.wannaUpdate(params, envGenMod[0]))
 				{
 					const auto& vowel = dualVowel.getVowel();
 					for (auto& voice : voices)
 						voice.updateResonators(vowel);
 				}
-			}
 
-			// samples, gain, numChannels, numSamples, v
-			void operator()(double** samples, int numChannels, int numSamples, int v) noexcept
-			{
-				voices[v](samples, gain, numChannels, numSamples);
+				voices[v](samples, midi, params, envGenMod, numChannels, numSamples);
 			}
 		private:
 			DualVowel dualVowel;
 			std::array<Voice, NumMPEChannels> voices;
-			double gainDb, gain;
 		};
 	}
 }

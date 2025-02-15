@@ -417,52 +417,51 @@ namespace gui
 					auto& material = modalFilter.getMaterial(matIdx);
 					auto& peakInfos = material.peakInfos;
 					const auto numPartials = dsp::modal::NumPartials;
-					while (true)
+
+					std::vector<int> duplicateIndexes;
+					size_t numDuplicates = 0;
+					do
 					{
-						Point duplicate;
-						bool duplicateFound = false;
+						for (auto i = 0; i < numDuplicates; ++i)
+						{
+							const auto dIdx = duplicateIndexes[i];
+							++peakInfos[dIdx].fc;
+						}
+
+						duplicateIndexes.clear();
 						for (auto i = 0; i < numPartials; ++i)
 						{
-							auto r0 = peakInfos[i].fc;
+							const PointD r0(peakInfos[i].fc, peakInfos[i].mag);
 							for (auto j = i + 1; j < numPartials; ++j)
-							{
 								if (i != j)
 								{
-									const auto r1 = peakInfos[j].fc;
-									const auto dif = std::abs(r1 - r0);
-									const auto threshold = 0.01f;
+									const PointD r1(peakInfos[j].fc, peakInfos[j].mag);
+									const LineD line(r0, r1);
+									const auto dif = line.getLengthSquared();
+									const auto threshold = 0.01;
 									if (dif < threshold)
 									{
-										duplicate = { i, j };
-										duplicateFound = true;
-										break;
+										bool alreadyFound = false;
+										for (const auto& dIdx : duplicateIndexes)
+											if (dIdx == i)
+											{
+												alreadyFound = true;
+												break;
+											}
+										if (!alreadyFound)
+											duplicateIndexes.push_back(j);
 									}
 								}
-
-							}
-						}
-						if (!duplicateFound)
-							break;
-
-						const auto dIdx1 = duplicate.y;
-						const auto d1Mag = peakInfos[dIdx1].mag;
-
-						for (auto i = dIdx1; i < numPartials - 1; ++i)
-						{
-							peakInfos[i].mag = peakInfos[i + 1].mag;
-							peakInfos[i].fc = peakInfos[i + 1].fc;
 						}
 
-						peakInfos[numPartials - 1].mag = d1Mag;
-
-						const auto maxRatio = peakInfos[numPartials - 1].fc;
-						peakInfos[numPartials - 1].fc = maxRatio + 1.f;
-					}
+						numDuplicates = duplicateIndexes.size();
+					} while (numDuplicates != 0);
+					
 					material.reportUpdate();
 				};
 				wannaUpdate = matIdx;
 			},
-			"Rescue Overlaps", "Puts overlapping partials somewhere else."
+			"Rescue Overlaps", "This button puts overlapping partials somewhere else."
 		);
 
 		dropDownGens.init();

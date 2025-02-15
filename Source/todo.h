@@ -4,6 +4,9 @@
 
 ~~~ todo ~~~
 
+die mod envelope im formant filter funzen noch nicht richtig
+optimiere formant filter, dass er nicht processt wenn er silent ist und grad kein noteOn ist
+
 make default presets for common usecases
 
 polyphony parameter

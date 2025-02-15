@@ -96,10 +96,13 @@ namespace param
 		case PID::ModalResoDampBreite: return "Modal Reso Damp Breite";
 		//
 		case PID::FormantPos: return "Formant Position";
+		case PID::FormantPosEnv: return "Formant Position Env";
 		case PID::FormantA: return "Formant A";
 		case PID::FormantB: return "Formant B";
 		case PID::FormantQ: return "Formant Q";
+		case PID::FormantQEnv: return "Formant Q Env";
 		case PID::FormantGain: return "Formant Gain";
+		case PID::FormantGainEnv: return "Formant Gain Env";
 		//
 		case PID::CombOct: return "Comb Oct";
 		case PID::CombSemi: return "Comb Semi";
@@ -208,10 +211,13 @@ namespace param
 		case PID::ModalResoDampBreite: return "The stereo width of the modal reso damp.";
 		//
 		case PID::FormantPos: return "The position between the selected vowel";
+		case PID::FormantPosEnv: return "The envelope generator's depth on the formant position.";
 		case PID::FormantA: return "Vowel A of the formant filter.";
 		case PID::FormantB: return "Vowel B of the formant filter.";
 		case PID::FormantQ: return "The formant filter's resonance.";
+		case PID::FormantQEnv: return "The envelope generator's depth on the formant filter's resonance.";
 		case PID::FormantGain: return "The formant filter's output gain.";
+		case PID::FormantGainEnv: return "The envelope generator's depth on the formant filter's gain.";
 		//
 		case PID::CombOct: return "Transposes the comb filter in octaves.";
 		case PID::CombSemi: return "Transposes the comb filter in semitones.";
@@ -1475,13 +1481,16 @@ namespace param
 		params.push_back(makeParam(PID::ModalResoDampBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		//
 		params.push_back(makeParam(PID::FormantPos, 0.f));
+		params.push_back(makeParam(PID::FormantPosEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		const auto maxVowelF = static_cast<float>(dsp::formant::NumVowelClasses - 1);
 		const auto vowelADefault = static_cast<float>(dsp::formant::VowelClass::AltoA);
 		const auto vowelBDefault = static_cast<float>(dsp::formant::VowelClass::TenorI);
 		params.push_back(makeParam(PID::FormantA, vowelADefault, makeRange::stepped(0.f, maxVowelF), Unit::Vowel));
 		params.push_back(makeParam(PID::FormantB, vowelBDefault, makeRange::stepped(0.f, maxVowelF), Unit::Vowel));
 		params.push_back(makeParam(PID::FormantQ, .5f, makeRange::lin(0.f, 1.f), Unit::Q));
+		params.push_back(makeParam(PID::FormantQEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::FormantGain, -60.f, makeRange::withCentre(-60.f, 6.f, -12.f), Unit::Decibel));
+		params.push_back(makeParam(PID::FormantGainEnv, 0.f, makeRange::lin(-60.f, 60.f), Unit::Decibel));
 		//
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-4.f, 4.f), Unit::Octaves));
 		params.push_back(makeParam(PID::CombSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));

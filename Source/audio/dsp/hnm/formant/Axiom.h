@@ -36,7 +36,6 @@ namespace dsp
 				bw = a.bw + pos * (b.bw - a.bw);
 				gain = a.gain + pos * (b.gain - a.gain);
 				bw *= q;
-
 				gain /= q;
 			}
 
@@ -166,7 +165,7 @@ namespace dsp
 			case VowelClass::CounterTenorU: return { 370, 630, 2750, 3000, 3400, 0, -20, -23, -30, -34, 40, 60, 100, 120, 120 };
 			case VowelClass::TenorA: return { 650, 1080, 2650, 2900, 3250, 0, -6, -7, -8, -22, 80, 90, 120, 130, 140 };
 			case VowelClass::TenorE: return { 400, 1700, 2600, 3200, 3580, 0, -14, -12, -14, -20, 70, 80, 100, 120, 120 };
-			case VowelClass::TenorI: return { 290, 1870, 2800, 3250, 3540, 0, 15, -18, -20, -30, 40, 90, 100, 120, 120 };
+			case VowelClass::TenorI: return { 290, 1870, 2800, 3250, 3540, 0, -15, -18, -20, -30, 40, 90, 100, 120, 120 };
 			case VowelClass::TenorO: return { 400, 800, 2600, 2800, 3000, 0, -10, -12, -12, -26, 40, 80, 100, 120, 120 };
 			case VowelClass::TenorU: return { 350, 600, 2700, 2900, 3250, 0, -20, -17, -14, -26, 40, 60, 100, 120, 120 };
 			case VowelClass::BassA: return { 600, 1040, 2250, 2450, 2750, 0, -7, -9, -9, -20, 60, 70, 110, 120, 130 };

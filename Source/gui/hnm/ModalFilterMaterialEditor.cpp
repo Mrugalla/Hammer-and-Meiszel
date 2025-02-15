@@ -74,13 +74,12 @@ namespace gui
 	}
 
 	ModalMaterialEditor::Draggerfall::Draggerfall() :
+		coordsAbs(0.f, 0.f),
+		coordsRel(0.f, 0.f),
 		width(1.f),
 		height(1.f),
-		xRel(1.f),
-		xAbs(1.f),
-		lenRel(.1f),
-		lenAbs(2.f),
-		lenAbsHalf(1.f),
+		radAbs(1.f),
+		radRel(.5f),
 		selection()
 	{
 		for (auto& s : selection)
@@ -91,34 +90,38 @@ namespace gui
 	{
 		width = w;
 		height = h;
-		updateX(partials, xAbs, false);
-		lenAbs = juce::jlimit(1.f, width, (lenRel + 0.f) * width);
-		lenRel = lenAbs / width;
-		lenAbsHalf = lenAbs * .5f;
+		updateCoords(partials, coordsAbs, false);
+		updateRadius(partials, 0.f);
 	}
 
-	void ModalMaterialEditor::Draggerfall::updateX(Partials& partials, float x, bool doUpdateSelection) noexcept
+	void ModalMaterialEditor::Draggerfall::updateCoords(Partials& partials, PointF xy, bool doUpdateSelection) noexcept
 	{
-		xAbs = x;
-		xRel = xAbs / width;
+		coordsAbs = xy;
+		coordsRel = { coordsAbs.x / width, coordsAbs.y / height };
 		if (doUpdateSelection)
 			updateSelection(partials);
 	}
 
-	void ModalMaterialEditor::Draggerfall::addLength(Partials& partials, float valRel) noexcept
+	void ModalMaterialEditor::Draggerfall::updateRadius(Partials& partials, float addToRadiusRel) noexcept
 	{
-		lenAbs = juce::jlimit(1.f, width, (lenRel + valRel) * width);
-		lenRel = lenAbs / width;
-		lenAbsHalf = lenAbs * .5f;
+		const auto minDimen = std::min(width, height);
+		radRel = juce::jlimit(.1f, 1.5f, radRel + addToRadiusRel);
+		radAbs = radRel * minDimen;
 		updateSelection(partials);
 	}
 
 	void ModalMaterialEditor::Draggerfall::paint(Graphics& g)
 	{
-		const auto x = xAbs - lenAbsHalf;
-		const auto w = lenAbs;
+		const auto radAbs2 = radAbs * 2.f;
+		const BoundsF bounds
+		(
+			coordsAbs.x - radAbs,
+			coordsAbs.y - radAbs,
+			radAbs2,
+			radAbs2
+		);
 		setCol(g, CID::Hover);
-		g.fillRect(x, 0.f, w, height);
+		g.fillEllipse(bounds);
 	}
 
 	bool ModalMaterialEditor::Draggerfall::isSelected(int i) const noexcept
@@ -142,18 +145,18 @@ namespace gui
 
 	void ModalMaterialEditor::Draggerfall::updateSelection(Partials& partials) noexcept
 	{
-		const auto lowerLimit = xAbs - lenAbsHalf;
-		const auto upperLimit = lowerLimit + lenAbs;
 		for (auto i = 0; i < NumPartials; ++i)
 		{
-			const auto partialX = partials[i].x;
-			selection[i] = partialX >= lowerLimit && partialX <= upperLimit;
+			const auto& partial = partials[i];
+			const PointF posAbs(partial.x, partial.y);
+			const LineF line(coordsAbs, posAbs);
+			selection[i] = line.getLength() < radAbs;
 		}
 	}
 
 	PointF ModalMaterialEditor::Draggerfall::getCoords() const noexcept
 	{
-		return { xAbs - lenAbsHalf, lenAbs };
+		return coordsAbs;
 	}
 
 	// ModalMaterialEditor
@@ -391,7 +394,7 @@ namespace gui
 
 	void ModalMaterialEditor::mouseMove(const Mouse& mouse)
 	{
-		draggerfall.updateX(partials, mouse.position.x, true);
+		draggerfall.updateCoords(partials, mouse.position, true);
 		
 		for (auto i = 0; i < NumPartials; ++i)
 		{
@@ -416,7 +419,7 @@ namespace gui
 
 	void ModalMaterialEditor::mouseDrag(const Mouse& mouse)
 	{
-		draggerfall.updateX(partials, mouse.position.x, false);
+		draggerfall.updateCoords(partials, mouse.position, false);
 
 		if (draggerfall.selectionEmpty())
 			return;
@@ -499,78 +502,35 @@ namespace gui
 		if (snap)
 			return mouseWheelSnap(y > 0.);
 		const auto depth = .15 * (sensitive ? Sensitive : 1.);
-		draggerfall.addLength(partials, y * static_cast<float>(depth));
+		draggerfall.updateRadius(partials, y * static_cast<float>(depth));
 		repaint();
 	}
 
 	void ModalMaterialEditor::mouseWheelSnap(bool goingUp)
 	{
-		if (goingUp)
+		for(auto i = 1; i < NumPartials; ++i)
 		{
-			for (auto i = NumPartials - 1; i > 0; --i)
+			const bool selected = draggerfall.isSelected(i);
+			if (selected)
 			{
-				const bool selected = draggerfall.isSelected(i);
-				if (selected)
+				auto& peakInfo = material.peakInfos[i];
+				auto fc = peakInfo.fc;
+				if (goingUp)
 				{
-					auto& peakInfo = material.peakInfos[i];
-					auto fc = peakInfo.fc;
-					bool fcBlocked;
-					do
-					{
-						fc = ruler.getNextHigherSnapped(fc);
-						fcBlocked = false;
-						for (auto j = 1; j < NumPartials; ++j)
-							if (i != j)
-							{
-								const auto& nFc = material.peakInfos[j].fc;
-								if (fc == nFc)
-								{
-									fcBlocked = true;
-									j = NumPartials;
-								}
-							}
-					} while (fcBlocked);
+					fc = ruler.getNextHigherSnapped(fc);
+					if (fc >= 420.)
+						return;
+				}
+				else
+				{
+					fc = ruler.getNextLowerSnapped(fc);
+					if (fc <= 1.)
+						return;
+				}
+				peakInfo.fc = fc;
+			}
+		}
 
-					peakInfo.fc = juce::jlimit(1., 420., fc);
-				}
-			}
-		}
-		else
-		{
-			for (auto i = 1; i < NumPartials; ++i)
-			{
-				const bool selected = draggerfall.isSelected(i);
-				if (selected)
-				{
-					auto& peakInfo = material.peakInfos[i];
-					auto fc = peakInfo.fc;
-					bool fcBlocked;
-					do
-					{
-						const auto nFc = ruler.getNextLowerSnapped(fc);
-						if (nFc > 1.)
-						{
-							fc = nFc;
-							fcBlocked = false;
-							for (auto j = 1; j < NumPartials; ++j)
-								if (i != j)
-								{
-									const auto& nFc = material.peakInfos[j].fc;
-									if (fc == nFc)
-									{
-										fcBlocked = true;
-										j = NumPartials;
-									}
-								}
-						}
-						else
-							return;
-					} while (fcBlocked);
-					peakInfo.fc = juce::jlimit(1., 420., fc);
-				}
-			}
-		}
-		
 		material.reportEndGesture();
 	}
 

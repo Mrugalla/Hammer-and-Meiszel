@@ -6,11 +6,11 @@ namespace dsp
 	{
 		double calcBandwidthFc(double reso, double sampleRateInv) noexcept
 		{
-			static constexpr auto Min = 20.;
-			static constexpr auto Range = 19.;
+			static constexpr auto BWStart = 200.;
+			static constexpr auto BWEnd = 0.;
+			static constexpr auto BWRange = BWEnd - BWStart;
 
-			const auto remap = math::tanhApprox(3. * reso);
-			const auto bw = Min - remap * Range;
+			const auto bw = BWStart + reso * BWRange;
 			const auto bwFc = bw * sampleRateInv;
 			return bwFc;
 		}
@@ -120,11 +120,13 @@ namespace dsp
 
 		void ResonatorBank::setReso(double reso, double damp, int ch) noexcept
 		{
-			gains[ch] = 1. + Tau * reso;
+			const auto resoScaled = reso * 3.;
+			const auto resoRemapped = math::tanhApprox(resoScaled);
+			gains[ch] = 1. + Pi * resoScaled;
 
 			if (damp == 0.)
 			{
-				const auto bw = calcBandwidthFc(reso, sampleRateInv);
+				const auto bw = calcBandwidthFc(resoRemapped, sampleRateInv);
 				for (auto i = 0; i < NumPartials; ++i)
 				{
 					auto& resonator = resonators[i];
@@ -139,9 +141,9 @@ namespace dsp
 			{
 				const auto iF = static_cast<double>(i);
 				const auto iR = iF * NumPartialsInv;
-				const auto iX = .5 * math::cosApprox(iR * Pi) + .5;
+				const auto iX = math::tanhApprox(Tau * (1. - iR));
 				const auto iM = 1. + damp * (iX - 1.);
-				const auto resoR = reso * iM;
+				const auto resoR = resoRemapped * iM;
 				const auto bw = calcBandwidthFc(resoR, sampleRateInv);
 
 				auto& resonator = resonators[i];

@@ -48,11 +48,11 @@ namespace gui
 			// partials, w, h
 			void resized(Partials&, float, float) noexcept;
 
-			// partials, x, doUpdateSelection
-			void updateX(Partials&, float, bool) noexcept;
+			// partials, coords, doUpdateSelection
+			void updateCoords(Partials&, PointF, bool) noexcept;
 
-			// partials, valRel
-			void addLength(Partials&, float) noexcept;
+			// partials, addToRadiusRelative
+			void updateRadius(Partials&, float) noexcept;
 
 			void paint(Graphics& g);
 
@@ -65,7 +65,8 @@ namespace gui
 			PointF getCoords() const noexcept;
 
 		protected:
-			float width, height, xRel, xAbs, lenRel, lenAbs, lenAbsHalf;
+			PointF coordsAbs, coordsRel;
+			float width, height, radAbs, radRel;// xRel, xAbs, lenRel, lenAbs, lenAbsHalf;
 			std::array<bool, NumPartials> selection;
 
 			void updateSelection(Partials&) noexcept;

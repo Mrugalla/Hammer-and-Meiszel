@@ -156,11 +156,20 @@ namespace audio
 		const auto& formantPosParam = params(PID::FormantPos);
 		const auto formantPos = static_cast<double>(formantPosParam.getValMod());
 
+		const auto& formantPosEnvParam = params(PID::FormantPosEnv);
+		const auto formantPosEnv = static_cast<double>(formantPosEnvParam.getValModDenorm());
+
 		const auto& formantQParam = params(PID::FormantQ);
 		const auto formantQ = static_cast<double>(formantQParam.getValMod());
 
+		const auto& formantQEnvParam = params(PID::FormantQEnv);
+		const auto formantQEnv = static_cast<double>(formantQEnvParam.getValModDenorm());
+
 		const auto& formantGainDbParam = params(PID::FormantGain);
 		const auto formantGainDb = static_cast<double>(formantGainDbParam.getValModDenorm());
+
+		const auto& formantGainEnvParam = params(PID::FormantGainEnv);
+		const auto formantGainEnv = static_cast<double>(formantGainEnvParam.getValModDenorm());
 
 		const auto& formantAParam = params(PID::FormantA);
 		const auto formantVowelA = static_cast<int>(std::round(formantAParam.getValModDenorm()));
@@ -168,7 +177,13 @@ namespace audio
 		const auto& formantBParam = params(PID::FormantB);
 		const auto formantVowelB = static_cast<int>(std::round(formantBParam.getValModDenorm()));
 
-		formantFilter(dsp::formant::Params(formantPos, formantQ, formantGainDb, formantVowelA, formantVowelB));
+		dsp::formant::Params formantParams
+		(
+			formantPos, formantQ, formantGainDb,
+			formantPosEnv, formantQEnv, formantGainEnv,
+			formantVowelA, formantVowelB
+		);
+		formantFilter(formantParams);
 
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
@@ -235,6 +250,9 @@ namespace audio
 				formantFilter
 				(
 					layerVoice,
+					midiVoice,
+					formantParams,
+					envGenModInfo.data,
 					numChannels, numSamples,
 					v
 				);
