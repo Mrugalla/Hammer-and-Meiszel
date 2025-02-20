@@ -28,7 +28,7 @@ namespace gui
 
 	protected:
 		OctSemiSlider octModal, semiModal, octComb, semiComb, unisonComb;
-		KnobHnM blend, spreizung, harmonie, kraft, reso, resoDamp, feedback;
+		KnobHnM blend, spreizung, harmonie, kraft, reso, damp, feedback;
 		LabelGroup octSemiGroup, knobLabelsGroup;
 	};
 }

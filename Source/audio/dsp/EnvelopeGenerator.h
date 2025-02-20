@@ -44,18 +44,20 @@ namespace dsp
 		double operator()(bool) noexcept;
 
 		double operator()() noexcept;
-		
-		// don't use this if sustain can equal 1
-		double getEnvNoSustain() const noexcept;
 
 		const Parameters& parameters;
 		double env, sampleRate;
 		State state;
 		bool noteOn;
 	protected:
-		smooth::LowpassD smooth;
-		double curEnv;
+		double phase, envStart;
 		const double MinDb;
+
+		void triggerAttackState() noexcept;
+
+		void triggerDecayState() noexcept;
+
+		void triggerReleaseState() noexcept;
 
 		void processAttack() noexcept;
 

@@ -91,9 +91,6 @@ namespace param
 		case PID::ModalResonanz: return "Modal Reso";
 		case PID::ModalResonanzEnv: return "Modal Reso Env";
 		case PID::ModalResonanzBreite: return "Modal Reso Breite";
-		case PID::ModalResoDamp: return "Modal Reso Damp";
-		case PID::ModalResoDampEnv: return "Modal Reso Damp Env";
-		case PID::ModalResoDampBreite: return "Modal Reso Damp Breite";
 		//
 		case PID::FormantPos: return "Formant Position";
 		case PID::FormantPosEnv: return "Formant Position Env";
@@ -110,6 +107,11 @@ namespace param
 		case PID::CombFeedback: return "Comb Feedback";
 		case PID::CombFeedbackEnv: return "Comb Feedback Env";
 		case PID::CombFeedbackWidth: return "Comb Feedback Width";
+		//
+		case PID::Damp: return "Damp";
+		case PID::DampEnv: return "Damp Env";
+		case PID::DampWidth: return "Damp Width";
+		//
 		default: return "Invalid Parameter Name";
 		}
 	}
@@ -206,9 +208,6 @@ namespace param
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
 		case PID::ModalResonanzEnv: return "The envelope generator's depth on the modal resonanz.";
 		case PID::ModalResonanzBreite: return "The stereo width of the modal resonanz.";
-		case PID::ModalResoDamp: return "Reso damping causes higher partials to be more damped.";
-		case PID::ModalResoDampEnv: return "The envelope generator's depth on the modal reso damp.";
-		case PID::ModalResoDampBreite: return "The stereo width of the modal reso damp.";
 		//
 		case PID::FormantPos: return "The position between the selected vowel";
 		case PID::FormantPosEnv: return "The envelope generator's depth on the formant position.";
@@ -225,6 +224,11 @@ namespace param
 		case PID::CombFeedback: return "The feedback of the comb filter's feedback delay.";
 		case PID::CombFeedbackEnv: return "The envelope generator's depth on the comb filter's feedback.";
 		case PID::CombFeedbackWidth: return "The stereo width of the comb filter's feedback.";
+		//
+		case PID::Damp: return "Dampens the voice with a lowpass filter.";
+		case PID::DampEnv: return "The envelope generator's depth on the dampening.";
+		case PID::DampWidth: return "The stereo width of the dampening.";
+		//
 		default: return "Invalid Tooltip.";
 		}
 	}
@@ -1476,20 +1480,17 @@ namespace param
 		params.push_back(makeParam(PID::ModalResonanz, .7f));
 		params.push_back(makeParam(PID::ModalResonanzEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResonanzBreite, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalResoDamp, .6f, makeRange::lin(0.f, 1.f)));
-		params.push_back(makeParam(PID::ModalResoDampEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::ModalResoDampBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		//
 		params.push_back(makeParam(PID::FormantPos, 0.f));
 		params.push_back(makeParam(PID::FormantPosEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		const auto maxVowelF = static_cast<float>(dsp::formant::NumVowelClasses - 1);
-		const auto vowelADefault = static_cast<float>(dsp::formant::VowelClass::AltoA);
-		const auto vowelBDefault = static_cast<float>(dsp::formant::VowelClass::TenorI);
+		const auto vowelADefault = static_cast<float>(dsp::formant::VowelClass::TenorI);
+		const auto vowelBDefault = static_cast<float>(dsp::formant::VowelClass::TenorA);
 		params.push_back(makeParam(PID::FormantA, vowelADefault, makeRange::stepped(0.f, maxVowelF), Unit::Vowel));
 		params.push_back(makeParam(PID::FormantB, vowelBDefault, makeRange::stepped(0.f, maxVowelF), Unit::Vowel));
-		params.push_back(makeParam(PID::FormantQ, .5f, makeRange::lin(0.f, 1.f), Unit::Q));
-		params.push_back(makeParam(PID::FormantQEnv, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::FormantGain, -60.f, makeRange::withCentre(-60.f, 6.f, -12.f), Unit::Decibel));
+		params.push_back(makeParam(PID::FormantQ, .8f, makeRange::lin(0.f, 1.f), Unit::Q));
+		params.push_back(makeParam(PID::FormantQEnv, 0.f, makeRange::lin(-1.f, 1.f), Unit::Q));
+		params.push_back(makeParam(PID::FormantGain, -60.f, makeRange::withCentre(-60.f, 32.f, -0.f), Unit::Decibel));
 		params.push_back(makeParam(PID::FormantGainEnv, 0.f, makeRange::lin(-60.f, 60.f), Unit::Decibel));
 		//
 		params.push_back(makeParam(PID::CombOct, 0.f, makeRange::stepped(-4.f, 4.f), Unit::Octaves));
@@ -1498,6 +1499,12 @@ namespace param
 		params.push_back(makeParam(PID::CombFeedback, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::CombFeedbackEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-1.f, 1.f)));
+		//
+		const auto numOctavesDamp = 12.f;
+		const auto dampRange = 8.f * numOctavesDamp;
+		params.push_back(makeParam(PID::Damp, dampRange, makeRange::lin(0.f, dampRange), Unit::Semi));
+		params.push_back(makeParam(PID::DampEnv, 0.f, makeRange::lin(-dampRange, dampRange), Unit::Semi));
+		params.push_back(makeParam(PID::DampWidth, 0.f, makeRange::lin(-dampRange, dampRange), Unit::Semi));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

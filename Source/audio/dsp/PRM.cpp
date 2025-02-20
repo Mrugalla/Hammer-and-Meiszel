@@ -71,9 +71,16 @@ namespace dsp
 	PRMInfo<Float> PRM<Float>::operator()(Float val, int startIdx, int endIdx) noexcept
 	{
 		value = val;
+		return operator()(startIdx, endIdx);
+	}
+
+	template<typename Float>
+	PRMInfo<Float> PRM<Float>::operator()(int startIdx, int endIdx) noexcept
+	{
 		bool smoothing = smooth(buf.data(), value, startIdx, endIdx);
 		return { buf.data(), value, smoothing };
 	}
+
 
 	template<typename Float>
 	PRMInfo<Float> PRM<Float>::operator()(int numSamples) noexcept

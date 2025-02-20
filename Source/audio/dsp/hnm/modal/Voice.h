@@ -19,8 +19,7 @@ namespace dsp
 			struct Parameters
 			{
 				Parameters(double = 0., double = 0., double = 0., double = 0., double = 0.,
-					double = 0., double = 0., double = 0., double = 0.,
-					double = 0., double = 0., double = 0., double = 0.,
+					double = 0., double = 0., double = 0., double = 0., double = 0.,
 					double = 0., double = 0., double = 0., double = 0., double = 0.);
 
 				const Parameter& operator[](int i) const noexcept;

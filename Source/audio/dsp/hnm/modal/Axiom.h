@@ -22,6 +22,6 @@ namespace dsp
 		static constexpr double SpreizungMin = -2.;
 		static constexpr double SpreizungMax = 2.;
 
-		enum kParam { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kResoDamp, kNumParams };
+		enum kParam { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumParams };
 	}
 }

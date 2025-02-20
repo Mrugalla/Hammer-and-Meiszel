@@ -14,17 +14,16 @@ namespace dsp
 
 		//
 
-		Voice::Parameters::Parameters(double _blend, double _spreizung, double _harmonie, double _kraft, double _reso, double _resoDamp,
-			double _blendEnv, double _spreizungEnv, double _harmonieEnv, double _kraftEnv, double _resoEnv, double _resoDampEnv,
-			double _blendBreite, double _spreizungBreite, double _harmonieBreite, double _kraftBreite, double _resoBreite, double _resoDampBreite) :
+		Voice::Parameters::Parameters(double _blend, double _spreizung, double _harmonie, double _kraft, double _reso,
+			double _blendEnv, double _spreizungEnv, double _harmonieEnv, double _kraftEnv, double _resoEnv,
+			double _blendBreite, double _spreizungBreite, double _harmonieBreite, double _kraftBreite, double _resoBreite) :
 			params
 			{
 				Parameter(_blend, _blendBreite, _blendEnv),
 				Parameter(_spreizung, _spreizungBreite, _spreizungEnv),
 				Parameter(_harmonie, _harmonieBreite, _harmonieEnv),
 				Parameter(_kraft, _kraftBreite, _kraftEnv),
-				Parameter(_reso, _resoBreite, _resoEnv),
-				Parameter(_resoDamp, _resoDampBreite, _resoDampEnv)
+				Parameter(_reso, _resoBreite, _resoEnv)
 			}
 		{}
 
@@ -179,13 +178,10 @@ namespace dsp
 			{
 				auto& resoParam = parameters[kParam::kReso];
 				resoParam(_parameters[kParam::kReso], envGenValue, 0., 1., numChannels);
-				auto& resoDampParam = parameters[kParam::kResoDamp];
-				resoDampParam(_parameters[kParam::kResoDamp], envGenValue, 0., 1., numChannels);
 				for (auto ch = 0; ch < numChannels; ++ch)
 				{
 					const auto reso = resoParam[ch];
-					const auto resoDamp = resoDampParam[ch];
-					resonatorBank.setReso(std::sqrt(reso), resoDamp, ch);
+					resonatorBank.setReso(std::sqrt(reso), ch);
 				}
 			}
 

@@ -10,6 +10,7 @@
 #include "dsp/NoiseSynth.h"
 #include "dsp/hnm/modal/ModalFilter.h"
 #include "dsp/hnm/formant/FormantFilter.h"
+#include "dsp/hnm/HnmLowpass.h"
 #include "dsp/hnm/comb/Comb.h"
 
 //This is where this plugin's custom dsp is implemented
@@ -56,6 +57,8 @@ namespace audio
 		dsp::modal::ModalFilter modalFilter;
 		dsp::formant::Filter formantFilter;
 		dsp::hnm::Comb combFilter;
+		dsp::hnm::lp::Filter lowpass;
+
 		std::atomic<bool> editorExists;
 
 		std::atomic<int> recording;

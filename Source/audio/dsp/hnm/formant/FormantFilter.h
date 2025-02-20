@@ -145,6 +145,7 @@ namespace dsp
 						process(samples, params, envGenMod[s], numChannels, s, ts);
 						noteOn = true;
 						sleepy = false;
+						s = ts;
 					}
 					else if (msg.isNoteOff())
 					{
@@ -153,8 +154,8 @@ namespace dsp
 							process(samples, params, envGenMod[s], numChannels, s, ts);
 							noteOn = false;
 						}
+						s = ts;
 					}
-					s = ts;
 				}
 				process(samples, params, envGenMod[s], numChannels, s, numSamples - s);
 			}

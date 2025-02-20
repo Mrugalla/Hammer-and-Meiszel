@@ -9,7 +9,7 @@ namespace audio
 		autoMPE(), voiceSplit(), parallelProcessor(), formantLayer(),
 		envGensAmp(), envGensMod(),
 		noiseSynth(),
-		modalFilter(), formantFilter(), combFilter(),
+		modalFilter(), formantFilter(), combFilter(), lowpass(),
 		editorExists(false),
 		recording(-1),
 		recSampleIndex(0)
@@ -26,12 +26,32 @@ namespace audio
 		combFilter.prepare(sampleRate);
 		envGensAmp.prepare(sampleRate);
 		envGensMod.prepare(sampleRate);
+		lowpass.prepare(sampleRate);
 	}
 
 	void PluginProcessor::operator()(double** samples,
 		dsp::MidiBuffer& midi, int numChannels, int numSamples,
 		bool playing) noexcept
 	{
+#if PPDTestEnvelope
+		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
+		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
+		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
+		const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
+		const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
+		const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
+		const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
+		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
+		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
+
+		const auto envGenAmpInfo = envGensAmp(midi, numSamples, 0);
+		if (envGenAmpInfo.active)
+			for (auto ch = 0; ch < numChannels; ++ch)
+				dsp::SIMD::copy(samples[ch], envGenAmpInfo.data, numSamples);
+		else
+			for (auto ch = 0; ch < numChannels; ++ch)
+				dsp::SIMD::clear(samples[ch], numSamples);
+#else
 		{
 			const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
 			const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
@@ -86,7 +106,7 @@ namespace audio
 					material.load();
 					recSampleIndex = 0;
 					recording.store(-1);
-					break;
+					s = numSamples;
 				}
 			}
 		}
@@ -137,22 +157,15 @@ namespace audio
 		const auto& modalResoBreiteParam = params(PID::ModalResonanzBreite);
 		const auto modalResoBreite = static_cast<double>(modalResoBreiteParam.getValModDenorm());
 
-		const auto& modalResoDampParam = params(PID::ModalResoDamp);
-		const auto modalResoDamp = static_cast<double>(modalResoDampParam.getValMod());
-		const auto& modalResoDampEnvParam = params(PID::ModalResoDampEnv);
-		const auto modalResoDampEnv = static_cast<double>(modalResoDampEnvParam.getValModDenorm());
-		const auto& modalResoDampBreiteParam = params(PID::ModalResoDampBreite);
-		const auto modalResoDampBreite = static_cast<double>(modalResoDampBreiteParam.getValModDenorm());
-
 		const dsp::modal::Voice::Parameters modalVoiceParams
 		(
-			modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso, modalResoDamp,
-			modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv, modalResoDampEnv,
-			modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite, modalResoDampBreite
+			modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso,
+			modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv,
+			modalBlendBreite, modalSpreizungBreite, modalHarmonieBreite, modalKraftBreite, modalResoBreite
 		);
 
 		modalFilter();
-		
+
 		const auto& formantPosParam = params(PID::FormantPos);
 		const auto formantPos = static_cast<double>(formantPosParam.getValMod());
 
@@ -202,9 +215,18 @@ namespace audio
 		const auto combFeedbackEnv = static_cast<double>(combFeedbackEnvParam.getValModDenorm());
 		const auto& combFeedbackWidthParam = params(PID::CombFeedbackWidth);
 		const auto combFeedbackWidth = static_cast<double>(combFeedbackWidthParam.getValModDenorm());
-		
+
 		combFilter(numSamples);
-		
+
+		const auto& dampParam = params(PID::Damp);
+		const auto damp = static_cast<double>(dampParam.getValModDenorm());
+		const auto& dampEnvParam = params(PID::DampEnv);
+		const auto dampEnv = static_cast<double>(dampEnvParam.getValModDenorm());
+		const auto& dampWidthParam = params(PID::DampWidth);
+		const auto dampWidth = static_cast<double>(dampWidthParam.getValModDenorm());
+
+		const dsp::hnm::lp::Params lpParams(damp, dampEnv, dampWidth);
+
 		const auto samplesInput = const_cast<const double**>(samples);
 		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
 		{
@@ -263,7 +285,7 @@ namespace audio
 
 			const bool combRinging = combFilter.isRinging(v);
 			active = active || combRinging;
-			if(active)
+			if (active)
 				combFilter
 				(
 					samplesVoice, midiVoice, xen,
@@ -274,10 +296,20 @@ namespace audio
 					v
 				);
 
+			lowpass
+			(
+				samplesVoice, midiVoice,
+				lpParams, xen,
+				envGenModVal,
+				numChannels, numSamples,
+				v
+			);
 			parallelProcessor.setSleepy(!active, v);
 		}
 
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);
+#endif
+		
 	}
 
 	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept

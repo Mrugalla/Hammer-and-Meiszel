@@ -43,6 +43,9 @@ namespace dsp
 		// value, startIdx, endIdx
 		PRMInfo<Float> operator()(Float, int, int) noexcept;
 
+		// startIdx, endIdx
+		PRMInfo<Float> operator()(int, int) noexcept;
+
 		// numSamples
 		PRMInfo<Float> operator()(int) noexcept;
 

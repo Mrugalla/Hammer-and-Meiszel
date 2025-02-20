@@ -81,9 +81,6 @@ namespace param
 		ModalResonanz,
 		ModalResonanzEnv,
 		ModalResonanzBreite,
-		ModalResoDamp,
-		ModalResoDampEnv,
-		ModalResoDampBreite,
 		// formant filter:
 		FormantPos,
 		FormantPosEnv,
@@ -100,6 +97,10 @@ namespace param
 		CombFeedback,
 		CombFeedbackEnv,
 		CombFeedbackWidth,
+		// lowpass
+		Damp,
+		DampEnv,
+		DampWidth,
 		//
 		NumParams
 	};

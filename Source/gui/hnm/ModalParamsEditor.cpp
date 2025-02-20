@@ -45,7 +45,7 @@ namespace gui
 		harmonie(u, PID::ModalHarmonie, PID::ModalHarmonieEnv, PID::ModalHarmonieBreite, "Harmonie"),
 		kraft(u, PID::ModalKraft, PID::ModalKraftEnv, PID::ModalKraftBreite, "Kraft"),
 		reso(u, PID::ModalResonanz, PID::ModalResonanzEnv, PID::ModalResonanzBreite, "Reso"),
-		resoDamp(u, PID::ModalResoDamp, PID::ModalResoDampEnv, PID::ModalResoDampBreite, "Reso Damp"),
+		damp(u, PID::Damp, PID::DampEnv, PID::DampWidth, "Damp"),
 		feedback(u, PID::CombFeedback, PID::CombFeedbackEnv, PID::CombFeedbackWidth, "Feedback"),
 		octSemiGroup(),
 		knobLabelsGroup()
@@ -72,16 +72,16 @@ namespace gui
 		addAndMakeVisible(harmonie);
 		addAndMakeVisible(kraft);
 		addAndMakeVisible(reso);
-		addAndMakeVisible(resoDamp);
 		addAndMakeVisible(feedback);
+		addAndMakeVisible(damp);
 
 		knobLabelsGroup.add(blend.labelMain);
 		knobLabelsGroup.add(spreizung.labelMain);
 		knobLabelsGroup.add(harmonie.labelMain);
 		knobLabelsGroup.add(kraft.labelMain);
 		knobLabelsGroup.add(reso.labelMain);
-		knobLabelsGroup.add(resoDamp.labelMain);
 		knobLabelsGroup.add(feedback.labelMain);
+		knobLabelsGroup.add(damp.labelMain);
 	}
 
 	void ModalParamsEditor::resized()
@@ -110,8 +110,8 @@ namespace gui
 		layout.place(harmonie, 2, 1, 1, 1);
 		layout.place(kraft, 3, 1, 1, 1);
 		layout.place(reso, 4, 1, 1, 1);
-		layout.place(resoDamp, 5, 1, 1, 1);
-		layout.place(feedback, 6, 1, 1, 1);
+		layout.place(feedback, 5, 1, 1, 1);
+		layout.place(damp, 6, 1, 1, 1);
 
 		knobLabelsGroup.setMaxHeight(utils.thicc);
 	}

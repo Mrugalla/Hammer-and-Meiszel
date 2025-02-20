@@ -470,13 +470,14 @@ namespace audio
 		if (midSide)
 			dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
+#if !PPDTestEnvelope
         for (auto& highpass : highpasses)
         {
             juce::dsp::AudioBlock<double> block(buffer);
             juce::dsp::ProcessContextReplacing<double> context(block);
             highpass.process(context);
         }
-
+#endif
 
 		const auto& softClipParam = params(PID::SoftClip);
 		const auto softClip = softClipParam.getValMod() > .5f;

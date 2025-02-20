@@ -71,7 +71,8 @@ namespace gui
 
 		// sum and normalize ratios
 		const auto ratioSum = atkRatio + dcyRatio + rlsRatio;
-		if (ratioSum == 0.f)
+		const bool onlySustain = ratioSum == 0.f;
+		if (onlySustain)
 		{
 			c.startNewSubPath(0.f, susHeight);
 			c.lineTo(width, susHeight);

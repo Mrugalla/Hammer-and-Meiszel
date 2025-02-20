@@ -77,7 +77,7 @@ namespace dsp
 			reset(2);
 			setFrequencyHz(materialStereo, 1000., 2);
 			for(auto ch = 0; ch < 2; ++ch)
-				setReso(.25, 1., ch);
+				setReso(.25, ch);
 			sleepyTimerThreshold = static_cast<int>(nyquist / 8.);
 		}
 
@@ -118,34 +118,14 @@ namespace dsp
 				updateFreqRatios(materialStereo[ch], numFiltersBelowNyquist[ch], ch);
 		}
 
-		void ResonatorBank::setReso(double reso, double damp, int ch) noexcept
+		void ResonatorBank::setReso(double reso, int ch) noexcept
 		{
 			const auto resoScaled = reso * 3.;
 			const auto resoRemapped = math::tanhApprox(resoScaled);
 			gains[ch] = 1. + Pi * resoScaled;
-
-			if (damp == 0.)
-			{
-				const auto bw = calcBandwidthFc(resoRemapped, sampleRateInv);
-				for (auto i = 0; i < NumPartials; ++i)
-				{
-					auto& resonator = resonators[i];
-					resonator.setBandwidth(bw, ch);
-					resonator.update(ch);
-				}
-				return;
-			}
-
-			static constexpr double NumPartialsInv = 1. / static_cast<double>(NumPartials);
+			const auto bw = calcBandwidthFc(resoRemapped, sampleRateInv);
 			for (auto i = 0; i < NumPartials; ++i)
 			{
-				const auto iF = static_cast<double>(i);
-				const auto iR = iF * NumPartialsInv;
-				const auto iX = math::tanhApprox(Tau * (1. - iR));
-				const auto iM = 1. + damp * (iX - 1.);
-				const auto resoR = resoRemapped * iM;
-				const auto bw = calcBandwidthFc(resoR, sampleRateInv);
-
 				auto& resonator = resonators[i];
 				resonator.setBandwidth(bw, ch);
 				resonator.update(ch);

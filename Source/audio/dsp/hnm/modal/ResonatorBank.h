@@ -41,8 +41,8 @@ namespace dsp
 			// materialStereo, numChannels
 			void updateFreqRatios(const MaterialDataStereo&, int) noexcept;
 
-			// bw, damp, ch
-			void setReso(double, double, int) noexcept;
+			// bw, ch
+			void setReso(double, int) noexcept;
 
 			bool isRinging() const noexcept;
 

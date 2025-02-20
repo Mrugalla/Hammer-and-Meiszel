@@ -7,21 +7,17 @@ namespace dsp
 	EnvelopeGenerator::Parameters::Parameters(double _atk, double _dcy, double _sus, double _rls) :
 		sampleRate(1.),
 		atkP(_atk), dcyP(_dcy), rlsP(_rls),
-		atk(math::msToInc(atkP, sampleRate)),
-		dcy(math::msToInc(dcyP, sampleRate)),
+		atk(-1.),
+		dcy(-1.),
 		sus(_sus),
-		rls(math::msToInc(rlsP, sampleRate))
+		rls(-1.)
 	{
 	}
 
 	void EnvelopeGenerator::Parameters::prepare(double _sampleRate) noexcept
 	{
 		sampleRate = _sampleRate;
-		atk = atkP;
-		dcy = dcyP;
-		rls = rlsP;
 		atkP = dcyP = rlsP = -1.;
-		operator()(atk, dcy, sus, rls);
 	}
 
 	void EnvelopeGenerator::Parameters::operator()(double _atk, double _dcy,
@@ -82,7 +78,6 @@ namespace dsp
 			else
 				s = synthesizeEnvelope(buffer, s, ts);
 		}
-
 		synthesizeEnvelope(buffer, s, numSamples);
 
 		return true;
@@ -90,9 +85,9 @@ namespace dsp
 
 	bool EnvelopeGenerator::isSleepy() noexcept
 	{
-		bool sleepy = !noteOn && curEnv < MinDb;
+		bool sleepy = !noteOn && env < MinDb;
 		if (sleepy)
-			env = curEnv = 0.;
+			env = 0.;
 		return sleepy;
 	}
 
@@ -101,8 +96,7 @@ namespace dsp
 		env(0.), sampleRate(1.),
 		state(State::Release),
 		noteOn(false),
-		smooth(0.),
-		curEnv(0.),
+		phase(1.), envStart(0.),
 		MinDb(math::dbToAmp(-60.))
 	{
 	}
@@ -110,7 +104,10 @@ namespace dsp
 	void EnvelopeGenerator::prepare(double _sampleRate) noexcept
 	{
 		sampleRate = _sampleRate;
-		smooth.makeFromDecayInMs(.5, sampleRate);
+		phase = 1.;
+		envStart = 0.;
+		env = 0.;
+		state = State::Release;
 	}
 
 	double EnvelopeGenerator::operator()(bool _noteOn) noexcept
@@ -130,77 +127,81 @@ namespace dsp
 		default: processRelease();
 			break;
 		}
-
-		curEnv = smooth(env * env);
-		return curEnv;
+		return env;
 	}
 
-	double EnvelopeGenerator::getEnvNoSustain() const noexcept
+	void EnvelopeGenerator::triggerAttackState() noexcept
 	{
-		if (env < parameters.sus)
-			return 0.;
-		const auto a = env - parameters.sus;
-		const auto b = 1. - parameters.sus;
-		const auto y = a / b;
-		return y * y;
+		state = State::Attack;
+		envStart = env;
+		phase = 0.;
+		processAttack();
+	}
+
+	void EnvelopeGenerator::triggerDecayState() noexcept
+	{
+		state = State::Decay;
+		phase = 0.;
+		env = 1.;
+		processDecay();
+	}
+
+	void EnvelopeGenerator::triggerReleaseState() noexcept
+	{
+		state = State::Release;
+		envStart = env;
+		phase = 0.;
+		processRelease();
 	}
 
 	void EnvelopeGenerator::processAttack() noexcept
 	{
-		if (noteOn)
-		{
-			env += parameters.atk * (1. - env);
-			if (env > 1. - 1e-6)
-			{
-				env = 1.;
-				state = State::Decay;
-				processDecay();
-			}
+		if (!noteOn)
+			return triggerReleaseState();
+		const auto x = dsp::Pi + phase * dsp::Pi;
+		const auto w = .5 * math::cosApprox(x > Pi ? x - Tau : x) + .5;
+		env = envStart + w * (1. - envStart);
+		phase += parameters.atk;
+		if (phase < 1.)
 			return;
-		}
-		state = State::Release;
-		processRelease();
+		triggerDecayState();
 	}
 
 	void EnvelopeGenerator::processDecay() noexcept
 	{
-		if (noteOn)
-		{
-			env += parameters.dcy * (parameters.sus - env);
-			const auto dist = parameters.sus - env;
-			const auto distSquared = dist * dist;
-			if (distSquared < 1e-6)
-			{
-				state = State::Sustain;
-				processSustain();
-			}
+		if (!noteOn)
+			return triggerReleaseState();
+		const auto x = phase * dsp::Pi;
+		const auto w = .5 * math::cosApprox(x) + .5;
+		env = parameters.sus + w * (1. - parameters.sus);
+		phase += parameters.dcy;
+		if (phase < 1.)
 			return;
-		}
-		state = State::Release;
-		processRelease();
+		state = State::Sustain;
+		env = parameters.sus;
+		processSustain();
 	}
 
 	void EnvelopeGenerator::processSustain() noexcept
 	{
-		if (noteOn)
-		{
-			env = parameters.sus;
-			return;
-		}
-		state = State::Release;
-		processRelease();
+		if (!noteOn)
+			return triggerReleaseState();
+		env = parameters.sus;
 	}
 
 	void EnvelopeGenerator::processRelease() noexcept
 	{
 		if (noteOn)
-		{
-			state = State::Attack;
-			return processAttack();
-		}
-		env += parameters.rls * (0. - env);
-		if (env < 1e-6)
-			env = 0.;
+			return triggerAttackState();
+		if (phase >= 1.)
+			return;
+		const auto x = phase * dsp::Pi;
+		const auto w = .5 * math::cosApprox(x) + .5;
+		env = envStart * w;
+		phase += parameters.rls;
+		if (phase < 1.)
+			return;
+		env = 0.;
 	}
 
 	int EnvelopeGenerator::synthesizeEnvelope(double* buffer, int s, int ts) noexcept

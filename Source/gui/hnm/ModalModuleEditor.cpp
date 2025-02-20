@@ -485,9 +485,9 @@ namespace gui
 		buttonRandomizer.add(PID::ModalKraft);
 		buttonRandomizer.add(PID::ModalKraftEnv);
 		buttonRandomizer.add(PID::ModalKraftBreite);
-		buttonRandomizer.add(PID::ModalResoDamp);
-		buttonRandomizer.add(PID::ModalResoDampEnv);
-		buttonRandomizer.add(PID::ModalResoDampBreite);
+		buttonRandomizer.add(PID::Damp);
+		buttonRandomizer.add(PID::DampEnv);
+		buttonRandomizer.add(PID::DampWidth);
 		buttonRandomizer.add(PID::ModalResonanz);
 		buttonRandomizer.add(PID::ModalResonanzEnv);
 		buttonRandomizer.add(PID::ModalResonanzBreite);

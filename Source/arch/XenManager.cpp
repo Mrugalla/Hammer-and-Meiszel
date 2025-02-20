@@ -4,10 +4,10 @@
 
 namespace arch
 {
-	bool XenManager::Info::operator==(const Info& other) const noexcept
+	bool XenManager::Info::operator==(const Info& x) const noexcept
 	{
-		return xen == other.xen && masterTune == other.masterTune &&
-			anchor == other.anchor && pitchbendRange == other.pitchbendRange;
+		return x.xen == xen && x.masterTune == masterTune &&
+			x.anchor == anchor && x.pitchbendRange == pitchbendRange;
 	}
 
 	XenManager::XenManager() :

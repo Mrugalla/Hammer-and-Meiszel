@@ -4,8 +4,10 @@
 
 ~~~ todo ~~~
 
-die mod envelope im formant filter funzen noch nicht richtig
-optimiere formant filter, dass er nicht processt wenn er silent ist und grad kein noteOn ist
+comb has no envelope?
+formants have no width?
+damp has no width
+lp sleepy optimization fehlt
 
 make default presets for common usecases
 
