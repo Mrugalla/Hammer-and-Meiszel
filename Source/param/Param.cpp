@@ -645,6 +645,16 @@ namespace param::strToVal
 		};
 	}
 
+	StrToValFunc octFloat()
+	{
+		return[p = parse()](const String& txt)
+		{
+			const auto text = txt.trimCharactersAtEnd(toString(Unit::Octaves));
+			const auto val = p(text, 0.f);
+			return val;
+		};
+	}
+
 	StrToValFunc semi()
 	{
 		return[p = parse()](const String& txt)
@@ -1010,6 +1020,11 @@ namespace param::valToStr
 		return [](float v) { return String(std::round(v)) + " " + toString(Unit::Octaves); };
 	}
 
+	ValToStrFunc octFloat()
+	{
+		return [](float v) { return String(v, 1) + " " + toString(Unit::Octaves); };
+	}
+
 	ValToStrFunc semi()
 	{
 		return [](float v) { return String(std::round(v)) + " " + toString(Unit::Semi); };
@@ -1304,6 +1319,10 @@ namespace param
 			valToStrFunc = valToStr::oct();
 			strToValFunc = strToVal::oct();
 			break;
+		case Unit::OctavesFloat:
+			valToStrFunc = valToStr::octFloat();
+			strToValFunc = strToVal::octFloat();
+			break;
 		case Unit::Semi:
 			valToStrFunc = valToStr::semi();
 			strToValFunc = strToVal::semi();
@@ -1500,11 +1519,10 @@ namespace param
 		params.push_back(makeParam(PID::CombFeedbackEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-1.f, 1.f)));
 		//
-		const auto numOctavesDamp = 12.f;
-		const auto dampRange = 8.f * numOctavesDamp;
-		params.push_back(makeParam(PID::Damp, dampRange, makeRange::lin(0.f, dampRange), Unit::Semi));
-		params.push_back(makeParam(PID::DampEnv, 0.f, makeRange::lin(-dampRange, dampRange), Unit::Semi));
-		params.push_back(makeParam(PID::DampWidth, 0.f, makeRange::lin(-dampRange, dampRange), Unit::Semi));
+		const auto numOctavesDamp = 8.f;
+		params.push_back(makeParam(PID::Damp, numOctavesDamp * .5f, makeRange::lin(0.f, numOctavesDamp), Unit::OctavesFloat));
+		params.push_back(makeParam(PID::DampEnv, 0.f, makeRange::lin(-numOctavesDamp, numOctavesDamp), Unit::OctavesFloat));
+		params.push_back(makeParam(PID::DampWidth, 0.f, makeRange::lin(-numOctavesDamp, numOctavesDamp), Unit::OctavesFloat));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

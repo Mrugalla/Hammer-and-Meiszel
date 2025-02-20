@@ -133,6 +133,7 @@ namespace param
 		Beats,
 		Degree,
 		Octaves,
+		OctavesFloat,
 		Semi,
 		Fine,
 		Ms,
@@ -320,67 +321,4 @@ namespace param
 		Parameters params;
 		std::atomic<float> modDepthAbsolute;
 	};
-
-	namespace strToVal
-	{
-		// valueString, altVal
-		std::function<float(String, float)> parse();
-
-		StrToValFunc power();
-		StrToValFunc solo();
-		StrToValFunc mute();
-		StrToValFunc percent();
-		StrToValFunc hz();
-		StrToValFunc phase();
-		StrToValFunc oct();
-		StrToValFunc semi();
-		StrToValFunc fine();
-		StrToValFunc ratio();
-		StrToValFunc lrms();
-		StrToValFunc freeSync();
-		StrToValFunc polarity();
-		StrToValFunc ms();
-		StrToValFunc db();
-		StrToValFunc voices();
-		StrToValFunc pan(const Params&);
-		StrToValFunc note();
-		StrToValFunc pitch(const Xen&);
-		StrToValFunc q();
-		StrToValFunc slope();
-		StrToValFunc beats();
-		StrToValFunc legato();
-		StrToValFunc filterType();
-		StrToValFunc vowel();
-	}
-
-	namespace valToStr
-	{
-		ValToStrFunc mute();
-		ValToStrFunc solo();
-		ValToStrFunc power();
-		ValToStrFunc percent();
-		ValToStrFunc hz();
-		ValToStrFunc phase();
-		ValToStrFunc phase360();
-		ValToStrFunc oct();
-		ValToStrFunc semi();
-		ValToStrFunc fine();
-		ValToStrFunc ratio();
-		ValToStrFunc lrms();
-		ValToStrFunc freeSync();
-		ValToStrFunc polarity();
-		ValToStrFunc ms();
-		ValToStrFunc db();
-		ValToStrFunc empty();
-		ValToStrFunc voices();
-		ValToStrFunc pan(const Params&);
-		ValToStrFunc note();
-		ValToStrFunc pitch(const Xen&);
-		ValToStrFunc q();
-		ValToStrFunc slope();
-		ValToStrFunc beats();
-		ValToStrFunc legato();
-		ValToStrFunc filterType();
-		ValToStrFunc vowel();
-	}
 }

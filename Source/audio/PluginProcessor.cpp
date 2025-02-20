@@ -198,12 +198,14 @@ namespace audio
 		);
 		formantFilter(formantParams);
 
+		const auto edo = xen.getXen();
+
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
 
 		const auto& combSemiParam = params(PID::CombSemi);
 		auto combSemi = static_cast<double>(std::round(combSemiParam.getValModDenorm()));
-		combSemi += combOct * xen.getXen();
+		combSemi += combOct * edo;
 
 		const auto& combUnisonParam = params(PID::CombUnison);
 		const auto combUnison = static_cast<double>(combUnisonParam.getValMod());
@@ -219,11 +221,11 @@ namespace audio
 		combFilter(numSamples);
 
 		const auto& dampParam = params(PID::Damp);
-		const auto damp = static_cast<double>(dampParam.getValModDenorm());
+		const auto damp = static_cast<double>(dampParam.getValModDenorm()) * edo;
 		const auto& dampEnvParam = params(PID::DampEnv);
-		const auto dampEnv = static_cast<double>(dampEnvParam.getValModDenorm());
+		const auto dampEnv = static_cast<double>(dampEnvParam.getValModDenorm()) * edo;
 		const auto& dampWidthParam = params(PID::DampWidth);
-		const auto dampWidth = static_cast<double>(dampWidthParam.getValModDenorm());
+		const auto dampWidth = static_cast<double>(dampWidthParam.getValModDenorm()) * edo;
 
 		const dsp::hnm::lp::Params lpParams(damp, dampEnv, dampWidth);
 
