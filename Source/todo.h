@@ -4,8 +4,7 @@
 
 ~~~ todo ~~~
 
-gerade läuft nur der formant filter weil er bei noteOffs ne diskontinuität erzeugt. warum?
-
+macht der comb unison grad das richtige?
 
 comb has no envelope?
 formants have no width?
@@ -13,13 +12,10 @@ damp has no width
 
 make default presets for common usecases
 
-polyphony parameter
-    monophonic mode with portamento and stuff
-    reset mod envelope on note on (or not)
-
-remap frequencies of partials with a MSEG curve, like mtransformer
+remap freq ratios of partials with a MSEG curve, like mtransformer
 
 map velocity to certain parameters
+    or maybe just to gain the amp/mod envelopes
 
 when sample imported user defines which range should be taken
     if user defines 2 ranges, it's one for each modal material
