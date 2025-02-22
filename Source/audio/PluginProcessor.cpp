@@ -115,7 +115,7 @@ namespace audio
 		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
 		keySelector(midi, xen, keySelectorEnabled, playing);
 
-		autoMPE(midi); voiceSplit(midi);
+		autoMPE(midi); voiceSplit(midi, numSamples);
 
 		const auto& modalOctParam = params(PID::ModalOct);
 		const auto& modalSemiParam = params(PID::ModalSemi);
@@ -157,7 +157,7 @@ namespace audio
 		const auto& modalResoBreiteParam = params(PID::ModalResonanzBreite);
 		const auto modalResoBreite = static_cast<double>(modalResoBreiteParam.getValModDenorm());
 
-		const dsp::modal::Voice::Parameters modalVoiceParams
+		const dsp::modal::Voice::Parameters modalParams
 		(
 			modalBlend, modalSpreizung, modalHarmonie, modalKraft, modalReso,
 			modalBlendEnv, modalSpreizungEnv, modalHarmonieEnv, modalKraftEnv, modalResoEnv,
@@ -196,7 +196,6 @@ namespace audio
 			formantPosEnv, formantQEnv, formantGainEnv,
 			formantVowelA, formantVowelB
 		);
-		formantFilter(formantParams);
 
 		const auto edo = xen.getXen();
 
@@ -218,7 +217,10 @@ namespace audio
 		const auto& combFeedbackWidthParam = params(PID::CombFeedbackWidth);
 		const auto combFeedbackWidth = static_cast<double>(combFeedbackWidthParam.getValModDenorm());
 
-		combFilter(numSamples);
+		const dsp::hnm::Params combParams
+		(
+			combSemi, combUnison, combFeedback, combFeedbackEnv, combFeedbackWidth
+		);
 
 		const auto& dampParam = params(PID::Damp);
 		const auto damp = static_cast<double>(dampParam.getValModDenorm()) * edo;
@@ -230,83 +232,132 @@ namespace audio
 		const dsp::hnm::lp::Params lpParams(damp, dampEnv, dampWidth);
 
 		const auto samplesInput = const_cast<const double**>(samples);
+
 		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
 		{
 			const auto& midiVoice = voiceSplit[v + 2];
 			auto bandVoice = parallelProcessor[v];
-			double* samplesVoice[] = { bandVoice.l, bandVoice.r };
 
-			// synthesize and process amplitude envelope generator
-			const auto envGenAmpInfo = envGensAmp(midiVoice, numSamples, v);
-			if (envGenAmpInfo.active)
-				for (auto ch = 0; ch < numChannels; ++ch)
-					dsp::SIMD::multiply(samplesVoice[ch], samplesInput[ch], envGenAmpInfo.data, numSamples);
-			else
-				for (auto ch = 0; ch < numChannels; ++ch)
-					dsp::SIMD::clear(samplesVoice[ch], numSamples);
-
-			// synthsize modulation envelope generator
-			const auto envGenModInfo = envGensMod(midiVoice, numSamples, v);
-			const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
-
-			const bool modalRinging = modalFilter.isRinging(v);
-			bool active = envGenModInfo.active || modalRinging;
-			if (active)
+			auto start = 0;
+			for(const auto it: midiVoice)
 			{
-				double* layerVoice[] = { formantLayer[0].data(), formantLayer[1].data() };
-				for (auto ch = 0; ch < numChannels; ++ch)
+				const auto msg = it.getMessage();
+				const auto end = it.samplePosition;
+				const auto numSamplesEvt = end - start;
+
+				const double* samplesInputEvt[] = { &samplesInput[0][start], &samplesInput[1][start] };
+				double* samplesVoiceEvt[] = { &bandVoice.l[start], &bandVoice.r[start] };
+
+				const auto envGenAmpActive = envGensAmp.processGain
+				(
+					samplesVoiceEvt, samplesInputEvt,
+					numChannels, numSamplesEvt, v
+				);
+
+				// synthesize the modulation envelope generator
+				const auto envGenModInfo = envGensMod(v, numSamplesEvt);
+				const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
+
+				const bool modalRinging = modalFilter.isRinging(v);
+				const bool formantsRinging = formantFilter.isRinging(v);
+				bool active = envGenAmpActive || modalRinging || formantsRinging;
+				if (active)
 				{
-					const auto smplsVoice = samplesVoice[ch];
-					auto layer = layerVoice[ch];
-					dsp::SIMD::copy(layer, smplsVoice, numSamples);
+					double* layerVoiceEvt[] = { formantLayer[0].data(), formantLayer[1].data() };
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						const auto smplsVoice = samplesVoiceEvt[ch];
+						auto layer = layerVoiceEvt[ch];
+						dsp::SIMD::copy(layer, smplsVoice, numSamplesEvt);
+					}
+
+					modalFilter
+					(
+						samplesVoiceEvt,
+						modalParams,
+						envGenModVal,
+						numChannels,
+						numSamplesEvt,
+						v
+					);
+
+					formantFilter
+					(
+						layerVoiceEvt,
+						formantParams,
+						envGenModVal,
+						numChannels,
+						numSamplesEvt,
+						v
+					);
+
+					for (auto ch = 0; ch < numChannels; ++ch)
+						dsp::SIMD::add(samplesVoiceEvt[ch], layerVoiceEvt[ch], numSamplesEvt);
 				}
 
-				modalFilter
-				(
-					samplesVoice,
-					midiVoice, xen,
-					modalVoiceParams,
-					modalSemi, envGenModVal,
-					numChannels, numSamples,
-					v
-				);
+				const bool combRinging = combFilter.isRinging(v);
+				active = active || combRinging;
+				if (active)
+					combFilter
+					(
+						samplesVoiceEvt, xen,
+						combParams, envGenModVal,
+						numChannels, numSamplesEvt, v
+					);
 
-				formantFilter
-				(
-					layerVoice,
-					midiVoice,
-					formantParams,
-					envGenModInfo.data,
-					numChannels, numSamples,
-					v
-				);
+				active = active || lowpass.isRinging(v);
+				if (active)
+					lowpass
+					(
+						samplesVoiceEvt,
+						lpParams, xen,
+						envGenModVal,
+						numChannels, numSamplesEvt,
+						v
+					);
 
-				for (auto ch = 0; ch < numChannels; ++ch)
-					dsp::SIMD::add(samplesVoice[ch], layerVoice[ch], numSamples);
+				parallelProcessor.setSleepy(!active, v);
+				start = end;
+
+				if (msg.isNoteOn())
+				{
+					envGensAmp.triggerNoteOn(true, v);
+					envGensMod.triggerNoteOn(true, v);
+					const auto noteNumber = static_cast<double>(msg.getNoteNumber());
+					modalFilter.triggerNoteOn(xen, noteNumber, numChannels, v);
+					formantFilter.triggerNoteOn(v);
+					combFilter.triggerNoteOn(noteNumber, v);
+					lowpass.triggerNoteOn(xen, noteNumber, v);
+				}
+				else if (msg.isNoteOff())
+				{
+					envGensAmp.triggerNoteOn(false, v);
+					envGensMod.triggerNoteOn(false, v);
+					modalFilter.triggerNoteOff(v);
+					formantFilter.triggerNoteOff(v);
+					combFilter.triggerNoteOff(v);
+					lowpass.triggerNoteOff(v);
+				}
+				else if (msg.isAllNotesOff())
+				{
+					envGensAmp.triggerNoteOn(false, v);
+					envGensMod.triggerNoteOn(false, v);
+					modalFilter.triggerNoteOff(v);
+					formantFilter.triggerNoteOff(v);
+					combFilter.triggerNoteOff(v);
+					lowpass.triggerNoteOff(v);
+				}
+				else if (msg.isPitchWheel())
+				{
+					static constexpr auto PB = static_cast<double>(0x3fff);
+					static constexpr auto PBInv = 1. / PB;
+					const auto pbRange = xen.getPitchbendRange() * 2.;
+					const auto pitchbend = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * pbRange;
+					modalFilter.triggerPitchbend(xen, pitchbend, numChannels, v);
+					combFilter.triggerPitchbend(pitchbend, v);
+					lowpass.triggerPitchbend(xen, pitchbend, v);
+				}
 			}
-
-			const bool combRinging = combFilter.isRinging(v);
-			active = active || combRinging;
-			if (active)
-				combFilter
-				(
-					samplesVoice, midiVoice, xen,
-					combSemi, combUnison,
-					combFeedback, combFeedbackEnv, combFeedbackWidth,
-					envGenModVal,
-					numChannels, numSamples,
-					v
-				);
-
-			lowpass
-			(
-				samplesVoice, midiVoice,
-				lpParams, xen,
-				envGenModVal,
-				numChannels, numSamples,
-				v
-			);
-			parallelProcessor.setSleepy(!active, v);
 		}
 
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);

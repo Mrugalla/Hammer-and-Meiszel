@@ -58,6 +58,20 @@ namespace dsp
 				const MidiBuffer&, const arch::XenManager&,
 				double, double, int, int) noexcept;
 
+			// samples, dualMaterial, parameters, envGenMod, numChannels, numSamples
+			void operator()(double**, const DualMaterial&,
+				const Parameters&, double, int, int) noexcept;
+
+			// xen, noteNumber, numChannels
+			void triggerNoteOn(const arch::XenManager&,
+				double, int) noexcept;
+
+			void triggerNoteOff() noexcept;
+
+			// xen, pitchbend, numChannels
+			void triggerPitchbend(const arch::XenManager&,
+				double, int) noexcept;
+
 			void reportMaterialUpdate() noexcept;
 
 			bool isRinging() const noexcept;

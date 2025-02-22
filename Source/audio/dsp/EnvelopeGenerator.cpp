@@ -65,30 +65,20 @@ namespace dsp
 		{
 			const auto msg = it.getMessage();
 			const auto ts = it.samplePosition;
+			s = synthesizeEnvelope(buffer, s, ts);
 			if (msg.isNoteOn())
-			{
-				s = synthesizeEnvelope(buffer, s, ts);
 				noteOn = true;
-			}
 			else if (msg.isNoteOff() || msg.isAllNotesOff())
-			{
-				s = synthesizeEnvelope(buffer, s, ts);
 				noteOn = false;
-			}
-			else
-				s = synthesizeEnvelope(buffer, s, ts);
 		}
 		synthesizeEnvelope(buffer, s, numSamples);
 
 		return true;
 	}
 
-	bool EnvelopeGenerator::isSleepy() noexcept
+	bool EnvelopeGenerator::isSleepy() const noexcept
 	{
-		bool sleepy = !noteOn && env < MinDb;
-		if (sleepy)
-			env = 0.;
-		return sleepy;
+		return !noteOn && env < MinDb;
 	}
 
 	EnvelopeGenerator::EnvelopeGenerator(const Parameters& p) :
@@ -239,7 +229,7 @@ namespace dsp
 			envGen.prepare(sampleRate);
 	}
 
-	bool EnvGenMultiVoice::isSleepy(int vIdx) noexcept
+	bool EnvGenMultiVoice::isSleepy(int vIdx) const noexcept
 	{
 		return envGens[vIdx].isSleepy();
 	}
@@ -250,6 +240,33 @@ namespace dsp
 		auto& envGen = envGens[vIdx];
 		const auto active = envGen(midi, bufferData, numSamples);
 		return { bufferData, active };
+	}
+
+	EnvGenMultiVoice::Info EnvGenMultiVoice::operator()(int vIdx, int numSamples) noexcept
+	{
+		auto bufferData = buffer.data();
+		auto& envGen = envGens[vIdx];
+		for (auto s = 0; s < numSamples; ++s)
+		{
+			const auto env = envGen();
+			bufferData[s] = env;
+		}
+		return { bufferData, !envGen.isSleepy() };
+	}
+
+	bool EnvGenMultiVoice::processGain(double** samplesOut, const double** samplesIn,
+		int numChannels, int numSamples, int v) noexcept
+	{
+		const auto info = operator()(v, numSamples);
+		if (info.active)
+		{
+			for (auto ch = 0; ch < numChannels; ++ch)
+				dsp::SIMD::multiply(samplesOut[ch], samplesIn[ch], info.data, numSamples);
+			return true;
+		}
+		for (auto ch = 0; ch < numChannels; ++ch)
+			dsp::SIMD::clear(samplesOut[ch], numSamples);
+		return false;
 	}
 
 	void EnvGenMultiVoice::updateParameters(const EnvelopeGenerator::Parameters& _params) noexcept

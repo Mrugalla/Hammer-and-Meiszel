@@ -2,6 +2,7 @@
 #include "../../../../arch/XenManager.h"
 #include "../../PRM.h"
 #include "../../WHead.h"
+#include "../../SleepyDetector.h"
 
 namespace dsp
 {
@@ -13,6 +14,12 @@ namespace dsp
 		static constexpr double PBInv = 1. / PB;
 		using XenManager = arch::XenManager;
 		
+		struct Params
+		{
+			// retune[-n,n]semi, retuneWidth[-1,1], fb[-1,1], fbEnv[-2,2], fbWidth[-2,2],
+			double retune, retuneWidth, fb, fbEnv, fbWidth;
+		};
+
 		struct Val
 		{
 			Val();
@@ -20,7 +27,7 @@ namespace dsp
 			void reset() noexcept;
 
 			// xen, Fs
-			double getDelaySamples(const XenManager&, double) noexcept;
+			void updateDelaySamples(const XenManager&, double) noexcept;
 
 			double freqHz, pitchNote, pitchParam, pb, delaySamples;
 		};
@@ -29,21 +36,15 @@ namespace dsp
 		{
 			DelayFeedback();
 
-			// sampleRate, delaySize
-			void prepare(double sampleRate, int _size);
+			// delaySize
+			void prepare(int _size);
 
 			// samples, wHead, rHead, feedbackBuffer, numSamples, ch
 			void operator()(double**, const int*, const double*,
 				const double*, int, int) noexcept;
-
-			bool isRinging() const noexcept;
-
 		private:
 			AudioBuffer ringBuffer;
 			int size;
-
-			int sleepyTimer, sleepyThreshold;
-			bool ringing;
 		};
 
 		struct ReadHead
@@ -66,46 +67,41 @@ namespace dsp
 			// sampleRate
 			void prepare(double);
 
-			// samples, midi, wHead, xen,
-			// retune[-n,n]semi, retuneWidth[-1,1],
-			// feedback[-1,1], feedbackEnv[-2,2], feedbackWidth[-2,2],
-			// envGenMod[-1,1], numChannels, numSamples
-			void operator()(double**, const MidiBuffer&,
-				const int*, const XenManager&,
-				double, double,
-				double, double, double, double,
-				int, int) noexcept;
+			// samples, xenManager, params, envGenMod[-1,1], numChannels, numSamples
+			void operator()(double**, const XenManager&,
+				const Params&, double, int, int) noexcept;
+
+			void triggerNoteOn(double) noexcept;
+
+			void triggerNoteOff() noexcept;
+
+			void triggerPitchbend(double) noexcept;
 
 			bool isRinging() const noexcept;
 
 		private:
+			WHead1x wHead;
 			std::array<PRMD, 2> delayPRMs, feedbackPRMs;
-			std::array<PRMInfoD, 2> feedbackInfos;
 			ReadHead readHead;
 			DelayFeedback delay;
 			std::array<Val, 2> vals;
 			double Fs;
-			double xen, anchor, masterTune;
+			arch::XenManager::Info xenInfo;
+			SleepyDetector sleepy;
 		public:
 			int size;
 		private:
-			// xen, retune, retuneWidth, numChannels
-			void updateRetuneParams(const XenManager&,
-				double, double, int) noexcept;
+			// xenManager
+			bool xenUpdated(const XenManager&) noexcept;
 
-			// fb, fbWidth, fbEnv, envGenMod, numChannels, numSamples
-			void updateFeedbackParams(double, double,
-				double, double, int, int) noexcept;
+			// xenManager, params, envGenMod, numChannels, numSamples
+			void updateParams(const XenManager&, const Params&, double, int, int) noexcept;
 
-			// midi, xenManager, numChannels, numSamples
-			void processMIDI(const MidiBuffer&,
-				const XenManager&, int, int) noexcept;
-
-			// xenManager, numChannels, startIdx, endIdx
-			void updatePitch(const XenManager&, int, int, int) noexcept;
-
-			// xenManager, ch
+			// xenManager, numChannels
 			void updatePitch(const XenManager&, int) noexcept;
+
+			// samples, numChannels, numSamples
+			void applyDelay(double**, int, int) noexcept;
 		};
 
 		using VoicesArray = std::array<Voice, NumMPEChannels>;
@@ -117,19 +113,22 @@ namespace dsp
 			// sampleRate
 			void prepare(double);
 
-			// numSamples
-			void operator()(int) noexcept;
+			// samples, xenManager, params, envGenMod, numChannels, numSamples, v
+			void operator()(double**, const arch::XenManager&,
+				const Params&, double, int, int, int) noexcept;
 
-			// samples, midi, xen, retune, retuneWidth, feedback, feedbackEnv, feedbackWidth,
-			// envGenMod, numChannels, numSamples, voiceIdx
-			void operator()(double**, const MidiBuffer&,
-				const arch::XenManager&, double, double,
-				double, double, double, double, int, int, int) noexcept;
+			// noteNumber, v
+			void triggerNoteOn(double, int) noexcept;
+
+			// v
+			void triggerNoteOff(int) noexcept;
+
+			// pitchbend, v
+			void triggerPitchbend(double, int) noexcept;
 
 			bool isRinging(int) const noexcept;
 
 		protected:
-			WHead1x wHead;
 			VoicesArray voices;
 		};
 	}

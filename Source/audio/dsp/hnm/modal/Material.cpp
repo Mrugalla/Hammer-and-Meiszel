@@ -398,7 +398,7 @@ namespace dsp
 		}
 
 		void generatePeakInfos(MaterialData& peakInfos, const float* bins,
-			const int* peakIndexes, float harm0Idx, float sampleRate) noexcept
+			const int* peakIndexes, float harm0Idx) noexcept
 		{
 			static constexpr auto FFTSizeInv = 1.f / static_cast<float>(Material::FFTSize);
 
@@ -495,7 +495,7 @@ namespace dsp
 			std::vector<int> peakIndexes;
 			peakIndexes.resize(NumPartials);
 			generatePeakIndexes(peakIndexes, bins, peakGroups);
-			generatePeakInfos(peakInfos, bins, peakIndexes.data(), static_cast<float>(harm0Idx), sampleRate);
+			generatePeakInfos(peakInfos, bins, peakIndexes.data(), static_cast<float>(harm0Idx));
 			sortRatios(peakInfos);
 			normalize(peakInfos);
 			reportUpdate();

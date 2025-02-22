@@ -19,6 +19,21 @@ namespace dsp
 			void operator()(double**, const MidiBuffer&, const arch::XenManager&,
 				const Voice::Parameters&, double, double, int, int, int) noexcept;
 
+			// samples, params, envGenMod, numChannels, numSamples, v
+			void operator()(double**, const Voice::Parameters&,
+				double, int, int, int) noexcept;
+
+			// xen, noteNumber, numChannels, v
+			void triggerNoteOn(const arch::XenManager&,
+				double, int, int) noexcept;
+
+			// v
+			void triggerNoteOff(int) noexcept;
+
+			// xen, pitchbend, numChannels, v
+			void triggerPitchbend(const arch::XenManager&,
+				double, int, int) noexcept;
+
 			bool isRinging(int) const noexcept;
 
 			Material& getMaterial(int) noexcept;

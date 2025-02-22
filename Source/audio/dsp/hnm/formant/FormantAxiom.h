@@ -24,12 +24,6 @@ namespace dsp
 				sampleRate = _sampleRate;
 			}
 
-			void updateFcs() noexcept
-			{
-				fc = math::freqHzToFc(f, sampleRate);
-				bwFc = math::freqHzToFc(bw, sampleRate);
-			}
-
 			void blend(const FilterProps& a, const FilterProps& b, double pos, double q) noexcept
 			{
 				f = a.f + pos * (b.f - a.f);
@@ -37,6 +31,8 @@ namespace dsp
 				gain = a.gain + pos * (b.gain - a.gain);
 				bw *= q;
 				gain /= q;
+				fc = math::freqHzToFc(f, sampleRate);
+				bwFc = math::freqHzToFc(bw, sampleRate);
 			}
 
 		private:
@@ -61,6 +57,12 @@ namespace dsp
 					FilterProps{f5, bw5, g5}
 				}
 			{
+				auto maxGain = 0.;
+				for (const auto& formant : formants)
+					maxGain = std::max(maxGain, formant.gain);
+				const auto gainInv = 1. / maxGain;
+				for (auto& formant : formants)
+					formant.gain *= gainInv;
 			}
 
 			Vowel() :
@@ -75,27 +77,20 @@ namespace dsp
 
 			void blend(const Vowel& a, const Vowel& b, double pos, double q) noexcept
 			{
-				const auto qStart = .9;
-				const auto qEnd = .1;
-				q = qStart + q * (qEnd - qStart);
+				static constexpr auto QStart = .9;
+				static constexpr auto QEnd = .1;
+				static constexpr auto QRange = QEnd - QStart;
+				q = QStart + q * QRange;
 				q *= q;
 
 				for (auto i = 0; i < NumFormants; ++i)
 					formants[i].blend(a.formants[i], b.formants[i], pos, q);
-				updateFcs();
-			}
-
-			void updateFcs() noexcept
-			{
-				for (auto& formant : formants)
-					formant.updateFcs();
 			}
 
 			const FilterProps& getFormant(int i) const noexcept
 			{
 				return formants[i];
 			}
-
 		private:
 			std::array<FilterProps, NumFormants> formants;
 		};

@@ -1,5 +1,6 @@
 #pragma once
 #include "../PRM.h"
+#include "../SleepyDetector.h"
 #include "../../../arch/XenManager.h"
 #include <juce_dsp/juce_dsp.h>
 
@@ -11,79 +12,43 @@ namespace dsp
 		{
 			struct Params
 			{
-				Params(double _damp = 0., double _dampEnv = 0., double _dampWidth = 0.) :
-					damp(_damp), dampEnv(_dampEnv), dampWidth(_dampWidth)
-				{
-				}
+				// damp, dampEnv, dampWidth
+				Params(double = 0., double = 0., double = 0.);
 
 				double damp, dampEnv, dampWidth;
 			};
 
 			struct Voice
 			{
+				using LP = juce::dsp::StateVariableTPTFilter<double>;
+
 				struct Val
 				{
-					Val() :
-						pitch(24.),
-						damp(0.),
-						freqHz(420.),
-						xenInfo(),
-						prm(freqHz),
-						info()
-					{
-						info.val = freqHz;
-					}
+					Val();
 
-					void prepare(double sampleRate) noexcept
-					{
-						prm.prepare(sampleRate, 13.);
-					}
+					// sampleRate
+					void prepare(double) noexcept;
 
-					void updateDamp(const arch::XenManager& xen,
-						const Params& params, double envGenMod) noexcept
-					{
-						const auto nDamp = params.damp + envGenMod * params.dampEnv;
-						if (damp == nDamp)
-							return;
-						damp = nDamp;
-						updateFreqHz(xen);
-					}
+					// xen, params, envGenMod, numSamples
+					void operator()(const arch::XenManager&,
+						const Params&, double, int) noexcept;
 
-					void updateXen(const arch::XenManager& xen) noexcept
-					{
-						if (xenInfo == xen.getInfo())
-							return;
-						xenInfo = xen.getInfo();
-						updateFreqHz(xen);
-					}
+					// xen, params, envGenMod
+					void updateDamp(const arch::XenManager&,
+						const Params&, double) noexcept;
 
-					void updatePitch(const arch::XenManager& xen, double note, int s, int ts) noexcept
-					{
-						pitch = note;
-						updateFreqHz(xen);
-						info = prm(freqHz, s, ts);
-					}
+					// xen
+					void updateXen(const arch::XenManager&) noexcept;
 
-					void updatePRM(int s, int ts) noexcept
-					{
-						info = prm(s, ts);
-					}
+					// xen, note
+					void updatePitch(const arch::XenManager&, double) noexcept;
 
-					void updateFreqHz(const arch::XenManager& xen) noexcept
-					{
-						freqHz = math::limit(0., 20000., xen.noteToFreqHz(pitch + damp));
-						prm.value = freqHz;
-					}
+					// xen
+					void updateFreqHz(const arch::XenManager&) noexcept;
 
-					bool isSmoothing() const noexcept
-					{
-						return info.smoothing;
-					}
+					bool isSmoothing() const noexcept;
 
-					double operator[](int s) const noexcept
-					{
-						return info[s];
-					}
+					double operator[](int) const noexcept;
 
 				private:
 					double pitch, damp, freqHz;
@@ -92,100 +57,57 @@ namespace dsp
 					PRMInfoD info;
 				};
 
-				Voice() :
-					lp(),
-					val()
-				{
-					lp.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-					lp.snapToZero();
-				}
+				Voice();
 
-				void prepare(double sampleRate) noexcept
-				{
-					juce::dsp::ProcessSpec spec;
-					spec.sampleRate = sampleRate;
-					spec.maximumBlockSize = BlockSize;
-					spec.numChannels = 2;
-					lp.prepare(spec);
-					lp.reset();
-					val.prepare(sampleRate);
-				}
+				// sampleRate
+				void prepare(double) noexcept;
 
-				void operator()(double** samples, const MidiBuffer& midi,
-					const Params& params, const arch::XenManager& xen,
-					double envGenMod, int numChannels, int numSamples) noexcept
-				{
-					val.updateXen(xen);
-					val.updateDamp(xen, params, envGenMod);
-					auto s = 0;
-					for (const auto it : midi)
-					{
-						const auto ts = it.samplePosition;
-						process(samples, numChannels, s, ts);
-						const auto msg = it.getMessage();
-						if (msg.isNoteOn())
-							val.updatePitch(xen, static_cast<double>(msg.getNoteNumber()), s, ts);
-						s = ts;
-					}
-					val.updatePRM(s, numSamples);
-					process(samples, numChannels, s, numSamples);
-				}
+				// samples, params, xen, envGenMod, numChannels, numSamples
+				void operator()(double**,
+					const Params&, const arch::XenManager&,
+					double, int, int) noexcept;
 
+				// xen, noteNumber
+				void triggerNoteOn(const arch::XenManager&, double) noexcept;
+
+				void triggerNoteOff() noexcept;
+
+				// xen, pitchbend
+				void triggerPitchbend(const arch::XenManager&, double) noexcept;
+
+				bool isRinging() const noexcept;
 			private:
-				juce::dsp::StateVariableTPTFilter<double> lp;
+				std::array<std::function<void(double)>, 2> updateCutoffFuncs;
+				LP lp;
 				Val val;
+				SleepyDetector sleepy;
 
-				void process(double** samples, int numChannels, int start, int end) noexcept
-				{
-					if (end - start == 0)
-						return;
-					if (val.isSmoothing())
-					{
-						for (auto s = start; s < end; ++s)
-						{
-							lp.setCutoffFrequency(val[s]);
-							for (auto ch = 0; ch < numChannels; ++ch)
-							{
-								auto smpls = samples[ch];
-								const auto smpl = smpls[s];
-								smpls[s] = lp.processSample(ch, smpl);
-							}
-						}
-						return;
-					}
-
-					for (auto ch = 0; ch < numChannels; ++ch)
-					{
-						auto smpls = samples[ch];
-						for (auto s = start; s < end; ++s)
-						{
-							const auto smpl = smpls[s];
-							smpls[s] = lp.processSample(ch, smpl);
-						}
-					}
-				}
+				// samples, numChannels, numSamples
+				void process(double**, int, int) noexcept;
 			};
 
 			struct Filter
 			{
-				Filter() :
-					voices()
-				{
-				}
+				Filter();
 
-				void prepare(double sampleRate) noexcept
-				{
-					for (auto& voice : voices)
-						voice.prepare(sampleRate);
-				}
+				// sampleRate
+				void prepare(double) noexcept;
 
-				void operator()(double** samples, const MidiBuffer& midi,
-					const Params& params, const arch::XenManager& xen,
-					double envGenMod, int numChannels, int numSamples, int v) noexcept
-				{
-					voices[v](samples, midi, params, xen, envGenMod, numChannels, numSamples);
-				}
+				// samples, params, xen, envGenMod, numChannels, numSamples, v
+				void operator()(double**,
+					const Params&, const arch::XenManager&,
+					double, int, int, int) noexcept;
 
+				// xen, noteNumber, v
+				void triggerNoteOn(const arch::XenManager&, double, int) noexcept;
+
+				// v
+				void triggerNoteOff(int) noexcept;
+
+				// xen, pitchbend, v
+				void triggerPitchbend(const arch::XenManager&, double, int) noexcept;
+
+				bool isRinging(int) const noexcept;
 			private:
 				std::array<Voice, NumMPEChannels> voices;
 			};

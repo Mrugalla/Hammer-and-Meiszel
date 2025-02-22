@@ -4,10 +4,12 @@
 
 ~~~ todo ~~~
 
+gerade läuft nur der formant filter weil er bei noteOffs ne diskontinuität erzeugt. warum?
+
+
 comb has no envelope?
 formants have no width?
 damp has no width
-lp sleepy optimization fehlt
 
 make default presets for common usecases
 

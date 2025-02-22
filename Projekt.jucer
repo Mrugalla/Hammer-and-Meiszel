@@ -120,8 +120,9 @@
             <FILE id="sc651e" name="HnmLowpass.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/HnmLowpass.cpp"/>
             <FILE id="ZQUCia" name="HnmLowpass.h" compile="0" resource="0" file="Source/audio/dsp/hnm/HnmLowpass.h"/>
             <GROUP id="{0ABDEC68-2CA1-9033-AA9E-437F1148FE81}" name="formant">
-              <FILE id="MSfaSp" name="Axiom.cpp" compile="1" resource="0" file="Source/audio/dsp/hnm/formant/Axiom.cpp"/>
-              <FILE id="paTL63" name="Axiom.h" compile="0" resource="0" file="Source/audio/dsp/hnm/formant/Axiom.h"/>
+              <FILE id="MSfaSp" name="FormantAxiom.cpp" compile="1" resource="0"
+                    file="Source/audio/dsp/hnm/formant/FormantAxiom.cpp"/>
+              <FILE id="paTL63" name="FormantAxiom.h" compile="0" resource="0" file="Source/audio/dsp/hnm/formant/FormantAxiom.h"/>
               <FILE id="CHErSL" name="FormantFilter.cpp" compile="1" resource="0"
                     file="Source/audio/dsp/hnm/formant/FormantFilter.cpp"/>
               <FILE id="q5bu6k" name="FormantFilter.h" compile="0" resource="0" file="Source/audio/dsp/hnm/formant/FormantFilter.h"/>
@@ -182,6 +183,10 @@
           <FILE id="Q6j13B" name="Filter.h" compile="0" resource="0" file="Source/audio/dsp/Filter.h"/>
           <FILE id="geDg2S" name="SlewLimiter.cpp" compile="1" resource="0" file="Source/audio/dsp/SlewLimiter.cpp"/>
           <FILE id="FhiUQT" name="SlewLimiter.h" compile="0" resource="0" file="Source/audio/dsp/SlewLimiter.h"/>
+          <FILE id="JdoJxW" name="SleepyDetector.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/SleepyDetector.cpp"/>
+          <FILE id="ohSW6i" name="SleepyDetector.h" compile="0" resource="0"
+                file="Source/audio/dsp/SleepyDetector.h"/>
           <FILE id="Nem3gG" name="FFT.cpp" compile="1" resource="0" file="Source/audio/dsp/FFT.cpp"/>
           <FILE id="QAfcqn" name="FFT.h" compile="0" resource="0" file="Source/audio/dsp/FFT.h"/>
           <FILE id="IJRXRu" name="Oversampler.cpp" compile="1" resource="0" file="Source/audio/dsp/Oversampler.cpp"/>

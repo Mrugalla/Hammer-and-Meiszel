@@ -2,6 +2,7 @@
 #include "../../../../arch/XenManager.h"
 #include "Material.h"
 #include "../../Resonator.h"
+#include "../../SleepyDetector.h"
 
 namespace dsp
 {
@@ -25,8 +26,7 @@ namespace dsp
 		public:
 			ResonatorBank();
 
-			// numChannels
-			void reset(int) noexcept;
+			void reset() noexcept;
 
 			// materialStereo, sampleRate
 			void prepare(const MaterialDataStereo&, double);
@@ -34,6 +34,23 @@ namespace dsp
 			// materialStereo, samples, midi, xen, transposeSemi, numChannels, numSamples
 			void operator()(const MaterialDataStereo&, double**, const MidiBuffer&,
 				const arch::XenManager&, double, int, int) noexcept;
+
+			// materialStereo, samples, numChannels, numSamples
+			void operator()(const MaterialDataStereo&, double**, int, int) noexcept;
+
+			// materialStereo, samples, numChannels, numSamples
+			void applyFilter(const MaterialDataStereo&, double**,
+				int, int) noexcept;
+
+			// materialStereo, xen, noteNumber, numChannels
+			void triggerNoteOn(const MaterialDataStereo&,
+				const arch::XenManager&, double, int) noexcept;
+
+			void triggerNoteOff() noexcept;
+
+			// materialStereo, xen, pitchbend, numChannels
+			void triggerPitchbend(const MaterialDataStereo&, const arch::XenManager&,
+				double, int) noexcept;
 
 			// materialStereo, freqHz, numChannels
 			void setFrequencyHz(const MaterialDataStereo&, double, int) noexcept;
@@ -53,19 +70,14 @@ namespace dsp
 			double freqMax, freqHz, sampleRate, sampleRateInv, nyquist;
 			std::array<double, 2> gains;
 			std::array<int, 2> numFiltersBelowNyquist;
-			int sleepyTimer, sleepyTimerThreshold;
-			bool ringing;
+			SleepyDetector sleepy;
 
 			// material, numFiltersBelowNyquist, ch
 			void updateFreqRatios(const MaterialData&, int&, int) noexcept;
 
-			/* materialStereo, samples, midi, xen, transposeSemi, numChannels, numSamples */
+			// materialStereo, samples, midi, xen, transposeSemi, numChannels, numSamples
 			void process(const MaterialDataStereo&, double**, const MidiBuffer&,
 				const arch::XenManager&, double, int, int) noexcept;
-
-			// materialStereo, samples, numChannels, startIdx, endIdx
-			void applyFilter(const MaterialDataStereo&, double**,
-				int, int, int) noexcept;
 		};
 	}
 }

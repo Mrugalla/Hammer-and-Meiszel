@@ -4,12 +4,14 @@ namespace dsp
 {
 	namespace hnm
 	{
+		// Params
+
 		// Val
 
 		Val::Val() :
 			freqHz(0.),
 			pitchNote(0.),
-			pitchParam(0.),
+			pitchParam(-1.),
 			pb(0.),
 			delaySamples(0.)
 		{}
@@ -17,17 +19,16 @@ namespace dsp
 		void Val::reset() noexcept
 		{
 			freqHz = 0.;
-			pitchNote = 0.;
+			pitchNote = -1.;
 			pitchParam = 0.;
 			pb = 0.;
 			delaySamples = 0.;
 		}
 
-		double Val::getDelaySamples(const XenManager& xenManager, double Fs) noexcept
+		void Val::updateDelaySamples(const XenManager& xenManager, double Fs) noexcept
 		{
 			freqHz = xenManager.noteToFreqHzWithWrap(pitchNote + pitchParam + pb, LowestFrequencyHz);
 			delaySamples = math::freqHzToSamples(freqHz, Fs);
-			return delaySamples;
 		}
 
 		double foldFc(double x) noexcept
@@ -45,21 +46,14 @@ namespace dsp
 
 		DelayFeedback::DelayFeedback() :
 			ringBuffer(),
-			size(0),
-			sleepyTimer(0),
-			sleepyThreshold(0),
-			ringing(false)
+			size(0)
 		{
 		}
 
-		void DelayFeedback::prepare(double sampleRate, int _size)
+		void DelayFeedback::prepare(int _size)
 		{
 			size = _size;
 			ringBuffer.setSize(2, size, false, true, false);
-
-			sleepyTimer = 0;
-			sleepyThreshold = static_cast<int>(sampleRate / 8.);
-			ringing = false;
 		}
 
 		void DelayFeedback::operator()(double** samples, const int* wHead, const double* rHead,
@@ -84,23 +78,7 @@ namespace dsp
 
 				ring[w] = sIn;
 				smpls[s] = sOut;
-
-				static constexpr double Eps = 1e-7;
-				const auto sOutAbs = sOut * sOut;
-				if (sOutAbs > Eps)
-				{
-					ringing = true;
-					sleepyTimer = 0;
-				}
 			}
-
-			sleepyTimer += numSamples;
-			ringing = sleepyTimer < sleepyThreshold;
-		}
-
-		bool DelayFeedback::isRinging() const noexcept
-		{
-			return ringing;
 		}
 
 		// ReadHead
@@ -130,16 +108,15 @@ namespace dsp
 		// Voice
 
 		Voice::Voice() :
+			wHead(),
 			delayPRMs{ 0.,0. },
 			feedbackPRMs{ 0., 0. },
-			feedbackInfos(),
 			readHead(),
 			delay(),
 			vals(),
 			Fs(0.),
-			xen(0.),
-			anchor(0.),
-			masterTune(0.),
+			xenInfo(),
+			sleepy(),
 			size(0)
 		{
 		}
@@ -153,156 +130,141 @@ namespace dsp
 				feedbackPRM.prepare(sampleRate, 1.);
 			const auto sizeD = std::ceil(math::freqHzToSamples(LowestFrequencyHz, Fs));
 			size = static_cast<int>(sizeD);
+			wHead.prepare(size);
 			readHead.prepare(sizeD);
-			delay.prepare(sampleRate, size);
+			delay.prepare(size);
 			for (auto& val : vals)
 				val.reset();
+			sleepy.prepare(sampleRate);
+			xenInfo = XenManager::Info();
 		}
 
-		void Voice::operator()(double** samples, const MidiBuffer& midi,
-			const int* wHead, const XenManager& xenManager,
-			double retune, double retuneWidth,
-			double fb, double fbEnv, double fbWidth, double envGenMod,
-			int numChannels, int numSamples) noexcept
+		void Voice::operator()(double** samples,
+			const XenManager& xenManager, const Params& params,
+			double envGenMod, int numChannels, int numSamples) noexcept
 		{
-			updateRetuneParams(xenManager, retune, retuneWidth, numChannels);
-			updateFeedbackParams(fb, fbWidth, fbEnv, envGenMod, numChannels, numSamples);
-			processMIDI(midi, xenManager, numChannels, numSamples);
+			updateParams(xenManager, params, envGenMod, numChannels, numSamples);
+			applyDelay(samples, numChannels, numSamples);
+			sleepy(samples, numChannels, numSamples);
+		}
 
+		void Voice::applyDelay(double** samples, int numChannels, int numSamples) noexcept
+		{
+			wHead(numSamples);
+			const auto wHeadData = wHead.data();
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
-				const auto feedbackBuffer = feedbackInfos[ch].buf;
-				auto delayBuffer = delayPRMs[ch].buf.data();
+				auto& delayPRM = delayPRMs[ch];
+				auto& val = vals[ch];
+				auto info = delayPRM(val.delaySamples, numSamples);
+				info.copyToBuffer(numSamples);
+
+				const auto fbBuffer = feedbackPRMs[ch].buf.data();
+				auto delayBuffer = delayPRM.buf.data();
 
 				readHead
 				(
 					delayBuffer,
-					wHead,
+					wHeadData,
 					numSamples
 				);
-
 
 				delay
 				(
 					samples,
-					wHead,
+					wHeadData,
 					delayBuffer,
-					feedbackBuffer,
+					fbBuffer,
 					numSamples,
 					ch
 				);
 			}
 		}
 
-		bool Voice::isRinging() const noexcept
+		void Voice::triggerNoteOn(double noteNumber) noexcept
 		{
-			return delay.isRinging();
+			for (auto& val : vals)
+				val.pitchNote = noteNumber;
+			sleepy.triggerNoteOn();
 		}
 
-		void Voice::updateRetuneParams(const XenManager& xenManager,
-			double retune, double retuneWidth, int numChannels) noexcept
+		void Voice::triggerNoteOff() noexcept
 		{
-			const auto retuneWidthHalf = retuneWidth * .5;
+			sleepy.triggerNoteOff();
+		}
+
+		void Voice::triggerPitchbend(double pitchbend) noexcept
+		{
+			for (auto& val : vals)
+				val.pb = pitchbend;
+		}
+
+		bool Voice::isRinging() const noexcept
+		{
+			return sleepy.isRinging();
+		}
+
+		bool Voice::xenUpdated(const XenManager& xenManager) noexcept
+		{
+			const auto& nInfo = xenManager.getInfo();
+			if (xenInfo == nInfo)
+				return false;
+			xenInfo = nInfo;
+			return true;
+		}
+
+		void Voice::updateParams(const XenManager& xenManager, const Params& params,
+			double envGenMod, int numChannels, int numSamples) noexcept
+		{
+			bool wannaUpdatePitch = false;
+
+			if (xenUpdated(xenManager))
+				wannaUpdatePitch = true;
+			
+			const auto retuneWidthHalf = params.retuneWidth * .5;
 			double retunes[2] =
 			{
-				retune + retuneWidthHalf,
-				retune - retuneWidthHalf
+				params.retune + retuneWidthHalf,
+				params.retune - retuneWidthHalf
 			};
-
-			const auto _xen = xenManager.getXen();
-			const auto _anchor = xenManager.getAnchor();
-			const auto _masterTune = xenManager.getMasterTune();
-			if (xen != _xen || anchor != _anchor || masterTune != _masterTune)
-			{
-				xen = _xen;
-				anchor = _anchor;
-				masterTune = _masterTune;
-				for (auto ch = 0; ch < numChannels; ++ch)
-					updatePitch(xenManager, ch);
-			}
 
 			for (auto ch = 0; ch < numChannels; ++ch)
 				if (vals[ch].pitchParam != retunes[ch])
 				{
 					vals[ch].pitchParam = retunes[ch];
-					updatePitch(xenManager, ch);
+					wannaUpdatePitch = true;
 				}
-		}
 
-		void Voice::updateFeedbackParams(double fb, double fbWidth,
-			double fbEnv, double envGenMod,
-			int numChannels, int numSamples) noexcept
-		{
-			//const auto fbWidthHalf = fbWidth * .5;
-			//const auto widthAmount = std::abs(fbWidth);
+			if(wannaUpdatePitch)
+				updatePitch(xenManager, numChannels);
+			
 			const double fbWidths[2] =
 			{
-				fb - fbWidth,
-				fb + fbWidth
+				params.fb - params.fbWidth,
+				params.fb + params.fbWidth
 			};
-			const auto envGained = envGenMod * fbEnv;
+			const auto envGained = envGenMod * params.fbEnv;
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				const auto fbModulated = math::limit(-.99, .99, fbWidths[ch] + envGained);
 				const auto fbRemapped = math::sinApprox(fbModulated * PiHalf);
-				feedbackInfos[ch] = feedbackPRMs[ch](fbRemapped, numSamples);
-				feedbackInfos[ch].copyToBuffer(numSamples);
+				auto info = feedbackPRMs[ch](fbRemapped, numSamples);
+				info.copyToBuffer(numSamples);
 			}
 		}
 
-		void Voice::processMIDI(const MidiBuffer& midi,
-			const XenManager& xenManager,
-			int numChannels, int numSamples) noexcept
-		{
-			auto s = 0;
-
-			for (const auto it : midi)
-			{
-				const auto msg = it.getMessage();
-				if (msg.isNoteOn())
-				{
-					const auto ts = it.samplePosition;
-					const auto note = msg.getNoteNumber();
-					auto noteD = static_cast<double>(note);
-					for (auto& val : vals)
-						val.pitchNote = noteD;
-					updatePitch(xenManager, numChannels, s, ts);
-					s = ts;
-				}
-				else if (msg.isPitchWheel())
-				{
-					const auto ts = it.samplePosition;
-					const auto pb = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * xenManager.getPitchbendRange() * 2.;
-					for (auto& val : vals)
-						val.pb = pb;
-					updatePitch(xenManager, numChannels, s, ts);
-					s = ts;
-				}
-			}
-
-			updatePitch(xenManager, numChannels, s, numSamples);
-		}
-
-		void Voice::updatePitch(const XenManager& xenManager, int numChannels, int s, int ts) noexcept
+		void Voice::updatePitch(const XenManager& xenManager, int numChannels) noexcept
 		{
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
-				const auto curDelay = vals[ch].delaySamples;
-				auto delayInfo = delayPRMs[ch](curDelay, s, ts);
-				delayInfo.copyToBuffer(s, ts);
-				updatePitch(xenManager, ch);
+				auto& val = vals[ch];
+				val.updateDelaySamples(xenManager, Fs);
 			}
-		}
-
-		void Voice::updatePitch(const XenManager& xenManager, int ch) noexcept
-		{
-			vals[ch].getDelaySamples(xenManager, Fs);
 		}
 
 		// Comb
 
 		Comb::Comb() :
-			wHead(),
 			voices()
 		{}
 
@@ -310,27 +272,33 @@ namespace dsp
 		{
 			for (auto i = 0; i < voices.size(); ++i)
 				voices[i].prepare(sampleRate);
-			wHead.prepare(voices[0].size);
 		}
 
-		void Comb::operator()(int numSamples) noexcept
-		{
-			wHead(numSamples);
-		}
-
-		void Comb::operator()(double** samples, const MidiBuffer& midi,
-			const arch::XenManager& xen,
-			double retune, double retuneWidth,
-			double fb, double fbEnv, double fbWidth,
-			double envGenMod,
-			int numChannels, int numSamples, int v) noexcept
+		void Comb::operator()(double** samples,
+			const arch::XenManager& xenManager, const Params& params,
+			double envGenMod, int numChannels, int numSamples, int v) noexcept
 		{
 			voices[v]
 			(
-				samples, midi, wHead.data(), xen,
-				retune, retuneWidth, fb, fbEnv, fbWidth, envGenMod,
+				samples, xenManager,
+				params, envGenMod,
 				numChannels, numSamples
 			);
+		}
+
+		void Comb::triggerNoteOn(double noteNumber, int v) noexcept
+		{
+			voices[v].triggerNoteOn(noteNumber);
+		}
+
+		void Comb::triggerNoteOff(int v) noexcept
+		{
+			voices[v].triggerNoteOff();
+		}
+
+		void Comb::triggerPitchbend(double pitchbend, int v) noexcept
+		{
+			voices[v].triggerPitchbend(pitchbend);
 		}
 
 		bool Comb::isRinging(int v) const noexcept

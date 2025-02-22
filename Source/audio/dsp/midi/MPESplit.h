@@ -11,7 +11,7 @@ namespace dsp
 
 		MPESplit();
 
-		void operator()(MidiBuffer&);
+		void operator()(MidiBuffer&, int);
 
 		MidiBuffer& operator[](int ch) noexcept;
 

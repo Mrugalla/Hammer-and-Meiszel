@@ -50,22 +50,18 @@ namespace dsp
 			nyquist(.5),
 			gains{ 1., 1. },
 			numFiltersBelowNyquist{ 0, 0 },
-			sleepyTimer(0),
-			sleepyTimerThreshold(0),
-			ringing(false)
+			sleepy()
 		{
 		}
 
-		void ResonatorBank::reset(int numChannels) noexcept
+		void ResonatorBank::reset() noexcept
 		{
-			for(auto ch = 0; ch < numChannels; ++ch)
+			for(auto ch = 0; ch < 2; ++ch)
 				for (auto i = 0; i < NumPartials; ++i)
 					resonators[i].reset(ch);
 			for (auto& n : numFiltersBelowNyquist)
 				n = 0;
-			sleepyTimer = 0;
 			val.reset();
-			ringing = false;
 		}
 
 		void ResonatorBank::prepare(const MaterialDataStereo& materialStereo, double _sampleRate)
@@ -74,11 +70,11 @@ namespace dsp
 			sampleRateInv = 1. / sampleRate;
 			nyquist = sampleRate * .5;
 			freqMax = math::noteToFreqHz2(math::freqHzToNote2(nyquist) - 1.);
-			reset(2);
+			reset();
 			setFrequencyHz(materialStereo, 1000., 2);
 			for(auto ch = 0; ch < 2; ++ch)
 				setReso(.25, ch);
-			sleepyTimerThreshold = static_cast<int>(nyquist / 8.);
+			sleepy.prepare(sampleRate);
 		}
 
 		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo,
@@ -91,11 +87,43 @@ namespace dsp
 				materialStereo, samples, midi, xen,
 				transposeSemi, numChannels, numSamples
 			);
+			sleepy(samples, numChannels, numSamples);
+		}
+
+		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo,
+			double** samples, int numChannels, int numSamples) noexcept
+		{
+			applyFilter(materialStereo, samples, numChannels, numSamples);
+			sleepy(samples, numChannels, numSamples);
+		}
+
+		void ResonatorBank::triggerNoteOn(const MaterialDataStereo& materialStereo,
+			const arch::XenManager& xen, double noteNumber, int numChannels) noexcept
+		{
+			val.pitch = noteNumber;
+			const auto freq = val.getFreq(xen);
+			setFrequencyHz(materialStereo, freq, numChannels);
+			sleepy.triggerNoteOn();
+		}
+
+		void ResonatorBank::triggerNoteOff() noexcept
+		{
+			sleepy.triggerNoteOff();
+		}
+
+		void ResonatorBank::triggerPitchbend(const MaterialDataStereo& materialStereo, const arch::XenManager& xen,
+			double pitchbend, int numChannels) noexcept
+		{
+			if (val.pb == pitchbend)
+				return;
+			val.pb = pitchbend;
+			const auto freq = val.getFreq(xen);
+			setFrequencyHz(materialStereo, freq, numChannels);
 		}
 
 		bool ResonatorBank::isRinging() const noexcept
 		{
-			return ringing;
+			return sleepy.isRinging();
 		}
 
 		void ResonatorBank::setFrequencyHz(const MaterialDataStereo& materialStereo,
@@ -155,9 +183,6 @@ namespace dsp
 			const MidiBuffer& midi, const arch::XenManager& xen, double transposeSemi,
 			int numChannels, int numSamples) noexcept
 		{
-			static constexpr auto PB = static_cast<double>(0x3fff);
-			static constexpr auto PBInv = 1. / PB;
-
 			{
 				const auto pbRange = xen.getPitchbendRange(); // can be improved by being triggered from xenManager changes directly
 				const auto xenScale = xen.getXen();
@@ -183,36 +208,24 @@ namespace dsp
 			for (const auto it : midi)
 			{
 				const auto msg = it.getMessage();
+				const auto ts = it.samplePosition;
+
+				applyFilter(materialStereo, samples, numChannels, numSamples);
+
 				if (msg.isNoteOn())
-				{
-					const auto ts = it.samplePosition;
-					val.pitch = static_cast<double>(msg.getNoteNumber());
-					const auto freq = val.getFreq(xen);
-					setFrequencyHz(materialStereo, freq, numChannels);
-					sleepyTimer = 0;
-					applyFilter(materialStereo, samples, numChannels, s, ts);
-					s = ts;
-				}
+					triggerNoteOn(materialStereo, xen, static_cast<double>(msg.getNoteNumber()), numChannels);
+				else if (msg.isNoteOff())
+					triggerNoteOff();
 				else if (msg.isPitchWheel())
-				{
-					const auto ts = it.samplePosition;
-					const auto pb = static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5;
-					if (val.pb != pb)
-					{
-						val.pb = pb;
-						const auto freq = val.getFreq(xen);
-						setFrequencyHz(materialStereo, freq, numChannels);
-						applyFilter(materialStereo, samples, numChannels, s, ts);
-						s = ts;
-					}
-				}
+					triggerPitchbend(materialStereo, xen, static_cast<double>(msg.getPitchWheelValue()), numChannels);
+				s = ts;
 			}
 
-			applyFilter(materialStereo, samples, numChannels, s, numSamples);
+			applyFilter(materialStereo, samples, numChannels, numSamples);
 		}
 
 		void ResonatorBank::applyFilter(const MaterialDataStereo& materialStereo, double** samples,
-			int numChannels, int startIdx, int endIdx) noexcept
+			int numChannels, int numSamples) noexcept
 		{
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
@@ -221,7 +234,7 @@ namespace dsp
 				const auto gain = gains[ch];
 				auto smpls = samples[ch];
 
-				for (auto i = startIdx; i < endIdx; ++i)
+				for (auto i = 0; i < numSamples; ++i)
 				{
 					const auto dry = smpls[i];
 					auto wet = 0.;
@@ -242,21 +255,10 @@ namespace dsp
 							resonators[f].reset(ch);
 						wet = 0.;
 					}
-					
-					static constexpr auto Eps = 1e-7;
-					if (wet * wet > Eps)
-					{
-						sleepyTimer = 0;
-						ringing = true;
-					}
 
 					smpls[i] = wet;
 				}
 			}
-
-			const auto blockLength = endIdx - startIdx;
-			sleepyTimer += blockLength;
-			ringing = sleepyTimer < sleepyTimerThreshold;
 		}
 	}
 }

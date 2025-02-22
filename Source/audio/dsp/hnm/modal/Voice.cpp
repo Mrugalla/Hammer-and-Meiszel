@@ -100,7 +100,7 @@ namespace dsp
 		void Voice::prepare(double sampleRate) noexcept
 		{
 			resonatorBank.prepare(materialStereo, sampleRate);
-			const auto smoothLenMs = 42.;
+			const auto smoothLenMs = 32.;
 			for (auto i = 0; i < kNumParams; ++i)
 				parameters[i].prepare(sampleRate, smoothLenMs);
 			wantsMaterialUpdate = true;
@@ -122,6 +122,31 @@ namespace dsp
 				materialStereo, samples, midi, xen,
 				transposeSemi, numChannels, numSamples
 			);
+		}
+
+		void Voice::operator()(double** samples, const DualMaterial& dualMaterial,
+			const Parameters& params, double envGenMod, int numChannels,
+			int numSamples) noexcept
+		{
+			updateParameters(dualMaterial, params, envGenMod, numChannels);
+			resonatorBank(materialStereo, samples, numChannels, numSamples);
+		}
+
+		void Voice::triggerNoteOn(const arch::XenManager& xen,
+			double noteNumber, int numChannels) noexcept
+		{
+			resonatorBank.triggerNoteOn(materialStereo, xen, noteNumber, numChannels);
+		}
+
+		void Voice::triggerNoteOff() noexcept
+		{
+			resonatorBank.triggerNoteOff();
+		}
+
+		void Voice::triggerPitchbend(const arch::XenManager& xen,
+			double pitchbend, int numChannels) noexcept
+		{
+			resonatorBank.triggerPitchbend(materialStereo, xen, pitchbend, numChannels);
 		}
 
 		bool Voice::isRinging() const noexcept

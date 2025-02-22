@@ -35,7 +35,7 @@ namespace dsp
 		// sampleRate
 		void prepare(double) noexcept;
 
-		bool isSleepy() noexcept;
+		bool isSleepy() const noexcept;
 
 		// returns true if envelope active
 		// midi, buffer, numSamples
@@ -87,10 +87,22 @@ namespace dsp
 		void prepare(double);
 
 		// vIdx
-		bool isSleepy(int) noexcept;
+		bool isSleepy(int) const noexcept;
+
+		// samplesOut, samplesIn, numChannels, numSamples, v
+		// returns true if envelope active
+		bool processGain(double**, const double**, int, int, int) noexcept;
 
 		// midi, numSamples, vIdx
 		Info operator()(const MidiBuffer&, int, int) noexcept;
+
+		// vIdx, numSamples
+		Info operator()(int, int) noexcept;
+
+		void triggerNoteOn(bool e, int vIdx) noexcept
+		{
+			envGens[vIdx].noteOn = e;
+		}
 
 		void updateParameters(const EnvelopeGenerator::Parameters&) noexcept;
 

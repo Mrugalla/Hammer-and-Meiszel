@@ -4,7 +4,7 @@
 #include "../arch/State.h"
 
 #include "../audio/dsp/hnm/modal/Axiom.h"
-#include "../audio/dsp/hnm/formant/Axiom.h"
+#include "../audio/dsp/hnm/formant/FormantAxiom.h"
 
 namespace param
 {

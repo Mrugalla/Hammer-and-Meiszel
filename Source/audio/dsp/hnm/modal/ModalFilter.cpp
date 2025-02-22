@@ -46,6 +46,29 @@ namespace dsp
 			);
 		}
 
+		void ModalFilter::operator()(double** samples, const Voice::Parameters& params,
+			double envGenMod, int numChannels, int numSamples, int v) noexcept
+		{
+			voices[v](samples, materials, params, envGenMod, numChannels, numSamples);
+		}
+
+		void ModalFilter::triggerNoteOn(const arch::XenManager& xen,
+			double noteNumber, int numChannels, int v) noexcept
+		{
+			voices[v].triggerNoteOn(xen, noteNumber, numChannels);
+		}
+
+		void ModalFilter::triggerNoteOff(int v) noexcept
+		{
+			voices[v].triggerNoteOff();
+		}
+
+		void ModalFilter::triggerPitchbend(const arch::XenManager& xen,
+			double pitchbend, int numChannels, int v) noexcept
+		{
+			voices[v].triggerPitchbend(xen, pitchbend, numChannels);
+		}
+
 		bool ModalFilter::isRinging(int i) const noexcept
 		{
 			return voices[i].isRinging();

@@ -1520,7 +1520,7 @@ namespace param
 		params.push_back(makeParam(PID::CombFeedbackWidth, 0.f, makeRange::lin(-1.f, 1.f)));
 		//
 		const auto numOctavesDamp = 8.f;
-		params.push_back(makeParam(PID::Damp, numOctavesDamp * .5f, makeRange::lin(0.f, numOctavesDamp), Unit::OctavesFloat));
+		params.push_back(makeParam(PID::Damp, numOctavesDamp, makeRange::lin(0.f, numOctavesDamp), Unit::OctavesFloat));
 		params.push_back(makeParam(PID::DampEnv, 0.f, makeRange::lin(-numOctavesDamp, numOctavesDamp), Unit::OctavesFloat));
 		params.push_back(makeParam(PID::DampWidth, 0.f, makeRange::lin(-numOctavesDamp, numOctavesDamp), Unit::OctavesFloat));
 		// LOW LEVEL PARAMS END
