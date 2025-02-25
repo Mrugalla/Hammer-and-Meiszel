@@ -25,9 +25,10 @@ namespace dsp
 			delaySamples = 0.;
 		}
 
-		void Val::updateDelaySamples(const XenManager& xenManager, double Fs) noexcept
+		void Val::updateDelaySamples(const XenManager& xen, double Fs) noexcept
 		{
-			freqHz = xenManager.noteToFreqHzWithWrap(pitchNote + pitchParam + pb, LowestFrequencyHz);
+			const auto pbRange = xen.getPitchbendRange();
+			freqHz = xen.noteToFreqHzWithWrap(pitchNote + pitchParam + pb * pbRange, LowestFrequencyHz);
 			delaySamples = math::freqHzToSamples(freqHz, Fs);
 		}
 
@@ -181,10 +182,17 @@ namespace dsp
 			}
 		}
 
-		void Voice::triggerNoteOn(double noteNumber) noexcept
+		void Voice::triggerXen(const XenManager& xen, int numChannels) noexcept
+		{
+			xenInfo = xen.getInfo();
+			updatePitch(xen, numChannels);
+		}
+
+		void Voice::triggerNoteOn(const XenManager& xen, double noteNumber, int numChannels) noexcept
 		{
 			for (auto& val : vals)
 				val.pitchNote = noteNumber;
+			updatePitch(xen, numChannels);
 			sleepy.triggerNoteOn();
 		}
 
@@ -193,10 +201,11 @@ namespace dsp
 			sleepy.triggerNoteOff();
 		}
 
-		void Voice::triggerPitchbend(double pitchbend) noexcept
+		void Voice::triggerPitchbend(const XenManager& xen, double pitchbend, int numChannels) noexcept
 		{
 			for (auto& val : vals)
 				val.pb = pitchbend;
+			updatePitch(xen, numChannels);
 		}
 
 		bool Voice::isRinging() const noexcept
@@ -204,23 +213,11 @@ namespace dsp
 			return sleepy.isRinging();
 		}
 
-		bool Voice::xenUpdated(const XenManager& xenManager) noexcept
-		{
-			const auto& nInfo = xenManager.getInfo();
-			if (xenInfo == nInfo)
-				return false;
-			xenInfo = nInfo;
-			return true;
-		}
-
-		void Voice::updateParams(const XenManager& xenManager, const Params& params,
+		void Voice::updateParams(const XenManager& xen, const Params& params,
 			double envGenMod, int numChannels, int numSamples) noexcept
 		{
-			bool wannaUpdatePitch = false;
+			bool wannaUpdate = false;
 
-			if (xenUpdated(xenManager))
-				wannaUpdatePitch = true;
-			
 			const auto retuneWidthHalf = params.retuneWidth * .5;
 			double retunes[2] =
 			{
@@ -232,11 +229,11 @@ namespace dsp
 				if (vals[ch].pitchParam != retunes[ch])
 				{
 					vals[ch].pitchParam = retunes[ch];
-					wannaUpdatePitch = true;
+					wannaUpdate = true;
 				}
 
-			if(wannaUpdatePitch)
-				updatePitch(xenManager, numChannels);
+			if(wannaUpdate)
+				updatePitch(xen, numChannels);
 			
 			const double fbWidths[2] =
 			{
@@ -286,9 +283,15 @@ namespace dsp
 			);
 		}
 
-		void Comb::triggerNoteOn(double noteNumber, int v) noexcept
+		void Comb::triggerXen(const arch::XenManager& xen, int numChannels) noexcept
 		{
-			voices[v].triggerNoteOn(noteNumber);
+			for (auto& voice: voices)
+				voice.triggerXen(xen, numChannels);
+		}
+
+		void Comb::triggerNoteOn(const arch::XenManager& xen, double noteNumber, int numChannels, int v) noexcept
+		{
+			voices[v].triggerNoteOn(xen, noteNumber, numChannels);
 		}
 
 		void Comb::triggerNoteOff(int v) noexcept
@@ -296,9 +299,9 @@ namespace dsp
 			voices[v].triggerNoteOff();
 		}
 
-		void Comb::triggerPitchbend(double pitchbend, int v) noexcept
+		void Comb::triggerPitchbend(const arch::XenManager& xen, double pitchbend, int numChannels, int v) noexcept
 		{
-			voices[v].triggerPitchbend(pitchbend);
+			voices[v].triggerPitchbend(xen, pitchbend, numChannels);
 		}
 
 		bool Comb::isRinging(int v) const noexcept

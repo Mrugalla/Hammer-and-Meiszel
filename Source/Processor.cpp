@@ -371,7 +371,7 @@ namespace audio
         const auto masterTune = std::round(params(PID::MasterTune).getValModDenorm());
         const auto anchor = std::round(params(PID::AnchorPitch).getValModDenorm());
         const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
-        xenManager(xen, masterTune, anchor, pitchbendRange);
+        xenManager({ xen, masterTune, anchor, pitchbendRange }, numChannels);
 #endif
 
         for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)

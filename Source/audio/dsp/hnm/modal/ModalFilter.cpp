@@ -6,7 +6,8 @@ namespace dsp
 	{
 		ModalFilter::ModalFilter() :
 			materials(),
-			voices()
+			voices(),
+			transposeSemi(0.)
 		{
 		}
 
@@ -30,26 +31,30 @@ namespace dsp
 			materials.reportUpdate();
 		}
 
-		void ModalFilter::operator()(double** samples,
-			const MidiBuffer& midi, const arch::XenManager& xen,
-			const Voice::Parameters& voiceParams,
-			double transposeSemi, double envGenMod,
-			int numChannels, int numSamples, int v) noexcept
-		{
-			auto& voice = voices[v];
-			voice
-			(
-				materials, voiceParams,
-				samples, midi, xen,
-				transposeSemi, envGenMod,
-				numChannels, numSamples
-			);
-		}
-
 		void ModalFilter::operator()(double** samples, const Voice::Parameters& params,
 			double envGenMod, int numChannels, int numSamples, int v) noexcept
 		{
-			voices[v](samples, materials, params, envGenMod, numChannels, numSamples);
+			voices[v]
+			(
+				samples, materials, params,
+				envGenMod, numChannels, numSamples
+			);
+		}
+
+		void ModalFilter::setTranspose(const arch::XenManager& xen, double t, int numChannels) noexcept
+		{
+			if (transposeSemi == t)
+				return;
+			transposeSemi = t;
+			for (auto& voice : voices)
+				voice.setTranspose(xen, transposeSemi, numChannels);
+		}
+
+		void ModalFilter::triggerXen(const arch::XenManager& xen,
+			int numChannels) noexcept
+		{
+			for(auto& voice: voices)
+				voice.triggerXen(xen, numChannels);
 		}
 
 		void ModalFilter::triggerNoteOn(const arch::XenManager& xen,

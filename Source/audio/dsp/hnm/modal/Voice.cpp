@@ -106,30 +106,21 @@ namespace dsp
 			wantsMaterialUpdate = true;
 		}
 
-		void Voice::operator()(const DualMaterial& dualMaterial, const Parameters& _parameters,
-			double** samples, const MidiBuffer& midi, const arch::XenManager& xen,
-			double transposeSemi, double envGenMod, int numChannels, int numSamples) noexcept
-		{
-			updateParameters
-			(
-				dualMaterial,
-				_parameters,
-				envGenMod,
-				numChannels
-			);
-			resonatorBank
-			(
-				materialStereo, samples, midi, xen,
-				transposeSemi, numChannels, numSamples
-			);
-		}
-
 		void Voice::operator()(double** samples, const DualMaterial& dualMaterial,
-			const Parameters& params, double envGenMod, int numChannels,
-			int numSamples) noexcept
+			const Parameters& params, double envGenMod, int numChannels, int numSamples) noexcept
 		{
 			updateParameters(dualMaterial, params, envGenMod, numChannels);
 			resonatorBank(materialStereo, samples, numChannels, numSamples);
+		}
+
+		void Voice::setTranspose(const arch::XenManager& xen, double transposeSemi, int numChannels) noexcept
+		{
+			resonatorBank.setTranspose(materialStereo, xen, transposeSemi, numChannels);
+		}
+
+		void Voice::triggerXen(const arch::XenManager& xen, int numChannels) noexcept
+		{
+			resonatorBank.triggerXen(xen, materialStereo, numChannels);
 		}
 
 		void Voice::triggerNoteOn(const arch::XenManager& xen,

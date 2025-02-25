@@ -47,7 +47,8 @@ namespace dsp
 	PRM<Float>::PRM(Float startVal) :
 		buf(),
 		smooth(startVal),
-		value(startVal)
+		value(startVal),
+		smoothing(false)
 	{
 		for(auto& b : buf)
 			b = startVal;
@@ -57,13 +58,14 @@ namespace dsp
 	void PRM<Float>::prepare(Float sampleRate, Float smoothLenMs) noexcept
 	{
 		smooth.makeFromDecayInMs(smoothLenMs, sampleRate);
+		smoothing = false;
 	}
 
 	template<typename Float>
 	PRMInfo<Float> PRM<Float>::operator()(Float val, int numSamples) noexcept
 	{
 		value = val;
-		bool smoothing = smooth(buf.data(), value, numSamples);
+		smoothing = smooth(buf.data(), value, numSamples);
 		return { buf.data(), value, smoothing };
 	}
 
@@ -77,15 +79,14 @@ namespace dsp
 	template<typename Float>
 	PRMInfo<Float> PRM<Float>::operator()(int startIdx, int endIdx) noexcept
 	{
-		bool smoothing = smooth(buf.data(), value, startIdx, endIdx);
+		smoothing = smooth(buf.data(), value, startIdx, endIdx);
 		return { buf.data(), value, smoothing };
 	}
-
 
 	template<typename Float>
 	PRMInfo<Float> PRM<Float>::operator()(int numSamples) noexcept
 	{
-		bool smoothing = smooth(buf.data(), value, numSamples);
+		smoothing = smooth(buf.data(), value, numSamples);
 		return { buf.data(), value, smoothing };
 	}
 

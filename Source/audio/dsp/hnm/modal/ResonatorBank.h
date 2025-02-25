@@ -20,7 +20,7 @@ namespace dsp
 
 				double getFreq(const arch::XenManager&) noexcept;
 
-				double pitch, transpose, pb, pbRange, xen, masterTune, anchor;
+				double pitch, transpose, pb;
 			};
 
 		public:
@@ -31,16 +31,20 @@ namespace dsp
 			// materialStereo, sampleRate
 			void prepare(const MaterialDataStereo&, double);
 
-			// materialStereo, samples, midi, xen, transposeSemi, numChannels, numSamples
-			void operator()(const MaterialDataStereo&, double**, const MidiBuffer&,
-				const arch::XenManager&, double, int, int) noexcept;
-
 			// materialStereo, samples, numChannels, numSamples
 			void operator()(const MaterialDataStereo&, double**, int, int) noexcept;
+
+			// materialStereo, xen, transposeSemi, numChannels
+			void setTranspose(const MaterialDataStereo&,
+				const arch::XenManager&, double, int) noexcept;
 
 			// materialStereo, samples, numChannels, numSamples
 			void applyFilter(const MaterialDataStereo&, double**,
 				int, int) noexcept;
+
+			// xen, materialStereo, numChannels
+			void triggerXen(const arch::XenManager&,
+				const MaterialDataStereo&, int) noexcept;
 
 			// materialStereo, xen, noteNumber, numChannels
 			void triggerNoteOn(const MaterialDataStereo&,
@@ -74,10 +78,6 @@ namespace dsp
 
 			// material, numFiltersBelowNyquist, ch
 			void updateFreqRatios(const MaterialData&, int&, int) noexcept;
-
-			// materialStereo, samples, midi, xen, transposeSemi, numChannels, numSamples
-			void process(const MaterialDataStereo&, double**, const MidiBuffer&,
-				const arch::XenManager&, double, int, int) noexcept;
 		};
 	}
 }

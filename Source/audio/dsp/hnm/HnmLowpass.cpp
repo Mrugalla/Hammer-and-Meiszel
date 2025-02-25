@@ -17,66 +17,76 @@ namespace dsp
 
 			Voice::Val::Val() :
 				pitch(24.),
-				damp(0.),
-				freqHz(420.),
-				xenInfo(),
-				prm(freqHz),
-				info()
+				pitchbend(0.),
+				damps{ 0., 0. },
+				prms{ 420., 69. }
 			{
-				info.val = freqHz;
 			}
 
 			void Voice::Val::prepare(double sampleRate) noexcept
 			{
-				prm.prepare(sampleRate, 13.);
+				for(auto& prm: prms)
+					prm.prepare(sampleRate, 13.);
 			}
 
 			void Voice::Val::operator()(const arch::XenManager& xen,
 				const Params& params, double envGenMod,
-				int numSamples) noexcept
+				int numChannels, int numSamples) noexcept
 			{
-				updateXen(xen);
-				updateDamp(xen, params, envGenMod);
-				info = prm(numSamples);
+				const auto dampEnv = params.dampEnv * envGenMod;
+				double dampValues[2] =
+				{
+					params.damp - params.dampWidth + dampEnv,
+					params.damp + params.dampWidth + dampEnv
+				};
+				for (auto ch = 0; ch < numChannels; ++ch)
+				{
+					const auto dampVal = dampValues[ch];
+					if (damps[ch] != dampVal)
+					{
+						damps[ch] = dampVal;
+						updateFreqHz(xen, ch);
+					}
+					prms[ch](numSamples);
+				}
 			}
 
-			void Voice::Val::updateXen(const arch::XenManager& xen) noexcept
+			void Voice::Val::updateXen(const arch::XenManager& xen, int numChannels) noexcept
 			{
-				if (xenInfo == xen.getInfo())
-					return;
-				xenInfo = xen.getInfo();
-				updateFreqHz(xen);
+				for (auto ch = 0; ch < numChannels; ++ch)
+					updateFreqHz(xen, ch);
 			}
-
-			void Voice::Val::updateDamp(const arch::XenManager& xen,
-				const Params& params, double envGenMod) noexcept
-			{
-				const auto nDamp = params.damp + envGenMod * params.dampEnv;
-				if (damp == nDamp)
-					return;
-				damp = nDamp;
-				updateFreqHz(xen);
-			}
-			void Voice::Val::updatePitch(const arch::XenManager& xen, double note) noexcept
+			
+			void Voice::Val::updatePitch(const arch::XenManager& xen, double note, int numChannels) noexcept
 			{
 				pitch = note;
-				updateFreqHz(xen);
+				for (auto ch = 0; ch < numChannels; ++ch)
+					updateFreqHz(xen, ch);
 			}
 
-			void Voice::Val::updateFreqHz(const arch::XenManager& xen) noexcept
+			void Voice::Val::updatePitchbend(const arch::XenManager& xen, double pb, int numChannels) noexcept
 			{
-				freqHz = math::limit(0., 20000., xen.noteToFreqHz(pitch + damp));
-				prm.value = freqHz;
+				pitchbend = pb;
+				for (auto ch = 0; ch < numChannels; ++ch)
+					updateFreqHz(xen, ch);
 			}
 
-			bool Voice::Val::isSmoothing() const noexcept
+			void Voice::Val::updateFreqHz(const arch::XenManager& xen, int ch) noexcept
 			{
-				return info.smoothing;
+				const auto pbRange = xen.getPitchbendRange();
+				const auto damp = damps[ch];
+				const auto freqHz = math::limit(0., 20000., xen.noteToFreqHz(pitch + damp + pitchbend * pbRange));
+				prms[ch].value = freqHz;
 			}
 
-			double Voice::Val::operator[](int s) const noexcept
+			bool Voice::Val::isSmoothing(int ch) const noexcept
 			{
-				return info[s];
+				return prms[ch].smoothing;
+			}
+
+			double Voice::Val::operator()(int ch, int s) const noexcept
+			{
+				return prms[ch][s];
 			}
 
 			// Voice
@@ -84,15 +94,19 @@ namespace dsp
 			Voice::Voice() :
 				updateCutoffFuncs
 			{
-				[&f = lp](double v) { f.setCutoffFrequency(v); },
-				[](double) {}
+				[&](double v, int ch) { lps[ch].setCutoffFrequency(v); },
+				[](double, int) {}
 			},
-				lp(),
+				lps(),
 				val(),
 				sleepy()
 			{
-				lp.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-				lp.snapToZero();
+				for (auto& lp : lps)
+				{
+					lp.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+					lp.setResonance(1. / std::sqrt(4.));
+					lp.snapToZero();
+				}
 			}
 
 			void Voice::prepare(double sampleRate) noexcept
@@ -100,9 +114,12 @@ namespace dsp
 				juce::dsp::ProcessSpec spec;
 				spec.sampleRate = sampleRate;
 				spec.maximumBlockSize = BlockSize;
-				spec.numChannels = 2;
-				lp.prepare(spec);
-				lp.reset();
+				spec.numChannels = 1;
+				for (auto& lp : lps)
+				{
+					lp.prepare(spec);
+					lp.reset();
+				}
 				val.prepare(sampleRate);
 				sleepy.prepare(sampleRate);
 			}
@@ -111,15 +128,20 @@ namespace dsp
 				const Params& params, const arch::XenManager& xen,
 				double envGenMod, int numChannels, int numSamples) noexcept
 			{
-				val(xen, params, envGenMod, numSamples);
+				val(xen, params, envGenMod, numChannels, numSamples);
 				process(samples, numChannels, numSamples);
 				sleepy(samples, numChannels, numSamples);
 			}
 
-			void Voice::triggerNoteOn(const arch::XenManager& xen, double noteNumber) noexcept
+			void Voice::triggerXen(const arch::XenManager& xen, int numChannels) noexcept
+			{
+				val.updateXen(xen, numChannels);
+			}
+
+			void Voice::triggerNoteOn(const arch::XenManager& xen, double noteNumber, int numChannels) noexcept
 			{
 				sleepy.triggerNoteOn();
-				val.updatePitch(xen, noteNumber);
+				val.updatePitch(xen, noteNumber, numChannels);
 			}
 
 			void Voice::triggerNoteOff() noexcept
@@ -127,9 +149,9 @@ namespace dsp
 				sleepy.triggerNoteOff();
 			}
 
-			void Voice::triggerPitchbend(const arch::XenManager& xen, double noteNumber) noexcept
+			void Voice::triggerPitchbend(const arch::XenManager& xen, double pb, int numChannels) noexcept
 			{
-				val.updatePitch(xen, noteNumber);
+				val.updatePitchbend(xen, pb, numChannels);
 			}
 
 			bool Voice::isRinging() const noexcept
@@ -139,16 +161,18 @@ namespace dsp
 
 			void Voice::process(double** samples, int numChannels, int numSamples) noexcept
 			{
-				const auto cutoffIdx = val.isSmoothing() ? 0 : 1;
-				const auto& cutoffFunc = updateCutoffFuncs[cutoffIdx];
-				for (auto s = 0; s < numSamples; ++s)
+				for (auto ch = 0; ch < numChannels; ++ch)
 				{
-					cutoffFunc(val[s]);
-					for (auto ch = 0; ch < numChannels; ++ch)
+					const auto cutoffIdx = val.isSmoothing(ch) ? 0 : 1;
+					const auto& cutoffFunc = updateCutoffFuncs[cutoffIdx];
+					auto& lp = lps[ch];
+
+					for (auto s = 0; s < numSamples; ++s)
 					{
+						cutoffFunc(val(ch, s), ch);
 						auto smpls = samples[ch];
 						const auto smpl = smpls[s];
-						const auto y = lp.processSample(ch, smpl);
+						const auto y = lp.processSample(0, smpl);
 						smpls[s] = y;
 					}
 				}
@@ -174,9 +198,15 @@ namespace dsp
 				voices[v](samples, params, xen, envGenMod, numChannels, numSamples);
 			}
 
-			void Filter::triggerNoteOn(const arch::XenManager& xen, double noteNumber, int v) noexcept
+			void Filter::triggerXen(const arch::XenManager& xen, int numChannels) noexcept
 			{
-				voices[v].triggerNoteOn(xen, noteNumber);
+				for (auto& voice : voices)
+					voice.triggerXen(xen, numChannels);
+			}
+
+			void Filter::triggerNoteOn(const arch::XenManager& xen, double noteNumber, int numChannels, int v) noexcept
+			{
+				voices[v].triggerNoteOn(xen, noteNumber, numChannels);
 			}
 
 			void Filter::triggerNoteOff(int v) noexcept
@@ -184,9 +214,9 @@ namespace dsp
 				voices[v].triggerNoteOff();
 			}
 
-			void Filter::triggerPitchbend(const arch::XenManager& xen, double pitchbend, int v) noexcept
+			void Filter::triggerPitchbend(const arch::XenManager& xen, double pitchbend, int numChannels, int v) noexcept
 			{
-				voices[v].triggerPitchbend(xen, pitchbend);
+				voices[v].triggerPitchbend(xen, pitchbend, numChannels);
 			}
 
 			bool Filter::isRinging(int v) const noexcept

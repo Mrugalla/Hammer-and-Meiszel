@@ -269,6 +269,21 @@ namespace dsp
 		return false;
 	}
 
+	bool EnvGenMultiVoice::processGain(double** samples,
+		int numChannels, int numSamples, int v) noexcept
+	{
+		const auto info = operator()(v, numSamples);
+		if (info.active)
+		{
+			for (auto ch = 0; ch < numChannels; ++ch)
+				dsp::SIMD::multiply(samples[ch], info.data, numSamples);
+			return true;
+		}
+		for (auto ch = 0; ch < numChannels; ++ch)
+			dsp::SIMD::clear(samples[ch], numSamples);
+		return false;
+	}
+
 	void EnvGenMultiVoice::updateParameters(const EnvelopeGenerator::Parameters& _params) noexcept
 	{
 		params(_params);

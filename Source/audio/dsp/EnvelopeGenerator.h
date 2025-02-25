@@ -93,6 +93,10 @@ namespace dsp
 		// returns true if envelope active
 		bool processGain(double**, const double**, int, int, int) noexcept;
 
+		// samples, numChannels, numSamples, v
+		// returns true if envelope active
+		bool processGain(double**, int, int, int) noexcept;
+
 		// midi, numSamples, vIdx
 		Info operator()(const MidiBuffer&, int, int) noexcept;
 

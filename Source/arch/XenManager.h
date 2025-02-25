@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <atomic>
+#include <functional>
 
 namespace arch
 {
@@ -13,10 +14,13 @@ namespace arch
 			double xen, masterTune, anchor, pitchbendRange;
 		};
 
+		// xenInfo, numChannels
+		using UpdateFunc = std::function<void(const Info&, int)>;
+
 		XenManager();
 
-		// xen, masterTune, anchor, pitchbendRange
-		void operator()(double, double, double, double) noexcept;
+		// xenInfo, numChannels
+		void operator()(const Info&, int) noexcept;
 
 		template<typename Float>
 		Float noteToFreqHz(Float) const noexcept;
@@ -38,6 +42,7 @@ namespace arch
 
 		double getMasterTune() const noexcept;
 
+		UpdateFunc updateFunc;
 	protected:
 		Info info;
 	};

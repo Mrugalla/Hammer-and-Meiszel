@@ -82,7 +82,6 @@ namespace dsp
 				static constexpr auto QRange = QEnd - QStart;
 				q = QStart + q * QRange;
 				q *= q;
-
 				for (auto i = 0; i < NumFormants; ++i)
 					formants[i].blend(a.formants[i], b.formants[i], pos, q);
 			}
@@ -93,6 +92,32 @@ namespace dsp
 			}
 		private:
 			std::array<FilterProps, NumFormants> formants;
+		};
+
+		struct VowelStereo
+		{
+			VowelStereo() :
+				vowels{}
+			{
+			}
+
+			void prepare(double sampleRate) noexcept
+			{
+				for (auto& vowel : vowels)
+					vowel.prepare(sampleRate);
+			}
+
+			void blend(const Vowel& a, const Vowel& b, double pos, double q, int ch) noexcept
+			{
+				vowels[ch].blend(a, b, pos, q);
+			}
+
+			const FilterProps& getFormant(int i, int ch) const noexcept
+			{
+				return vowels[ch].getFormant(i);
+			}
+		protected:
+			std::array<Vowel, 2> vowels;
 		};
 
 		enum class VowelClass

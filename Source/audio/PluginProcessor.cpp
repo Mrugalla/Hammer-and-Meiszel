@@ -3,7 +3,7 @@
 
 namespace audio
 {
-	PluginProcessor::PluginProcessor(Params& _params, const arch::XenManager& _xen) :
+	PluginProcessor::PluginProcessor(Params& _params, arch::XenManager& _xen) :
 		params(_params), xen(_xen), sampleRate(1.),
 		keySelector(),
 		autoMPE(), voiceSplit(), parallelProcessor(), formantLayer(),
@@ -15,6 +15,13 @@ namespace audio
 		recSampleIndex(0)
 	{
 		startTimerHz(2);
+
+		xen.updateFunc = [&](const arch::XenManager::Info&, int numChannels)
+		{
+			modalFilter.triggerXen(xen, numChannels);
+			combFilter.triggerXen(xen, numChannels);
+			lowpass.triggerXen(xen, numChannels);
+		};
 	}
 
 	void PluginProcessor::prepare(double _sampleRate)
@@ -52,28 +59,26 @@ namespace audio
 			for (auto ch = 0; ch < numChannels; ++ch)
 				dsp::SIMD::clear(samples[ch], numSamples);
 #else
-		{
-			const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
-			const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
-			const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
-			const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
-			const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
-			const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
-			const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
-			const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
+		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
+		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
+		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
+		const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
+		const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
+		const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
+		const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
+		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
 
-			const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
-			const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
-			const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
-			const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
-			const auto& envGenModSustainParam = params(PID::EnvGenModSustain);
-			const auto envGenModSustain = static_cast<double>(envGenModSustainParam.getValModDenorm());
-			const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
-			const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
+		const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
+		const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
+		const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
+		const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
+		const auto& envGenModSustainParam = params(PID::EnvGenModSustain);
+		const auto envGenModSustain = static_cast<double>(envGenModSustainParam.getValModDenorm());
+		const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
+		const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
 
-			envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
-			envGensMod.updateParameters({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
-		}
+		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
+		envGensMod.updateParameters({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
 
 		const auto& noiseBlendParam = params(PID::NoiseBlend);
 		const auto noiseBlend = noiseBlendParam.getValMod();
@@ -122,6 +127,8 @@ namespace audio
 		auto modalSemi = static_cast<double>(std::round(modalSemiParam.getValModDenorm()));
 		modalSemi += static_cast<double>(std::round(modalOctParam.getValModDenorm())) * xen.getXen();
 
+		modalFilter.setTranspose(xen, modalSemi, numChannels);
+
 		const auto& modalBlendParam = params(PID::ModalBlend);
 		const auto modalBlend = static_cast<double>(modalBlendParam.getValMod());
 		const auto& modalBlendEnvParam = params(PID::ModalBlendEnv);
@@ -168,40 +175,42 @@ namespace audio
 
 		const auto& formantPosParam = params(PID::FormantPos);
 		const auto formantPos = static_cast<double>(formantPosParam.getValMod());
-
 		const auto& formantPosEnvParam = params(PID::FormantPosEnv);
 		const auto formantPosEnv = static_cast<double>(formantPosEnvParam.getValModDenorm());
+		const auto& formantPosWidthParam = params(PID::FormantPosWidth);
+		const auto formantPosWidth = static_cast<double>(formantPosWidthParam.getValModDenorm());
 
 		const auto& formantQParam = params(PID::FormantQ);
 		const auto formantQ = static_cast<double>(formantQParam.getValMod());
-
 		const auto& formantQEnvParam = params(PID::FormantQEnv);
 		const auto formantQEnv = static_cast<double>(formantQEnvParam.getValModDenorm());
-
-		const auto& formantGainDbParam = params(PID::FormantGain);
-		const auto formantGainDb = static_cast<double>(formantGainDbParam.getValModDenorm());
-
-		const auto& formantGainEnvParam = params(PID::FormantGainEnv);
-		const auto formantGainEnv = static_cast<double>(formantGainEnvParam.getValModDenorm());
+		const auto& formantQWidthParam = params(PID::FormantQWidth);
+		const auto formantQWidth = static_cast<double>(formantQWidthParam.getValModDenorm());
 
 		const auto& formantAParam = params(PID::FormantA);
 		const auto formantVowelA = static_cast<int>(std::round(formantAParam.getValModDenorm()));
-
 		const auto& formantBParam = params(PID::FormantB);
 		const auto formantVowelB = static_cast<int>(std::round(formantBParam.getValModDenorm()));
 
 		dsp::formant::Params formantParams
 		(
-			formantPos, formantQ, formantGainDb,
-			formantPosEnv, formantQEnv, formantGainEnv,
+			formantPos, formantQ,
+			formantPosEnv, formantQEnv,
+			formantPosWidth, formantQWidth,
 			formantVowelA, formantVowelB
 		);
+
+		const auto& formantDecayParam = params(PID::FormantDecay);
+		const auto formantDecay = static_cast<double>(formantDecayParam.getValModDenorm());
+		const auto& formantGainDbParam = params(PID::FormantGain);
+		const auto formantGainDb = static_cast<double>(formantGainDbParam.getValModDenorm());
+
+		formantFilter.updateEnvelopes(formantDecay, envGenAmpRelease, formantGainDb, numSamples);
 
 		const auto edo = xen.getXen();
 
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
-
 		const auto& combSemiParam = params(PID::CombSemi);
 		auto combSemi = static_cast<double>(std::round(combSemiParam.getValModDenorm()));
 		combSemi += combOct * edo;
@@ -211,7 +220,6 @@ namespace audio
 
 		const auto& combFeedbackParam = params(PID::CombFeedback);
 		const auto combFeedback = static_cast<double>(combFeedbackParam.getValModDenorm());
-
 		const auto& combFeedbackEnvParam = params(PID::CombFeedbackEnv);
 		const auto combFeedbackEnv = static_cast<double>(combFeedbackEnvParam.getValModDenorm());
 		const auto& combFeedbackWidthParam = params(PID::CombFeedbackWidth);
@@ -270,7 +278,7 @@ namespace audio
 						auto layer = layerVoiceEvt[ch];
 						dsp::SIMD::copy(layer, smplsVoice, numSamplesEvt);
 					}
-
+					
 					modalFilter
 					(
 						samplesVoiceEvt,
@@ -280,6 +288,7 @@ namespace audio
 						numSamplesEvt,
 						v
 					);
+
 
 					formantFilter
 					(
@@ -294,7 +303,7 @@ namespace audio
 					for (auto ch = 0; ch < numChannels; ++ch)
 						dsp::SIMD::add(samplesVoiceEvt[ch], layerVoiceEvt[ch], numSamplesEvt);
 				}
-
+				
 				const bool combRinging = combFilter.isRinging(v);
 				active = active || combRinging;
 				if (active)
@@ -304,7 +313,6 @@ namespace audio
 						combParams, envGenModVal,
 						numChannels, numSamplesEvt, v
 					);
-
 				active = active || lowpass.isRinging(v);
 				if (active)
 					lowpass
@@ -326,8 +334,8 @@ namespace audio
 					const auto noteNumber = static_cast<double>(msg.getNoteNumber());
 					modalFilter.triggerNoteOn(xen, noteNumber, numChannels, v);
 					formantFilter.triggerNoteOn(v);
-					combFilter.triggerNoteOn(noteNumber, v);
-					lowpass.triggerNoteOn(xen, noteNumber, v);
+					combFilter.triggerNoteOn(xen, noteNumber, numChannels, v);
+					lowpass.triggerNoteOn(xen, noteNumber, numChannels, v);
 				}
 				else if (msg.isNoteOff())
 				{
@@ -351,11 +359,10 @@ namespace audio
 				{
 					static constexpr auto PB = static_cast<double>(0x3fff);
 					static constexpr auto PBInv = 1. / PB;
-					const auto pbRange = xen.getPitchbendRange() * 2.;
-					const auto pitchbend = (static_cast<double>(msg.getPitchWheelValue()) * PBInv - .5) * pbRange;
-					modalFilter.triggerPitchbend(xen, pitchbend, numChannels, v);
-					combFilter.triggerPitchbend(pitchbend, v);
-					lowpass.triggerPitchbend(xen, pitchbend, v);
+					const auto pb = static_cast<double>(2 * msg.getPitchWheelValue()) * PBInv - 1;
+					modalFilter.triggerPitchbend(xen, pb, numChannels, v);
+					combFilter.triggerPitchbend(xen, pb, numChannels, v);
+					lowpass.triggerPitchbend(xen, pb, numChannels, v);
 				}
 			}
 		}

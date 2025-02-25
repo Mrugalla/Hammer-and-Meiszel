@@ -18,11 +18,7 @@ namespace dsp
 		ResonatorBank::Val::Val() :
 			pitch(0.),
 			transpose(0.),
-			pb(0.),
-			pbRange(2.),
-			xen(0.),
-			masterTune(0.),
-			anchor(0.)
+			pb(0.)
 		{}
 
 		void ResonatorBank::Val::reset() noexcept
@@ -30,13 +26,12 @@ namespace dsp
 			pitch = 0.;
 			transpose = 0.;
 			pb = 0.;
-			pbRange = 2.;
-			xen = 0.;
 		}
 
-		double ResonatorBank::Val::getFreq(const arch::XenManager& _xen) noexcept
+		double ResonatorBank::Val::getFreq(const arch::XenManager& xen) noexcept
 		{
-			return _xen.noteToFreqHzWithWrap(pitch + transpose + pb * pbRange * 2.);
+			const auto pbRange = xen.getPitchbendRange();
+			return xen.noteToFreqHzWithWrap(pitch + transpose + pb * pbRange);
 		}
 
 		ResonatorBank::ResonatorBank() :
@@ -78,23 +73,25 @@ namespace dsp
 		}
 
 		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo,
-			double** samples, const MidiBuffer& midi,
-			const arch::XenManager& xen, double transposeSemi,
-			int numChannels, int numSamples) noexcept
-		{
-			process
-			(
-				materialStereo, samples, midi, xen,
-				transposeSemi, numChannels, numSamples
-			);
-			sleepy(samples, numChannels, numSamples);
-		}
-
-		void ResonatorBank::operator()(const MaterialDataStereo& materialStereo,
 			double** samples, int numChannels, int numSamples) noexcept
 		{
 			applyFilter(materialStereo, samples, numChannels, numSamples);
 			sleepy(samples, numChannels, numSamples);
+		}
+
+		void ResonatorBank::setTranspose(const MaterialDataStereo& materialStereo,
+			const arch::XenManager& xen, double transposeSemi, int numChannels) noexcept
+		{
+			val.transpose = transposeSemi;
+			const auto freq = val.getFreq(xen);
+			setFrequencyHz(materialStereo, freq, numChannels);
+		}
+
+		void ResonatorBank::triggerXen(const arch::XenManager& xen,
+			const MaterialDataStereo& materialStereo, int numChannels) noexcept
+		{
+			const auto freq = val.getFreq(xen);
+			setFrequencyHz(materialStereo, freq, numChannels);
 		}
 
 		void ResonatorBank::triggerNoteOn(const MaterialDataStereo& materialStereo,
@@ -114,8 +111,6 @@ namespace dsp
 		void ResonatorBank::triggerPitchbend(const MaterialDataStereo& materialStereo, const arch::XenManager& xen,
 			double pitchbend, int numChannels) noexcept
 		{
-			if (val.pb == pitchbend)
-				return;
 			val.pb = pitchbend;
 			const auto freq = val.getFreq(xen);
 			setFrequencyHz(materialStereo, freq, numChannels);
@@ -177,51 +172,6 @@ namespace dsp
 				}
 				else return;
 			}
-		}
-
-		void ResonatorBank::process(const MaterialDataStereo& materialStereo, double** samples,
-			const MidiBuffer& midi, const arch::XenManager& xen, double transposeSemi,
-			int numChannels, int numSamples) noexcept
-		{
-			{
-				const auto pbRange = xen.getPitchbendRange(); // can be improved by being triggered from xenManager changes directly
-				const auto xenScale = xen.getXen();
-				const auto masterTune = xen.getMasterTune();
-				const auto anchorPitch = xen.getAnchor();
-				if (val.transpose != transposeSemi ||
-					val.pbRange != pbRange ||
-					val.xen != xenScale ||
-					val.masterTune != masterTune ||
-					val.anchor != anchorPitch)
-				{
-					val.transpose = transposeSemi;
-					val.pbRange = pbRange;
-					val.xen = xenScale;
-					val.masterTune = masterTune;
-					val.anchor = anchorPitch;
-					const auto freq = val.getFreq(xen);
-					setFrequencyHz(materialStereo, freq, numChannels);
-				}
-			}
-
-			auto s = 0;
-			for (const auto it : midi)
-			{
-				const auto msg = it.getMessage();
-				const auto ts = it.samplePosition;
-
-				applyFilter(materialStereo, samples, numChannels, numSamples);
-
-				if (msg.isNoteOn())
-					triggerNoteOn(materialStereo, xen, static_cast<double>(msg.getNoteNumber()), numChannels);
-				else if (msg.isNoteOff())
-					triggerNoteOff();
-				else if (msg.isPitchWheel())
-					triggerPitchbend(materialStereo, xen, static_cast<double>(msg.getPitchWheelValue()), numChannels);
-				s = ts;
-			}
-
-			applyFilter(materialStereo, samples, numChannels, numSamples);
 		}
 
 		void ResonatorBank::applyFilter(const MaterialDataStereo& materialStereo, double** samples,

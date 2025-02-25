@@ -71,11 +71,16 @@ namespace dsp
 			void operator()(double**, const XenManager&,
 				const Params&, double, int, int) noexcept;
 
-			void triggerNoteOn(double) noexcept;
+			// xenManager, numChannels
+			void triggerXen(const XenManager&, int) noexcept;
+
+			// xen, noteNumber, numChannels
+			void triggerNoteOn(const XenManager&, double, int) noexcept;
 
 			void triggerNoteOff() noexcept;
 
-			void triggerPitchbend(double) noexcept;
+			// xen, pitchbend, numChannels
+			void triggerPitchbend(const XenManager&, double, int) noexcept;
 
 			bool isRinging() const noexcept;
 
@@ -91,9 +96,6 @@ namespace dsp
 		public:
 			int size;
 		private:
-			// xenManager
-			bool xenUpdated(const XenManager&) noexcept;
-
 			// xenManager, params, envGenMod, numChannels, numSamples
 			void updateParams(const XenManager&, const Params&, double, int, int) noexcept;
 
@@ -117,14 +119,17 @@ namespace dsp
 			void operator()(double**, const arch::XenManager&,
 				const Params&, double, int, int, int) noexcept;
 
-			// noteNumber, v
-			void triggerNoteOn(double, int) noexcept;
+			// xen, numChannels
+			void triggerXen(const arch::XenManager&, int) noexcept;
+
+			// xen, noteNumber, numChannels, v
+			void triggerNoteOn(const arch::XenManager&, double, int, int) noexcept;
 
 			// v
 			void triggerNoteOff(int) noexcept;
 
-			// pitchbend, v
-			void triggerPitchbend(double, int) noexcept;
+			// xen, pitchbend, numChannels, v
+			void triggerPitchbend(const arch::XenManager&, double, int, int) noexcept;
 
 			bool isRinging(int) const noexcept;
 

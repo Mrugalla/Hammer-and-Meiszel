@@ -4,11 +4,8 @@
 
 ~~~ todo ~~~
 
-macht der comb unison grad das richtige?
-
-comb has no envelope?
-formants have no width?
-damp has no width
+formant filter
+    kein parameter smoothing yet
 
 make default presets for common usecases
 

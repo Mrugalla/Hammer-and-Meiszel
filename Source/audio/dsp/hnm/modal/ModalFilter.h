@@ -15,13 +15,15 @@ namespace dsp
 
 			void operator()() noexcept;
 
-			// samples, midi, xen, voiceParams, transposeSemi, envGenMod, numChannels, numSamples, v
-			void operator()(double**, const MidiBuffer&, const arch::XenManager&,
-				const Voice::Parameters&, double, double, int, int, int) noexcept;
-
-			// samples, params, envGenMod, numChannels, numSamples, v
+			// samples, params, xen, envGenMod, numChannels, numSamples, v
 			void operator()(double**, const Voice::Parameters&,
 				double, int, int, int) noexcept;
+
+			// xen, transposeSemi, numChannels
+			void setTranspose(const arch::XenManager&, double, int) noexcept;
+
+			// xen, numChannels
+			void triggerXen(const arch::XenManager&, int) noexcept;
 
 			// xen, noteNumber, numChannels, v
 			void triggerNoteOn(const arch::XenManager&,
@@ -50,6 +52,7 @@ namespace dsp
 		private:
 			DualMaterial materials;
 			std::array<Voice, NumMPEChannels> voices;
+			double transposeSemi;
 		};
 	}
 }

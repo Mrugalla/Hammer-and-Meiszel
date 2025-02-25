@@ -50,17 +50,15 @@ namespace dsp
 			// sampleRate
 			void prepare(double) noexcept;
 
-			// dualMaterial, parameters,
-			// samples,
-			// midi, xen, transposeSemi, envGenMod,
-			// numChannels, numSamples
-			void operator()(const DualMaterial&, const Parameters&, double**,
-				const MidiBuffer&, const arch::XenManager&,
-				double, double, int, int) noexcept;
-
 			// samples, dualMaterial, parameters, envGenMod, numChannels, numSamples
 			void operator()(double**, const DualMaterial&,
 				const Parameters&, double, int, int) noexcept;
+
+			// xen, transposeSemi, numChannels
+			void setTranspose(const arch::XenManager&, double, int) noexcept;
+
+			// xen, numChannels
+			void triggerXen(const arch::XenManager&, int) noexcept;
 
 			// xen, noteNumber, numChannels
 			void triggerNoteOn(const arch::XenManager&,

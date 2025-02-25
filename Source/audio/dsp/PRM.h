@@ -55,6 +55,7 @@ namespace dsp
 		std::array<Float, BlockSize> buf;
 		smooth::Smooth<Float> smooth;
 		Float value;
+		bool smoothing;
 	};
 
 	using PRMF = PRM<float>;

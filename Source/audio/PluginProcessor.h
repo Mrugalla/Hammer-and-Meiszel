@@ -24,7 +24,7 @@ namespace audio
 		using Params = param::Params;
 		using PID = param::PID;
 		
-		PluginProcessor(Params&, const arch::XenManager&);
+		PluginProcessor(Params&, arch::XenManager&);
 
 		// sampleRate
 		void prepare(double);
@@ -42,7 +42,7 @@ namespace audio
 		void timerCallback() override;
 
 		Params& params;
-		const arch::XenManager& xen;
+		arch::XenManager& xen;
 		double sampleRate;
 
 		dsp::KeySelector keySelector;

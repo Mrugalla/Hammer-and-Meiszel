@@ -11,17 +11,17 @@ namespace arch
 	}
 
 	XenManager::XenManager() :
-		info{ 12., 440., 69., 2. }
+		info{ 12., 440., 69., 2. },
+		updateFunc(nullptr)
 	{
 	}
 
-	void XenManager::operator()(double _xen, double _masterTune,
-		double _anchor, double _pitchbendRange) noexcept
+	void XenManager::operator()(const Info& nInfo, int numChannels) noexcept
 	{
-		info.xen = _xen;
-		info.masterTune = _masterTune;
-		info.anchor = _anchor;
-		info.pitchbendRange = _pitchbendRange;
+		if (info == nInfo)
+			return;
+		info = nInfo;
+		updateFunc(info, numChannels);
 	}
 
 	template<typename Float>
