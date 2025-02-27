@@ -4,15 +4,22 @@ namespace dsp
 {
 	namespace formant
 	{
+		// Param
+		
+		Param::Param(double _val, double _env, double _width) :
+			val(_val),
+			env(_env),
+			width(_width)
+		{
+		}
+
 		// Params
 
-		Params::Params(double _vowelPos, double _q,
-			double vowelPosEnv, double qEnv,
-			double vowelPosWidth, double qWidth,
-			int _vowelA, int _vowelB) :
-			vowelPos(_vowelPos, vowelPosEnv, vowelPosWidth),
-			q(_q, qEnv, qWidth),
-			vowelA(_vowelA), vowelB(_vowelB)
+		Params::Params(double _blend, double _q,
+			double blendEnv, double qEnv,
+			double blendWidth, double qWidth) :
+			blend(_blend, blendEnv, blendWidth),
+			q(_q, qEnv, qWidth)
 		{
 		}
 
@@ -44,196 +51,116 @@ namespace dsp
 			return prms[ch];
 		}
 
-		// DualVowel
-
-		DualVowel::DualVowel() :
-			a(toVowel(VowelClass::SopranoA)),
-			b(toVowel(VowelClass::SopranoE)),
-			ab(),
-			vowelPos(),
-			vowelA(0), vowelB(0)
-		{
-		}
-
-		void DualVowel::prepare(double sampleRate) noexcept
-		{
-			a.prepare(sampleRate);
-			b.prepare(sampleRate);
-			ab.prepare(sampleRate);
-			vowelPos.prepare(sampleRate);
-			vowelA = 0;
-			vowelB = 0;
-		}
-
-		bool DualVowel::wannaUpdate(const Params& params,
-			double envGenMod, int numChannels, int numSamples) noexcept
-		{
-			bool update = false;
-			updateVowels(params, update);
-			updateVowelPos(params, envGenMod, update, numChannels, numSamples);
-			return update;
-		}
-
-		VowelStereo& DualVowel::getVowel() noexcept
-		{
-			return ab;
-		}
-
-		void DualVowel::updateVowels(const Params& params, bool& update) noexcept
-		{
-			if (vowelA != params.vowelA)
-			{
-				vowelA = params.vowelA;
-				const auto vowelClass = static_cast<VowelClass>(params.vowelA);
-				a = toVowel(vowelClass);
-				update = true;
-			}
-
-			if (vowelB != params.vowelB)
-			{
-				vowelB = params.vowelB;
-				const auto vowelClass = static_cast<VowelClass>(params.vowelB);
-				b = toVowel(vowelClass);
-				update = true;
-			}
-		}
-
-		void DualVowel::updateVowelPos(const Params& params, double envGenMod,
-			bool& update, int numChannels, int numSamples) noexcept
-		{
-			double vowelArray[2] =
-			{
-				params.vowelPos.val + params.vowelPos.env * envGenMod + params.vowelPos.width,
-				params.vowelPos.val + params.vowelPos.env * envGenMod - params.vowelPos.width
-			};
-			for (auto ch = 0; ch < numChannels; ++ch)
-			{
-				const auto posCh = math::limit(0., 1., vowelArray[ch]);
-				const auto vowelPosInfo = vowelPos(posCh, ch, numSamples);
-				if (vowelPosInfo.smoothing)
-				{
-					ab.blend(a, b, vowelPos[ch].value, ch);
-					update = true;
-				}
-			}
-		}
-
 		// Voice
 
 		Voice::Voice() :
+			vowelStereo(),
+			blendPRMs{ 0., 0. },
+			qPRMs{ 0., 0. },
 			resonators(),
-			dualVowel(),
-			sleepyDetector(),
-			qPRMs(0.),
-			qUpdateFuncs
-			{
-				[&](int ch, int s)
-				{
-					const auto& qPRM = qPRMs[ch];
-					const auto qVal = qPRM[s];
-					auto& vowel = dualVowel.getVowel();
-					vowel.applyQ(qVal, ch);
-					for (auto& resonator : resonators)
-					{
-						resonator.setBandwidth(qVal, ch);
-						resonator.update(ch);
-					}
-				},
-				[](int, int){}
-			}
-		{
-		}
+			sleepy()
+		{ }
 
 		void Voice::prepare(double sampleRate) noexcept
 		{
+			for (auto& vowel : vowelStereo)
+				vowel.prepare(sampleRate);
+			for(auto& blend: blendPRMs)
+				blend.prepare(sampleRate, 14.);
+			for (auto& q : qPRMs)
+				q.prepare(sampleRate, 14.);
 			for (auto& resonator : resonators)
 				resonator.reset();
-			dualVowel.prepare(sampleRate);
-			sleepyDetector.prepare(sampleRate);
-			qPRMs.prepare(sampleRate);
+			sleepy.prepare(sampleRate);
 		}
 
-		void Voice::updateResonatorsBlock(const VowelStereo& vowel, int numChannels) noexcept
+		void Voice::operator()(double** samples,
+			const Vowels& vowels, const Params& params, double envGenMod,
+			int numChannels, int numSamples, bool forceUpdate) noexcept
 		{
-			for(auto ch = 0; ch < numChannels; ++ch)
-				for (auto i = 0; i < NumFormants; ++i)
-				{
-					auto& resonator = resonators[i];
-					const auto& formant = vowel.getFormant(i, ch);
-					resonator.setCutoffFc(formant.fc, ch);
-					resonator.setGain(formant.gain, ch);
-					resonator.update(ch);
-				}
+			updateParameters(vowels, params, envGenMod, numChannels, forceUpdate);
+			resonate(samples, numChannels, numSamples);
 		}
 
-		void Voice::updateParameters(const Params& params, double envGenMod,
-			int numChannels, int numSamples) noexcept
+		void Voice::updateParameters(const Vowels& vowels, const Params& params, double envGenMod,
+			int numChannels, bool forceUpdate) noexcept
 		{
-			if (!dualVowel.wannaUpdate(params, envGenMod, numChannels, numSamples))
-				return;
-			const auto& vowel = dualVowel.getVowel();
-			updateResonatorsBlock(vowel, numChannels);
-		}
+			double blendArray[2] =
+			{
+				params.blend.val + params.blend.env * envGenMod - params.blend.width,
+				params.blend.val + params.blend.env * envGenMod + params.blend.width
+			};
 
-		void Voice::updateQ(const Params& params, double envGenMod,
-			int numChannels, int numSamples) noexcept
-		{
 			double qArray[2] =
 			{
-				params.q.val + params.q.env * envGenMod + params.q.width,
-				params.q.val + params.q.env * envGenMod - params.q.width
+				params.q.val + params.q.env * envGenMod - params.q.width,
+				params.q.val + params.q.env * envGenMod + params.q.width
 			};
+
+			static constexpr auto QStart = .8;
+			static constexpr auto QEnd = 0.1;
+			static constexpr auto QRange = QEnd - QStart;
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
-				auto val = math::limit(0., 1., qArray[ch]);
-				static constexpr auto QStart = .9;
-				static constexpr auto QEnd = .1;
-				static constexpr auto QRange = QEnd - QStart;
-				val = QStart + val * QRange;
-				val *= val;
-				qPRMs(val, ch, numSamples);
-			}
-		}
+				auto& blendPRM = blendPRMs[ch];
+				auto& qPRM = qPRMs[ch];
 
-		void Voice::operator()(double** samples, const Params& params,
-			double envGenMod, int numChannels, int numSamples) noexcept
-		{
-			updateParameters(params, envGenMod, numChannels, numSamples);
-			updateQ(params, envGenMod, numChannels, numSamples);
-			resonate(samples, numChannels, numSamples);
+				const auto blendLimited = math::limit(0., 1., blendArray[ch]);
+				const auto blendInfo = blendPRM(blendLimited);
+
+				const auto qLimited = math::limit(0., 1., qArray[ch]);
+				const auto qMapped = QStart + qLimited * QRange;
+				const auto qInfo = qPRM(qMapped * qMapped);
+
+				if (forceUpdate || blendInfo.smoothing || qInfo.smoothing)
+				{
+					auto& vowel = vowelStereo[ch];
+					vowel.blend(vowels[0], vowels[1], blendPRM.info.val);
+					vowel.applyQ(qPRM.info.val);
+					for (auto i = 0; i < NumFormants; ++i)
+					{
+						auto& resonator = resonators[i];
+						const auto& formant = vowel.getFormant(i);
+						resonator.setCutoffFc(formant.fc, ch);
+						resonator.setBandwidth(formant.bwFc, ch);
+						resonator.setGain(formant.gain, ch);
+						resonator.update(ch);
+					}
+				}
+			}
 		}
 
 		void Voice::triggerNoteOn() noexcept
 		{
-			sleepyDetector.triggerNoteOn();
+			sleepy.triggerNoteOn();
 		}
 
 		void Voice::triggerNoteOff() noexcept
 		{
-			sleepyDetector.triggerNoteOff();
+			sleepy.triggerNoteOff();
 		}
 
 		bool Voice::isSleepy() const noexcept
 		{
-			return sleepyDetector.isSleepy();
+			return sleepy.isSleepy();
+		}
+
+		void Voice::fallAsleepIfTired(double** samples, int numChannels, int numSamples) noexcept
+		{
+			sleepy(samples, numChannels, numSamples);
 		}
 
 		void Voice::resonate(double** samples, int numChannels, int numSamples) noexcept
 		{
 			for (auto ch = 0; ch < numChannels; ++ch)
 				resonate(samples[ch], numSamples, ch);
-			sleepyDetector(samples, numChannels, numSamples);
 		}
 
 		void Voice::resonate(double* smpls, int numSamples, int ch) noexcept
 		{
-			const auto& qPRM = qPRMs[ch];
-			const auto& qUpdateFunc = qPRM.smoothing ? qUpdateFuncs[0] : qUpdateFuncs[1];
-
 			for (auto s = 0; s < numSamples; ++s)
 			{
 				const auto dry = smpls[s];
-				qUpdateFunc(ch, s);
 				auto y = resonators[0](dry, ch);
 				for (auto i = 1; i < NumFormants; ++i)
 				{
@@ -247,62 +174,89 @@ namespace dsp
 		// FormantFilter
 
 		Filter::Filter() :
+			vowels
+			{
+				toVowel(VowelClass::SopranoA),
+				toVowel(VowelClass::SopranoE)
+			},
 			envGens(),
 			gainPRM(0.),
 			voices(),
 			decayMs(-1.),
-			releaseMs(-1.)
+			releaseMs(-1.),
+			wannaUpdate(false)
 		{
 		}
 
 		void Filter::prepare(double sampleRate) noexcept
 		{
-			decayMs = -1.;
-			releaseMs = -1.;
+			for (auto& vowel : vowels)
+				vowel.prepare(sampleRate);
+			envGens.prepare(sampleRate);
 			gainPRM.prepare(sampleRate, 7.);
 			for (auto& voice : voices)
 				voice.prepare(sampleRate);
-			envGens.prepare(sampleRate);
+			decayMs = -1.;
+			releaseMs = -1.;
+			wannaUpdate = false;
 		}
 
-		void Filter::updateEnvelopes(double _decayMs, double _releaseMs,
-			double gainDb, int numSamples) noexcept
+		void Filter::updateParameters(double _attackMs, double _decayMs, double _releaseMs, double gainDb,
+			VowelClass vowelClassA, VowelClass vowelClassB) noexcept
 		{
-			if (decayMs != _decayMs || releaseMs != _releaseMs)
+			if (attackMs != _attackMs || decayMs != _decayMs || releaseMs != _releaseMs)
 			{
+				attackMs = _attackMs;
 				decayMs = _decayMs;
 				releaseMs = _releaseMs;
-				envGens.updateParameters(EnvelopeGenerator::Parameters(0., decayMs, 0., releaseMs));
+				envGens.updateParameters(EnvelopeGenerator::Parameters(attackMs, decayMs, 0., releaseMs));
 			}
 
 			const auto gain = math::dbToAmp(gainDb, -60.);
-			auto gainInfo = gainPRM(gain, numSamples);
+			gainPRM(gain);
+			
+			wannaUpdate = false;
+			if (vowels[0].getVowelClass() != vowelClassA)
+			{
+				vowels[0] = toVowel(vowelClassA);
+				wannaUpdate = true;
+			}
+			if (vowels[1].getVowelClass() != vowelClassB)
+			{
+				vowels[1] = toVowel(vowelClassB);
+				wannaUpdate = true;
+			}
 		}
 
-		void Filter::operator()(double** samples, const Params& params,
-			double envGenMod, int numChannels, int numSamples, int v) noexcept
+		void Filter::operator()(double** samples, const Params& params, double envGenMod,
+			int numChannels, int numSamples, int v) noexcept
 		{
-			voices[v](samples, params, envGenMod, numChannels, numSamples);
+			auto& voice = voices[v];
+			voice(samples, vowels, params, envGenMod, numChannels, numSamples, wannaUpdate);
 			if (envGens.processGain(samples, numChannels, numSamples, v))
 				for (auto ch = 0; ch < numChannels; ++ch)
-					SIMD::multiply(samples[ch], gainPRM.value, numSamples);
+					SIMD::multiply(samples[ch], gainPRM.info.val, numSamples);
+			voice.fallAsleepIfTired(samples, numChannels, numSamples);
 		}
 
 		void Filter::triggerNoteOn(int v) noexcept
 		{
-			voices[v].triggerNoteOn();
+			auto& voice = voices[v];
+			voice.triggerNoteOn();
 			envGens.triggerNoteOn(true, v);
 		}
 
 		void Filter::triggerNoteOff(int v) noexcept
 		{
-			voices[v].triggerNoteOff();
+			auto& voice = voices[v];
+			voice.triggerNoteOff();
 			envGens.triggerNoteOn(false, v);
 		}
 
 		bool Filter::isRinging(int v) const noexcept
 		{
-			return !voices[v].isSleepy();
+			auto& voice = voices[v];
+			return !voice.isSleepy();
 		}
 	}
 }

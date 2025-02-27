@@ -216,6 +216,22 @@ namespace audio
 
 		modalFilter();
 
+		const auto& formantDecayParam = params(PID::FormantDecay);
+		const auto formantDecay = static_cast<double>(formantDecayParam.getValModDenorm());
+		const auto& formantGainDbParam = params(PID::FormantGain);
+		const auto formantGainDb = static_cast<double>(formantGainDbParam.getValModDenorm());
+		const auto& formantAParam = params(PID::FormantA);
+		const auto formantVowelA = static_cast<int>(std::round(formantAParam.getValModDenorm()));
+		const auto& formantBParam = params(PID::FormantB);
+		const auto formantVowelB = static_cast<int>(std::round(formantBParam.getValModDenorm()));
+
+		formantFilter.updateParameters
+		(
+			envGenAmpAttack, formantDecay, envGenAmpRelease, formantGainDb,
+			static_cast<dsp::formant::VowelClass>(formantVowelA),
+			static_cast<dsp::formant::VowelClass>(formantVowelB)
+		);
+
 		const auto& formantPosParam = params(PID::FormantPos);
 		const auto formantPos = static_cast<double>(formantPosParam.getValMod());
 		const auto& formantPosEnvParam = params(PID::FormantPosEnv);
@@ -230,25 +246,10 @@ namespace audio
 		const auto& formantQWidthParam = params(PID::FormantQWidth);
 		const auto formantQWidth = static_cast<double>(formantQWidthParam.getValModDenorm());
 
-		const auto& formantAParam = params(PID::FormantA);
-		const auto formantVowelA = static_cast<int>(std::round(formantAParam.getValModDenorm()));
-		const auto& formantBParam = params(PID::FormantB);
-		const auto formantVowelB = static_cast<int>(std::round(formantBParam.getValModDenorm()));
-
 		dsp::formant::Params formantParams
 		(
-			formantPos, formantQ,
-			formantPosEnv, formantQEnv,
-			formantPosWidth, formantQWidth,
-			formantVowelA, formantVowelB
+			formantPos, formantQ, formantPosEnv, formantQEnv, formantPosWidth, formantQWidth
 		);
-
-		const auto& formantDecayParam = params(PID::FormantDecay);
-		const auto formantDecay = static_cast<double>(formantDecayParam.getValModDenorm());
-		const auto& formantGainDbParam = params(PID::FormantGain);
-		const auto formantGainDb = static_cast<double>(formantGainDbParam.getValModDenorm());
-
-		formantFilter.updateEnvelopes(formantDecay, envGenAmpRelease, formantGainDb, numSamples);
 
 		const auto edo = xen.getXen();
 
@@ -310,8 +311,8 @@ namespace audio
 				const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
 
 				const bool modalRinging = modalFilter.isRinging(v);
-				//const bool formantsRinging = formantFilter.isRinging(v);
-				bool active = envGenAmpActive || modalRinging;// || formantsRinging;
+				const bool formantsRinging = formantFilter.isRinging(v);
+				bool active = envGenAmpActive || modalRinging || formantsRinging;
 				if (active)
 				{
 					double* layerVoiceEvt[] = { formantLayer[0].data(), formantLayer[1].data() };

@@ -12,24 +12,16 @@ namespace dsp
 	{
 		struct Param
 		{
-			Param(double _val, double _env, double _width) :
-				val(_val),
-				env(_env),
-				width(_width)
-			{
-			}
+			Param(double, double, double);
 			double val, env, width;
 		};
 
 		struct Params
 		{
-			//vowelPos, q, vowelPosEnv, qEnv, vowelPosWidth, qWidth, vowelA, vowelB
+			//blend, q, blendEnv, qEnv, blendWidth, qWidth
 			Params(double = 0., double = 0., double = 0.,
-				double = 0., double = 0., double = 0.,
-				int = 0, int = 0);
-
-			Param vowelPos, q;
-			int vowelA, vowelB;
+				double = 0., double = 0., double = 0.);
+			Param blend, q;
 		};
 
 		// https://www.classes.cs.uchicago.edu/archive/1999/spring/CS295/Computing_Resources/Csound/CsManual3.48b1.HTML/Appendices/table3.html
@@ -52,61 +44,36 @@ namespace dsp
 			std::array<PRMD, 2> prms;
 		};
 
-		struct DualVowel
+		using Vowels = std::array<Vowel, 2>;
+		
+		class Voice
 		{
-			DualVowel();
+			using ResonatorArray = std::array<ResonatorStereo2, NumFormants>;
+		public:
+			Voice();
 
 			// sampleRate
 			void prepare(double) noexcept;
 
-			// params, envGenMod, numChannels, numSamples
-			bool wannaUpdate(const Params&, double, int, int) noexcept;
-
-			VowelStereo& getVowel() noexcept;
-		private:
-			Vowel a, b;
-			VowelStereo ab;
-			ParamStereo vowelPos;
-			int vowelA, vowelB;
-
-			// params, update
-			void updateVowels(const Params&, bool&) noexcept;
-
-			// params, envGenMod, update, numChannels, numSamples
-			void updateVowelPos(const Params&, double, bool&, int, int) noexcept;
-		};
-
-		class Voice
-		{
-			using ResonatorBank = std::array<ResonatorStereo2, NumFormants>;
-		public:
-			Voice();
-
-			void prepare(double) noexcept;
-
-			// samples, params, envGenMod, numChannels, numSamples
-			void operator()(double**, const Params&, double, int, int) noexcept;
+			// samples, vowels, params, envGenMod, numChannels, numSamples, forceUpdate
+			void operator()(double**, const Vowels&, const Params&, double, int, int, bool) noexcept;
 
 			void triggerNoteOn() noexcept;
 
 			void triggerNoteOff() noexcept;
 
-			// params, envGenMod, numChannels, numSamples
-			void updateParameters(const Params&, double, int, int) noexcept;
-
 			bool isSleepy() const noexcept;
+
+			// samples, numChannels, numSamples
+			void fallAsleepIfTired(double**, int, int) noexcept;
 		private:
-			ResonatorBank resonators;
-			DualVowel dualVowel;
-			SleepyDetector sleepyDetector;
-			ParamStereo qPRMs;
-			std::array<std::function<void(int, int)>, 2> qUpdateFuncs;
+			Vowels vowelStereo;
+			std::array<PRMBlockD, 2> blendPRMs, qPRMs;
+			ResonatorArray resonators;
+			SleepyDetector sleepy;
 
-			// vowel, numChannels
-			void updateResonatorsBlock(const VowelStereo&, int) noexcept;
-
-			// params, envGenMod, numChannels, numSamples
-			void updateQ(const Params&, double, int, int) noexcept;
+			// vowels, params, envGenMod, numChannels, forceUpdate
+			void updateParameters(const Vowels&, const Params&, double, int, bool) noexcept;
 
 			// samples, numChannels, numSamples
 			void resonate(double**, int, int) noexcept;
@@ -122,12 +89,11 @@ namespace dsp
 			// sampleRate
 			void prepare(double) noexcept;
 
-			// decayMs, relaseMs, gainDb, numSamples
-			void updateEnvelopes(double, double, double, int) noexcept;
+			// attackMs, decayMs, relaseMs, gainDb, vowelClassA, vowelClassB
+			void updateParameters(double, double, double, double, VowelClass, VowelClass) noexcept;
 
 			// samples, params, envGenMod, numChannels, numSamples, v
-			void operator()(double**, const Params&,
-				double, int, int, int) noexcept;
+			void operator()(double**, const Params&, double, int, int, int) noexcept;
 
 			void triggerNoteOn(int) noexcept;
 
@@ -135,10 +101,12 @@ namespace dsp
 
 			bool isRinging(int) const noexcept;
 		private:
+			Vowels vowels;
 			EnvGenMultiVoice envGens;
-			PRMD gainPRM;
+			PRMBlockD gainPRM;
 			std::array<Voice, NumMPEChannels> voices;
-			double decayMs, releaseMs;
+			double attackMs, decayMs, releaseMs;
+			bool wannaUpdate;
 		};
 	}
 }

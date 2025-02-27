@@ -252,7 +252,7 @@ namespace math
     inline Float dbToAmp(Float db, Float threshold) noexcept
     {
         if (db <= threshold)
-            return 0.f;
+            return static_cast<Float>(0);
         return dbToAmp(db);
     }
 

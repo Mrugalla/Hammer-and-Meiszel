@@ -4,12 +4,6 @@
 
 ~~~ todo ~~~
 
-formant filter total broken!
-    dualVowel war ne schlechte idee. lass es einfach die voice handlen
-    vowela und vowelb ist nicht smooth
-    vowelpos ist blocksmootht
-    vowelQ soll sample-smooth
-
 make default presets for common usecases
 
 remap freq ratios of partials with a MSEG curve, like mtransformer
