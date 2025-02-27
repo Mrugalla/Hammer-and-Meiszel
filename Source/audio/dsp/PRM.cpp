@@ -117,6 +117,13 @@ namespace dsp
 	}
 
 	template<typename Float>
+	void PRMBlock<Float>::reset() noexcept
+	{
+		lp.reset();
+		info.val = startVal;
+	}
+
+	template<typename Float>
 	PRMInfo<Float> PRMBlock<Float>::operator()(Float x) noexcept
 	{
 		if (info.val != x)

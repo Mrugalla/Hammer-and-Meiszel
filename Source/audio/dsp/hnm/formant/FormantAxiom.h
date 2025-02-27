@@ -14,8 +14,9 @@ namespace dsp
 		{
 			// f in fc, bw in fc, gain in db
 			FilterProps(double _f = 0., double _bw = 0., double gainDb = 0.) :
-				f(_f), bw(_bw), gain(math::dbToAmp(gainDb)),
-				fc(0.), bwFc(0.), sampleRate(0.)
+				f(_f), bw(_bw), posBw(0.), posGain(0.),
+				gain(math::dbToAmp(gainDb)), fc(0.), bwFc(0.),
+				sampleRate(0.)
 			{
 			}
 
@@ -24,19 +25,22 @@ namespace dsp
 				sampleRate = _sampleRate;
 			}
 
-			void blend(const FilterProps& a, const FilterProps& b, double pos, double q) noexcept
+			void blend(const FilterProps& a, const FilterProps& b, double pos) noexcept
 			{
 				f = a.f + pos * (b.f - a.f);
-				bw = a.bw + pos * (b.bw - a.bw);
-				gain = a.gain + pos * (b.gain - a.gain);
-				bw *= q;
-				gain /= q;
+				posBw = a.bw + pos * (b.bw - a.bw);
+				posGain = a.gain + pos * (b.gain - a.gain);
 				fc = math::freqHzToFc(f, sampleRate);
-				bwFc = math::freqHzToFc(bw, sampleRate);
 			}
 
+			void applyQ(double q) noexcept
+			{
+				bw = posBw * q;
+				gain = posGain / q;
+				bwFc = math::freqHzToFc(bw, sampleRate);
+			}
 		private:
-			double f, bw;
+			double f, bw, posBw, posGain;
 		public:
 			double gain, fc, bwFc;
 		private:
@@ -75,15 +79,16 @@ namespace dsp
 					formant.prepare(sampleRate);
 			}
 
-			void blend(const Vowel& a, const Vowel& b, double pos, double q) noexcept
+			void blend(const Vowel& a, const Vowel& b, double pos) noexcept
 			{
-				static constexpr auto QStart = .9;
-				static constexpr auto QEnd = .1;
-				static constexpr auto QRange = QEnd - QStart;
-				q = QStart + q * QRange;
-				q *= q;
 				for (auto i = 0; i < NumFormants; ++i)
-					formants[i].blend(a.formants[i], b.formants[i], pos, q);
+					formants[i].blend(a.formants[i], b.formants[i], pos);
+			}
+
+			void applyQ(double q) noexcept
+			{
+				for (auto i = 0; i < NumFormants; ++i)
+					formants[i].applyQ(q);
 			}
 
 			const FilterProps& getFormant(int i) const noexcept
@@ -107,9 +112,14 @@ namespace dsp
 					vowel.prepare(sampleRate);
 			}
 
-			void blend(const Vowel& a, const Vowel& b, double pos, double q, int ch) noexcept
+			void blend(const Vowel& a, const Vowel& b, double pos, int ch) noexcept
 			{
-				vowels[ch].blend(a, b, pos, q);
+				vowels[ch].blend(a, b, pos);
+			}
+
+			void applyQ(double q, int ch) noexcept
+			{
+				vowels[ch].applyQ(q);
 			}
 
 			const FilterProps& getFormant(int i, int ch) const noexcept

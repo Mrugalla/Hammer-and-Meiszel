@@ -54,9 +54,6 @@ namespace dsp
 			for(auto ch = 0; ch < 2; ++ch)
 				for (auto i = 0; i < NumPartials; ++i)
 					resonators[i].reset(ch);
-			for (auto& n : numFiltersBelowNyquist)
-				n = 0;
-			val.reset();
 		}
 
 		void ResonatorBank::prepare(const MaterialDataStereo& materialStereo, double _sampleRate)
@@ -66,6 +63,9 @@ namespace dsp
 			nyquist = sampleRate * .5;
 			freqMax = math::noteToFreqHz2(math::freqHzToNote2(nyquist) - 1.);
 			reset();
+			val.reset();
+			for (auto& n : numFiltersBelowNyquist)
+				n = 0;
 			setFrequencyHz(materialStereo, 1000., 2);
 			for(auto ch = 0; ch < 2; ++ch)
 				setReso(.25, ch);
@@ -99,6 +99,7 @@ namespace dsp
 		{
 			val.pitch = noteNumber;
 			const auto freq = val.getFreq(xen);
+			reset();
 			setFrequencyHz(materialStereo, freq, numChannels);
 			sleepy.triggerNoteOn();
 		}

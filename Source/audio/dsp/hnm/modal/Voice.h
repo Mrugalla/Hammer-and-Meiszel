@@ -32,6 +32,17 @@ namespace dsp
 				// default value
 				ParameterProcessor(double = 0.);
 
+				void reset(int numChannels) noexcept
+				{
+					for (auto ch = 0; ch < numChannels; ++ch)
+					{
+						auto& prm = prms[ch];
+						auto& val = vals[ch];
+						prm.reset();
+						val = prm.startVal;
+					}
+				}
+
 				// sampleRate, smoothLenMs
 				void prepare(double, double) noexcept;
 

@@ -38,11 +38,18 @@ namespace dsp
 		{
 			ParamStereo(double = 0.);
 
-			double& operator[](int i) noexcept;
+			void prepare(double) noexcept;
 
-			const double& operator[](int i) const noexcept;
+			// val, ch, numSamples
+			PRMInfoD operator()(double, int, int) noexcept;
+
+			// ch
+			PRMD& operator[](int) noexcept;
+
+			// ch
+			const PRMD& operator[](int) const noexcept;
 		protected:
-			std::array<double, 2> vals;
+			std::array<PRMD, 2> prms;
 		};
 
 		struct DualVowel
@@ -52,16 +59,21 @@ namespace dsp
 			// sampleRate
 			void prepare(double) noexcept;
 
-			// params, envGenMod, numChannels
-			bool wannaUpdate(const Params&, double, int) noexcept;
+			// params, envGenMod, numChannels, numSamples
+			bool wannaUpdate(const Params&, double, int, int) noexcept;
 
-			const VowelStereo& getVowel() const noexcept;
-
+			VowelStereo& getVowel() noexcept;
 		private:
 			Vowel a, b;
 			VowelStereo ab;
-			ParamStereo vowelPos, q;
+			ParamStereo vowelPos;
 			int vowelA, vowelB;
+
+			// params, update
+			void updateVowels(const Params&, bool&) noexcept;
+
+			// params, envGenMod, update, numChannels, numSamples
+			void updateVowelPos(const Params&, double, bool&, int, int) noexcept;
 		};
 
 		class Voice
@@ -79,17 +91,22 @@ namespace dsp
 
 			void triggerNoteOff() noexcept;
 
-			// params, envGenMod, numChannels
-			void updateParameters(const Params&, double, int) noexcept;
+			// params, envGenMod, numChannels, numSamples
+			void updateParameters(const Params&, double, int, int) noexcept;
 
 			bool isSleepy() const noexcept;
 		private:
 			ResonatorBank resonators;
 			DualVowel dualVowel;
 			SleepyDetector sleepyDetector;
+			ParamStereo qPRMs;
+			std::array<std::function<void(int, int)>, 2> qUpdateFuncs;
 
 			// vowel, numChannels
-			void updateResonators(const VowelStereo&, int) noexcept;
+			void updateResonatorsBlock(const VowelStereo&, int) noexcept;
+
+			// params, envGenMod, numChannels, numSamples
+			void updateQ(const Params&, double, int, int) noexcept;
 
 			// samples, numChannels, numSamples
 			void resonate(double**, int, int) noexcept;

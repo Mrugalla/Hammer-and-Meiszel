@@ -40,7 +40,8 @@ namespace audio
 		dsp::MidiBuffer& midi, int numChannels, int numSamples,
 		bool playing) noexcept
 	{
-#if PPDTestEnvelope
+#if PPDTestEnvelope == 1
+		// tests the gain env monophonically
 		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
 		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
 		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
@@ -58,6 +59,49 @@ namespace audio
 		else
 			for (auto ch = 0; ch < numChannels; ++ch)
 				dsp::SIMD::clear(samples[ch], numSamples);
+#elif PPDTestEnvelope == 2
+		// tests the gain env polyphonically
+		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
+		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
+		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
+		const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
+		const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
+		const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
+		const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
+		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
+		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
+		autoMPE(midi); voiceSplit(midi, numSamples);
+		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
+		{
+			const auto& midiVoice = voiceSplit[v + 2];
+			auto bandVoice = parallelProcessor[v];
+
+			auto start = 0;
+			for (const auto it : midiVoice)
+			{
+				const auto msg = it.getMessage();
+				const auto end = it.samplePosition;
+				const auto numSamplesEvt = end - start;
+				double* samplesVoiceEvt[] = { &bandVoice.l[start], &bandVoice.r[start] };
+				for (auto ch = 0; ch < numChannels; ++ch)
+					for (auto s = 0; s < numSamplesEvt; ++s)
+						samplesVoiceEvt[ch][s] = 1.;
+				const auto envGenAmpActive = envGensAmp.processGain
+				(
+					samplesVoiceEvt,
+					numChannels, numSamplesEvt, v
+				);
+				parallelProcessor.setSleepy(!envGenAmpActive, v);
+				start = end;
+				if (msg.isNoteOn())
+					envGensAmp.triggerNoteOn(true, v);
+				else if (msg.isNoteOff())
+					envGensAmp.triggerNoteOn(false, v);
+				else if (msg.isAllNotesOff())
+					envGensAmp.triggerNoteOn(false, v);
+			}
+		}
+		parallelProcessor.joinReplace(samples, numChannels, numSamples);
 #else
 		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
 		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
@@ -119,7 +163,6 @@ namespace audio
 		const auto& keySelectorEnabledParam = params(PID::KeySelectorEnabled);
 		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
 		keySelector(midi, xen, keySelectorEnabled, playing);
-
 		autoMPE(midi); voiceSplit(midi, numSamples);
 
 		const auto& modalOctParam = params(PID::ModalOct);
@@ -267,8 +310,8 @@ namespace audio
 				const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
 
 				const bool modalRinging = modalFilter.isRinging(v);
-				const bool formantsRinging = formantFilter.isRinging(v);
-				bool active = envGenAmpActive || modalRinging || formantsRinging;
+				//const bool formantsRinging = formantFilter.isRinging(v);
+				bool active = envGenAmpActive || modalRinging;// || formantsRinging;
 				if (active)
 				{
 					double* layerVoiceEvt[] = { formantLayer[0].data(), formantLayer[1].data() };
@@ -289,7 +332,6 @@ namespace audio
 						v
 					);
 
-
 					formantFilter
 					(
 						layerVoiceEvt,
@@ -303,7 +345,6 @@ namespace audio
 					for (auto ch = 0; ch < numChannels; ++ch)
 						dsp::SIMD::add(samplesVoiceEvt[ch], layerVoiceEvt[ch], numSamplesEvt);
 				}
-				
 				const bool combRinging = combFilter.isRinging(v);
 				active = active || combRinging;
 				if (active)

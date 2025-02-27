@@ -67,6 +67,8 @@ namespace dsp
 		// startVal
 		PRMBlock(Float = static_cast<Float>(0));
 
+		void reset() noexcept;
+
 		// sampleRate, smoothLenMs
 		void prepare(Float, Float) noexcept;
 

@@ -470,7 +470,7 @@ namespace audio
 		if (midSide)
 			dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
-#if !PPDTestEnvelope
+#if PPDTestEnvelope == 0
         for (auto& highpass : highpasses)
         {
             juce::dsp::AudioBlock<double> block(buffer);

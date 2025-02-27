@@ -100,7 +100,7 @@ namespace dsp
 		void Voice::prepare(double sampleRate) noexcept
 		{
 			resonatorBank.prepare(materialStereo, sampleRate);
-			const auto smoothLenMs = 32.;
+			const auto smoothLenMs = 7.;
 			for (auto i = 0; i < kNumParams; ++i)
 				parameters[i].prepare(sampleRate, smoothLenMs);
 			wantsMaterialUpdate = true;
@@ -127,6 +127,8 @@ namespace dsp
 			double noteNumber, int numChannels) noexcept
 		{
 			resonatorBank.triggerNoteOn(materialStereo, xen, noteNumber, numChannels);
+			for (auto i = 0; i < kParam::kNumParams; ++i)
+				parameters[i].reset(numChannels);
 		}
 
 		void Voice::triggerNoteOff() noexcept
