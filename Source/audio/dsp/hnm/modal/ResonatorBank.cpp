@@ -37,8 +37,6 @@ namespace dsp
 		ResonatorBank::ResonatorBank() :
 			resonators(),
 			val(),
-			FreqMin(math::noteToFreqHz2(MinPitch)),
-			freqMax(1.),
 			freqHz(1000.),
 			sampleRate(1.),
 			sampleRateInv(1.),
@@ -61,7 +59,6 @@ namespace dsp
 			sampleRate = _sampleRate;
 			sampleRateInv = 1. / sampleRate;
 			nyquist = sampleRate * .5;
-			freqMax = math::noteToFreqHz2(math::freqHzToNote2(nyquist) - 1.);
 			reset();
 			val.reset();
 			for (auto& n : numFiltersBelowNyquist)
@@ -125,9 +122,10 @@ namespace dsp
 		void ResonatorBank::setFrequencyHz(const MaterialDataStereo& materialStereo,
 			double freq, int numChannels) noexcept
 		{
-			if (freqHz == freq)
+			const auto freqSafe = math::limit(MinFreqHz, nyquist, freq);
+			if (freqSafe == freqHz)
 				return;
-			freqHz = freq;
+			freqHz = freqSafe;
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				auto& material = materialStereo[ch];
@@ -163,7 +161,7 @@ namespace dsp
 			{
 				const auto pFc = material.getFc(i);
 				const auto fcKeytracked = freqHz * pFc;
-				if (fcKeytracked < freqMax)
+				if (fcKeytracked < nyquist)
 				{
 					const auto fc = math::freqHzToFc(fcKeytracked, sampleRate);
 					auto& resonator = resonators[i];

@@ -6,7 +6,7 @@ namespace dsp
 	namespace modal
 	{
 		static constexpr int NumPartials = 7;
-		static constexpr double MinPitch = 24;
+		static constexpr double MinFreqHz = 20.;
 
 		enum class StatusMat
 		{

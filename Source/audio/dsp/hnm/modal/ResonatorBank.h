@@ -70,8 +70,7 @@ namespace dsp
 		private:
 			ResonatorArray resonators;
 			Val val;
-			const double FreqMin;
-			double freqMax, freqHz, sampleRate, sampleRateInv, nyquist;
+			double freqHz, sampleRate, sampleRateInv, nyquist;
 			std::array<double, 2> gains;
 			std::array<int, 2> numFiltersBelowNyquist;
 			SleepyDetector sleepy;
