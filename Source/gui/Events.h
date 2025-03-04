@@ -16,6 +16,9 @@ namespace gui
             ToastColour,
             DeactivateAllTextEditors,
             InteractColourChanged,
+            ParameterEditorShowUp,
+            ParameterEditorAssignParam,
+			ParameterEditorVanish,
             NumTypes
         };
 

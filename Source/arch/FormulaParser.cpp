@@ -599,7 +599,11 @@ namespace fx
 			return false;
 		}
 
-		auto txt = text.toLowerCase();
+		auto txt = text.toLowerCase()
+			.removeCharacters(" ")
+			.removeCharacters("\n")
+			.removeCharacters("\t")
+			.removeCharacters("\r");
 
 		// TOKENIZE
 		Tokens tokens;

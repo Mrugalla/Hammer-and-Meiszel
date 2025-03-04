@@ -60,18 +60,18 @@ namespace dsp
 		if (midi.isEmpty() && isSleepy())
 			return false;
 
-		auto s = 0;
+		auto start = 0;
 		for (const auto it : midi)
 		{
 			const auto msg = it.getMessage();
-			const auto ts = it.samplePosition;
-			s = synthesizeEnvelope(buffer, s, ts);
+			const auto end = it.samplePosition;
+			start = synthesizeEnvelope(buffer, start, end);
 			if (msg.isNoteOn())
 				noteOn = true;
 			else if (msg.isNoteOff() || msg.isAllNotesOff())
 				noteOn = false;
 		}
-		synthesizeEnvelope(buffer, s, numSamples);
+		synthesizeEnvelope(buffer, start, numSamples);
 
 		return true;
 	}

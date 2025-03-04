@@ -250,6 +250,10 @@
         </GROUP>
         <FILE id="VSJIYZ" name="Ruler.cpp" compile="1" resource="0" file="Source/gui/Ruler.cpp"/>
         <FILE id="dEwQsp" name="Ruler.h" compile="0" resource="0" file="Source/gui/Ruler.h"/>
+        <FILE id="dSFWdM" name="ParameterEditor.cpp" compile="1" resource="0"
+              file="Source/gui/ParameterEditor.cpp"/>
+        <FILE id="dKjQr2" name="ParameterEditor.h" compile="0" resource="0"
+              file="Source/gui/ParameterEditor.h"/>
         <FILE id="ocVZS1" name="PatchBrowser.cpp" compile="1" resource="0"
               file="Source/gui/PatchBrowser.cpp"/>
         <FILE id="JsYvUs" name="PatchBrowser.h" compile="0" resource="0" file="Source/gui/PatchBrowser.h"/>

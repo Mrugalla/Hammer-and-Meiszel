@@ -39,7 +39,21 @@ namespace dsp
 			vals{ defaultVal, defaultVal }
 		{}
 
-		// sampleRate, smoothLenMs
+		void Voice::ParameterProcessor::reset(const Parameter& p, double envGenVal,
+			double min, double max, int numChannels) noexcept
+		{
+			const auto env = p.env * envGenVal;
+			
+			const auto val0 = math::limit(min, max, p.val - p.breite + env);
+			prms[0].reset(val0);
+			
+			if (numChannels == 1)
+				return;
+
+			const auto val1 = math::limit(min, max, p.val + p.breite + env);
+			prms[1].reset(val1);
+		}
+
 		void Voice::ParameterProcessor::prepare(double sampleRate, double smoothLenMs) noexcept
 		{
 			for (auto ch = 0; ch < 2; ++ch)
@@ -51,7 +65,6 @@ namespace dsp
 			}
 		}
 
-		// p, envGenVal, min, max, numChannels
 		bool Voice::ParameterProcessor::operator()(const Parameter& p, double envGenVal,
 			double min, double max, int numChannels) noexcept
 		{
@@ -94,16 +107,18 @@ namespace dsp
 			materialStereo(),
 			parameters(),
 			resonatorBank(),
-			wantsMaterialUpdate(true)
+			wantsMaterialUpdate(true),
+			snapParameterValues(false)
 		{}
 
 		void Voice::prepare(double sampleRate) noexcept
 		{
 			resonatorBank.prepare(materialStereo, sampleRate);
-			const auto smoothLenMs = 7.;
+			const auto smoothLenMs = 42.;
 			for (auto i = 0; i < kNumParams; ++i)
 				parameters[i].prepare(sampleRate, smoothLenMs);
 			wantsMaterialUpdate = true;
+			snapParameterValues = false;
 		}
 
 		void Voice::operator()(double** samples, const DualMaterial& dualMaterial,
@@ -123,12 +138,10 @@ namespace dsp
 			resonatorBank.triggerXen(xen, materialStereo, numChannels);
 		}
 
-		void Voice::triggerNoteOn(const arch::XenManager& xen,
-			double noteNumber, int numChannels) noexcept
+		void Voice::triggerNoteOn(const arch::XenManager& xen, double noteNumber, int numChannels) noexcept
 		{
 			resonatorBank.triggerNoteOn(materialStereo, xen, noteNumber, numChannels);
-			for (auto i = 0; i < kParam::kNumParams; ++i)
-				parameters[i].reset(numChannels);
+			snapParameterValues = true;
 		}
 
 		void Voice::triggerNoteOff() noexcept
@@ -193,27 +206,36 @@ namespace dsp
 		{
 			const auto envGenValue = envGenMod;
 
-			{
-				auto& resoParam = parameters[kParam::kReso];
-				resoParam(_parameters[kParam::kReso], envGenValue, 0., 1., numChannels);
-				for (auto ch = 0; ch < numChannels; ++ch)
-				{
-					const auto reso = resoParam[ch];
-					resonatorBank.setReso(std::sqrt(reso), ch);
-				}
-			}
-
+			auto& resoParam = parameters[kParam::kReso];
 			auto& blendParam = parameters[kBlend];
-			const bool blendSmooth = blendParam(_parameters[kBlend], envGenValue, 0., 1., numChannels);
 			auto& spreziParam = parameters[kSpreizung];
-			const bool spreziSmooth = spreziParam(_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);
 			auto& harmonieParam = parameters[kHarmonie];
-			const bool harmonieSmooth = harmonieParam(_parameters[kHarmonie], envGenValue, 0., 1., numChannels);
 			auto& kraftParam = parameters[kKraft];
-			const bool kraftSmooth = kraftParam(_parameters[kKraft], envGenValue, -1., 1., numChannels);
-			const bool spectralUpdate = blendSmooth || spreziSmooth || harmonieSmooth || wantsMaterialUpdate;
 
-			if (kraftSmooth || spectralUpdate)
+			bool wannaUpdate = wantsMaterialUpdate;
+			if (snapParameterValues)
+			{
+				resoParam.reset(_parameters[kParam::kReso], envGenValue, 0., 1., numChannels);
+				blendParam.reset(_parameters[kBlend], envGenValue, 0., 1., numChannels);
+				spreziParam.reset(_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);
+				harmonieParam.reset(_parameters[kHarmonie], envGenValue, 0., 1., numChannels);
+				kraftParam.reset(_parameters[kKraft], envGenValue, -1., 1., numChannels);
+				wannaUpdate = true;
+				snapParameterValues = false;
+			}
+			
+			resoParam(_parameters[kParam::kReso], envGenValue, 0., 1., numChannels);
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				const auto reso = resoParam[ch];
+				resonatorBank.setReso(std::sqrt(reso), ch);
+			}
+			const bool blendSmooth = blendParam(_parameters[kBlend], envGenValue, 0., 1., numChannels);
+			const bool spreziSmooth = spreziParam(_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);
+			const bool harmonieSmooth = harmonieParam(_parameters[kHarmonie], envGenValue, 0., 1., numChannels);
+			const bool kraftSmooth = kraftParam(_parameters[kKraft], envGenValue, -1., 1., numChannels);
+
+			if (wannaUpdate || blendSmooth || spreziSmooth || harmonieSmooth || kraftSmooth)
 			{
 				const auto& mat0 = dualMaterial.getMaterialData(0);
 				const auto& mat1 = dualMaterial.getMaterialData(1);
@@ -243,7 +265,7 @@ namespace dsp
 					const auto kraftVal = kraftParam[ch];
 					const auto kraft = (math::tanhApprox(Pi * kraftVal) + 1.) * .5;
 
-					if (kraft != 0.)
+					if (kraftVal != 0.)
 						for (auto i = 0; i < NumPartials; ++i)
 						{
 							const auto x = material[i].mag;
@@ -251,11 +273,8 @@ namespace dsp
 							material[i].mag = y;
 						}
 				}
-
-				if(spectralUpdate)
-					resonatorBank.updateFreqRatios(materialStereo, numChannels);
+				resonatorBank.updateFreqRatios(materialStereo, numChannels);
 			}
-
 			wantsMaterialUpdate = false;
 		}
 

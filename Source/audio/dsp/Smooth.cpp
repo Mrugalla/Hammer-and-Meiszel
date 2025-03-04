@@ -113,9 +113,13 @@ namespace dsp
 		template<typename Float, bool AutoGain>
 		void Lowpass<Float, AutoGain>::reset()
 		{
-			//a0 = static_cast<Float>(1);
-			//b1 = static_cast<Float>(0);
-			y1 = startVal;
+			reset(startVal);
+		}
+
+		template<typename Float, bool AutoGain>
+		void Lowpass<Float, AutoGain>::reset(Float v)
+		{
+			y1 = v;
 		}
 
 		template<typename Float, bool AutoGain>

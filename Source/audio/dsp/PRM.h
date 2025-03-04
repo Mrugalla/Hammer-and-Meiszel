@@ -69,6 +69,9 @@ namespace dsp
 
 		void reset() noexcept;
 
+		// val
+		void reset(Float) noexcept;
+
 		// sampleRate, smoothLenMs
 		void prepare(Float, Float) noexcept;
 

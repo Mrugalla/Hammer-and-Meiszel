@@ -16,6 +16,7 @@ namespace gui
 				e.manifestOfWisdomButton.value = 0.f;
                 e.buttonColours.repaint();
 				e.manifestOfWisdomButton.repaint();
+                e.parameterEditor.setActive(false);
                 e.giveAwayKeyboardFocus();
                 return;
             }
@@ -41,6 +42,7 @@ namespace gui
         evtMember(utils.eventSystem, makeEvt(*this)),
         compPower(utils),
         tooltip(utils),
+        parameterEditor(utils),
         patchBrowser(utils),
 		topEditor(utils, patchBrowser),
         genAni(utils),
@@ -105,6 +107,7 @@ namespace gui
 		addChildComponent(manifestOfWisdom);
         addChildComponent(patchBrowser);
         addChildComponent(toast);
+        addChildComponent(parameterEditor);
         addAndMakeVisible(compPower);
 
         {
@@ -256,6 +259,7 @@ namespace gui
         const auto toastWidth = static_cast<int>(utils.thicc * 28.f);
         const auto toastHeight = toastWidth * 3 / 4;
         toast.setSize(toastWidth, toastHeight);
+		parameterEditor.setSize(toastWidth * 3, toastHeight);
 	}
 
     void Editor::mouseEnter(const Mouse&)

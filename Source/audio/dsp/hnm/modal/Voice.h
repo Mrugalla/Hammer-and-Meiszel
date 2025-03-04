@@ -32,16 +32,9 @@ namespace dsp
 				// default value
 				ParameterProcessor(double = 0.);
 
-				void reset(int numChannels) noexcept
-				{
-					for (auto ch = 0; ch < numChannels; ++ch)
-					{
-						auto& prm = prms[ch];
-						auto& val = vals[ch];
-						prm.reset();
-						val = prm.startVal;
-					}
-				}
+				// p, envGenVal, min, max, numChannels
+				void reset(const Parameter&, double,
+					double, double, int) noexcept;
 
 				// sampleRate, smoothLenMs
 				void prepare(double, double) noexcept;
@@ -89,7 +82,7 @@ namespace dsp
 			MaterialDataStereo materialStereo;
 			std::array<ParameterProcessor, kNumParams> parameters;
 			ResonatorBank resonatorBank;
-			bool wantsMaterialUpdate;
+			bool wantsMaterialUpdate, snapParameterValues;
 
 			// dest, src0 ,src1, blend, partialIdx
 			void blendMags(MaterialData&, const MaterialData&, const MaterialData&, double, int) noexcept;

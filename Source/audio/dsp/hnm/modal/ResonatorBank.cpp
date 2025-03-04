@@ -31,7 +31,7 @@ namespace dsp
 		double ResonatorBank::Val::getFreq(const arch::XenManager& xen) noexcept
 		{
 			const auto pbRange = xen.getPitchbendRange();
-			return xen.noteToFreqHzWithWrap(pitch + transpose + pb * pbRange);
+			return xen.noteToFreqHz(pitch + transpose + pb * pbRange);
 		}
 
 		ResonatorBank::ResonatorBank() :
@@ -96,8 +96,8 @@ namespace dsp
 		{
 			val.pitch = noteNumber;
 			const auto freq = val.getFreq(xen);
-			reset();
-			setFrequencyHz(materialStereo, freq, numChannels);
+			if (setFrequencyHz(materialStereo, freq, numChannels))
+				reset();
 			sleepy.triggerNoteOn();
 		}
 
@@ -119,12 +119,12 @@ namespace dsp
 			return sleepy.isRinging();
 		}
 
-		void ResonatorBank::setFrequencyHz(const MaterialDataStereo& materialStereo,
+		bool ResonatorBank::setFrequencyHz(const MaterialDataStereo& materialStereo,
 			double freq, int numChannels) noexcept
 		{
 			const auto freqSafe = math::limit(MinFreqHz, nyquist, freq);
-			if (freqSafe == freqHz)
-				return;
+			if (freqHz == freqSafe)
+				return false;
 			freqHz = freqSafe;
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
@@ -132,6 +132,7 @@ namespace dsp
 				auto& nfbn = numFiltersBelowNyquist[ch];
 				updateFreqRatios(material, nfbn, ch);
 			}
+			return true;
 		}
 
 		void ResonatorBank::updateFreqRatios(const MaterialDataStereo& materialStereo, int numChannels) noexcept

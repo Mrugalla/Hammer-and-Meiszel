@@ -53,7 +53,11 @@ namespace dsp
 			// startVal, autogain
 			Lowpass(const Float = static_cast<Float>(0));
 
+			// resets to startVal
 			void reset();
+
+			// value
+			void reset(Float);
 
 			// buffer, val, numSamples
 			void operator()(Float*, Float, int) noexcept;

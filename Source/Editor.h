@@ -10,6 +10,7 @@
 #include "gui/KeySelectorEditor.h"
 #include "gui/hnm/TopEditor.h"
 #include "gui/LabelPluginRecorder.h"
+#include "gui/ParameterEditor.h"
 
 namespace gui
 {
@@ -33,6 +34,7 @@ namespace gui
         evt::Member evtMember;
         CompPower compPower;
         Tooltip tooltip;
+		ParameterEditor parameterEditor;
         patch::Browser patchBrowser;
         TopEditor topEditor;
         GenAniGrowTrees genAni;

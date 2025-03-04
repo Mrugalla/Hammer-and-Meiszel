@@ -57,7 +57,7 @@ namespace dsp
 				double, int) noexcept;
 
 			// materialStereo, freqHz, numChannels
-			void setFrequencyHz(const MaterialDataStereo&, double, int) noexcept;
+			bool setFrequencyHz(const MaterialDataStereo&, double, int) noexcept;
 
 			// materialStereo, numChannels
 			void updateFreqRatios(const MaterialDataStereo&, int) noexcept;

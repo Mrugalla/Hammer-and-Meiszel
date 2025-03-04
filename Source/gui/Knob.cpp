@@ -6,6 +6,7 @@ namespace gui
 
     Knob::Knob(Utils& u) :
         Comp(u),
+        pIDs(),
         values(),
         onEnter([]() {}), onExit([]() {}), onDown([]() {}), onDoubleClick([]() {}),
         onDrag([](const PointF&, const Mouse&) {}),
@@ -69,6 +70,13 @@ namespace gui
         lastPos = getPosition().toFloat();
 
         onDown();
+
+        if (mouse.mods.isCtrlDown())
+        {
+			const auto screenBounds = getScreenBounds();
+            notify(evt::Type::ParameterEditorShowUp, &screenBounds);
+			notify(evt::Type::ParameterEditorAssignParam, &pIDs);
+        }
     }
 
     void Knob::mouseDrag(const Mouse& mouse)
@@ -239,12 +247,12 @@ namespace gui
         };
     }
 
-    void ModDial::attach(PID* pIDs, int numPIDs)
+    void ModDial::attach(PID* _pIDs, int numPIDs)
     {
         prms.clear();
         prms.reserve(numPIDs);
         for (auto i = 0; i < numPIDs; ++i)
-            prms.emplace_back(&utils.getParam(pIDs[i]));
+            prms.emplace_back(&utils.getParam(_pIDs[i]));
     }
 
     void ModDial::attach(PID pID)
@@ -295,14 +303,15 @@ namespace gui
 
     // Parameters and Look&Feel
 
-    void makeParameters(const std::vector<PID>& pIDs, Knob& knob, bool verticalDrag)
+    void makeParameters(const std::vector<PID>& _pIDs, Knob& knob, bool verticalDrag)
     {
-        knob.setTooltip(toTooltip(pIDs[0]));
+		knob.pIDs = _pIDs;
+        knob.setTooltip(toTooltip(knob.pIDs[0]));
 
         std::vector<Param*> prms;
-        prms.reserve(pIDs.size());
-        for (auto i = 0; i < pIDs.size(); ++i)
-            prms.emplace_back(&knob.utils.getParam(pIDs[i]));
+        prms.reserve(knob.pIDs.size());
+        for (auto i = 0; i < knob.pIDs.size(); ++i)
+            prms.emplace_back(&knob.utils.getParam(knob.pIDs[i]));
 
         knob.onEnter = [&k = knob, prm = prms[0]]()
         {

@@ -130,7 +130,7 @@ namespace gui
 			}
 		}
 
-		layout.place(*selector, 1, 0, 1, 1);
+		//layout.place(*selector, 1, 0, 1, 1);
 
 		const auto buttonsBottomBounds = layout(1, 1, 1, 1);
 		{

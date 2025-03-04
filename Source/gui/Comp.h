@@ -17,11 +17,7 @@ namespace gui
 
 		void setLocked(bool);
 
-		void deregisterCallbacks();
-
 		void add(const Callback&);
-
-		void registerCallbacks();
 
 		// xL, yL
 		void initLayout(const String&, const String&);
@@ -41,5 +37,9 @@ namespace gui
 		String tooltip;
 		std::vector<evt::Member> members;
 		Callbacks callbacks;
+	private:
+		void deregisterCallbacks();
+
+		void registerCallbacks();
 	};
 }

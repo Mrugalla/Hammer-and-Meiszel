@@ -35,6 +35,7 @@ namespace gui
 
         void paint(Graphics& g) override;
 
+        std::vector<PID> pIDs;
         std::vector<float> values;
         Func onEnter, onExit, onDown, onDoubleClick;
         OnDrag onDrag;
@@ -88,16 +89,10 @@ namespace gui
 
     // modDial, horizontalSlider
     void locateAtSlider(ModDial&, const Knob&);
-
-
 }
 
 /*
-todo:
-
 low stepsizes reveil that it picks the wrong points for the parameter values
 
 wanna implement linear interpolation between points
-
-
 */
