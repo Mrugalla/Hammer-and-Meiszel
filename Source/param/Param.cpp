@@ -1500,7 +1500,7 @@ namespace param
 		params.push_back(makeParam(PID::ModalKraft, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalKraftEnv, 0.f, makeRange::lin(-2.f, 2.f)));
 		params.push_back(makeParam(PID::ModalKraftBreite, 0.f, makeRange::lin(-2.f, 2.f)));
-		params.push_back(makeParam(PID::ModalResonanz, .7f));
+		params.push_back(makeParam(PID::ModalResonanz, 1.f));
 		params.push_back(makeParam(PID::ModalResonanzEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::ModalResonanzBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		//

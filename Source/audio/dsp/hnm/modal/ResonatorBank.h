@@ -23,6 +23,43 @@ namespace dsp
 				double pitch, transpose, pb;
 			};
 
+			class ResoGain
+			{
+				static constexpr int NumGains = 3;
+				static constexpr int MaxGain = NumGains - 1;
+				static constexpr double MaxGainD = static_cast<double>(MaxGain);
+			public:
+				ResoGain() :
+					gains(),
+					gain{ 1., 1. }
+				{
+					gains[0] = 1.;
+					gains[1] = math::dbToAmp(24.);
+					gains[2] = math::dbToAmp(32.);
+					gains[NumGains] = gains[NumGains - 1];
+				}
+
+				void update(double x, int ch) noexcept
+				{
+					x *= MaxGainD;
+					const auto xFloor = std::floor(x);
+					const auto xFrac = x - xFloor;
+					const auto i0 = static_cast<int>(xFloor);
+					const auto i1 = i0 + 1;
+					const auto g0 = gains[i0];
+					const auto g1 = gains[i1];
+					const auto gR = g1 - g0;
+					gain[ch] = g0 + xFrac * gR;
+				}
+
+				const double operator()(int ch) const noexcept
+				{
+					return gain[ch];
+				}
+			private:
+				std::array<double, NumGains + 1> gains;
+				std::array<double, 2> gain;
+			};
 		public:
 			ResonatorBank();
 
@@ -71,7 +108,7 @@ namespace dsp
 			ResonatorArray resonators;
 			Val val;
 			double freqHz, sampleRate, sampleRateInv, nyquist;
-			std::array<double, 2> gains;
+			ResoGain autoGainReso;
 			std::array<int, 2> numFiltersBelowNyquist;
 			SleepyDetector sleepy;
 

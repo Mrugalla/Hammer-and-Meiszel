@@ -228,7 +228,7 @@ namespace dsp
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				const auto reso = resoParam[ch];
-				resonatorBank.setReso(std::sqrt(reso), ch);
+				resonatorBank.setReso(reso, ch);
 			}
 			const bool blendSmooth = blendParam(_parameters[kBlend], envGenValue, 0., 1., numChannels);
 			const bool spreziSmooth = spreziParam(_parameters[kSpreizung], envGenValue, SpreizungMin, SpreizungMax, numChannels);

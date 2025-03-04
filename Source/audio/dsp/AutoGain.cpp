@@ -77,7 +77,7 @@ namespace dsp
 	template<size_t NumGains>
 	AutoGain<NumGains>::AutoGain() :
 		gains(),
-		gain(1.)
+		gain{ 1., 1. }
 	{
 		for (auto& g : gains)
 			g = 1.;
@@ -101,12 +101,11 @@ namespace dsp
 			const auto nRMS = math::getRMS(samples.data(), noise.Size);
 			gains[i] = (nRMS == 0.f || std::isnan(nRMS) || std::isinf(nRMS)) ? 0.f : rms / nRMS;
 		}
-
 		delete pinkNoise;
 	}
 
 	template<size_t NumGains>
-	void AutoGain<NumGains>::updateParameterValue(double valNorm) noexcept
+	void AutoGain<NumGains>::updateParameterValue(double valNorm, int ch) noexcept
 	{
 		const auto x = valNorm * NumStepsD;
 		const auto xFloor = std::floor(x);
@@ -116,19 +115,19 @@ namespace dsp
 		const auto gF = gains[iF];
 		const auto gC = gains[iC];
 		const auto gRange = gC - gF;
-		gain = gF + xFrac * gRange;
+		gain[ch] = gF + xFrac * gRange;
 	}
 
 	template<size_t NumGains>
-	double AutoGain<NumGains>::operator()(double smpl) const noexcept
+	double AutoGain<NumGains>::operator()(double smpl, int ch) const noexcept
 	{
-		return smpl * gain;
+		return smpl * gain[ch];
 	}
 
 	template<size_t NumGains>
-	double AutoGain<NumGains>::operator()() const noexcept
+	double AutoGain<NumGains>::operator()(int ch) const noexcept
 	{
-		return gain;
+		return gain[ch];
 	}
 
 	template struct AutoGain<2>;

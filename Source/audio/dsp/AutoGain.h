@@ -7,7 +7,7 @@ namespace dsp
 	{
 		static constexpr int Size = 1 << 11;
 
-		/* targetDb */
+		// targetDb
 		PinkNoise(double = -24.);
 
 		double rms() noexcept;
@@ -31,20 +31,21 @@ namespace dsp
 
 		AutoGain();
 
-		/* processFunc(smpls, parameterValue, numSamples) */
+		// processFunc(smpls, parameterValue, numSamples)
 		void prepareGains(std::function<void(double*, double, int)>&&);
 
-		// valNorm
-		void updateParameterValue(double) noexcept;
+		// valNorm, ch
+		void updateParameterValue(double, int) noexcept;
 
-		// smpl
-		double operator()(double) const noexcept;
+		// smpl, ch
+		double operator()(double, int) const noexcept;
 
-		double operator()() const noexcept;
+		// ch
+		double operator()(int) const noexcept;
 
 	protected:
 		std::array<double, NumSteps + 2> gains;
-		double gain;
+		std::array<double, 2> gain;
 	};
 
 	using AutoGain2 = AutoGain<2>;
