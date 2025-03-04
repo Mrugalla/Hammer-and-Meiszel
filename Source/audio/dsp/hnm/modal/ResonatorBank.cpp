@@ -4,17 +4,6 @@ namespace dsp
 {
 	namespace modal
 	{
-		double calcBandwidthFc(double reso, double sampleRateInv) noexcept
-		{
-			static constexpr auto BWStart = 200.;
-			static constexpr auto BWEnd = 0.;
-			static constexpr auto BWRange = BWEnd - BWStart;
-
-			const auto bw = BWStart + reso * BWRange;
-			const auto bwFc = bw * sampleRateInv;
-			return bwFc;
-		}
-
 		ResonatorBank::Val::Val() :
 			pitch(0.),
 			transpose(0.),
@@ -41,7 +30,7 @@ namespace dsp
 			sampleRate(1.),
 			sampleRateInv(1.),
 			nyquist(.5),
-			gains{ 1., 1. },
+			autoGainReso(),
 			numFiltersBelowNyquist{ 0, 0 },
 			sleepy()
 		{
@@ -143,10 +132,15 @@ namespace dsp
 
 		void ResonatorBank::setReso(double reso, int ch) noexcept
 		{
-			const auto resoScaled = reso * 3.;
-			const auto resoRemapped = math::tanhApprox(resoScaled);
-			gains[ch] = 1. + Pi * resoScaled;
-			const auto bw = calcBandwidthFc(resoRemapped, sampleRateInv);
+			static constexpr auto BWStart = 200.;
+			static constexpr auto BWEnd = 0.;
+			static constexpr auto BWRange = BWEnd - BWStart;
+
+			const auto resoSqrt = std::sqrt(reso);
+			const auto resoScaled = resoSqrt * 3.;
+			const auto resoMapped = math::tanhApprox(resoScaled);
+			const auto bw = (BWStart + resoMapped * BWRange) * sampleRateInv;
+			autoGainReso.update(reso, ch);
 			for (auto i = 0; i < NumPartials; ++i)
 			{
 				auto& resonator = resonators[i];
@@ -181,7 +175,7 @@ namespace dsp
 			{
 				const auto& material = materialStereo[ch];
 				const auto nfbn = numFiltersBelowNyquist[ch];
-				const auto gain = gains[ch];
+				const auto autoGain = autoGainReso(ch);
 				auto smpls = samples[ch];
 
 				for (auto i = 0; i < numSamples; ++i)
@@ -197,7 +191,7 @@ namespace dsp
 						wet += bpY;
 					}
 
-					wet *= gain;
+					wet *= autoGain;
 
 					if (wet * wet > 4.)
 					{
