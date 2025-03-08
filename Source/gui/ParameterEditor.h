@@ -13,12 +13,13 @@ namespace gui
 			onEnter = [&]()
 			{
 				setActive(false);
-				for (auto& pID : pIDs)
+				for (const auto pID : pIDs)
 				{
 					auto& param = u.getParam(pID);
 					const auto valDenormTxt = txt;
 					const auto valDenorm = param.getValForTextDenorm(valDenormTxt);
-					const auto valNorm = param.range.convertTo0to1(valDenorm);
+					const auto valLegal = param.range.snapToLegalValue(valDenorm);
+					const auto valNorm = param.range.convertTo0to1(valLegal);
 					param.setValueWithGesture(valNorm);
 				}
 			};

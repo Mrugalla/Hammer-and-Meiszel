@@ -656,6 +656,74 @@ namespace gui
         };
     }
 
+    void makeTextKnob(Knob& knob, bool showModulation)
+    {
+        knob.onPaint = [showModulation](Graphics& g, Knob& k)
+            {
+                const auto thicc = k.utils.thicc;
+                const auto thicc2 = thicc * 2.f;
+                const auto thicc3 = thicc * 3.f;
+
+                const auto& vals = k.values;
+                const auto valMain = vals[Knob::Value];
+                
+                const auto enterExitPhase = k.callbacks[Knob::kEnterExitCB].phase;
+                const auto downUpPhase = k.callbacks[Knob::kDownUpCB].phase;
+
+                const auto boundsOutter = k.getLocalBounds().toFloat().reduced(thicc);
+				const auto colInteract = getColour(CID::Interact);
+                g.setColour(colInteract.withMultipliedAlpha(.25f));
+                g.fillRoundedRectangle(boundsOutter, thicc3);
+
+				const auto boundsInner = boundsOutter.reduced(thicc2);
+                const auto width = boundsInner.getWidth();
+				const auto height = boundsInner.getHeight();
+
+                const auto pID = k.pIDs[0];
+				const auto& param = k.utils.getParam(pID);
+				const auto text = param.getText(valMain, 1);
+                if (enterExitPhase != 0.f)
+                {
+                    auto tFont = font::dosisBold();
+                    const auto fHeight = findMaxHeight(tFont, text, width, height);
+                    tFont.setHeight(fHeight * enterExitPhase);
+                    g.setFont(tFont);
+                    g.setColour(colInteract);
+                    g.drawFittedText(text, boundsInner.toNearestInt(), Just::centred, 1);
+                }
+                if (enterExitPhase != 1.f)
+                {
+                    auto tFont = font::dosisExtraLight();
+                    const auto fHeight = findMaxHeight(tFont, text, width, height);
+					tFont.setHeight(fHeight * (1.f - enterExitPhase));
+					g.setFont(tFont);
+					g.setColour(colInteract);
+					g.drawFittedText(text, boundsInner.toNearestInt(), Just::centred, 1);
+                }
+                
+                if (showModulation)
+                {
+                    const auto valMod = vals[Knob::ValMod];
+                    const auto modDepth = vals[Knob::ModDepth];
+
+                    
+                    const auto widthHalf = width * .5f;
+                    const auto centreX = boundsInner.getX() + widthHalf;
+                    const auto modX = centreX + widthHalf * modDepth;
+                    const auto lineY = boundsInner.getBottom();
+                    const LineF modLine(centreX, lineY, modX, lineY);
+                    setCol(g, CID::Mod);
+                    const auto lineThicc = thicc2 + enterExitPhase * thicc;
+                    g.drawLine(modLine, lineThicc);
+
+                    const auto valDif = valMod - valMain;
+                    const auto valModX = centreX + widthHalf * valDif;
+					const LineF modTick(valModX, lineY, valModX, lineY - lineThicc);
+					g.drawLine(modTick, lineThicc);
+                }
+            };
+    }
+
     void makeKnob(PID pID, Knob& knob, bool showModulation)
     {
         makeParameter(pID, knob, true);
@@ -667,6 +735,12 @@ namespace gui
         makeParameter(pID, knob, false);
         makeSlider(knob, showModulation);
     }
+
+	void makeTextKnob(PID pID, Knob& knob, bool showModulation)
+	{
+		makeParameter(pID, knob, true);
+		makeTextKnob(knob, showModulation);
+	}
 
     void locateAtKnob(ModDial& modDial, const Knob& knob)
     {

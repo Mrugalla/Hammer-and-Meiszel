@@ -76,6 +76,16 @@ namespace gui
 		};
 		buttonFixed.value = 0.f;
 
+		addEvt([&](const evt::Type t, const void*)
+		{
+			if (t == evt::Type::ClickedEmpty)
+			{
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+				partialsFixedEditors[matIdx].setVisible(false);
+				buttonFixed.value = 0.f;
+			}
+		});
+
 		add(Callback([&]()
 		{
 			if (wannaUpdate == -1)
@@ -123,7 +133,7 @@ namespace gui
 		for (auto& m : materialEditors)
 			layout.place(m, 0, 1, 1, 1);
 		for (auto& p : partialsFixedEditors)
-			layout.place(p, 0, 1, 1, 1, true);
+			layout.place(p, 0, 1.f, 1, .8f, true);
 		params.setBounds(layout.bottom().toNearestInt());
 		const auto dropDownsBounds = layout(0, 1, 1, 1, thicc).toNearestInt();
 		dropDownGens.setBounds(dropDownsBounds);

@@ -19,6 +19,7 @@ namespace dsp
 				auto& voice = voices[v];
 				voice.prepare(sampleRate);
 			}
+			transposeSemi = 420.;
 		}
 
 		void ModalFilter::operator()() noexcept

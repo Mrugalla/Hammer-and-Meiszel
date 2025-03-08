@@ -242,7 +242,7 @@ namespace gui
         
         // right panel
         layout.place(ioEditor, 2, 0, 1, 3);
-        layout.place(genAni, 2, 1.5f, 1, 1.5f);
+        layout.place(genAni, 2, 2.5f, 1, .5f);
         layout.place(buttonColours, 2.f, -3, .5f, 1);
 		layout.place(manifestOfWisdomButton, 2.5f, -3, .5f, 1);
 

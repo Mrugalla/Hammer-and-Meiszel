@@ -9,6 +9,7 @@ namespace gui
 		ModalPartialsFixedEditor(Utils& u) :
 			Comp(u),
 			title(u),
+			decayLabel(u), gainLabel(u),
 			vowelA(u), vowelB(u),
 			vowelQ(u, PID::FormantQ, PID::FormantQEnv, PID::FormantQWidth, "Q"),
 			vowelPos(u, PID::FormantPos, PID::FormantPosEnv, PID::FormantPosWidth, "Pos"),
@@ -17,11 +18,13 @@ namespace gui
 		{
 			layout.init
 			(
-				{ 3, 3, 2, 2 },
-				{ 1, 2, 5 }
+				{ 1, 1, 1, 1 },
+				{ 1, 1, 5 }
 			);
 
 			addAndMakeVisible(title);
+			addAndMakeVisible(decayLabel);
+			addAndMakeVisible(gainLabel);
 			addAndMakeVisible(vowelA);
 			addAndMakeVisible(vowelB);
 			addAndMakeVisible(vowelPos);
@@ -33,8 +36,8 @@ namespace gui
 			addAndMakeVisible(modDialDecay);
 			addAndMakeVisible(modDialGain);
 
-			makeKnob(PID::FormantA, vowelA);
-			makeKnob(PID::FormantB, vowelB);
+			makeTextKnob(PID::FormantA, vowelA);
+			makeTextKnob(PID::FormantB, vowelB);
 			makeKnob(PID::FormantDecay, decay);
 			makeKnob(PID::FormantGain, gain);
 
@@ -46,9 +49,8 @@ namespace gui
 			const auto labelFont = font::dosisMedium();
 			makeTextLabel(title, "Formant Filter:", labelFont, Just::centred, CID::Txt, "The formant filter runs in parallel with the modal filter.");
 			title.autoMaxHeight = true;
-			//makeTextLabel(labelVowelA, "A", labelFont, Just::centred, CID::Interact);
-			//makeTextLabel(labelVowelB, "B", labelFont, Just::centred, CID::Interact);
-			//makeTextLabel(labelDecay, "Decay", labelFont, Just::centred, CID::Interact);
+			makeTextLabel(decayLabel, "Decay", labelFont, Just::centred, CID::Interact);
+			makeTextLabel(gainLabel, "Gain", labelFont, Just::centred, CID::Interact);
 		}
 
 		void paint(Graphics& g) override
@@ -66,8 +68,10 @@ namespace gui
 			vowelB.setBounds(vowelA.getBounds().withX(vowelA.getRight()));
 			layout.place(vowelQ, 0, 2, 1, 1);
 			layout.place(vowelPos, 1, 2, 1, 1);
-			layout.place(decay, 2, 2, 1, 1);
-			layout.place(gain, 3, 2, 1, 1);
+			layout.place(decay, 2, 2.f, 1, .5f);
+			layout.place(gain, 3, 2.f, 1, .5f);
+			layout.place(decayLabel, 2, 2.5f, 1, .5f);
+			layout.place(gainLabel, 3, 2.5f, 1, .5f);
 
 			locateAtKnob(modDialVowelA, vowelA);
 			locateAtKnob(modDialVowelB, vowelB);
@@ -75,7 +79,7 @@ namespace gui
 			locateAtKnob(modDialGain, gain);
 		}
 	private:
-		Label title;
+		Label title, decayLabel, gainLabel;
 		Knob vowelA, vowelB;
 		KnobHnM vowelQ, vowelPos;
 		Knob decay, gain;

@@ -10,7 +10,9 @@ namespace gui
 			Comp(u, _tooltip),
 			img(),
 			onResize([](){}),
-			active(utils.getProps().getBoolValue("genaniactive", true))
+			active(utils.getProps().getBoolValue("genaniactive", true)),
+			mode(utils.getProps().getIntValue("genanimode", 0)),
+			numModes(1)
 		{
 			setOpaque(true);
 		}
@@ -69,6 +71,12 @@ namespace gui
 		{
 			if (mouse.mouseWasDraggedSinceMouseDown())
 				return;
+			if (mouse.mods.isCtrlDown())
+			{
+				mode = (mode + 1) % numModes;
+				utils.getProps().setValue("genanimode", mode);
+				return;
+			}
 			active = !active;
 			callbacks[0].active = active;
 			if (!active)
@@ -92,26 +100,30 @@ namespace gui
 	protected:
 		Image img;
 		std::function<void()> onResize;
+		int mode, numModes;
 		bool active;
-
-		
 	};
 
 	struct GenAniGrowTrees :
 		public GenAniComp
 	{
+		enum { kTree, kTech, kNumModes };
+		// TREE CONSTANTS
 		static constexpr float MutationLikelyness = .05f;
 		static constexpr int MutationTime = 9;
 		static constexpr float NewBranchMinY = .6f;
+		//
 
 		GenAniGrowTrees(Utils& u) :
-			GenAniComp(u, "Get mesmerized by these beautiful growing branches!"),
+			GenAniComp(u, "Get mesmerized by this procedural stuff! (CTRL+Click to switch mode)"),
 			rand(),
 			col(juce::uint8(rand.nextInt()), juce::uint8(rand.nextInt()), juce::uint8(rand.nextInt())),
 			pos(),
 			angle(0.f),
 			alphaDownCount(0)
 		{
+			numModes = kNumModes;
+
 			onResize = [&]()
 			{
 				const auto width = static_cast<float>(getWidth());
@@ -127,35 +139,27 @@ namespace gui
 				if (!img.isValid())
 					return;
 
+				/*
 				auto& phase = callbacks[0].phase;
 				phase += speed;
 				if (phase >= 1.f)
 					phase -= 1.f;
+				*/
 				
 				Graphics g{ img };
 				
-				const auto width = static_cast<float>(getWidth());
-				const auto height = static_cast<float>(getHeight());
-
-				const auto length = 1.f + rand.nextFloat() * 2.f * utils.thicc;
-				const auto line = LineF::fromStartAndAngle(pos, length, angle + PiQuart - rand.nextFloat() * PiHalf);
-				const auto end = line.getEnd();
-
-				g.setColour(col);
-				const auto thicc = 1.f + rand.nextFloat() * 2.f * utils.thicc;
-				g.drawLine(line, thicc);
-
-				pos = end;
-				
-				const bool triggerBranch = rand.nextFloat() < MutationLikelyness;
-
-				if (pos.y <= 0.f || triggerBranch)
-					startNewBranch(width, height, 3.6f, .7f);
-
-				++alphaDownCount;
-				if (alphaDownCount >= 1 << MutationTime)
-					mutate(width, height);
-
+				switch (mode)
+				{
+				case kTree:
+					treeProcess(g);
+					break;
+				case kTech:
+					techProcess(g);
+					break;
+				default:
+					treeProcess(g);
+					break;
+				}
 				repaint();
 			}, 0, fps, false));
 
@@ -164,11 +168,146 @@ namespace gui
 
 	private:
 		Random rand;
+		// TREE VARIABLES
 		juce::Colour col;
 		PointF pos;
 		float angle;
 		int alphaDownCount;
+		// TECH VARIABLES
+		//
 
+		void treeProcess(Graphics& g)
+		{
+			const auto width = static_cast<float>(getWidth());
+			const auto height = static_cast<float>(getHeight());
+
+			const auto length = 1.f + rand.nextFloat() * 2.f * utils.thicc;
+			const auto line = LineF::fromStartAndAngle(pos, length, angle + PiQuart - rand.nextFloat() * PiHalf);
+			const auto end = line.getEnd();
+
+			g.setColour(col);
+			const auto thicc = 1.f + rand.nextFloat() * 2.f * utils.thicc;
+			g.drawLine(line, thicc);
+
+			pos = end;
+
+			const bool triggerBranch = rand.nextFloat() < MutationLikelyness;
+
+			if (pos.y <= 0.f || triggerBranch)
+				startNewBranch(width, height, 3.6f, .7f);
+
+			++alphaDownCount;
+			if (alphaDownCount >= 1 << MutationTime)
+				mutate(width, height);
+		}
+
+		void techProcess(Graphics& g)
+		{
+			const auto width = getWidth();
+			const auto height = getHeight();
+
+			const auto flipx = [width](int x)
+			{
+				if (x < 0)
+					return x + width;
+				if (x >= width)
+					return x - width;
+				return x;
+			};
+			const auto flipy = [height](int y)
+			{
+				if (y < 0)
+					return y + height;
+				if (y >= height)
+					return y - height;
+				return y;
+			};
+
+			const auto flipxF = [w = static_cast<float>(width)](float x)
+			{
+				if (x < 0.f)
+					return x + w;
+				if (x >= w)
+					return x - w;
+				return x;
+			};
+			const auto flipyF = [h = static_cast<float>(height)](float y)
+			{
+				if (y < 0.f)
+					return y + h;
+				if (y >= h)
+					return y - h;
+				return y;
+			};
+
+			int numSpotsFound = 0;
+			const auto numSteps = 64;
+			for (auto i = 0; i < numSteps; ++i)
+			{
+				const auto x = rand.nextInt(width);
+				const auto y = rand.nextInt(height);
+				const auto pxl = img.getPixelAt(x, y);
+				if (pxl.getBrightness() > .1f)
+				{
+					++numSpotsFound;
+					g.setColour(pxl.withRotatedHue(rand.nextFloat() * .01f));
+					const auto randSquared = rand.nextFloat();
+					const auto rad = 1.f + randSquared * randSquared * 2.f;
+					const auto dia = rad * 2.f;
+					const auto xF = static_cast<float>(x);
+					const auto yF = static_cast<float>(y);
+					const auto x1 = flipxF(xF - rad + rand.nextFloat() * dia);
+					const auto y1 = flipyF(yF - rad + rand.nextFloat() * dia);
+					g.fillEllipse(x1 - rad, y1 - rad, dia, dia);
+				}
+			}
+			if (numSpotsFound == 0)
+			{
+				g.setColour(Colour::fromHSL(rand.nextFloat(), rand.nextFloat(), rand.nextFloat(), 1.f));
+				const auto x = rand.nextInt(width);
+				const auto y = rand.nextInt(height);
+				const auto xF = static_cast<float>(x);
+				const auto yF = static_cast<float>(y);
+				const auto randSquared = rand.nextFloat();
+				const auto rad = 1.f + randSquared * randSquared * 13.f;
+				const auto dia = rad * 2.f;
+				g.fillEllipse(xF - rad, yF - rad, dia, dia);
+			}
+			else if (numSpotsFound == numSteps)
+			{
+				g.setColour(Colour(0xff000000));
+				const auto x = rand.nextInt(width);
+				const auto y = rand.nextInt(height);
+				const auto xF = static_cast<float>(x);
+				const auto yF = static_cast<float>(y);
+				const auto randSquared = rand.nextFloat();
+				const auto rad = randSquared * static_cast<float>(height);
+				const auto dia = rad * 2.f;
+				g.fillEllipse(xF - rad, yF - rad, dia, dia);
+			}
+
+			auto brightness = 0.f;
+			for (auto y = 0; y < height; ++y)
+				for (auto x = 0; x < width; ++x)
+				{
+					const auto pxl = img.getPixelAt(x, y);
+					brightness += pxl.getBrightness();
+				}
+			brightness /= width * height;
+			if (brightness < .1f)
+			{
+				for (auto y = 0; y < img.getHeight(); ++y)
+					for (auto x = 0; x < img.getWidth(); ++x)
+					{
+						auto pxl = img.getPixelAt(x, y);
+						pxl = pxl.interpolatedWith(Colour(0xffffffff), .1f);
+						pxl = pxl.withMultipliedSaturationHSL(1.5f);
+						img.setPixelAt(x, y, pxl);
+					}
+			}
+		}
+
+		// TREE PROCESS:
 		void startNewBranch(float width, float height, float gravity, float latchLikelyness) noexcept
 		{
 			static constexpr auto TimeOut = 1 << 10;
@@ -214,6 +353,26 @@ namespace gui
 				
 		}
 
+		void brighten(float valTop, float valBtm) noexcept
+		{
+			Colour white(0xffffffff);
+			const auto h = static_cast<float>(img.getHeight());
+			const auto hInv = 1.f / h;
+			const auto valRange = valBtm - valTop;
+			for (auto y = 0; y < img.getHeight(); ++y)
+			{
+				const auto yF = static_cast<float>(y);
+				const auto yR = yF * hInv;
+				const auto val = valTop + yR * valRange;
+				for (auto x = 0; x < img.getWidth(); ++x)
+				{
+					auto pxl = img.getPixelAt(x, y);
+					pxl = pxl.interpolatedWith(white, val);
+					img.setPixelAt(x, y, pxl);
+				}
+			}
+		}
+
 		void genNewCol(float mixOldNew, int tolerance) noexcept
 		{
 			angle = rand.nextFloat() * Pi - PiHalf;
@@ -254,5 +413,6 @@ namespace gui
 				img.setPixelAt(xx, yy, Colour(0xff000000));
 			}
 		}
+		// TREE PROCESS END
 	};
 }

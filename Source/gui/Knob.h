@@ -78,11 +78,17 @@ namespace gui
     // knob, showModulation
     void makeSlider(Knob&, bool = true);
 
+    // knob, showModulation
+    void makeTextKnob(Knob&, bool = true);
+
     // pID, knob, showModulation
     void makeKnob(PID, Knob&, bool = true);
 
     // pID, knob, showModulation
     void makeSlider(PID, Knob&, bool = true);
+
+    // pID, knob, showModulation
+    void makeTextKnob(PID, Knob&, bool = true);
 
     // modDial, knob
     void locateAtKnob(ModDial&, const Knob&);
