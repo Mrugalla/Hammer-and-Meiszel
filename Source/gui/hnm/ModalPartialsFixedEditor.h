@@ -14,7 +14,8 @@ namespace gui
 			vowelQ(u, PID::FormantQ, PID::FormantQEnv, PID::FormantQWidth, "Q"),
 			vowelPos(u, PID::FormantPos, PID::FormantPosEnv, PID::FormantPosWidth, "Pos"),
 			decay(u), gain(u),
-			modDialVowelA(u), modDialVowelB(u), modDialDecay(u), modDialGain(u)
+			modDialVowelA(u), modDialVowelB(u), modDialDecay(u), modDialGain(u),
+			group()
 		{
 			layout.init
 			(
@@ -47,10 +48,15 @@ namespace gui
 			modDialGain.attach(PID::FormantGain);
 
 			const auto labelFont = font::dosisMedium();
-			makeTextLabel(title, "Formant Filter:", labelFont, Just::centred, CID::Txt, "The formant filter runs in parallel with the modal filter.");
+			makeTextLabel(title, " << Formant Filter >> ", labelFont, Just::centred, CID::Txt, "The formant filter runs in parallel with the modal filter.");
 			title.autoMaxHeight = true;
-			makeTextLabel(decayLabel, "Decay", labelFont, Just::centred, CID::Interact);
-			makeTextLabel(gainLabel, "Gain", labelFont, Just::centred, CID::Interact);
+			makeTextLabel(decayLabel, "Decay", labelFont, Just::centred, CID::Txt);
+			makeTextLabel(gainLabel, "Gain", labelFont, Just::centred, CID::Txt);
+
+			group.add(vowelPos.labelMain);
+			group.add(vowelQ.labelMain);
+			group.add(decayLabel);
+			group.add(gainLabel);
 		}
 
 		void paint(Graphics& g) override
@@ -77,6 +83,8 @@ namespace gui
 			locateAtKnob(modDialVowelB, vowelB);
 			locateAtKnob(modDialDecay, decay);
 			locateAtKnob(modDialGain, gain);
+
+			group.setMaxHeight(utils.thicc);
 		}
 	private:
 		Label title, decayLabel, gainLabel;
@@ -84,5 +92,6 @@ namespace gui
 		KnobHnM vowelQ, vowelPos;
 		Knob decay, gain;
 		ModDial modDialVowelA, modDialVowelB, modDialDecay, modDialGain;
+		LabelGroup group;
 	};
 }

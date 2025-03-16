@@ -86,6 +86,9 @@ namespace gui
     static constexpr float Pi = Tau * .5f;;
     static constexpr float PiHalf = Tau * .25f;
     static constexpr float PiQuart = Tau * .125f;
+	static constexpr float PiEight = Tau * .0625f;
+	static constexpr float PiSixteenth = Tau * .03125f;
+	static constexpr float Pi32 = Pi / 32.f;
 
     static constexpr int EditorWidth = 1082;
     static constexpr int EditorHeight = 722;

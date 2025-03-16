@@ -21,7 +21,7 @@ namespace gui
 			layout.init
 			(
 				{ 1, 1 },
-				{ 5, 2, 3, 1 }
+				{ 8, 2, 3, 1 }
 			);
 
 			addAndMakeVisible(labelMain);
@@ -59,8 +59,12 @@ namespace gui
 			layout.resized(getLocalBounds().toFloat());
 			layout.place(main, 0, 0.f, 2, 1.2f);
 			layout.place(labelMain, 0, 1, 2, 1);
-			layout.place(env, 0, 1.8f, 1, 1.4f);
-			layout.place(width, 1, 1.8f, 1, 1.4f);
+			const auto off = 1.f;
+			const auto off2 = off * 2.f;
+			const auto lilY = 2.f - off;
+			const auto lilH = 1.f + off2;
+			layout.place(env, 0, lilY, 1, lilH, true);
+			layout.place(width, 1, lilY, 1, lilH, true);
 			layout.place(labelEnv, 0, 3, 1, 1);
 			layout.place(labelWidth, 1, 3, 1, 1);
 

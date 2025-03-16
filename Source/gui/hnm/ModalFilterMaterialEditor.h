@@ -48,13 +48,14 @@ namespace gui
 			// partials, w, h
 			void resized(Partials&, float, float) noexcept;
 
-			// partials, coords, doUpdateSelection
-			void updateCoords(Partials&, PointF, bool) noexcept;
+			// coords
+			void updateCoords(PointF) noexcept;
 
 			// partials, addToRadiusRelative
 			void updateRadius(Partials&, float) noexcept;
 
-			void paint(Graphics& g);
+			// g, margin
+			void paint(Graphics& g, float);
 
 			bool isSelected(int i) const noexcept;
 
@@ -64,12 +65,12 @@ namespace gui
 
 			PointF getCoords() const noexcept;
 
+			void updateSelection(Partials&) noexcept;
+
 		protected:
 			PointF coordsAbs, coordsRel;
-			float width, height, radAbs, radRel;// xRel, xAbs, lenRel, lenAbs, lenAbsHalf;
+			float width, height, radAbs, radRel;
 			std::array<bool, NumPartials> selection;
-
-			void updateSelection(Partials&) noexcept;
 		};
 
 		enum

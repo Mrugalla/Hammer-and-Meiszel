@@ -47,4 +47,7 @@ namespace gui
     Colour toDefault(CID cID) noexcept;
 
     void setCol(Graphics&, CID);
+
+    // g, cID, alpha
+    void setCol(Graphics&, CID, float);
 }

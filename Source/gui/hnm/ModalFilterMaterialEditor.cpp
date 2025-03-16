@@ -74,12 +74,12 @@ namespace gui
 	}
 
 	ModalMaterialEditor::Draggerfall::Draggerfall() :
-		coordsAbs(0.f, 0.f),
+		coordsAbs(-1.f, -1.f),
 		coordsRel(0.f, 0.f),
 		width(1.f),
 		height(1.f),
-		radAbs(1.f),
-		radRel(.5f),
+		radAbs(.1f),
+		radRel(1.f / Pi),
 		selection()
 	{
 		for (auto& s : selection)
@@ -90,16 +90,14 @@ namespace gui
 	{
 		width = w;
 		height = h;
-		updateCoords(partials, coordsAbs, false);
+		updateCoords(coordsAbs);
 		updateRadius(partials, 0.f);
 	}
 
-	void ModalMaterialEditor::Draggerfall::updateCoords(Partials& partials, PointF xy, bool doUpdateSelection) noexcept
+	void ModalMaterialEditor::Draggerfall::updateCoords(PointF xy) noexcept
 	{
 		coordsAbs = xy;
 		coordsRel = { coordsAbs.x / width, coordsAbs.y / height };
-		if (doUpdateSelection)
-			updateSelection(partials);
 	}
 
 	void ModalMaterialEditor::Draggerfall::updateRadius(Partials& partials, float addToRadiusRel) noexcept
@@ -107,10 +105,12 @@ namespace gui
 		const auto minDimen = std::min(width, height);
 		radRel = juce::jlimit(.1f, 1.5f, radRel + addToRadiusRel);
 		radAbs = radRel * minDimen;
+		if (coordsAbs.getX() < 0.f)
+			return;
 		updateSelection(partials);
 	}
 
-	void ModalMaterialEditor::Draggerfall::paint(Graphics& g)
+	void ModalMaterialEditor::Draggerfall::paint(Graphics& g, float margin)
 	{
 		const auto radAbs2 = radAbs * 2.f;
 		const BoundsF bounds
@@ -120,8 +120,9 @@ namespace gui
 			radAbs2,
 			radAbs2
 		);
-		setCol(g, CID::Hover);
+		setCol(g, CID::Hover, .5f);
 		g.fillEllipse(bounds);
+		g.fillEllipse(bounds.reduced(margin));
 	}
 
 	bool ModalMaterialEditor::Draggerfall::isSelected(int i) const noexcept
@@ -247,6 +248,8 @@ namespace gui
 
 		const auto w = static_cast<float>(getWidth());
 		auto const h = static_cast<float>(hInt);
+		const auto thicc = utils.thicc;
+		const auto thicc2 = thicc * 2.f;
 
 		Gradient bgGradient
 		(
@@ -263,7 +266,7 @@ namespace gui
 		ruler.paintStripes(g, rulerTop, rulerBtm, 33);
 
 		if (isMouseOver() && !isMouseButtonDownAnywhere())
-			draggerfall.paint(g);
+			draggerfall.paint(g, thicc2);
 
 		auto unselectedPartialsCol = Colours::c(CID::Txt);
 		paintPartial(g, h, unselectedPartialsCol, 0);
@@ -279,9 +282,10 @@ namespace gui
 		const auto strumPhase = callbacks[kStrumCB + i].phase;
 		const bool selected = draggerfall.isSelected(i);
 		const auto knotW = utils.thicc
-			* (selected ? 2.f : 1.f)
+			* (selected ? 1.5f : 1.f)
 			+ utils.thicc * strumPhase * 2.f;
 		const auto knotWHalf = knotW * .5f;
+		const auto knotW2 = knotW * 2.f;
 
 		const auto x = partials[i].x;
 		const auto y = partials[i].y;
@@ -293,7 +297,7 @@ namespace gui
 		g.fillRect(x - knotWHalf, y, knotW, h);
 
 		g.setColour(Colours::c(CID::Interact));
-		g.fillRect(x - knotWHalf, y - knotWHalf, knotW, knotW);
+		g.fillEllipse(x - knotW, y - knotW, knotW2, knotW2);
 	}
 
 	void ModalMaterialEditor::resized()
@@ -394,7 +398,8 @@ namespace gui
 
 	void ModalMaterialEditor::mouseMove(const Mouse& mouse)
 	{
-		draggerfall.updateCoords(partials, mouse.position, true);
+		draggerfall.updateCoords(mouse.position);
+		draggerfall.updateSelection(partials);
 		
 		for (auto i = 0; i < NumPartials; ++i)
 		{
@@ -419,7 +424,8 @@ namespace gui
 
 	void ModalMaterialEditor::mouseDrag(const Mouse& mouse)
 	{
-		draggerfall.updateCoords(partials, mouse.position, false);
+		draggerfall.updateCoords(mouse.position);
+		draggerfall.updateSelection(partials);
 
 		if (draggerfall.selectionEmpty())
 			return;

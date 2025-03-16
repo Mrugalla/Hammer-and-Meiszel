@@ -139,13 +139,6 @@ namespace gui
 				if (!img.isValid())
 					return;
 
-				/*
-				auto& phase = callbacks[0].phase;
-				phase += speed;
-				if (phase >= 1.f)
-					phase -= 1.f;
-				*/
-				
 				Graphics g{ img };
 				
 				switch (mode)
@@ -294,16 +287,15 @@ namespace gui
 					brightness += pxl.getBrightness();
 				}
 			brightness /= width * height;
-			if (brightness < .1f)
+			const auto brightnessMargin = .1f;
+			if (brightness < brightnessMargin || brightness > 1.f - brightnessMargin)
 			{
-				for (auto y = 0; y < img.getHeight(); ++y)
-					for (auto x = 0; x < img.getWidth(); ++x)
-					{
-						auto pxl = img.getPixelAt(x, y);
-						pxl = pxl.interpolatedWith(Colour(0xffffffff), .1f);
-						pxl = pxl.withMultipliedSaturationHSL(1.5f);
-						img.setPixelAt(x, y, pxl);
-					}
+				const auto minDimen = juce::jmin(width, height);
+				const Point randPos(rand.nextInt(width), rand.nextInt(height));
+				const auto randRad = rand.nextFloat() * minDimen;
+				const auto randCol = Colour::fromHSL(rand.nextFloat(), rand.nextFloat(), rand.nextFloat(), 1.f);
+				g.setColour(randCol);
+				g.fillEllipse(randPos.x - randRad, randPos.y - randRad, randRad * 2.f, randRad * 2.f);
 			}
 		}
 

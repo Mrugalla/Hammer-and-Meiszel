@@ -18,12 +18,12 @@ namespace gui
 		void resized() override;
 
 		Button buttonAB, buttonSolo, buttonFixed;
-		ButtonDropDown buttonDropDownGens, buttonDropDownMisc;
+		ButtonDropDown buttonDropDownGens, buttonDropDownProcess;
 		ButtonRandomizer buttonRandomizer;
 		std::array<ModalMaterialEditor, 2> materialEditors;
 		std::array<ModalPartialsFixedEditor, 2> partialsFixedEditors;
 		ModalParamsEditor params;
-		DropDownMenu dropDownGens, dropDownMisc;
+		DropDownMenu dropDownGens, dropDownProcess;
 		arch::RandSeed randSeedVertical, randSeedHorizontal, randSeedFixedPartials;
 
 		std::function<void()> updateMaterialFunc;

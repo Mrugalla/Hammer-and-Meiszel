@@ -471,82 +471,109 @@ namespace gui
                 radius + knobBounds.getY()
             );
 
-            const auto outterArcThicc = thicc2 - enterExitPhase * thicc + downUpPhase * thicc;
-			const auto outterArcThiccHalf = outterArcThicc * .5f;
             const auto innerArcThicc = enterExitPhase * thicc3;
             const auto arcsDist = thicc5 - enterExitPhase * thicc3;
-            Stroke stroke(outterArcThicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
             const auto innerRad = radius - innerArcThicc * .5f - arcsDist;
             const auto innerAngleWidth = AngleWidth * (.98f - enterExitPhase * .03f);
-            
-            // paint lines
-            {
-                Path arcOutline;
+
+            Path arcInline;
+            arcInline.addCentredArc
+            (
+                centre.x, centre.y,
+                innerRad, innerRad,
+                0.f, -innerAngleWidth, innerAngleWidth,
+                true
+            );
+            setCol(g, CID::Txt);
+            Stroke stroke(innerArcThicc, Stroke::JointStyle::beveled, Stroke::EndCapStyle::rounded);
+            g.strokePath(arcInline, stroke);
+
+            const auto valMain = vals[Knob::Value];
+            const auto valNormAngle = valMain * AngleRange;
+            const auto valAngle = -AngleWidth + valNormAngle;
+
+            const auto angleOffset = Pi32 * thicc * 1.5f;
+
+            const auto arcOutlineAStart = -AngleWidth;
+            const auto arcOutlineAEnd = valAngle - angleOffset;
+            const auto arcOutlineBStart = valAngle + angleOffset;
+            const auto arcOutlineBEnd = AngleWidth;
+
+            Path arcOutline;
+
+            if (arcOutlineAStart < arcOutlineAEnd)
                 arcOutline.addCentredArc
                 (
                     centre.x, centre.y,
                     radius, radius,
                     0.f,
-                    -AngleWidth, AngleWidth,
+                    arcOutlineAStart, arcOutlineAEnd,
                     true
                 );
-                setCol(g, CID::Txt);
-                g.strokePath(arcOutline, stroke);
 
-                Path arcInline;
-                arcInline.addCentredArc
-                (
-                    centre.x, centre.y,
-                    innerRad, innerRad,
-                    0.f,
-                    -innerAngleWidth, innerAngleWidth,
-                    true
-                );
-                stroke.setStrokeThickness(innerArcThicc);
-                g.strokePath(arcInline, stroke);
-                stroke.setStrokeThickness(outterArcThicc);
-            };
-
-            const auto valNormAngle = vals[Knob::Value] * AngleRange;
-            const auto valAngle = -AngleWidth + valNormAngle;
-			const auto radExt = radius + outterArcThiccHalf;
-            const auto shortenA = radius - outterArcThicc;
-            const auto shortenB = innerRad - innerArcThicc * .5f;
-            const auto shorten = shortenA + enterExitPhase * (shortenB - shortenA);
-
-            // paint modulation
-            if (showModulation)
-            {
-                const auto valModAngle = vals[Knob::ValMod] * AngleRange;
-                const auto modAngle = -AngleWidth + valModAngle;
-                const auto modTick = LineF::fromStartAndAngle(centre, radExt + thicc, modAngle);
-				const auto shortenedModTick = modTick.withShortenedStart(shorten - thicc);
-
-                setCol(g, CID::Bg);
-                g.drawLine(shortenedModTick, thicc5);
-
-                const auto maxModDepthAngle = juce::jlimit(-AngleWidth, AngleWidth, valNormAngle + vals[Knob::ModDepth] * AngleRange - AngleWidth);
-                setCol(g, CID::Mod);
-                g.drawLine(modTick.withShortenedStart(shorten), thicc2);
-
-                Path modPath;
-                modPath.addCentredArc
+            if (arcOutlineBStart < arcOutlineBEnd)
+                arcOutline.addCentredArc
                 (
                     centre.x, centre.y,
                     radius, radius,
                     0.f,
-                    maxModDepthAngle, valAngle,
+                    arcOutlineBStart, arcOutlineBEnd,
                     true
                 );
-                g.strokePath(modPath, stroke);
-            };
 
-            { // paint tick
+            const auto outterArcThicc = thicc2 - enterExitPhase * thicc + downUpPhase * thicc;
+            stroke = Stroke(outterArcThicc, Stroke::JointStyle::beveled, Stroke::EndCapStyle::rounded);
+            g.strokePath(arcOutline, stroke);
+
+            const auto shortenA = radius - outterArcThicc;
+            const auto shortenB = innerRad - innerArcThicc * .5f;
+            const auto shorten = shortenA + enterExitPhase * (shortenB - shortenA);
+
+            const auto modDepth = showModulation ? vals[Knob::ModDepth] : 0.f;
+            if(modDepth != 0.f)
+            {
+                const auto modDepthAngle = juce::jlimit(-AngleWidth, AngleWidth, valNormAngle + modDepth * AngleRange - AngleWidth);
+
+                Path modPath;
+
+				if (modDepthAngle < valAngle)
+                    modPath.addCentredArc
+					(
+						centre.x, centre.y,
+						radius, radius,
+						0.f,
+                        modDepthAngle, valAngle,
+						true
+					);
+				else if (modDepthAngle > valAngle)
+                    modPath.addCentredArc
+					(
+						centre.x, centre.y,
+						radius, radius,
+						0.f,
+                        valAngle, modDepthAngle,
+						true
+					);
+                
+                const auto valMod = vals[Knob::ValMod];
+                const auto valModAngle = valMod * AngleRange;
+                const auto modAngle = -AngleWidth + valModAngle;
+
+                const auto modTick = LineF::fromStartAndAngle(centre, radius, modAngle).withShortenedStart(radius - thicc3);
+
+                modPath.startNewSubPath(modTick.getEnd());
+				modPath.lineTo(modTick.getStart());
+
+                setCol(g, CID::Mod);
+                stroke = Stroke(outterArcThicc + thicc * .5f, Stroke::JointStyle::mitered, Stroke::EndCapStyle::rounded);
+                g.strokePath(modPath, stroke);
+            }
+
+            // paint tick
+            {
                 const auto tickLine = LineF::fromStartAndAngle(centre, radius + thicc2, valAngle);
                 const auto tickBg = tickLine.withShortenedStart(shorten - thicc);
-                setCol(g, CID::Bg);
-                g.drawLine(tickBg, thicc5);
-				const auto tick = tickLine.withShortenedStart(shorten);
+                const auto tick = tickLine.withShortenedStart(shorten);
                 setCol(g, CID::Interact);
                 g.drawLine(tick, thicc3);
             }
@@ -659,69 +686,68 @@ namespace gui
     void makeTextKnob(Knob& knob, bool showModulation)
     {
         knob.onPaint = [showModulation](Graphics& g, Knob& k)
+        {
+            const auto thicc = k.utils.thicc;
+            const auto thicc2 = thicc * 2.f;
+            const auto thicc3 = thicc * 3.f;
+
+            const auto& vals = k.values;
+            const auto valMain = vals[Knob::Value];
+                
+            const auto enterExitPhase = k.callbacks[Knob::kEnterExitCB].phase;
+            const auto downUpPhase = k.callbacks[Knob::kDownUpCB].phase;
+
+            const auto boundsOutter = k.getLocalBounds().toFloat().reduced(thicc);
+			const auto colInteract = getColour(CID::Interact);
+            g.setColour(colInteract.withMultipliedAlpha(.25f));
+            g.fillRoundedRectangle(boundsOutter, thicc3);
+
+			const auto boundsInner = boundsOutter.reduced(thicc2);
+            const auto width = boundsInner.getWidth();
+			const auto height = boundsInner.getHeight();
+
+            const auto pID = k.pIDs[0];
+			const auto& param = k.utils.getParam(pID);
+			const auto text = param.getText(valMain, 1);
+            if (enterExitPhase != 0.f)
             {
-                const auto thicc = k.utils.thicc;
-                const auto thicc2 = thicc * 2.f;
-                const auto thicc3 = thicc * 3.f;
-
-                const auto& vals = k.values;
-                const auto valMain = vals[Knob::Value];
+                auto tFont = font::dosisBold();
+                const auto fHeight = findMaxHeight(tFont, text, width, height);
+                tFont.setHeight(fHeight * enterExitPhase + downUpPhase * thicc3);
+                g.setFont(tFont);
+                g.setColour(colInteract);
+                g.drawFittedText(text, boundsInner.toNearestInt(), Just::centred, 1);
+            }
+            if (enterExitPhase != 1.f)
+            {
+                auto tFont = font::dosisExtraLight();
+                const auto fHeight = findMaxHeight(tFont, text, width, height);
+				tFont.setHeight(fHeight * (1.f - enterExitPhase));
+				g.setFont(tFont);
+				g.setColour(colInteract);
+				g.drawFittedText(text, boundsInner.toNearestInt(), Just::centred, 1);
+            }
                 
-                const auto enterExitPhase = k.callbacks[Knob::kEnterExitCB].phase;
-                const auto downUpPhase = k.callbacks[Knob::kDownUpCB].phase;
-
-                const auto boundsOutter = k.getLocalBounds().toFloat().reduced(thicc);
-				const auto colInteract = getColour(CID::Interact);
-                g.setColour(colInteract.withMultipliedAlpha(.25f));
-                g.fillRoundedRectangle(boundsOutter, thicc3);
-
-				const auto boundsInner = boundsOutter.reduced(thicc2);
-                const auto width = boundsInner.getWidth();
-				const auto height = boundsInner.getHeight();
-
-                const auto pID = k.pIDs[0];
-				const auto& param = k.utils.getParam(pID);
-				const auto text = param.getText(valMain, 1);
-                if (enterExitPhase != 0.f)
-                {
-                    auto tFont = font::dosisBold();
-                    const auto fHeight = findMaxHeight(tFont, text, width, height);
-                    tFont.setHeight(fHeight * enterExitPhase);
-                    g.setFont(tFont);
-                    g.setColour(colInteract);
-                    g.drawFittedText(text, boundsInner.toNearestInt(), Just::centred, 1);
-                }
-                if (enterExitPhase != 1.f)
-                {
-                    auto tFont = font::dosisExtraLight();
-                    const auto fHeight = findMaxHeight(tFont, text, width, height);
-					tFont.setHeight(fHeight * (1.f - enterExitPhase));
-					g.setFont(tFont);
-					g.setColour(colInteract);
-					g.drawFittedText(text, boundsInner.toNearestInt(), Just::centred, 1);
-                }
-                
-                if (showModulation)
-                {
-                    const auto valMod = vals[Knob::ValMod];
-                    const auto modDepth = vals[Knob::ModDepth];
-
+            if (showModulation)
+            {
+                const auto valMod = vals[Knob::ValMod];
+                const auto modDepth = vals[Knob::ModDepth];
                     
-                    const auto widthHalf = width * .5f;
-                    const auto centreX = boundsInner.getX() + widthHalf;
-                    const auto modX = centreX + widthHalf * modDepth;
-                    const auto lineY = boundsInner.getBottom();
-                    const LineF modLine(centreX, lineY, modX, lineY);
-                    setCol(g, CID::Mod);
-                    const auto lineThicc = thicc2 + enterExitPhase * thicc;
-                    g.drawLine(modLine, lineThicc);
+                const auto widthHalf = width * .5f;
+                const auto centreX = boundsInner.getX() + widthHalf;
+                const auto modX = centreX + widthHalf * modDepth;
+                const auto lineY = boundsInner.getBottom();
+                const LineF modLine(centreX, lineY, modX, lineY);
+                setCol(g, CID::Mod);
+                const auto lineThicc = thicc2 + enterExitPhase * thicc;
+                g.drawLine(modLine, lineThicc);
 
-                    const auto valDif = valMod - valMain;
-                    const auto valModX = centreX + widthHalf * valDif;
-					const LineF modTick(valModX, lineY, valModX, lineY - lineThicc);
-					g.drawLine(modTick, lineThicc);
-                }
-            };
+                const auto valDif = valMod - valMain;
+                const auto valModX = centreX + widthHalf * valDif;
+				const LineF modTick(valModX, lineY, valModX, lineY - lineThicc);
+				g.drawLine(modTick, lineThicc);
+            }
+        };
     }
 
     void makeKnob(PID pID, Knob& knob, bool showModulation)

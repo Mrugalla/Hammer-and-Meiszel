@@ -97,12 +97,12 @@ namespace gui
     {
         switch (cID)
         {
-        case Colours::ID::Bg: return Colour(0xff05060f);
-        case Colours::ID::Txt: return Colour(0xff61e973);
-        case Colours::ID::Interact: return Colour(0xff00cfe2);
-        case Colours::ID::Mod: return Colour(0xff7b00ff);
-        case Colours::ID::Hover: return Colour(0xbfdeffd9);
-        case Colours::ID::Darken: return Colour(0xab0c2425);
+        case Colours::ID::Bg: return Colour(0xff0c6066);
+        case Colours::ID::Txt: return Colour(0xffe2ffd3);
+        case Colours::ID::Interact: return Colour(0xffd5ff00);
+        case Colours::ID::Mod: return Colour(0xff001014);
+        case Colours::ID::Hover: return Colour(0x84ffffff);
+        case Colours::ID::Darken: return Colour(0xad15133b);
         default: return Colour(0xff000000);
         }
     }
@@ -111,6 +111,11 @@ namespace gui
 	{
 		g.setColour(getColour(cID));
 	}
+
+    void setCol(Graphics& g, CID cID, float alpha)
+    {
+        g.setColour(getColour(cID).withMultipliedAlpha(alpha));
+    }
 }
 
 #undef DisregardState

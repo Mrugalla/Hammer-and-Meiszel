@@ -7,7 +7,7 @@ namespace gui
 		buttonAB(u),
 		buttonSolo(u),
 		buttonDropDownGens(u),
-		buttonDropDownMisc(u),
+		buttonDropDownProcess(u),
 		buttonRandomizer(u, "randmodal"),
 		buttonFixed(u),
 		materialEditors
@@ -32,7 +32,7 @@ namespace gui
 		},
 		params(u),
 		dropDownGens(u),
-		dropDownMisc(u),
+		dropDownProcess(u),
 		updateMaterialFunc([](){}),
 		randSeedVertical(u.getProps(), "randvrtcl"),
 		randSeedHorizontal(u.getProps(), "randhrzntl"),
@@ -48,7 +48,7 @@ namespace gui
 		addAndMakeVisible(buttonAB);
 		addAndMakeVisible(buttonSolo);
 		addAndMakeVisible(buttonDropDownGens);
-		addAndMakeVisible(buttonDropDownMisc);
+		addAndMakeVisible(buttonDropDownProcess);
 		addAndMakeVisible(buttonRandomizer);
 		addAndMakeVisible(buttonFixed);
 		for (auto& m : materialEditors)
@@ -58,7 +58,7 @@ namespace gui
 		materialEditors[0].setVisible(true);
 		addAndMakeVisible(params);
 		addChildComponent(dropDownGens);
-		addChildComponent(dropDownMisc);
+		addChildComponent(dropDownProcess);
 
 		initButtonAB();
 		initButtonSolo();
@@ -124,7 +124,7 @@ namespace gui
 			x += buttonWidth;
 			buttonDropDownGens.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
-			buttonDropDownMisc.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
+			buttonDropDownProcess.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
 			buttonRandomizer.setBounds(BoundsF(x, y, buttonWidth, h).toNearestInt());
 			x += buttonWidth;
@@ -137,7 +137,7 @@ namespace gui
 		params.setBounds(layout.bottom().toNearestInt());
 		const auto dropDownsBounds = layout(0, 1, 1, 1, thicc).toNearestInt();
 		dropDownGens.setBounds(dropDownsBounds);
-		dropDownMisc.setBounds(dropDownsBounds);
+		dropDownProcess.setBounds(dropDownsBounds);
 	}
 
 	void ModalModuleEditor::initButtonAB()
@@ -172,18 +172,18 @@ namespace gui
 		buttonSolo.value = 0.f;
 		buttonSolo.type = Button::Type::kToggle;
 		buttonSolo.onClick = [&](const Mouse&)
+		{
+			buttonSolo.value = std::round(1.f - buttonSolo.value);
+			utils.audioProcessor.pluginProcessor.modalFilter.setSolo(buttonSolo.value > .5f);
+			for (auto& mv : materialEditors)
 			{
-				buttonSolo.value = std::round(1.f - buttonSolo.value);
-				utils.audioProcessor.pluginProcessor.modalFilter.setSolo(buttonSolo.value > .5f);
-				for (auto& mv : materialEditors)
+				if (mv.isShowing())
 				{
-					if (mv.isShowing())
-					{
-						mv.updateActives(buttonSolo.value > .5f);
-						mv.repaint();
-					}
+					mv.updateActives(buttonSolo.value > .5f);
+					mv.repaint();
 				}
-			};
+			}
+		};
 	}
 
 	void ModalModuleEditor::initDropDown()
@@ -202,7 +202,7 @@ namespace gui
 				};
 				wannaUpdate = i;
 			},
-			"Gen: Sine", "Generates a modal material with a single partial."
+			"Sine", "Generates a modal material with a single partial."
 		);
 
 		// GEN: SAW
@@ -219,7 +219,7 @@ namespace gui
 				};
 				wannaUpdate = i;
 			},
-			"Gen: Saw", "Generates a sawtooth-shaped modal material."
+			"Saw", "Generates a sawtooth-shaped modal material."
 		);
 
 		// GEN: SQUARE
@@ -236,7 +236,7 @@ namespace gui
 				};
 				wannaUpdate = i;
 			},
-			"Gen: Square", "Generates a square-shaped modal material."
+			"Square", "Generates a square-shaped modal material."
 		);
 
 		// GEN: FIBONACCI
@@ -253,7 +253,7 @@ namespace gui
 				};
 				wannaUpdate = i;
 			},
-			"Gen: Fibonacci", "Generates a modal material with Fibonacci ratios."
+			"Fibonacci", "Generates a modal material with Fibonacci ratios."
 		);
 
 		// GEN: PRIME
@@ -270,11 +270,77 @@ namespace gui
 				};
 				wannaUpdate = i;
 			},
-			"Gen: Prime", "Generates a modal material with prime ratios."
+			"Prime", "Generates a modal material with prime ratios."
+		);
+
+		// GEN: Randomize Magnitudes
+		dropDownGens.add
+		(
+			[&](const Mouse& mouse)
+			{
+				randSeedVertical.updateSeed(mouse.mods.isLeftButtonDown());
+
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+				updateMaterialFunc = [&, matIdx]()
+					{
+						const auto numPartials = dsp::modal::NumPartials;
+						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+						auto& material = modalFilter.getMaterial(matIdx);
+						auto& peaks = material.peakInfos;
+						for (auto i = 0; i < numPartials; ++i)
+						{
+							auto& peak = peaks[i];
+							peak.mag = randSeedVertical();
+						}
+						material.updatePeakInfosFromGUI();
+					};
+				wannaUpdate = matIdx;
+			},
+			"Rand Magnitudes", "Randomizes all of the partials' magnitudes."
+		);
+
+		// Proc: Randomize Frequency Ratios
+		dropDownGens.add
+		(
+			[&](const Mouse& mouse)
+			{
+				randSeedHorizontal.updateSeed(mouse.mods.isLeftButtonDown());
+
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+				updateMaterialFunc = [&, matIdx]()
+					{
+						const auto numPartials = dsp::modal::NumPartials;
+						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+						auto& material = modalFilter.getMaterial(matIdx);
+						auto& peaks = material.peakInfos;
+						for (auto i = 1; i < numPartials; ++i)
+						{
+							auto& peak = peaks[i];
+							peak.fc = 1.f * randSeedHorizontal() * 32.f;
+						}
+						material.updatePeakInfosFromGUI();
+					};
+				wannaUpdate = matIdx;
+
+			},
+			"Rand Ratios", "Randomizes all of the modal material's ratios."
+		);
+
+		// Record Input
+		dropDownGens.add
+		(
+			[&](const Mouse&)
+			{
+				const auto i = buttonAB.value > .5f ? 1 : 0;
+				auto& processor = utils.audioProcessor.pluginProcessor;
+				processor.recording.store(i);
+				processor.recSampleIndex = 0;
+			},
+			"Rec Input", "Records the input signal for modal analysis."
 		);
 
 		// Copy To Other Material
-		dropDownMisc.add
+		dropDownProcess.add
 		(
 			[&](const Mouse&)
 			{
@@ -293,7 +359,7 @@ namespace gui
 		);
 
 		// Proc: Vertical Flip
-		dropDownMisc.add
+		dropDownProcess.add
 		(
 			[&](const Mouse&)
 			{
@@ -326,7 +392,7 @@ namespace gui
 		);
 
 		// Proc: Horizontal Flip
-		dropDownMisc.add
+		dropDownProcess.add
 		(
 			[&](const Mouse&)
 			{
@@ -349,74 +415,8 @@ namespace gui
 			"Proc: Horizontal Flip", "Flips the modal material's partials horizontally."
 		);
 
-		// Proc: Randomize Magnitudes
-		dropDownMisc.add
-		(
-			[&](const Mouse& mouse)
-			{
-				randSeedVertical.updateSeed(mouse.mods.isLeftButtonDown());
-
-				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
-				{
-						const auto numPartials = dsp::modal::NumPartials;
-						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-						auto& material = modalFilter.getMaterial(matIdx);
-						auto& peaks = material.peakInfos;
-						for (auto i = 0; i < numPartials; ++i)
-						{
-							auto& peak = peaks[i];
-							peak.mag = randSeedVertical();
-						}
-						material.updatePeakInfosFromGUI();
-				};
-				wannaUpdate = matIdx;
-			},
-			"Randomize Magnitudes", "Randomizes all of the partials' magnitudes."
-		);
-
-		// Proc: Randomize Frequency Ratios
-		dropDownMisc.add
-		(
-			[&](const Mouse& mouse)
-			{
-				randSeedHorizontal.updateSeed(mouse.mods.isLeftButtonDown());
-
-				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
-				{
-					const auto numPartials = dsp::modal::NumPartials;
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(matIdx);
-					auto& peaks = material.peakInfos;
-					for (auto i = 1; i < numPartials; ++i)
-					{
-						auto& peak = peaks[i];
-						peak.fc = 1.f * randSeedHorizontal() * 32.f;
-					}
-					material.updatePeakInfosFromGUI();
-				};
-				wannaUpdate = matIdx;
-				
-			},
-			"Randomize Ratios", "Randomizes all of the modal material's ratios."
-		);
-
-		// Record Input
-		dropDownMisc.add
-		(
-			[&](const Mouse&)
-			{
-				const auto i = buttonAB.value > .5f ? 1 : 0;
-				auto& processor = utils.audioProcessor.pluginProcessor;
-				processor.recording.store(i);
-				processor.recSampleIndex = 0;
-			},
-			"Record Input", "Records the input signal for modal analysis."
-		);
-
 		// Rescue Overlaps
-		dropDownMisc.add
+		dropDownProcess.add
 		(
 			[&](const Mouse&)
 			{
@@ -475,9 +475,9 @@ namespace gui
 		);
 
 		dropDownGens.init();
-		dropDownMisc.init();
-		buttonDropDownGens.init(dropDownGens, "Generators", "Generate modal materials from magic! (math)");
-		buttonDropDownMisc.init(dropDownMisc, "Misc", "Here you can find additional modal material features.");
+		dropDownProcess.init();
+		buttonDropDownGens.init(dropDownGens, "Generate", "Generate modal materials from magic! (math)");
+		buttonDropDownProcess.init(dropDownProcess, "Process", "Here you can find additional modal material features.");
 	}
 
 	void ModalModuleEditor::initRandomizer()
