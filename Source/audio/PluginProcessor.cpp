@@ -6,7 +6,8 @@ namespace audio
 	PluginProcessor::PluginProcessor(Params& _params, arch::XenManager& _xen) :
 		params(_params), xen(_xen), sampleRate(1.),
 		keySelector(),
-		autoMPE(), voiceSplit(), parallelProcessor(), formantLayer(),
+		monophonyHandler(), autoMPE(), voiceSplit(),
+		parallelProcessor(), formantLayer(),
 		envGensAmp(), envGensMod(),
 		noiseSynth(),
 		modalFilter(), formantFilter(), combFilter(), lowpass(),
@@ -161,11 +162,14 @@ namespace audio
 		}
 
 		const auto& polyParam = params(PID::Polyphony);
+		
 		const auto polyphony = static_cast<int>(std::round(polyParam.getValModDenorm()));
+		monophonyHandler(midi, polyphony);
 
 		const auto& keySelectorEnabledParam = params(PID::KeySelectorEnabled);
 		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
 		keySelector(midi, xen, keySelectorEnabled, playing);
+
 		autoMPE(midi, polyphony);
 		voiceSplit(midi, numSamples);
 
@@ -379,7 +383,8 @@ namespace audio
 					envGensAmp.triggerNoteOn(true, v);
 					envGensMod.triggerNoteOn(true, v);
 					const auto noteNumber = static_cast<double>(msg.getNoteNumber());
-					modalFilter.triggerNoteOn(xen, noteNumber, numChannels, v);
+					const bool polyphonic = polyphony != 1;
+					modalFilter.triggerNoteOn(xen, noteNumber, numChannels, v, polyphonic);
 					formantFilter.triggerNoteOn(v);
 					combFilter.triggerNoteOn(xen, noteNumber, numChannels, v);
 					lowpass.triggerNoteOn(xen, noteNumber, numChannels, v);

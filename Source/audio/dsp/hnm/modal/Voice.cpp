@@ -138,9 +138,17 @@ namespace dsp
 			resonatorBank.triggerXen(xen, materialStereo, numChannels);
 		}
 
-		void Voice::triggerNoteOn(const arch::XenManager& xen, double noteNumber, int numChannels) noexcept
+		void Voice::triggerNoteOn(const arch::XenManager& xen, double noteNumber,
+			int numChannels, bool polyphonic) noexcept
 		{
-			resonatorBank.triggerNoteOn(materialStereo, xen, noteNumber, numChannels);
+			resonatorBank.triggerNoteOn
+			(
+				materialStereo,
+				xen,
+				noteNumber,
+				numChannels,
+				polyphonic
+			);
 			snapParameterValues = true;
 		}
 

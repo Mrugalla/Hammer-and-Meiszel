@@ -64,9 +64,9 @@ namespace dsp
 			// xen, numChannels
 			void triggerXen(const arch::XenManager&, int) noexcept;
 
-			// xen, noteNumber, numChannels
+			// xen, noteNumber, numChannels, polyphonic
 			void triggerNoteOn(const arch::XenManager&,
-				double, int) noexcept;
+				double, int, bool) noexcept;
 
 			void triggerNoteOff() noexcept;
 

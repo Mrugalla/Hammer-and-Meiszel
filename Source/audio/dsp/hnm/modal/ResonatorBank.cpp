@@ -23,6 +23,38 @@ namespace dsp
 			return xen.noteToFreqHz(pitch + transpose + pb * pbRange);
 		}
 
+		//
+
+		ResonatorBank::ResoGain::ResoGain() :
+			gains(),
+			gain{ 1., 1. }
+		{
+			gains[0] = 1.;
+			gains[1] = math::dbToAmp(24.);
+			gains[2] = math::dbToAmp(32.);
+			gains[NumGains] = gains[NumGains - 1];
+		}
+
+		void ResonatorBank::ResoGain::update(double x, int ch) noexcept
+		{
+			x *= MaxGainD;
+			const auto xFloor = std::floor(x);
+			const auto xFrac = x - xFloor;
+			const auto i0 = static_cast<int>(xFloor);
+			const auto i1 = i0 + 1;
+			const auto g0 = gains[i0];
+			const auto g1 = gains[i1];
+			const auto gR = g1 - g0;
+			gain[ch] = g0 + xFrac * gR;
+		}
+
+		double ResonatorBank::ResoGain::operator()(int ch) const noexcept
+		{
+			return gain[ch];
+		}
+
+		//
+
 		ResonatorBank::ResonatorBank() :
 			resonators(),
 			val(),
@@ -81,12 +113,13 @@ namespace dsp
 		}
 
 		void ResonatorBank::triggerNoteOn(const MaterialDataStereo& materialStereo,
-			const arch::XenManager& xen, double noteNumber, int numChannels) noexcept
+			const arch::XenManager& xen, double noteNumber, int numChannels, bool polyphonic) noexcept
 		{
 			val.pitch = noteNumber;
 			const auto freq = val.getFreq(xen);
 			if (setFrequencyHz(materialStereo, freq, numChannels))
-				reset();
+				if(polyphonic)
+					reset();
 			sleepy.triggerNoteOn();
 		}
 

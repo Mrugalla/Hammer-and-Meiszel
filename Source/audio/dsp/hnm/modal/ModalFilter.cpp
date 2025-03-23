@@ -59,9 +59,9 @@ namespace dsp
 		}
 
 		void ModalFilter::triggerNoteOn(const arch::XenManager& xen,
-			double noteNumber, int numChannels, int v) noexcept
+			double noteNumber, int numChannels, int v, bool polyphonic) noexcept
 		{
-			voices[v].triggerNoteOn(xen, noteNumber, numChannels);
+			voices[v].triggerNoteOn(xen, noteNumber, numChannels, polyphonic);
 		}
 
 		void ModalFilter::triggerNoteOff(int v) noexcept

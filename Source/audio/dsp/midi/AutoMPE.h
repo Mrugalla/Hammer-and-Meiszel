@@ -29,7 +29,6 @@ namespace dsp
 		MidiBuffer buffer;
 		Voices voices;
 		int channelIdx, poly;
-		std::array<uint8, 128> heldNotes;
 
 		void updatePoly(int);
 

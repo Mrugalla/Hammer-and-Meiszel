@@ -153,6 +153,10 @@
             <FILE id="YdTVJ4" name="MIDITranspose.cpp" compile="1" resource="0"
                   file="Source/audio/dsp/midi/MIDITranspose.cpp"/>
             <FILE id="gl2l3M" name="MIDITranspose.h" compile="0" resource="0" file="Source/audio/dsp/midi/MIDITranspose.h"/>
+            <FILE id="tIBvHf" name="MonophonyHandler.cpp" compile="1" resource="0"
+                  file="Source/audio/dsp/midi/MonophonyHandler.cpp"/>
+            <FILE id="GpusTM" name="MonophonyHandler.h" compile="0" resource="0"
+                  file="Source/audio/dsp/midi/MonophonyHandler.h"/>
             <FILE id="R2HZP8" name="MPESplit.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/MPESplit.cpp"/>
             <FILE id="bWUojx" name="MPESplit.h" compile="0" resource="0" file="Source/audio/dsp/midi/MPESplit.h"/>
             <FILE id="adbDVS" name="NoteDelay.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/NoteDelay.cpp"/>

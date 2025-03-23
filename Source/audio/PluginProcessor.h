@@ -4,6 +4,7 @@
 #include "../HammerUndMeiszelTests.h"
 #include "../param/Param.h"
 #include "dsp/KeySelector.h"
+#include "dsp/midi/MonophonyHandler.h"
 #include "dsp/midi/AutoMPE.h"
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
@@ -46,6 +47,7 @@ namespace audio
 		double sampleRate;
 
 		dsp::KeySelector keySelector;
+		dsp::MonophonyHandler monophonyHandler;
 		dsp::AutoMPE autoMPE;
 		dsp::MPESplit voiceSplit;
 		dsp::PPMIDIBand parallelProcessor;
