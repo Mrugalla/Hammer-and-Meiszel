@@ -318,7 +318,7 @@ namespace gui
 		{
 			bool updated = false;
 			
-			auto& polyParam = utils.audioProcessor.params(PID::Polyphony);
+			const auto& polyParam = utils.audioProcessor.params(PID::Polyphony);
 			const auto poly = static_cast<int>(std::round(polyParam.getValModDenorm()));
 			if (voiceGrid.poly != poly)
 			{
