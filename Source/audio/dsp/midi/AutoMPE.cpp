@@ -12,8 +12,7 @@ namespace dsp
 		voices(),
 		channelIdx(-1),
 		poly(VoicesSize),
-		heldNotes(),
-		curNote(-1)
+		heldNotes()
 	{}
 
 	const AutoMPE::Voices& AutoMPE::AutoMPE::getVoices() const noexcept
@@ -42,7 +41,7 @@ namespace dsp
 				voice.note = -1;
 			}
 		}
-		channelIdx = curNote = -1;
+		channelIdx = -1;
 		poly = _poly;
 		if(poly == 1)
 			for (auto i = 0; i < 128; ++i)
@@ -88,7 +87,6 @@ namespace dsp
 				voice.channel = channelIdx + 2;
 				return processNoteOn(voice, msg, ts);
 			}
-				
 		}
 		incChannelIdx();
 		auto& voice = voices[channelIdx];
@@ -101,18 +99,17 @@ namespace dsp
 	{
 		const bool monophonic = poly == 1;
 		if (monophonic)
-			if(curNote != -1)
-				buffer.addEvent(MidiMessage::noteOff(voice.channel, curNote), ts);
+			if(voice.note != -1)
+				buffer.addEvent(MidiMessage::noteOff(voice.channel, voice.note), ts);
 		const auto velo = msg.getVelocity();
-		curNote = msg.getNoteNumber();
-		heldNotes[curNote] = velo;
+		voice.note = msg.getNoteNumber();
+		heldNotes[voice.note] = velo;
 		if (velo == 0)
 		{
-			buffer.addEvent(MidiMessage::noteOff(voice.channel, curNote), ts);
-			voice.note = curNote = -1;
+			buffer.addEvent(MidiMessage::noteOff(voice.channel, voice.note), ts);
+			voice.note = -1;
 			return;
 		}
-		voice.note = curNote;
 		msg.setChannel(voice.channel);
 		buffer.addEvent(msg, ts);
 	}
@@ -135,7 +132,7 @@ namespace dsp
 	void AutoMPE::processNoteOff(Voice& voice, MidiMessage& msg, int ts) noexcept
 	{
 		msg.setChannel(voice.channel);
-		voice.note = curNote = -1;
+		voice.note = -1;
 		buffer.addEvent(msg, ts);
 		const bool polyphonic = poly != 1;
 		if (polyphonic)
@@ -143,8 +140,8 @@ namespace dsp
 		for (auto i = 0; i < 128; ++i)
 			if (heldNotes[i] != 0)
 			{
-				voice.note = curNote = i;
-				buffer.addEvent(MidiMessage::noteOn(voice.channel, curNote, heldNotes[i]), ts);
+				voice.note = i;
+				buffer.addEvent(MidiMessage::noteOn(voice.channel, voice.note, heldNotes[i]), ts);
 				return;
 			}
 	}

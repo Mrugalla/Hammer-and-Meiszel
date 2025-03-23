@@ -29,9 +29,7 @@ namespace dsp
 		MidiBuffer buffer;
 		Voices voices;
 		int channelIdx, poly;
-		// MONO MODE:
 		std::array<uint8, 128> heldNotes;
-		int curNote;
 
 		void updatePoly(int);
 
