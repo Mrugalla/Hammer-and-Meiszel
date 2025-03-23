@@ -63,6 +63,8 @@ namespace param
 		EnvGenModDecay,
 		EnvGenModSustain,
 		EnvGenModRelease,
+		// polyphony:
+		Polyphony,
 		// modal:
 		ModalOct,
 		ModalSemi,

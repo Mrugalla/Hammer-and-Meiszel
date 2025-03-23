@@ -20,5 +20,7 @@ namespace gui
 
 	protected:
 		std::array<bool, NumVoices> voices;
+	public:
+		int poly;
 	};
 }

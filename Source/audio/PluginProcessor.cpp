@@ -160,10 +160,14 @@ namespace audio
 			}
 		}
 
+		const auto& polyParam = params(PID::Polyphony);
+		const auto polyphony = static_cast<int>(std::round(polyParam.getValModDenorm()));
+
 		const auto& keySelectorEnabledParam = params(PID::KeySelectorEnabled);
 		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
 		keySelector(midi, xen, keySelectorEnabled, playing);
-		autoMPE(midi); voiceSplit(midi, numSamples);
+		autoMPE(midi, polyphony);
+		voiceSplit(midi, numSamples);
 
 		const auto& modalOctParam = params(PID::ModalOct);
 		const auto& modalSemiParam = params(PID::ModalSemi);
@@ -284,7 +288,6 @@ namespace audio
 		const dsp::hnm::lp::Params lpParams(damp, dampEnv, dampWidth);
 
 		const auto samplesInput = const_cast<const double**>(samples);
-
 		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
 		{
 			const auto& midiVoice = voiceSplit[v + 2];
@@ -310,9 +313,11 @@ namespace audio
 				const auto envGenModInfo = envGensMod(v, numSamplesEvt);
 				const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
 
+				bool active = envGenAmpActive;
+
 				const bool modalRinging = modalFilter.isRinging(v);
 				const bool formantsRinging = formantFilter.isRinging(v);
-				bool active = envGenAmpActive || modalRinging || formantsRinging;
+				active = active || modalRinging || formantsRinging;
 				if (active)
 				{
 					double* layerVoiceEvt[] = { formantLayer[0].data(), formantLayer[1].data() };
@@ -322,7 +327,7 @@ namespace audio
 						auto layer = layerVoiceEvt[ch];
 						dsp::SIMD::copy(layer, smplsVoice, numSamplesEvt);
 					}
-					
+
 					modalFilter
 					(
 						samplesVoiceEvt,

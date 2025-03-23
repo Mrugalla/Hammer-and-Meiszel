@@ -25,9 +25,6 @@ namespace gui
 		ModalParamsEditor params;
 		DropDownMenu dropDownGens, dropDownProcess;
 		arch::RandSeed randSeedVertical, randSeedHorizontal, randSeedFixedPartials;
-
-		std::function<void()> updateMaterialFunc;
-		int wannaUpdate;
 	private:
 		void initButtonAB();
 

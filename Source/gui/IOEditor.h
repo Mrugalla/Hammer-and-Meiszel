@@ -8,7 +8,7 @@ namespace gui
 	struct IOEditor :
 		public Comp
 	{
-		enum { kWet, kMix, kOut, kMacro, kSidePanelParams };
+		enum { kPoly, kWet, kMix, kOut, kMacro, kSidePanelParams };
 		enum
 		{
 			kMacroRel,

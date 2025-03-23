@@ -18,14 +18,15 @@ namespace dsp
 
 		AutoMPE();
 
-		void operator()(MidiBuffer&);
+		// midi, poly
+		void operator()(MidiBuffer&, int);
 
 		const Voices& getVoices() const noexcept;
 
 	private:
 		MidiBuffer buffer;
 		Voices voices;
-		int channelIdx;
+		int channelIdx, poly;
 
 		void incChannelIdx() noexcept;
 

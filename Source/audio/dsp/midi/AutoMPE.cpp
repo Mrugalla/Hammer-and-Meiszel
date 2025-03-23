@@ -11,7 +11,8 @@ namespace dsp
 	AutoMPE::AutoMPE() :
 		buffer(),
 		voices(),
-		channelIdx(-1)
+		channelIdx(-1),
+		poly(VoicesSize)
 	{}
 
 	const AutoMPE::Voices& AutoMPE::AutoMPE::getVoices() const noexcept
@@ -19,8 +20,21 @@ namespace dsp
 		return voices;
 	}
 
-	void AutoMPE::operator()(MidiBuffer& midi)
+	void AutoMPE::operator()(MidiBuffer& midi, int _poly)
 	{
+		if (poly != _poly)
+		{
+			for (auto ch = _poly; ch < poly; ++ch)
+			{
+				auto& voice = voices[ch];
+				if (voice.noteOn)
+					buffer.addEvent(MidiMessage::noteOff(voice.channel, voice.note), 0);
+			}
+			poly = _poly;
+			channelIdx = -1;
+		}
+		
+
 		buffer.clear();
 
 		for (const auto it : midi)
@@ -42,7 +56,9 @@ namespace dsp
 
 	void AutoMPE::incChannelIdx() noexcept
 	{
-		channelIdx = (channelIdx + 1) % voices.size();
+		++channelIdx;
+		if(channelIdx >= poly)
+			channelIdx = 0;
 	}
 
 	void AutoMPE::processNoteOn(MidiMessage& msg, int ts)

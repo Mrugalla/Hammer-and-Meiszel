@@ -33,11 +33,9 @@ namespace gui
 		params(u),
 		dropDownGens(u),
 		dropDownProcess(u),
-		updateMaterialFunc([](){}),
 		randSeedVertical(u.getProps(), "randvrtcl"),
 		randSeedHorizontal(u.getProps(), "randhrzntl"),
-		randSeedFixedPartials(u.getProps(), "randfixd"),
-		wannaUpdate(-1)
+		randSeedFixedPartials(u.getProps(), "randfixd")
 	{
 		layout.init
 		(
@@ -85,18 +83,6 @@ namespace gui
 				buttonFixed.value = 0.f;
 			}
 		});
-
-		add(Callback([&]()
-		{
-			if (wannaUpdate == -1)
-				return;
-			const auto& mat = utils.audioProcessor.pluginProcessor.modalFilter.getMaterial(wannaUpdate);
-			const auto status = mat.status.load();
-			if (status != dsp::modal::StatusMat::Processing)
-				return;
-			updateMaterialFunc();
-			wannaUpdate = -1;
-		}, 0, cbFPS::k15, true));
 	}
 
 	void ModalModuleEditor::paint(Graphics& g)
@@ -188,19 +174,22 @@ namespace gui
 
 	void ModalModuleEditor::initDropDown()
 	{
+		const auto updateFunc = [&](int matIdx)
+		{
+			auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+			auto& material = modalFilter.getMaterial(matIdx);
+			material.updatePeakInfosFromGUI();
+		};
+
 		// GEN: SINE
 		dropDownGens.add
 		(
 			[&](const Mouse&)
 			{
 				const auto i = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, i]()
-				{
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(i);
-					dsp::modal::generateSine(material);
-				};
-				wannaUpdate = i;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(i);
+				dsp::modal::generateSine(material);
 			},
 			"Sine", "Generates a modal material with a single partial."
 		);
@@ -211,13 +200,9 @@ namespace gui
 			[&](const Mouse&)
 			{
 				const auto i = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, i]()
-				{
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(i);
-					dsp::modal::generateSaw(material);
-				};
-				wannaUpdate = i;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(i);
+				dsp::modal::generateSaw(material);
 			},
 			"Saw", "Generates a sawtooth-shaped modal material."
 		);
@@ -228,13 +213,9 @@ namespace gui
 			[&](const Mouse&)
 			{
 				const auto i = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, i]()
-				{
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(i);
-					dsp::modal::generateSquare(material);
-				};
-				wannaUpdate = i;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(i);
+				dsp::modal::generateSquare(material);
 			},
 			"Square", "Generates a square-shaped modal material."
 		);
@@ -245,13 +226,9 @@ namespace gui
 			[&](const Mouse&)
 			{
 				const auto i = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, i]()
-				{
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(i);
-					dsp::modal::generateFibonacci(material);
-				};
-				wannaUpdate = i;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(i);
+				dsp::modal::generateFibonacci(material);
 			},
 			"Fibonacci", "Generates a modal material with Fibonacci ratios."
 		);
@@ -262,71 +239,79 @@ namespace gui
 			[&](const Mouse&)
 			{
 				const auto i = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, i]()
-				{
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(i);
-					dsp::modal::generatePrime(material);
-				};
-				wannaUpdate = i;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(i);
+				dsp::modal::generatePrime(material);
 			},
 			"Prime", "Generates a modal material with prime ratios."
+		);
+
+		const auto randRatiosFunc = [&](const Mouse& mouse, int matIdx)
+		{
+			randSeedHorizontal.updateSeed(mouse.mods.isLeftButtonDown());
+			const auto numPartials = dsp::modal::NumPartials;
+			auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+			auto& material = modalFilter.getMaterial(matIdx);
+			auto& peaks = material.peakInfos;
+			for (auto i = 1; i < numPartials; ++i)
+			{
+				auto& peak = peaks[i];
+				peak.fc = 1.f * randSeedHorizontal() * 32.f;
+			}
+		};
+
+		const auto randMagsFunc = [&](const Mouse& mouse, int matIdx)
+		{
+			randSeedVertical.updateSeed(mouse.mods.isLeftButtonDown());
+			const auto numPartials = dsp::modal::NumPartials;
+			auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+			auto& material = modalFilter.getMaterial(matIdx);
+			auto& peaks = material.peakInfos;
+			for (auto i = 0; i < numPartials; ++i)
+			{
+				auto& peak = peaks[i];
+				peak.mag = randSeedVertical();
+			}
+		};
+
+		// GEN: Randomize All
+		dropDownGens.add
+		(
+			[&, a = randRatiosFunc, b = randMagsFunc, u = updateFunc](const Mouse& mouse)
+			{
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+				a(mouse, matIdx);
+				b(mouse, matIdx); 
+				u(matIdx);
+			},
+			"Rand: All", "Randomizes every property of the modal material."
+		);
+
+		// GEN: Randomize Frequency Ratios
+		dropDownGens.add
+		(
+			[&, a = randRatiosFunc, u = updateFunc](const Mouse& mouse)
+			{
+				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
+				a(mouse, matIdx);
+				u(matIdx);
+			},
+			"Rand: Ratios", "Randomizes the modal material's ratios."
 		);
 
 		// GEN: Randomize Magnitudes
 		dropDownGens.add
 		(
-			[&](const Mouse& mouse)
+			[&, b = randMagsFunc, u = updateFunc](const Mouse& mouse)
 			{
-				randSeedVertical.updateSeed(mouse.mods.isLeftButtonDown());
-
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
-					{
-						const auto numPartials = dsp::modal::NumPartials;
-						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-						auto& material = modalFilter.getMaterial(matIdx);
-						auto& peaks = material.peakInfos;
-						for (auto i = 0; i < numPartials; ++i)
-						{
-							auto& peak = peaks[i];
-							peak.mag = randSeedVertical();
-						}
-						material.updatePeakInfosFromGUI();
-					};
-				wannaUpdate = matIdx;
+				b(mouse, matIdx);
+				u(matIdx);
 			},
-			"Rand Magnitudes", "Randomizes all of the partials' magnitudes."
+			"Rand: Magnitudes", "Randomizes the modal material's magnitudes."
 		);
 
-		// Proc: Randomize Frequency Ratios
-		dropDownGens.add
-		(
-			[&](const Mouse& mouse)
-			{
-				randSeedHorizontal.updateSeed(mouse.mods.isLeftButtonDown());
-
-				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
-					{
-						const auto numPartials = dsp::modal::NumPartials;
-						auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-						auto& material = modalFilter.getMaterial(matIdx);
-						auto& peaks = material.peakInfos;
-						for (auto i = 1; i < numPartials; ++i)
-						{
-							auto& peak = peaks[i];
-							peak.fc = 1.f * randSeedHorizontal() * 32.f;
-						}
-						material.updatePeakInfosFromGUI();
-					};
-				wannaUpdate = matIdx;
-
-			},
-			"Rand Ratios", "Randomizes all of the modal material's ratios."
-		);
-
-		// Record Input
+		// GEN: Record Input
 		dropDownGens.add
 		(
 			[&](const Mouse&)
@@ -339,21 +324,17 @@ namespace gui
 			"Rec Input", "Records the input signal for modal analysis."
 		);
 
-		// Copy To Other Material
+		// Proc: Copy To Other Material
 		dropDownProcess.add
 		(
 			[&](const Mouse&)
 			{
 				const auto i = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, i]()
-				{
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					const auto& materialThis = modalFilter.getMaterial(i);
-					auto& materialThat = modalFilter.getMaterial(1 - i);
-					materialThat.peakInfos = materialThis.peakInfos;
-					materialThat.reportUpdate();
-				};
-				wannaUpdate = 1 - i;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				const auto& materialThis = modalFilter.getMaterial(i);
+				auto& materialThat = modalFilter.getMaterial(1 - i);
+				materialThat.peakInfos = materialThis.peakInfos;
+				materialThat.reportUpdate();
 			},
 			"Copy To Other Material", "Copies the selected modal material to the other material."
 		);
@@ -364,31 +345,27 @@ namespace gui
 			[&](const Mouse&)
 			{
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
+				const auto numPartials = dsp::modal::NumPartials;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(matIdx);
+				auto& peaks = material.peakInfos;
+
+				auto maxRatio = peaks[0].fc;
+				for (auto i = 1; i < numPartials; ++i)
+					maxRatio = std::max(maxRatio, peaks[i].fc);
+
+				const auto peaksCopy = peaks;
+				for (auto i = 0; i < numPartials; ++i)
 				{
-					const auto numPartials = dsp::modal::NumPartials;
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(matIdx);
-					auto& peaks = material.peakInfos;
-
-					auto maxRatio = peaks[0].fc;
-					for (auto i = 1; i < numPartials; ++i)
-						maxRatio = std::max(maxRatio, peaks[i].fc);
-
-					const auto peaksCopy = peaks;
-					for (auto i = 0; i < numPartials; ++i)
-					{
-						const auto j = numPartials - i - 1;
-						const auto& peakJ = peaksCopy[j];
-						auto& peak = peaks[i];
-						peak.fc = maxRatio - peakJ.fc + 1.f;
-						peak.mag = peakJ.mag;
-					}
-					material.reportUpdate();
-				};
-				wannaUpdate = matIdx;
+					const auto j = numPartials - i - 1;
+					const auto& peakJ = peaksCopy[j];
+					auto& peak = peaks[i];
+					peak.fc = maxRatio - peakJ.fc + 1.f;
+					peak.mag = peakJ.mag;
+				}
+				material.reportUpdate();
 			},
-			"Proc: Vertical Flip", "Flips the modal material's partials vertically."
+			"Vertical Flip", "Flips the modal material's partials vertically."
 		);
 
 		// Proc: Horizontal Flip
@@ -397,22 +374,18 @@ namespace gui
 			[&](const Mouse&)
 			{
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
+				const auto numPartials = dsp::modal::NumPartials;
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(matIdx);
+				auto& peaks = material.peakInfos;
+				for (auto i = 0; i < numPartials; ++i)
 				{
-					const auto numPartials = dsp::modal::NumPartials;
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(matIdx);
-					auto& peaks = material.peakInfos;
-					for (auto i = 0; i < numPartials; ++i)
-					{
-						auto& peak = peaks[i];
-						peak.mag = 1.f - peak.mag;
-					}
-					material.reportUpdate();
-				};
-				wannaUpdate = matIdx;
+					auto& peak = peaks[i];
+					peak.mag = 1.f - peak.mag;
+				}
+				material.reportUpdate();
 			},
-			"Proc: Horizontal Flip", "Flips the modal material's partials horizontally."
+			"Horizontal Flip", "Flips the modal material's partials horizontally."
 		);
 
 		// Rescue Overlaps
@@ -421,55 +394,51 @@ namespace gui
 			[&](const Mouse&)
 			{
 				const auto matIdx = buttonAB.value > .5f ? 1 : 0;
-				updateMaterialFunc = [&, matIdx]()
+				auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
+				auto& material = modalFilter.getMaterial(matIdx);
+				auto& peakInfos = material.peakInfos;
+				const auto numPartials = dsp::modal::NumPartials;
+
+				std::vector<int> duplicateIndexes;
+				size_t numDuplicates = 0;
+				do
 				{
-					auto& modalFilter = utils.audioProcessor.pluginProcessor.modalFilter;
-					auto& material = modalFilter.getMaterial(matIdx);
-					auto& peakInfos = material.peakInfos;
-					const auto numPartials = dsp::modal::NumPartials;
-
-					std::vector<int> duplicateIndexes;
-					size_t numDuplicates = 0;
-					do
+					for (auto i = 0; i < numDuplicates; ++i)
 					{
-						for (auto i = 0; i < numDuplicates; ++i)
-						{
-							const auto dIdx = duplicateIndexes[i];
-							++peakInfos[dIdx].fc;
-						}
+						const auto dIdx = duplicateIndexes[i];
+						++peakInfos[dIdx].fc;
+					}
 
-						duplicateIndexes.clear();
-						for (auto i = 0; i < numPartials; ++i)
-						{
-							const PointD r0(peakInfos[i].fc, peakInfos[i].mag);
-							for (auto j = i + 1; j < numPartials; ++j)
-								if (i != j)
+					duplicateIndexes.clear();
+					for (auto i = 0; i < numPartials; ++i)
+					{
+						const PointD r0(peakInfos[i].fc, peakInfos[i].mag);
+						for (auto j = i + 1; j < numPartials; ++j)
+							if (i != j)
+							{
+								const PointD r1(peakInfos[j].fc, peakInfos[j].mag);
+								const LineD line(r0, r1);
+								const auto dif = line.getLengthSquared();
+								const auto threshold = 0.01;
+								if (dif < threshold)
 								{
-									const PointD r1(peakInfos[j].fc, peakInfos[j].mag);
-									const LineD line(r0, r1);
-									const auto dif = line.getLengthSquared();
-									const auto threshold = 0.01;
-									if (dif < threshold)
-									{
-										bool alreadyFound = false;
-										for (const auto& dIdx : duplicateIndexes)
-											if (dIdx == i)
-											{
-												alreadyFound = true;
-												break;
-											}
-										if (!alreadyFound)
-											duplicateIndexes.push_back(j);
-									}
+									bool alreadyFound = false;
+									for (const auto& dIdx : duplicateIndexes)
+										if (dIdx == i)
+										{
+											alreadyFound = true;
+											break;
+										}
+									if (!alreadyFound)
+										duplicateIndexes.push_back(j);
 								}
-						}
+							}
+					}
 
-						numDuplicates = duplicateIndexes.size();
-					} while (numDuplicates != 0);
-					
-					material.reportUpdate();
-				};
-				wannaUpdate = matIdx;
+					numDuplicates = duplicateIndexes.size();
+				} while (numDuplicates != 0);
+
+				material.reportUpdate();
 			},
 			"Rescue Overlaps", "This button puts overlapping partials somewhere else."
 		);
@@ -477,7 +446,7 @@ namespace gui
 		dropDownGens.init();
 		dropDownProcess.init();
 		buttonDropDownGens.init(dropDownGens, "Generate", "Generate modal materials from magic! (math)");
-		buttonDropDownProcess.init(dropDownProcess, "Process", "Here you can find additional modal material features.");
+		buttonDropDownProcess.init(dropDownProcess, "Process", "Process the modal material in various ways!");
 	}
 
 	void ModalModuleEditor::initRandomizer()

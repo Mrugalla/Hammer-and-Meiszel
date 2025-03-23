@@ -64,6 +64,7 @@ namespace gui
 			SidePanelParam(u),
 			SidePanelParam(u),
 			SidePanelParam(u),
+			SidePanelParam(u),
 			SidePanelParam(u)
 		},
 		buttons
@@ -84,7 +85,7 @@ namespace gui
 		layout.init
 		(
 			{ 1, 1, 1 },
-			{ 5, 3, 2, 1, 3, 3, 3, 2, 13 }
+			{ 5, 3, 2, 1, 3, 3, 3, 3, 2, 13 }
 		);
 
 		initKnobs();
@@ -302,6 +303,7 @@ namespace gui
 
 	void IOEditor::initSidePanels()
 	{
+		sidePanelParams[kPoly].init(*this, "Poly", PID::Polyphony);
 		sidePanelParams[kWet].init(*this, "Wet", PID::GainWet);
 		sidePanelParams[kMix].init(*this, "Mix", PID::Mix);
 		sidePanelParams[kOut].init(*this, "Out", PID::GainOut);
@@ -315,8 +317,17 @@ namespace gui
 		voiceGrid.init([&](VoiceGrid<dsp::AutoMPE::VoicesSize>::Voices& voices)
 		{
 			bool updated = false;
+			
+			auto& polyParam = utils.audioProcessor.params(PID::Polyphony);
+			const auto poly = static_cast<int>(std::round(polyParam.getValModDenorm()));
+			if (voiceGrid.poly != poly)
+			{
+				updated = true;
+				voiceGrid.poly = poly;
+			}
+
 			const auto& pp = utils.audioProcessor.pluginProcessor.parallelProcessor;
-			for (auto i = 0; i < voices.size(); ++i)
+			for (auto i = 0; i < voiceGrid.poly; ++i)
 			{
 				const auto active = !pp.isSleepy(i);
 				if (voices[i] != active)

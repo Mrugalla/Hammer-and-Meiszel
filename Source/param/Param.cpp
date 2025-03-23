@@ -92,6 +92,8 @@ namespace param
 		case PID::ModalResonanzEnv: return "Modal Reso Env";
 		case PID::ModalResonanzBreite: return "Modal Reso Breite";
 		//
+		case PID::Polyphony: return "Polyphony";
+		//
 		case PID::FormantA: return "Formant A";
 		case PID::FormantB: return "Formant B";
 		case PID::FormantPos: return "Formant Position";
@@ -210,6 +212,8 @@ namespace param
 		case PID::ModalResonanz: return "Higher resonance causes sharper ringing.";
 		case PID::ModalResonanzEnv: return "The envelope generator's depth on the modal resonanz.";
 		case PID::ModalResonanzBreite: return "The stereo width of the modal resonanz.";
+		//
+		case PID::Polyphony: return "The polyphony (number of voices) of the synth engine.";
 		//
 		case PID::FormantA: return "Vowel A of the formant filter.";
 		case PID::FormantB: return "Vowel B of the formant filter.";
@@ -1485,6 +1489,8 @@ namespace param
 		params.push_back(makeParam(PID::EnvGenModDecay, 120.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenModSustain, 0.f, makeRange::lin(0.f, .999f)));
 		params.push_back(makeParam(PID::EnvGenModRelease, 42.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		//
+		params.push_back(makeParam(PID::Polyphony, 15.f, makeRange::stepped(1.f, 15.f), Unit::Voices));
 		//
 		params.push_back(makeParam(PID::ModalOct, 0.f, makeRange::stepped(-4.f, 4.f), Unit::Octaves));
 		params.push_back(makeParam(PID::ModalSemi, 0.f, makeRange::stepped(-12.f, 12.f), Unit::Semi));
