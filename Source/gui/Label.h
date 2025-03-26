@@ -82,23 +82,14 @@ namespace gui
 	
 	struct LabelGroup
 	{
-		LabelGroup() :
-			labels()
-		{}
+		LabelGroup();
 
-		void add(Label& label)
-		{
-			labels.push_back(&label);
-		}
+		void clear();
 
-		void setMaxHeight(float margin = 0.f) noexcept
-		{
-			const auto thicc = labels[0]->utils.thicc;
-			const auto h = findMaxCommonHeight(labels) - margin;
-			const auto height = h < 0.f ? thicc : h;
-			for (auto i = 0; i < labels.size(); ++i)
-				labels[i]->setHeight(height);
-		}
+		void add(Label&);
+
+		// margin
+		void setMaxHeight(float = 0.f) noexcept;
 
 	protected:
 		std::vector<Label*> labels;

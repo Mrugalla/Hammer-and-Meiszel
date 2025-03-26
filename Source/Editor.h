@@ -50,6 +50,7 @@ namespace gui
         KeySelectorEditor keySelector;
 		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
 		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
+        EnvelopeGeneratorMultiVoiceEditor::PIDsTemposync modEnvPIDsSync;
 		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
 		ModalModuleEditor modalEditor;
         ButtonColours buttonColours;

@@ -38,8 +38,8 @@ namespace audio
 	}
 
 	void PluginProcessor::operator()(double** samples,
-		dsp::MidiBuffer& midi, int numChannels, int numSamples,
-		bool playing) noexcept
+		dsp::MidiBuffer& midi, double bpm,
+		int numChannels, int numSamples, bool playing) noexcept
 	{
 #if PPDTestEnvelope == 1
 		// tests the gain env monophonically
@@ -112,18 +112,32 @@ namespace audio
 		const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
 		const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
 		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
+		envGensAmp.updateParametersMs({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
 
-		const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
-		const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
-		const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
-		const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
+		const auto& envGenModTemposyncParam = params(PID::EnvGenModTemposync);
+		const auto envGenModTemposync = envGenModTemposyncParam.getValMod() > .5f;
 		const auto& envGenModSustainParam = params(PID::EnvGenModSustain);
 		const auto envGenModSustain = static_cast<double>(envGenModSustainParam.getValModDenorm());
-		const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
-		const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
-
-		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
-		envGensMod.updateParameters({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
+		if (envGenModTemposync)
+		{
+			const auto& envGenModAttackParam = params(PID::EnvGenModAttackTS);
+			const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
+			const auto& envGenModDecayParam = params(PID::EnvGenModDecayTS);
+			const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
+			const auto& envGenModReleaseParam = params(PID::EnvGenModReleaseTS);
+			const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
+			envGensMod.updateParametersSync({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease }, bpm);
+		}
+		else
+		{
+			const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
+			const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
+			const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
+			const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
+			const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
+			const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
+			envGensMod.updateParametersMs({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
+		}
 
 		const auto& noiseBlendParam = params(PID::NoiseBlend);
 		const auto noiseBlend = noiseBlendParam.getValMod();

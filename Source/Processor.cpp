@@ -548,15 +548,17 @@ namespace audio
 #endif
         const auto ph = playHead.load();
         const auto posOpt = ph->getPosition();
+        double bpm = 120.;
         bool playing = false;
         if (posOpt.hasValue())
         {
             auto pos = *posOpt;
             playing = pos.getIsPlaying();
+            const auto bpmOpt = pos.getBpm();
+            if(bpmOpt.hasValue())
+				bpm = *bpmOpt;
         }
-        
-        pluginProcessor(samplesUp, midi, numChannels, numSamplesUp, playing);
-
+        pluginProcessor(samplesUp, midi, bpm, numChannels, numSamplesUp, playing);
 #if PPDHasHQ
         oversampler.downsample(samples, numSamples);
 #endif

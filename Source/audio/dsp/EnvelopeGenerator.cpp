@@ -20,39 +20,74 @@ namespace dsp
 		atkP = dcyP = rlsP = -1.;
 	}
 
-	void EnvelopeGenerator::Parameters::operator()(double _atk, double _dcy,
+	void EnvelopeGenerator::Parameters::processSync(double _atk, double _dcy,
+		double _sus, double _rls, double bpm) noexcept
+	{
+		sus = _sus;
+		const auto timeVal = 60000. / bpm * 4.;
+		if (atkP != _atk)
+		{
+			atkP = _atk;
+			if (atkP != 0.)
+			{
+				const auto atkMs = timeVal * atkP;
+				atk = math::msToInc(atkMs, sampleRate);
+			}
+			else
+				atk = 1.;
+		}
+		if (dcyP != _dcy)
+		{
+			dcyP = _dcy;
+			if (dcyP != 0.)
+			{
+				const auto dcyMs = timeVal * dcyP;
+				dcy = math::msToInc(dcyMs, sampleRate);
+			}
+			else
+				dcy = 1.;
+		}
+		if (rlsP != _rls)
+		{
+			rlsP = _rls;
+			if (rlsP != 0.)
+			{
+				const auto rlsMs = timeVal * rlsP;
+				rls = math::msToInc(rlsMs, sampleRate);
+			}
+			else
+				rls = 1.;
+		}
+	}
+
+	void EnvelopeGenerator::Parameters::processMs(double _atk, double _dcy,
 		double _sus, double _rls) noexcept
 	{
 		sus = _sus;
 		if (atkP != _atk)
 		{
 			atkP = _atk;
-			if (atkP < .1)
-				atk = 1.;
-			else
+			if (atkP != 0.)
 				atk = math::msToInc(atkP, sampleRate);
+			else
+				atk = 1.;
 		}
 		if (dcyP != _dcy)
 		{
 			dcyP = _dcy;
-			if (dcyP < .1)
-				dcy = 1.;
-			else
+			if (dcyP != 0.)
 				dcy = math::msToInc(dcyP, sampleRate);
+			else
+				dcy = 1.;
 		}
 		if (rlsP != _rls)
 		{
 			rlsP = _rls;
-			if (rlsP < .1)
-				rls = 1.;
-			else
+			if (rlsP != 0.)
 				rls = math::msToInc(rlsP, sampleRate);
+			else
+				rls = 1.;
 		}
-	}
-
-	void EnvelopeGenerator::Parameters::operator()(const Parameters& other) noexcept
-	{
-		operator()(other.atkP, other.dcyP, other.sus, other.rlsP);
 	}
 
 	bool EnvelopeGenerator::operator()(const MidiBuffer& midi, double* buffer, int numSamples) noexcept
@@ -284,9 +319,14 @@ namespace dsp
 		return false;
 	}
 
-	void EnvGenMultiVoice::updateParameters(const EnvelopeGenerator::Parameters& _params) noexcept
+	void EnvGenMultiVoice::updateParametersMs(const EnvelopeGenerator::Parameters& p) noexcept
 	{
-		params(_params);
+		params.processMs(p.atkP, p.dcyP, p.sus, p.rlsP);
+	}
+
+	void EnvGenMultiVoice::updateParametersSync(const EnvelopeGenerator::Parameters& p, double bpm) noexcept
+	{
+		params.processSync(p.atkP, p.dcyP, p.sus, p.rlsP, bpm);
 	}
 
 	const EnvelopeGenerator::Parameters& EnvGenMultiVoice::getParameters() const noexcept

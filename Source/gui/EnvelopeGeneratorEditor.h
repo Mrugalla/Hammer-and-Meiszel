@@ -12,26 +12,38 @@ namespace gui
 		using EnvGen = dsp::EnvelopeGenerator;
 		using EnvGenMultiVoice = dsp::EnvGenMultiVoice;
 
+		enum { kTSCheckCB, numCallbacks };
+
 		enum { kAttack, kDecay, kSustain, kRelease, kNumParameters };
 		static constexpr int kTitle = kNumParameters;
+
+		struct PIDsTemposync
+		{
+			PID atk, dcy, rls, temposync;
+		};
 
 		struct EnvGenView :
 			public Comp
 		{
-			// utils, attack, decay, sustain, release
-			EnvGenView(Utils&, PID, PID, PID, PID);
+			// utils, sustain
+			EnvGenView(Utils&, PID);
+
+			// attack, decay, release, isTemposync
+			void init(PID, PID, PID, bool);
 
 			void resized() override;
 
 			void paint(Graphics&) override;
 
 		protected:
-			Param &atkParam, &dcyParam, &susParam, &rlsParam;
+			Param& susParam;
+			Param *atkParam, *dcyParam, *rlsParam;
 			Ruler ruler;
 			Path curve, curveMod;
 			float atkV, dcyV, susV, rlsV, atkModV, dcyModV, susModV, rlsModV;
 
-			void initRuler();
+			// isTemposync
+			void initRuler(bool);
 
 			// path c, atkratio, dcyratio, sus, rlsratio
 			void updateCurve(Path&, float,
@@ -40,9 +52,9 @@ namespace gui
 			bool updateCurve() noexcept;
 		};
 
-		// utils, title, attack, decay, sustain, release
+		// utils, title, attack, decay, sustain, release, temposyncPIDs
 		EnvelopeGeneratorMultiVoiceEditor(Utils&, const String&,
-			PID, PID, PID, PID);
+			PID, PID, PID, PID, PIDsTemposync* = nullptr);
 
 		void paint(Graphics&) override;
 
@@ -54,6 +66,8 @@ namespace gui
 		std::array<Knob, kNumParameters> knobs;
 		std::array<ModDial, kNumParameters> modDials;
 		LabelGroup adsrLabelsGroup;
+		Button temposync;
 		ButtonRandomizer buttonRandomizer;
+		bool temposyncEnabled;
 	};
 }

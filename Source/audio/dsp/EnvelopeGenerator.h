@@ -1,5 +1,5 @@
 #pragma once
-#include "Smooth.h"
+#include "../Using.h"
 
 namespace dsp
 {
@@ -22,9 +22,10 @@ namespace dsp
 			void prepare(double) noexcept;
 
 			// atkMs, dcyMs, sus, rlsMs
-			void operator()(double, double, double, double) noexcept;
+			void processMs(double, double, double, double) noexcept;
 
-			void operator()(const Parameters&) noexcept;
+			// atkTS, dcyTS, sus, rlsTS, bpm
+			void processSync(double, double, double, double, double) noexcept;
 
 			double sampleRate, atkP, dcyP, rlsP;
 			double atk, dcy, sus, rls;
@@ -108,7 +109,9 @@ namespace dsp
 			envGens[vIdx].noteOn = e;
 		}
 
-		void updateParameters(const EnvelopeGenerator::Parameters&) noexcept;
+		void updateParametersMs(const EnvelopeGenerator::Parameters&) noexcept;
+
+		void updateParametersSync(const EnvelopeGenerator::Parameters&, double bpm) noexcept;
 
 		const EnvelopeGenerator::Parameters& getParameters() const noexcept;
 

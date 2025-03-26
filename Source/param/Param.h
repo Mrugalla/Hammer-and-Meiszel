@@ -54,15 +54,20 @@ namespace param
 		// inputs:
 		NoiseBlend,
 		KeySelectorEnabled,
-		// modsys:
+		// env gen amp:
 		EnvGenAmpAttack,
 		EnvGenAmpDecay,
 		EnvGenAmpSustain,
 		EnvGenAmpRelease,
+		// env gen mod:
 		EnvGenModAttack,
 		EnvGenModDecay,
 		EnvGenModSustain,
 		EnvGenModRelease,
+		EnvGenModAttackTS,
+		EnvGenModDecayTS,
+		EnvGenModReleaseTS,
+		EnvGenModTemposync,
 		// polyphony:
 		Polyphony,
 		// modal:

@@ -4,13 +4,10 @@ namespace gui
 {
 	//EnvGenView
 
-	EnvelopeGeneratorMultiVoiceEditor::EnvGenView::EnvGenView(Utils& u,
-		PID atkPID, PID dcyPID, PID susPID, PID rlsPID) :
+	EnvelopeGeneratorMultiVoiceEditor::EnvGenView::EnvGenView(Utils& u, PID susPID) :
 		Comp(u),
-		atkParam(u.audioProcessor.params(atkPID)),
-		dcyParam(u.audioProcessor.params(dcyPID)),
-		susParam(u.audioProcessor.params(susPID)),
-		rlsParam(u.audioProcessor.params(rlsPID)),
+		susParam(u.getParam(susPID)),
+		atkParam(nullptr), dcyParam(nullptr), rlsParam(nullptr),
 		ruler(u),
 		curve(), curveMod(),
 		atkV(-1.f), dcyV(-1.f), susV(-1.f), rlsV(-1.f),
@@ -22,13 +19,19 @@ namespace gui
 			{ 2, 13 }
 		);
 
-		initRuler();
-
 		add(Callback([&]()
 		{
 			if (updateCurve())
 				repaint();
 		}, 0, cbFPS::k30, true));
+	}
+
+	void EnvelopeGeneratorMultiVoiceEditor::EnvGenView::init(PID atkPID, PID dcyPID, PID rlsPID, bool isTemposync)
+	{
+		atkParam = utils.audioProcessor.params[atkPID];
+		dcyParam = utils.audioProcessor.params[dcyPID];
+		rlsParam = utils.audioProcessor.params[rlsPID];
+		initRuler(isTemposync);
 	}
 
 	void EnvelopeGeneratorMultiVoiceEditor::EnvGenView::resized()
@@ -47,16 +50,47 @@ namespace gui
 		g.strokePath(curve, stroke);
 	}
 
-	void EnvelopeGeneratorMultiVoiceEditor::EnvGenView::initRuler()
+	void EnvelopeGeneratorMultiVoiceEditor::EnvGenView::initRuler(bool isTemposync)
 	{
 		addAndMakeVisible(ruler);
+		ruler.setCID(CID::Hover);
+		
+		if (isTemposync)
+		{
+			ruler.setDrawFirstVal(false);
+			ruler.setGetIncFunc([](float v)
+			{
+				auto measure = 1.f / 32.f;
+				while (true)
+				{
+					if (v <= measure)
+						return measure / 4.f;
+					measure *= 2.f;
+				}
+			});
+			ruler.setValToStrFunc([](float v)
+			{
+				if (v < 1.f)
+				{
+					auto vInv = 1.f / v;
+					if (vInv == std::round(vInv))
+						return "1 / " + String(vInv);
+					vInv *= 3.f;
+					return "3 / " + String(vInv);
+				}
+				else
+				{
+					return String(v) + " bar";
+				}
+			});
+			return;
+		}
+		ruler.setDrawFirstVal(true);
 		ruler.makeIncExpansionOfGF();
 		ruler.setValToStrFunc([](float v)
 		{
 			return (v < 1000.f ? String(v) + "ms" : String(v * .001f) + "s");
 		});
-		ruler.setCID(CID::Hover);
-		ruler.setDrawFirstVal(true);
 	}
 
 	void EnvelopeGeneratorMultiVoiceEditor::EnvGenView::updateCurve(Path& c, float atkRatio,
@@ -119,14 +153,17 @@ namespace gui
 
 	bool EnvelopeGeneratorMultiVoiceEditor::EnvGenView::updateCurve() noexcept
 	{
+		if (atkParam == nullptr || dcyParam == nullptr || rlsParam == nullptr)
+			return false;
+
 		// denormalized parameter values
-		const auto atkModDenorm = atkParam.getValModDenorm();
-		const auto dcyModDenorm = dcyParam.getValModDenorm();
-		const auto rlsModDenorm = rlsParam.getValModDenorm();
+		const auto atkModDenorm = atkParam->getValModDenorm();
+		const auto dcyModDenorm = dcyParam->getValModDenorm();
+		const auto rlsModDenorm = rlsParam->getValModDenorm();
 		const auto susMod = susParam.getValMod();
-		const auto atkDenorm = atkParam.getValueDenorm();
-		const auto dcyDenorm = dcyParam.getValueDenorm();
-		const auto rlsDenorm = rlsParam.getValueDenorm();
+		const auto atkDenorm = atkParam->getValueDenorm();
+		const auto dcyDenorm = dcyParam->getValueDenorm();
+		const auto rlsDenorm = rlsParam->getValueDenorm();
 		const auto sus = susParam.getValue();
 
 		// return if no change
@@ -145,9 +182,9 @@ namespace gui
 		ruler.setLength(atkDenorm + dcyDenorm + rlsDenorm);
 
 		// denormalized parameter end values
-		const auto atkEndDenorm = atkParam.range.end;
-		const auto dcyEndDenorm = dcyParam.range.end;
-		const auto rlsEndDenorm = rlsParam.range.end;
+		const auto atkEndDenorm = atkParam->range.end;
+		const auto dcyEndDenorm = dcyParam->range.end;
+		const auto rlsEndDenorm = rlsParam->range.end;
 
 		// ratio of denormalized values [0,1]
 		const auto atkModRatio = atkModDenorm / atkEndDenorm;
@@ -165,14 +202,16 @@ namespace gui
 	//EnvelopeGeneratorMultiVoiceEditor
 
 	EnvelopeGeneratorMultiVoiceEditor::EnvelopeGeneratorMultiVoiceEditor(Utils& u, const String& title,
-		PID atk, PID dcy, PID sus, PID rls) :
+		PID atk, PID dcy, PID sus, PID rls, PIDsTemposync* temposyncPIDs) :
 		Comp(u),
 		labels{ Label(u), Label(u), Label(u), Label(u), Label(u) },
-		envGenView(u, atk, dcy, sus, rls),
+		envGenView(u, sus),
 		knobs{ Knob(u), Knob(u), Knob(u), Knob(u) },
 		modDials{ ModDial(u), ModDial(u), ModDial(u), ModDial(u) },
 		adsrLabelsGroup(),
-		buttonRandomizer(u, "randenv" + title)
+		temposync(u),
+		buttonRandomizer(u, "randenv" + title),
+		temposyncEnabled(false)
 	{
 		layout.init
 		(
@@ -189,20 +228,72 @@ namespace gui
 			addAndMakeVisible(modDial);
 		addAndMakeVisible(buttonRandomizer);
 
+		if (temposyncPIDs)
+		{
+			addAndMakeVisible(temposync);
+			makeParameter(temposync, temposyncPIDs->temposync, Button::Type::kToggle, "Sync");
+
+			const auto& temposyncParam = u.getParam(PID::EnvGenModTemposync);
+			temposyncEnabled = temposyncParam.getValMod() > .5f;
+
+			add(Callback([&, a = atk, d = dcy, r = rls,
+				aSync = temposyncPIDs->atk,
+				dSync = temposyncPIDs->dcy,
+				rSync = temposyncPIDs->rls]()
+				{
+					const auto& temposyncParam = u.getParam(PID::EnvGenModTemposync);
+					const auto enabled = temposyncParam.getValMod() > .5f;
+					if (enabled == temposyncEnabled)
+						return;
+					temposyncEnabled = enabled;
+
+					const auto aC = temposyncEnabled ? aSync : a;
+					const auto dC = temposyncEnabled ? dSync : d;
+					const auto rC = temposyncEnabled ? rSync : r;
+					makeKnob(aC, knobs[kAttack]);
+					makeKnob(dC, knobs[kDecay]);
+					makeKnob(rC, knobs[kRelease]);
+					modDials[kAttack].attach(aC);
+					modDials[kDecay].attach(dC);
+					modDials[kRelease].attach(rC);
+
+					envGenView.init(aC, dC, rC, temposyncEnabled);
+					repaint();
+				}, kTSCheckCB, cbFPS::k15, true));
+		}
+
+		if(temposyncEnabled)
+		{
+			makeKnob(temposyncPIDs->atk, knobs[kAttack]);
+			makeKnob(temposyncPIDs->dcy, knobs[kDecay]);
+			makeKnob(temposyncPIDs->rls, knobs[kRelease]);
+			modDials[kAttack].attach(temposyncPIDs->atk);
+			modDials[kDecay].attach(temposyncPIDs->dcy);
+			modDials[kRelease].attach(temposyncPIDs->rls);
+
+			envGenView.init(temposyncPIDs->atk, temposyncPIDs->dcy, temposyncPIDs->rls, true);
+		}
+		else
+		{
+			makeKnob(atk, knobs[kAttack]);
+			makeKnob(dcy, knobs[kDecay]);
+			makeKnob(rls, knobs[kRelease]);
+			modDials[kAttack].attach(atk);
+			modDials[kDecay].attach(dcy);
+			modDials[kRelease].attach(rls);
+
+			envGenView.init(atk, dcy, rls, false);
+		}
+
+		makeKnob(sus, knobs[kSustain]);
+		modDials[kSustain].attach(sus);
+
 		const auto fontKnobs = font::dosisBold();
 		makeTextLabel(labels[kAttack], "A", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(labels[kDecay], "D", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(labels[kSustain], "S", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(labels[kRelease], "R", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(labels[kTitle], title, font::dosisMedium(), Just::centredLeft, CID::Txt);
-		makeKnob(atk, knobs[kAttack]);
-		makeKnob(dcy, knobs[kDecay]);
-		makeKnob(sus, knobs[kSustain]);
-		makeKnob(rls, knobs[kRelease]);
-		modDials[kAttack].attach(atk);
-		modDials[kDecay].attach(dcy);
-		modDials[kSustain].attach(sus);
-		modDials[kRelease].attach(rls);
 		for (auto i = 0; i < kNumParameters; ++i)
 			adsrLabelsGroup.add(labels[i]);
 
@@ -210,6 +301,13 @@ namespace gui
 		buttonRandomizer.add(dcy);
 		buttonRandomizer.add(sus);
 		buttonRandomizer.add(rls);
+		if (temposyncPIDs)
+		{
+			buttonRandomizer.add(temposyncPIDs->temposync);
+			buttonRandomizer.add(temposyncPIDs->atk);
+			buttonRandomizer.add(temposyncPIDs->dcy);
+			buttonRandomizer.add(temposyncPIDs->rls);
+		}
 	}
 
 	void EnvelopeGeneratorMultiVoiceEditor::paint(Graphics& g)
@@ -229,16 +327,18 @@ namespace gui
 	{
 		const auto thicc = utils.thicc;
 		layout.resized(getLocalBounds().toFloat());
-		layout.place(labels[kTitle], 0, 0, 4, 1);
+		layout.place(labels[kTitle], 0, 0, 2, 1);
 		labels[kTitle].setMaxHeight(thicc);
 		envGenView.setBounds(layout(0, 1, 4, 1).reduced(thicc).toNearestInt());
 		for (auto i = 0; i < kNumParameters; ++i)
 		{
-			layout.place(knobs[i], i, 2, 1, 1);
-			locateAtKnob(modDials[i], knobs[i]);
+			auto& knob = knobs[i];
+			layout.place(knob, i, 2, 1, 1);
+			locateAtKnob(modDials[i], knob);
 			layout.place(labels[i], i, 3, 1, 1);
 		}
 		adsrLabelsGroup.setMaxHeight();
 		layout.place(buttonRandomizer, 3, 0, 1, 1);
+		layout.place(temposync, 2, 0, 1, 1);
 	}
 }

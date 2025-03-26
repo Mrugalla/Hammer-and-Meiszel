@@ -222,4 +222,32 @@ namespace gui
 	{
 		setMaxCommonHeight(labels, static_cast<int>(size));
 	}
+
+	//////
+
+	LabelGroup::LabelGroup() :
+		labels()
+	{
+	}
+
+	void LabelGroup::clear()
+	{
+		labels.clear();
+	}
+
+	void LabelGroup::add(Label& label)
+	{
+		labels.push_back(&label);
+	}
+
+	void LabelGroup::setMaxHeight(float margin) noexcept
+	{
+		const auto thicc = labels[0]->utils.thicc;
+		const auto h = findMaxCommonHeight(labels) - margin;
+		const auto height = h < 0.f ? thicc : h;
+		for (auto i = 0; i < labels.size(); ++i)
+			labels[i]->setHeight(height);
+	}
+
+	//////
 }

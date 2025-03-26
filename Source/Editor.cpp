@@ -57,6 +57,7 @@ namespace gui
         noiseBlend(utils),
 		modDialNoiseBlend(utils),
         keySelector(utils, utils.audioProcessor.pluginProcessor.keySelector),
+		modEnvPIDsSync(PID::EnvGenModAttackTS, PID::EnvGenModDecayTS, PID::EnvGenModReleaseTS, PID::EnvGenModTemposync),
         envGens
         {
             EnvelopeGeneratorMultiVoiceEditor
@@ -75,7 +76,8 @@ namespace gui
                 PID::EnvGenModAttack,
                 PID::EnvGenModDecay,
                 PID::EnvGenModSustain,
-                PID::EnvGenModRelease
+                PID::EnvGenModRelease,
+                &modEnvPIDsSync
             )
         },
         modalEditor(utils),

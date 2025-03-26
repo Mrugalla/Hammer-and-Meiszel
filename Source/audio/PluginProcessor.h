@@ -30,8 +30,8 @@ namespace audio
 		// sampleRate
 		void prepare(double);
 
-		// samples, midiBuffer, numChannels, numSamples, playing
-		void operator()(double**, dsp::MidiBuffer&, int, int, bool) noexcept;
+		// samples, midiBuffer, bpm, numChannels, numSamples, playing
+		void operator()(double**, dsp::MidiBuffer&, double, int, int, bool) noexcept;
 		
 		// samples, midiBuffer, numChannels, numSamples
 		void processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept;

@@ -179,6 +179,10 @@
           <FILE id="SddrPg" name="Delay.h" compile="0" resource="0" file="Source/audio/dsp/Delay.h"/>
           <FILE id="Xg8M5o" name="DelayVoices.cpp" compile="1" resource="0" file="Source/audio/dsp/DelayVoices.cpp"/>
           <FILE id="WVcMhW" name="DelayVoices.h" compile="0" resource="0" file="Source/audio/dsp/DelayVoices.h"/>
+          <FILE id="wmuWsb" name="EnvelopeFollower.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/EnvelopeFollower.cpp"/>
+          <FILE id="NYcQJc" name="EnvelopeFollower.h" compile="0" resource="0"
+                file="Source/audio/dsp/EnvelopeFollower.h"/>
           <FILE id="AXevhJ" name="EnvelopeGenerator.cpp" compile="1" resource="0"
                 file="Source/audio/dsp/EnvelopeGenerator.cpp"/>
           <FILE id="SE37u0" name="EnvelopeGenerator.h" compile="0" resource="0"

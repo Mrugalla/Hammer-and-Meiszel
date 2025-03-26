@@ -69,10 +69,15 @@ namespace param
 		case PID::EnvGenAmpDecay: return "EnvGenAmp Decay";
 		case PID::EnvGenAmpSustain: return "EnvGenAmp Sustain";
 		case PID::EnvGenAmpRelease: return "EnvGenAmp Release";
+		//
 		case PID::EnvGenModAttack: return "EnvGenMod Attack";
 		case PID::EnvGenModDecay: return "EnvGenMod Decay";
 		case PID::EnvGenModSustain: return "EnvGenMod Sustain";
 		case PID::EnvGenModRelease: return "EnvGenMod Release";
+		case PID::EnvGenModAttackTS: return "EnvGenMod Attack Sync";
+		case PID::EnvGenModDecayTS: return "EnvGenMod Decay Sync";
+		case PID::EnvGenModReleaseTS: return "EnvGenMod Release Sync";
+		case PID::EnvGenModTemposync: return "EnvGenMod Temposync";
 		//
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
@@ -187,14 +192,21 @@ namespace param
 		// LOW LEVEL PARAMS:
 		case PID::NoiseBlend: return "Blends between the dry signal and the noise synth.";
 		case PID::KeySelectorEnabled: return "If enabled the modal filters are triggered by the key selector.";
+		//
 		case PID::EnvGenAmpAttack: return "The amplitude envelope generator's attack time.";
 		case PID::EnvGenAmpDecay: return "The amplitude envelope generator's decay time.";
 		case PID::EnvGenAmpSustain: return "The amplitude envelope generator's sustain level.";
 		case PID::EnvGenAmpRelease: return "The amplitude envelope generator's release time.";
-		case PID::EnvGenModAttack: return "The modulation envelope generator's attack time.";
-		case PID::EnvGenModDecay: return "The modulation envelope generator's decay time.";
+		//
+		case PID::EnvGenModAttack: return "The modulation envelope generator's attack time in secs/ms.";
+		case PID::EnvGenModDecay: return "The modulation envelope generator's decay time in secs/ms.";
 		case PID::EnvGenModSustain: return "The modulation envelope generator's sustain level.";
-		case PID::EnvGenModRelease: return "The modulation envelope generator's release time.";
+		case PID::EnvGenModRelease: return "The modulation envelope generator's release time in secs/ms.";
+		case PID::EnvGenModAttackTS: return "The modulation envelope generator's attack time in sync with the tempo.";
+		case PID::EnvGenModDecayTS: return "The modulation envelope generator's decay time in sync with the tempo.";
+		case PID::EnvGenModReleaseTS: return "The modulation envelope generator's release time in sync with the tempo.";
+		case PID::EnvGenModTemposync: return "Dis/Enable temposync for the modulation envelope generator.";
+		//
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
 		case PID::ModalBlend: return "Blends between the 2 modal filters.";
@@ -1489,6 +1501,10 @@ namespace param
 		params.push_back(makeParam(PID::EnvGenModDecay, 120.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenModSustain, 0.f, makeRange::lin(0.f, .999f)));
 		params.push_back(makeParam(PID::EnvGenModRelease, 42.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvGenModAttackTS, 0.f, makeRange::beats(64.f, .5f, true), Unit::Beats));
+		params.push_back(makeParam(PID::EnvGenModDecayTS, 1.f / 16.f, makeRange::beats(64.f, .5f, true), Unit::Beats));
+		params.push_back(makeParam(PID::EnvGenModReleaseTS, 1.f / 16.f, makeRange::beats(64.f, .5f, true), Unit::Beats));
+		params.push_back(makeParam(PID::EnvGenModTemposync, 1.f, makeRange::toggle(), Unit::Power));
 		//
 		params.push_back(makeParam(PID::Polyphony, 15.f, makeRange::stepped(1.f, 15.f), Unit::Voices));
 		//

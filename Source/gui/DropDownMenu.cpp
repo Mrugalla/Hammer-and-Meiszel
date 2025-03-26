@@ -4,7 +4,8 @@ namespace gui
 {
 	DropDownMenu::DropDownMenu(Utils& u) :
 		Comp(u),
-		buttons()
+		buttons(),
+		labelGroup()
 	{
 		addEvt([&](evt::Type type, const void*)
 		{
@@ -43,8 +44,13 @@ namespace gui
 
 	void DropDownMenu::init()
 	{
+		labelGroup.clear();
 		for (auto& btn : buttons)
+		{
+			labelGroup.add(btn->label);
+			btn->label.autoMaxHeight = false;
 			addAndMakeVisible(*btn);
+		}
 	}
 
 	void DropDownMenu::resized()
@@ -66,6 +72,7 @@ namespace gui
 			auto& btn = *buttons[b];
 			btn.setBounds(BoundsF(x, y, w, h).reduced(utils.thicc).toNearestInt());
 		}
+		labelGroup.setMaxHeight(utils.thicc);
 	}
 
 	//

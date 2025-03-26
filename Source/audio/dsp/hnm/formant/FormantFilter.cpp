@@ -209,7 +209,7 @@ namespace dsp
 				attackMs = _attackMs;
 				decayMs = _decayMs;
 				releaseMs = _releaseMs;
-				envGens.updateParameters(EnvelopeGenerator::Parameters(attackMs, decayMs, 0., releaseMs));
+				envGens.updateParametersMs({ attackMs, decayMs, 0., releaseMs });
 			}
 
 			const auto gain = math::dbToAmp(gainDb, -60.);

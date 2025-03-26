@@ -20,6 +20,7 @@ namespace gui
 		void resized() override;
 	private:
 		std::vector<std::unique_ptr<Button>> buttons;
+		LabelGroup labelGroup;
 	};
 
 	struct ButtonDropDown :
