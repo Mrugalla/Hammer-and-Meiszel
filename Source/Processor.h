@@ -46,7 +46,7 @@ namespace audio
         void processBlock(AudioBufferD&, MidiBuffer&) override;
         void processBlockBypassed(AudioBufferD&, MidiBuffer&) override;
 
-        void processBlockOversampler(double* const*, MidiBuffer&, int, int) noexcept;
+        void processBlockOversampler(double* const*, MidiBuffer&, const dsp::Transport::Info&, int, int) noexcept;
         
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
@@ -72,6 +72,7 @@ namespace audio
         Params params;
         State state;
 
+        dsp::Transport transport;
         PluginProcessor pluginProcessor;
         AudioBufferD audioBufferD;
         MidiBuffer midiSubBuffer, midiOutBuffer;

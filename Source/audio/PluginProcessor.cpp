@@ -8,13 +8,34 @@ namespace audio
 		keySelector(),
 		monophonyHandler(), autoMPE(), voiceSplit(),
 		parallelProcessor(), formantLayer(),
-		envGensAmp(), envGensMod(),
+		envGensAmp(), envGensMod(), envFolMod(),
+		randMod(),
+		getModValFuncs(),
 		noiseSynth(),
 		modalFilter(), formantFilter(), combFilter(), lowpass(),
 		editorExists(false),
 		recording(-1),
 		recSampleIndex(0)
 	{
+		getModValFuncs[0] = [&](int v, int numSamplesEvt, int)
+		{
+			// ENVELOPE GENERATOR
+			const auto envGenModInfo = envGensMod(v, numSamplesEvt);
+			const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
+			return envGenModVal;
+		};
+		getModValFuncs[1] = [&](int, int, int s)
+		{
+			// ENVELOPE FOLLOWER
+			const auto envFolModVal = envFolMod.isSleepy() ? 0. : envFolMod[s];
+			return envFolModVal;
+		};
+		getModValFuncs[2] = [&](int, int, int s)
+		{
+			// RANDOMIZER
+			return randMod[s];
+		};
+
 		startTimerHz(2);
 
 		xen.updateFunc = [&](const arch::XenManager::Info&, int numChannels)
@@ -29,81 +50,20 @@ namespace audio
 	{
 		sampleRate = _sampleRate;
 		keySelector.prepare();
+		envGensAmp.prepare(sampleRate);
+		envGensMod.prepare(sampleRate);
+		envFolMod.prepare(sampleRate);
+		randMod.prepare(sampleRate);
 		modalFilter.prepare(sampleRate);
 		formantFilter.prepare(sampleRate);
 		combFilter.prepare(sampleRate);
-		envGensAmp.prepare(sampleRate);
-		envGensMod.prepare(sampleRate);
 		lowpass.prepare(sampleRate);
 	}
 
 	void PluginProcessor::operator()(double** samples,
-		dsp::MidiBuffer& midi, double bpm,
-		int numChannels, int numSamples, bool playing) noexcept
+		dsp::MidiBuffer& midi, const dsp::Transport::Info& transport,
+		int numChannels, int numSamples) noexcept
 	{
-#if PPDTestEnvelope == 1
-		// tests the gain env monophonically
-		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
-		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
-		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
-		const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
-		const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
-		const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
-		const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
-		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
-		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
-
-		const auto envGenAmpInfo = envGensAmp(midi, numSamples, 0);
-		if (envGenAmpInfo.active)
-			for (auto ch = 0; ch < numChannels; ++ch)
-				dsp::SIMD::copy(samples[ch], envGenAmpInfo.data, numSamples);
-		else
-			for (auto ch = 0; ch < numChannels; ++ch)
-				dsp::SIMD::clear(samples[ch], numSamples);
-#elif PPDTestEnvelope == 2
-		// tests the gain env polyphonically
-		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
-		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
-		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
-		const auto envGenAmpDecay = static_cast<double>(envGenAmpDecayParam.getValModDenorm());
-		const auto& envGenAmpSustainParam = params(PID::EnvGenAmpSustain);
-		const auto envGenAmpSustain = static_cast<double>(envGenAmpSustainParam.getValModDenorm());
-		const auto& envGenAmpReleaseParam = params(PID::EnvGenAmpRelease);
-		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
-		envGensAmp.updateParameters({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
-		autoMPE(midi); voiceSplit(midi, numSamples);
-		for (auto v = 0; v < dsp::NumMPEChannels; ++v)
-		{
-			const auto& midiVoice = voiceSplit[v + 2];
-			auto bandVoice = parallelProcessor[v];
-
-			auto start = 0;
-			for (const auto it : midiVoice)
-			{
-				const auto msg = it.getMessage();
-				const auto end = it.samplePosition;
-				const auto numSamplesEvt = end - start;
-				double* samplesVoiceEvt[] = { &bandVoice.l[start], &bandVoice.r[start] };
-				for (auto ch = 0; ch < numChannels; ++ch)
-					for (auto s = 0; s < numSamplesEvt; ++s)
-						samplesVoiceEvt[ch][s] = 1.;
-				const auto envGenAmpActive = envGensAmp.processGain
-				(
-					samplesVoiceEvt,
-					numChannels, numSamplesEvt, v
-				);
-				parallelProcessor.setSleepy(!envGenAmpActive, v);
-				start = end;
-				if (msg.isNoteOn())
-					envGensAmp.triggerNoteOn(true, v);
-				else if (msg.isNoteOff())
-					envGensAmp.triggerNoteOn(false, v);
-				else if (msg.isAllNotesOff())
-					envGensAmp.triggerNoteOn(false, v);
-			}
-		}
-		parallelProcessor.joinReplace(samples, numChannels, numSamples);
-#else
 		const auto& envGenAmpAttackParam = params(PID::EnvGenAmpAttack);
 		const auto envGenAmpAttack = static_cast<double>(envGenAmpAttackParam.getValModDenorm());
 		const auto& envGenAmpDecayParam = params(PID::EnvGenAmpDecay);
@@ -114,29 +74,73 @@ namespace audio
 		const auto envGenAmpRelease = static_cast<double>(envGenAmpReleaseParam.getValModDenorm());
 		envGensAmp.updateParametersMs({ envGenAmpAttack, envGenAmpDecay, envGenAmpSustain, envGenAmpRelease });
 
-		const auto& envGenModTemposyncParam = params(PID::EnvGenModTemposync);
-		const auto envGenModTemposync = envGenModTemposyncParam.getValMod() > .5f;
-		const auto& envGenModSustainParam = params(PID::EnvGenModSustain);
-		const auto envGenModSustain = static_cast<double>(envGenModSustainParam.getValModDenorm());
-		if (envGenModTemposync)
+		const auto& modSelectParam = params(PID::ModSelect);
+		const auto modSelect = static_cast<int>(std::round(modSelectParam.getValModDenorm()));
+		enum { kEnvGen, kEnvMod, kRandMod, kNumModulators };
+
+		if (modSelect == kEnvGen)
 		{
-			const auto& envGenModAttackParam = params(PID::EnvGenModAttackTS);
-			const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
-			const auto& envGenModDecayParam = params(PID::EnvGenModDecayTS);
-			const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
-			const auto& envGenModReleaseParam = params(PID::EnvGenModReleaseTS);
-			const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
-			envGensMod.updateParametersSync({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease }, bpm);
+			const auto& envGenModTemposyncParam = params(PID::EnvGenModTemposync);
+			const auto envGenModTemposync = envGenModTemposyncParam.getValMod() > .5f;
+			const auto& envGenModSustainParam = params(PID::EnvGenModSustain);
+			const auto envGenModSustain = static_cast<double>(envGenModSustainParam.getValModDenorm());
+			if (envGenModTemposync)
+			{
+				const auto& envGenModAttackParam = params(PID::EnvGenModAttackTS);
+				const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
+				const auto& envGenModDecayParam = params(PID::EnvGenModDecayTS);
+				const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
+				const auto& envGenModReleaseParam = params(PID::EnvGenModReleaseTS);
+				const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
+				envGensMod.updateParametersSync({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease }, transport.bpm);
+			}
+			else
+			{
+				const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
+				const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
+				const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
+				const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
+				const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
+				const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
+				envGensMod.updateParametersMs({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
+			}
 		}
-		else
+		else if (modSelect == kEnvMod)
 		{
-			const auto& envGenModAttackParam = params(PID::EnvGenModAttack);
-			const auto envGenModAttack = static_cast<double>(envGenModAttackParam.getValModDenorm());
-			const auto& envGenModDecayParam = params(PID::EnvGenModDecay);
-			const auto envGenModDecay = static_cast<double>(envGenModDecayParam.getValModDenorm());
-			const auto& envGenModReleaseParam = params(PID::EnvGenModRelease);
-			const auto envGenModRelease = static_cast<double>(envGenModReleaseParam.getValModDenorm());
-			envGensMod.updateParametersMs({ envGenModAttack, envGenModDecay, envGenModSustain, envGenModRelease });
+			const auto& envFolModGainParam = params(PID::EnvFolModGain);
+			const auto envFolModGainDb = static_cast<double>(envFolModGainParam.getValModDenorm());
+
+			const auto& envFolModAtkParam = params(PID::EnvFolModAttack);
+			const auto envFolModAtkMs = static_cast<double>(envFolModAtkParam.getValModDenorm());
+
+			const auto& envFolModDcyParam = params(PID::EnvFolModDecay);
+			const auto envFolModDcyMs = static_cast<double>(envFolModDcyParam.getValModDenorm());
+
+			const auto& envFolModSmoothParam = params(PID::EnvFolModSmooth);
+			const auto envFolModSmoothMs = static_cast<double>(envFolModSmoothParam.getValModDenorm());
+
+			const dsp::EnvelopeFollower::Params envFolModParams
+			{
+				envFolModGainDb, envFolModAtkMs, envFolModDcyMs, envFolModSmoothMs
+			};
+
+			envFolMod(samples, envFolModParams, numChannels, numSamples);
+		}
+		else if (modSelect == kRandMod)
+		{
+			const auto& randModGainParam = params(PID::RandModGain);
+			const auto randModGain = static_cast<double>(randModGainParam.getValMod());
+
+			const auto& randModRateSyncParam = params(PID::RandModRateSync);
+			const auto randModRateSync = static_cast<double>(randModRateSyncParam.getValModDenorm());
+
+			const auto& randModSmoothParam = params(PID::RandModSmooth);
+			const auto randModSmooth = static_cast<double>(randModSmoothParam.getValMod());
+
+			const auto& randModSpreadParam = params(PID::RandModSpread);
+			const auto randModSpread = static_cast<double>(randModSpreadParam.getValMod());
+
+			randMod({ randModGain, randModRateSync, randModSmooth, randModSpread }, transport, numSamples);
 		}
 
 		const auto& noiseBlendParam = params(PID::NoiseBlend);
@@ -177,13 +181,11 @@ namespace audio
 
 		const auto& polyParam = params(PID::Polyphony);
 		
-		const auto polyphony = static_cast<int>(std::round(polyParam.getValModDenorm()));
-		monophonyHandler(midi, polyphony);
-
 		const auto& keySelectorEnabledParam = params(PID::KeySelectorEnabled);
 		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
-		keySelector(midi, xen, keySelectorEnabled, playing);
-
+		const auto polyphony = keySelectorEnabled ? static_cast<int>(xen.getXen()) : static_cast<int>(std::round(polyParam.getValModDenorm()));
+		monophonyHandler(midi, polyphony);
+		keySelector(midi, xen, keySelectorEnabled, transport.playing);
 		autoMPE(midi, polyphony);
 		voiceSplit(midi, numSamples);
 
@@ -328,8 +330,7 @@ namespace audio
 				);
 
 				// synthesize the modulation envelope generator
-				const auto envGenModInfo = envGensMod(v, numSamplesEvt);
-				const auto envGenModVal = envGenModInfo.active ? envGenModInfo[0] : 0.;
+				const auto envGenModVal = getModValFuncs[modSelect](v, numSamplesEvt, start);
 
 				bool active = envGenAmpActive;
 
@@ -434,8 +435,6 @@ namespace audio
 		}
 
 		parallelProcessor.joinReplace(samples, numChannels, numSamples);
-#endif
-		
 	}
 
 	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept

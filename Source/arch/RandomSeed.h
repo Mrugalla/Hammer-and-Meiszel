@@ -12,32 +12,12 @@ namespace arch
 		using RandJUCE = juce::Random;
 
 		// user props, id
-		RandSeed(Props& _props, String&& _id) :
-			user(_props),
-			id(_id.removeCharacters(" ").toLowerCase()),
-			mt(rd()),
-			dist(0.f, 1.f),
-			seed(user.getIntValue(id, 0))
-		{
-			if (seed != 0)
-				return;
-			RandJUCE rand;
-			seed = rand.nextInt();
-			user.setValue(id, seed);
-		}
+		RandSeed(Props&, String&&);
 
 		// seedUp
-		void updateSeed(bool seedUp)
-		{
-			seed += seedUp ? 1 : -1;
-			mt.seed(seed);
-			user.setValue(id, seed);
-		}
+		void updateSeed(bool);
 
-		float operator()()
-		{
-			return dist(mt);
-		}
+		float operator()();
 
 	private:
 		Props& user;

@@ -36,6 +36,14 @@ namespace gui
     Editor::Editor(Processor& p) :
         AudioProcessorEditor(&p),
         audioProcessor(p),
+        callback(Callback([&]()
+        {
+			auto& modSelectParam = utils.getParam(PID::ModSelect);
+			const auto val = static_cast<int>(std::round(modSelectParam.getValModDenorm()));
+            envGenMod.setVisible(val == 0);
+			envFolMod.setVisible(val == 1);
+			randMod.setVisible(val == 2);
+        }, 0, cbFPS::k15, true)),
         marbleImg(juce::ImageCache::getFromMemory(BinaryData::marble_png, BinaryData::marble_pngSize)),
         utils(*this, p),
         layout(),
@@ -58,28 +66,34 @@ namespace gui
 		modDialNoiseBlend(utils),
         keySelector(utils, utils.audioProcessor.pluginProcessor.keySelector),
 		modEnvPIDsSync(PID::EnvGenModAttackTS, PID::EnvGenModDecayTS, PID::EnvGenModReleaseTS, PID::EnvGenModTemposync),
-        envGens
-        {
-            EnvelopeGeneratorMultiVoiceEditor
-            (
-                utils,
-                "Gain Envelope:",
-                PID::EnvGenAmpAttack,
-                PID::EnvGenAmpDecay,
-                PID::EnvGenAmpSustain,
-                PID::EnvGenAmpRelease
-            ),
-            EnvelopeGeneratorMultiVoiceEditor
-            (
-                utils,
-                "Mod Envelope:",
-                PID::EnvGenModAttack,
-                PID::EnvGenModDecay,
-                PID::EnvGenModSustain,
-                PID::EnvGenModRelease,
-                &modEnvPIDsSync
-            )
-        },
+        envGenAmp
+        (
+            utils, "Gain Envelope:",
+            PID::EnvGenAmpAttack, PID::EnvGenAmpDecay,
+            PID::EnvGenAmpSustain, PID::EnvGenAmpRelease
+        ),
+        envGenMod
+        (
+            utils, "Mod Envelope:",
+            PID::EnvGenModAttack, PID::EnvGenModDecay,
+            PID::EnvGenModSustain, PID::EnvGenModRelease,
+            &modEnvPIDsSync
+        ),
+		envFolMod
+        (
+            p.pluginProcessor.envFolMod, utils,
+            PID::EnvFolModGain, PID::EnvFolModAttack,
+            PID::EnvFolModDecay, PID::EnvFolModSmooth
+        ),
+        randMod
+        (
+			p.pluginProcessor.randMod, utils,
+            PID::RandModGain,
+			PID::RandModRateSync,
+			PID::RandModSmooth,
+			PID::RandModSpread
+        ),
+        modSelect(utils),
         modalEditor(utils),
         buttonColours(coloursEditor),
         manifestOfWisdomButton(utils, manifestOfWisdom)
@@ -100,8 +114,11 @@ namespace gui
 		addAndMakeVisible(noiseBlend);
 		addAndMakeVisible(modDialNoiseBlend);
 		addAndMakeVisible(keySelector);
-		for (auto& envGen : envGens)
-			addAndMakeVisible(envGen);
+		addAndMakeVisible(envGenAmp);
+		addChildComponent(envGenMod);
+		addChildComponent(envFolMod);
+		addChildComponent(randMod);
+		addAndMakeVisible(modSelect);
 		addAndMakeVisible(modalEditor);
         addAndMakeVisible(buttonColours);
         addAndMakeVisible(manifestOfWisdomButton);
@@ -111,6 +128,11 @@ namespace gui
         addChildComponent(toast);
         addChildComponent(parameterEditor);
         addAndMakeVisible(compPower);
+
+        {
+            modSelect.attach(PID::ModSelect);
+            utils.add(&callback);
+        }
 
         {
             makeSlider(noiseBlend, true);
@@ -190,23 +212,27 @@ namespace gui
     {
         const auto noiseSize = .1f;
         e.layout.place(e.labelNoiseBlend, 0.f, 2.f, .2f, noiseSize);
-        e.labelNoiseBlend.setMaxHeight();
+        e.labelNoiseBlend.setMaxHeight(e.utils.thicc);
 		e.layout.place(e.noiseBlend,      .2f, 2.f, .7f, noiseSize);
         locateAtSlider(e.modDialNoiseBlend, e.noiseBlend);
+		const auto modSelectH = .5f;
 		const auto envsY = 2.f + noiseSize;
-		const auto envsH = 2.f - noiseSize * 2.f;
+		const auto envsHMoar = 2.f - noiseSize * 2.f;
+        const auto envsH = envsHMoar - modSelectH;
         const auto envsArea = e.layout(0, envsY, 1, envsH);
 		const auto x = envsArea.getX();
 		auto y = envsArea.getY();
 		const auto w = envsArea.getWidth();
 		const auto h = envsArea.getHeight();
 		const auto hHalf = h * .5f;
-        for (auto i = 0; i < e.envGens.size(); ++i)
-		{
-			auto& envGen = e.envGens[i];
-            envGen.setBounds(BoundsF(x, y, w, hHalf).reduced(envGenMargin).toNearestInt());
-			y += hHalf;
-		}
+        e.envGenAmp.setBounds(BoundsF(x, y, w, hHalf).reduced(envGenMargin).toNearestInt());
+        y += hHalf;
+        const auto modulatorBounds = BoundsF(x, y, w, hHalf).reduced(envGenMargin).toNearestInt();
+		e.envGenMod.setBounds(modulatorBounds);
+		e.envFolMod.setBounds(modulatorBounds);
+		e.randMod.setBounds(modulatorBounds);
+        y += hHalf;
+        e.modSelect.setBounds(BoundsF(x, y, w, e.layout.getY(4.f) - y).toNearestInt());
     }
 
     void Editor::resized()
@@ -228,7 +254,6 @@ namespace gui
 
         utils.resized();
         const auto thicc = utils.thicc;
-		const auto thicc2 = thicc * 2.f;
 
         layout.resized(getLocalBounds());
 
@@ -240,7 +265,7 @@ namespace gui
         layout.place(topEditor, 1, 0, 1, 1);
 
         // left panel
-        resizeLeftPanel(*this, thicc2);
+        resizeLeftPanel(*this, thicc);
         
         // right panel
         layout.place(ioEditor, 2, 0, 1, 3);

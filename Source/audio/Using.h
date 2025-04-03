@@ -14,6 +14,7 @@ namespace dsp
 
 	static constexpr float PiF = 3.1415926535897932384626433832795f;
 	static constexpr float TauF = PiF * 2.f;
+	static constexpr double SixtyInv = 1. / 60.;
 
 	using MidiBuffer = juce::MidiBuffer;
 	using MidiMessage = juce::MidiMessage;
@@ -21,7 +22,10 @@ namespace dsp
 	using AudioBuffer = juce::AudioBuffer<double>;
 	using AudioBufferF = juce::AudioBuffer<float>;
 	using Uint8 = uint8_t;
-	
+	using Int64 = juce::int64;
+	using PlayHead = juce::AudioPlayHead;
+	using PosInfo = PlayHead::CurrentPositionInfo;
+
 	static constexpr int NumMIDIChannels = 16;
 	static constexpr int NumMPEChannels = NumMIDIChannels - 1;
 	static constexpr double PitchbendRange = 16383.;

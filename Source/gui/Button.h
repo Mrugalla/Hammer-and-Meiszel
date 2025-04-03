@@ -75,4 +75,6 @@ namespace gui
 
 	// button, PID, type, onPaint
 	void makeParameter(Button&, PID, Button::Type, Button::OnPaint);
+
+	void makeParameter(std::vector<std::unique_ptr<Button>>&, PID);
 }

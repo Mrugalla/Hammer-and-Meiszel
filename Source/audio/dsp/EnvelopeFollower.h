@@ -11,38 +11,73 @@ namespace dsp
 		};
 
 		EnvelopeFollower() :
+			meter(0.),
 			buffer(),
+			MinDb(math::dbToAmp(-60.)),
 			gainPRM(1.),
 			envLP(0.),
 			smooth(0.),
-			sampleRate(1.),
-			smoothMs(-1.),
+			sampleRate(1.), smoothMs(-1.),
 			attackState(false)
 		{}
 
 		void prepare(double Fs) noexcept
 		{
+			meter.store(0.);
 			sampleRate = Fs;
 			gainPRM.prepare(sampleRate, 4.);
+			smooth.reset();
 			smoothMs = -1.;
 			envLP.reset();
 		}
 
-		void operator()(double* smpls, Params& params, int numSamples) noexcept
+		void operator()(double* smpls, const Params& params, int numSamples) noexcept
 		{
 			rectify(smpls, numSamples);
 			applyGain(params.gainDb, numSamples);
 			synthesizeEnvelope(params, numSamples);
 			smoothen(params.smoothMs, numSamples);
+			processMeter();
 		}
 
+		void operator()(double** samples, const Params& params,
+			int numChannels, int numSamples) noexcept
+		{
+			copyMid(samples, numChannels, numSamples);
+			operator()(buffer.data(), params, numSamples);
+		}
+
+		bool isSleepy() const noexcept
+		{
+			return !attackState && envLP.y1 < MinDb;
+		}
+
+		double operator[](int i) const noexcept
+		{
+			return buffer[i];
+		}
+
+		double getMeter() const noexcept
+		{
+			return meter.load();
+		}
 	private:
+		std::atomic<double> meter;
 		std::array<double, BlockSize> buffer;
+		const double MinDb;
 		PRMD gainPRM;
-		smooth::LowpassD envLP;
-		smooth::SmoothD smooth;
+		smooth::LowpassD envLP, smooth;
 		double sampleRate, smoothMs;
 		bool attackState;
+
+		void copyMid(double** samples, int numChannels, int numSamples) noexcept
+		{
+			SIMD::copy(buffer.data(), samples[0], numSamples);
+			if (numChannels == 1)
+				return;
+			SIMD::add(buffer.data(), samples[1], numSamples);
+			SIMD::multiply(buffer.data(), .5, numSamples);
+		}
 
 		void rectify(double* smpls, int numSamples) noexcept
 		{
@@ -54,12 +89,13 @@ namespace dsp
 		{
 			const auto gain = math::dbToAmp(gainDb);
 			const auto gainInfo = gainPRM(gain, numSamples);
+			auto data = buffer.data();
 			if (gainInfo.smoothing)
-				return SIMD::multiply(buffer.data(), gainInfo.buf, numSamples);
-			SIMD::multiply(buffer.data(), gain, numSamples);
+				return SIMD::multiply(data, gainInfo.buf, numSamples);
+			SIMD::multiply(data, gain, numSamples);
 		}
 
-		void synthesizeEnvelope(Params& params, int numSamples) noexcept
+		void synthesizeEnvelope(const Params& params, int numSamples) noexcept
 		{
 			for (auto s = 0; s < numSamples; ++s)
 			{
@@ -72,18 +108,18 @@ namespace dsp
 			}
 		}
 
-		double processAttack(Params& params, double s0, double s1) noexcept
+		double processAttack(const Params& params, double s0, double s1) noexcept
 		{
-			if (s0 < s1)
+			if (s0 <= s1)
 				return envLP(s1);
 			attackState = false;
 			envLP.makeFromDecayInMs(params.dcyMs, sampleRate);
 			return processDecay(params, s0, s1);
 		}
 
-		double processDecay(Params& params, double s0, double s1) noexcept
+		double processDecay(const Params& params, double s0, double s1) noexcept
 		{
-			if (s0 > s1)
+			if (s0 >= s1)
 				return envLP(s1);
 			attackState = true;
 			envLP.makeFromDecayInMs(params.atkMs, sampleRate);
@@ -98,6 +134,12 @@ namespace dsp
 				smooth.makeFromDecayInMs(smoothMs, sampleRate);
 			}
 			smooth(buffer.data(), numSamples);
+		}
+
+		void processMeter()
+		{
+			const auto max = *std::max_element(buffer.begin(), buffer.end());
+			meter.store(max);
 		}
 	};
 }

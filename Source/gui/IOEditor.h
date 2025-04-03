@@ -29,6 +29,8 @@ namespace gui
 			// editor, name, pID
 			void init(IOEditor&, const String&, PID);
 
+			void setVisible(bool);
+
 			void setBounds(BoundsF);
 
 			Layout layout;
@@ -52,6 +54,7 @@ namespace gui
 		ButtonPower buttonPower;
 		VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;
 		LabelGroup labelGroup, tuningLabelGroup;
+		bool keySelectorEnabled;
 
 		void initMacroSwap();
 

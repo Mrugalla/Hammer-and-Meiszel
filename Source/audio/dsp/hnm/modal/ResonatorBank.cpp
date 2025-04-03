@@ -226,7 +226,7 @@ namespace dsp
 
 					wet *= autoGain;
 
-					if (wet * wet > 4.)
+					if (wet * wet > 64.)
 					{
 						for (auto f = 0; f < nfbn; ++f)
 							resonators[f].reset(ch);

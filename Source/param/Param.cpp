@@ -70,6 +70,8 @@ namespace param
 		case PID::EnvGenAmpSustain: return "EnvGenAmp Sustain";
 		case PID::EnvGenAmpRelease: return "EnvGenAmp Release";
 		//
+		case PID::ModSelect: return "Mod Select";
+		//
 		case PID::EnvGenModAttack: return "EnvGenMod Attack";
 		case PID::EnvGenModDecay: return "EnvGenMod Decay";
 		case PID::EnvGenModSustain: return "EnvGenMod Sustain";
@@ -78,6 +80,16 @@ namespace param
 		case PID::EnvGenModDecayTS: return "EnvGenMod Decay Sync";
 		case PID::EnvGenModReleaseTS: return "EnvGenMod Release Sync";
 		case PID::EnvGenModTemposync: return "EnvGenMod Temposync";
+		//
+		case PID::EnvFolModGain: return "EnvFolMod Gain";
+		case PID::EnvFolModAttack: return "EnvFolMod Attack";
+		case PID::EnvFolModDecay: return "EnvFolMod Decay";
+		case PID::EnvFolModSmooth: return "EnvFolMod Smooth";
+		//
+		case PID::RandModGain: return "RandMod Gain";
+		case PID::RandModRateSync: return "RandMod Rate Sync";
+		case PID::RandModSmooth: return "RandMod Smooth";
+		case PID::RandModSpread: return "RandMod Spread";
 		//
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
@@ -198,6 +210,8 @@ namespace param
 		case PID::EnvGenAmpSustain: return "The amplitude envelope generator's sustain level.";
 		case PID::EnvGenAmpRelease: return "The amplitude envelope generator's release time.";
 		//
+		case PID::ModSelect: return "Select the modulation source.";
+		//
 		case PID::EnvGenModAttack: return "The modulation envelope generator's attack time in secs/ms.";
 		case PID::EnvGenModDecay: return "The modulation envelope generator's decay time in secs/ms.";
 		case PID::EnvGenModSustain: return "The modulation envelope generator's sustain level.";
@@ -206,6 +220,16 @@ namespace param
 		case PID::EnvGenModDecayTS: return "The modulation envelope generator's decay time in sync with the tempo.";
 		case PID::EnvGenModReleaseTS: return "The modulation envelope generator's release time in sync with the tempo.";
 		case PID::EnvGenModTemposync: return "Dis/Enable temposync for the modulation envelope generator.";
+		//
+		case PID::EnvFolModGain: return "Gain stage the envelope follower with this control.";
+		case PID::EnvFolModAttack: return "The envelope follower's attack time in ms.";
+		case PID::EnvFolModDecay: return "The envelope follower's decay time in ms.";
+		case PID::EnvFolModSmooth: return "Smoothen the envelope follower's output with this control.";
+		//
+		case PID::RandModGain: return "The randomizer's output gain.";
+		case PID::RandModRateSync: return "The rate of the randomizer in sync with the tempo.";
+		case PID::RandModSmooth: return "Make every new random value glide towards the next one.";
+		case PID::RandModSpread: return "Spread the range of random values occuring for each step.";
 		//
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
@@ -580,8 +604,18 @@ namespace param::strToVal
 			fx::Parser fx;
 			if (fx(txt))
 				return fx();
-
 			return altVal;
+		};
+	}
+
+	StrToValFunc standard(float defaultVal)
+	{
+		return[p = parse(), defaultVal](const String& txt)
+		{
+			if (math::stringNegates(txt))
+				return defaultVal;
+			const auto val = p(txt, defaultVal);
+			return val;
 		};
 	}
 
@@ -1425,7 +1459,7 @@ namespace param
 	}
 
 	extern Param* makeParam(PID id, float valDenormDefault, const Range& range,
-		ValToStrFunc&& valToStrFunc, StrToValFunc&& strToValFunc)
+		const ValToStrFunc& valToStrFunc, const StrToValFunc& strToValFunc = strToVal::standard(0.f))
 	{
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Custom);
 	}
@@ -1442,7 +1476,7 @@ namespace param
 	{
 		{ // HIGH LEVEL PARAMS:
 			params.push_back(makeParam(PID::Macro, 1.f));
-			
+
 #if PPDIsNonlinear
 			const auto gainInRange = makeRange::withCentre(PPDGainInMin, PPDGainInMax, 0.f);
 			params.push_back(makeParam(PID::GainIn, 0.f, gainInRange, Unit::Decibel));
@@ -1465,7 +1499,7 @@ namespace param
 			const auto gainOutRange = makeRange::lin(PPDGainOutMin, PPDGainOutMax);
 			params.push_back(makeParam(PID::GainOut, 0.f, gainOutRange, Unit::Decibel));
 #if PPDHasStereoConfig
-			params.push_back(makeParam(PID::StereoConfig, 1.f, makeRange::toggle(), Unit::StereoConfig));
+			params.push_back(makeParam(PID::StereoConfig, 0.f, makeRange::toggle(), Unit::StereoConfig));
 #endif
 #if PPDHasHQ
 			params.push_back(makeParam(PID::HQ, 1.f, makeRange::toggle(), Unit::Power));
@@ -1497,6 +1531,19 @@ namespace param
 		params.push_back(makeParam(PID::EnvGenAmpSustain, .8f, makeRange::lin(0.f, .999f)));
 		params.push_back(makeParam(PID::EnvGenAmpRelease, 42.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		//
+		params.push_back(makeParam(PID::ModSelect, 0.f, makeRange::stepped(0.f, 2.f),
+			[](float v)
+			{
+				auto x = static_cast<int>(std::round(v));
+				switch (x)
+				{
+				case 0: return "Env Gen";
+				case 1: return "Env Fol";
+				case 2: return "Random";
+				default: return "Invalid, Biatch!";
+				}
+			}));
+		//
 		params.push_back(makeParam(PID::EnvGenModAttack, 4.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenModDecay, 120.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvGenModSustain, 0.f, makeRange::lin(0.f, .999f)));
@@ -1505,6 +1552,16 @@ namespace param
 		params.push_back(makeParam(PID::EnvGenModDecayTS, 1.f / 16.f, makeRange::beats(64.f, .5f, true), Unit::Beats));
 		params.push_back(makeParam(PID::EnvGenModReleaseTS, 1.f / 16.f, makeRange::beats(64.f, .5f, true), Unit::Beats));
 		params.push_back(makeParam(PID::EnvGenModTemposync, 1.f, makeRange::toggle(), Unit::Power));
+		//
+		params.push_back(makeParam(PID::EnvFolModGain, 0.f, makeRange::lin(-48.f, 48.f), Unit::Decibel));
+		params.push_back(makeParam(PID::EnvFolModAttack, 4.f, makeRange::quad(0.f, 1000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvFolModDecay, 120.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::EnvFolModSmooth, 42.f, makeRange::quad(0.f, 1000.f, 2), Unit::Ms));
+		//
+		params.push_back(makeParam(PID::RandModGain, 1.f));
+		params.push_back(makeParam(PID::RandModRateSync, 1.f / 16.f, makeRange::beats(64.f, .5f), Unit::Beats));
+		params.push_back(makeParam(PID::RandModSmooth, 0.f));
+		params.push_back(makeParam(PID::RandModSpread, 1.f));
 		//
 		params.push_back(makeParam(PID::Polyphony, 15.f, makeRange::stepped(1.f, 15.f), Unit::Voices));
 		//
@@ -1527,17 +1584,17 @@ namespace param
 		params.push_back(makeParam(PID::ModalResonanzBreite, 0.f, makeRange::lin(-1.f, 1.f)));
 		//
 		const auto maxVowelF = static_cast<float>(dsp::formant::NumVowelClasses - 1);
-		const auto vowelADefault = static_cast<float>(dsp::formant::VowelClass::TenorI);
-		const auto vowelBDefault = static_cast<float>(dsp::formant::VowelClass::TenorA);
+		const auto vowelADefault = static_cast<float>(dsp::formant::VowelClass::TenorA);
+		const auto vowelBDefault = static_cast<float>(dsp::formant::VowelClass::TenorO);
 		params.push_back(makeParam(PID::FormantA, vowelADefault, makeRange::stepped(0.f, maxVowelF), Unit::Vowel));
 		params.push_back(makeParam(PID::FormantB, vowelBDefault, makeRange::stepped(0.f, maxVowelF), Unit::Vowel));
 		params.push_back(makeParam(PID::FormantPos, 0.f));
 		params.push_back(makeParam(PID::FormantPosEnv, 0.f, makeRange::lin(-1.f, 1.f)));
 		params.push_back(makeParam(PID::FormantPosWidth, 0.f, makeRange::lin(-1.f, 1.f)));
-		params.push_back(makeParam(PID::FormantQ, .8f, makeRange::lin(0.f, 1.f), Unit::Q));
+		params.push_back(makeParam(PID::FormantQ, .85f, makeRange::lin(0.f, 1.f), Unit::Q));
 		params.push_back(makeParam(PID::FormantQEnv, 0.f, makeRange::lin(-1.f, 1.f), Unit::Q));
 		params.push_back(makeParam(PID::FormantQWidth, 0.f, makeRange::lin(-1.f, 1.f), Unit::Q));
-		params.push_back(makeParam(PID::FormantDecay, 20.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
+		params.push_back(makeParam(PID::FormantDecay, 1000.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		const auto formantMinGain = -48.f;
 		params.push_back(makeParam(PID::FormantGain, formantMinGain, makeRange::withCentre(formantMinGain, 24.f, -0.f), Unit::Decibel));
 		//

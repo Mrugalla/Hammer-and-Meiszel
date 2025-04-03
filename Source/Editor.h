@@ -1,9 +1,12 @@
 #pragma once
+#include "gui/RadioButton.h"
 #include "gui/GenAniComp.h"
 #include "gui/ModalParamsEditor.h"
 #include "gui/IOEditor.h"
 #include "gui/Tooltip.h"
 #include "gui/EnvelopeGeneratorEditor.h"
+#include "gui/EnvelopeFollowerEditor.h"
+#include "gui/RandomizerEditor.h"
 #include "gui/hnm/ModalModuleEditor.h"
 #include "gui/ColoursEditor.h"
 #include "gui/ManifestOfWisdom.h"
@@ -28,6 +31,7 @@ namespace gui
         void mouseUp(const Mouse&) override;
 
         Processor& audioProcessor;
+        Callback callback;
         Image marbleImg;
         Utils utils;
         Layout layout;
@@ -51,7 +55,10 @@ namespace gui
 		enum class kEnvGens { kEnvGenAmp, kEnvGenMod, kNumEnvGens };
 		static constexpr int NumEnvGens = static_cast<int>(kEnvGens::kNumEnvGens);
         EnvelopeGeneratorMultiVoiceEditor::PIDsTemposync modEnvPIDsSync;
-		std::array<EnvelopeGeneratorMultiVoiceEditor, NumEnvGens> envGens;
+		EnvelopeGeneratorMultiVoiceEditor envGenAmp, envGenMod;
+		EnvelopeFollowerEditor envFolMod;
+        RandomizerEditor randMod;
+        RadioButton modSelect;
 		ModalModuleEditor modalEditor;
         ButtonColours buttonColours;
         ButtonWisdom manifestOfWisdomButton;

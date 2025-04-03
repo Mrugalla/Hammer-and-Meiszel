@@ -8,7 +8,7 @@
               pluginDesc="Harvests energy from unexpected sources" pluginManufacturer="Mrugalla"
               pluginManufacturerCode="Bbmr" pluginCode="Hrmz" pluginVST3Category="Filter,Fx"
               pluginAAXCategory="64" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;PPDHasDelta=false&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=30.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=48&#10;&#10;PPDTestEnvelope=0"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;PPDHasDelta=false&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=30.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=48&#10;&#10;PPDDCOffsetFilter=1"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
@@ -171,8 +171,6 @@
           <FILE id="t6mcvM" name="Allpass.h" compile="0" resource="0" file="Source/audio/dsp/Allpass.h"/>
           <FILE id="AG7iE0" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
           <FILE id="Vqq7T8" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
-          <FILE id="yCB0ii" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>
-          <FILE id="f6dMPF" name="Resonator.h" compile="0" resource="0" file="Source/audio/dsp/Resonator.h"/>
           <FILE id="S4ULQD" name="Convolver.cpp" compile="1" resource="0" file="Source/audio/dsp/Convolver.cpp"/>
           <FILE id="CQadaB" name="Convolver.h" compile="0" resource="0" file="Source/audio/dsp/Convolver.h"/>
           <FILE id="fQk7iF" name="Delay.cpp" compile="1" resource="0" file="Source/audio/dsp/Delay.cpp"/>
@@ -189,14 +187,20 @@
                 file="Source/audio/dsp/EnvelopeGenerator.h"/>
           <FILE id="u7s2sw" name="Filter.cpp" compile="1" resource="0" file="Source/audio/dsp/Filter.cpp"/>
           <FILE id="Q6j13B" name="Filter.h" compile="0" resource="0" file="Source/audio/dsp/Filter.h"/>
+          <FILE id="Nem3gG" name="FFT.cpp" compile="1" resource="0" file="Source/audio/dsp/FFT.cpp"/>
+          <FILE id="QAfcqn" name="FFT.h" compile="0" resource="0" file="Source/audio/dsp/FFT.h"/>
+          <FILE id="YXkFSg" name="Randomizer.cpp" compile="1" resource="0" file="Source/audio/dsp/Randomizer.cpp"/>
+          <FILE id="XZViAk" name="Randomizer.h" compile="0" resource="0" file="Source/audio/dsp/Randomizer.h"/>
+          <FILE id="yCB0ii" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>
+          <FILE id="f6dMPF" name="Resonator.h" compile="0" resource="0" file="Source/audio/dsp/Resonator.h"/>
           <FILE id="geDg2S" name="SlewLimiter.cpp" compile="1" resource="0" file="Source/audio/dsp/SlewLimiter.cpp"/>
           <FILE id="FhiUQT" name="SlewLimiter.h" compile="0" resource="0" file="Source/audio/dsp/SlewLimiter.h"/>
           <FILE id="JdoJxW" name="SleepyDetector.cpp" compile="1" resource="0"
                 file="Source/audio/dsp/SleepyDetector.cpp"/>
           <FILE id="ohSW6i" name="SleepyDetector.h" compile="0" resource="0"
                 file="Source/audio/dsp/SleepyDetector.h"/>
-          <FILE id="Nem3gG" name="FFT.cpp" compile="1" resource="0" file="Source/audio/dsp/FFT.cpp"/>
-          <FILE id="QAfcqn" name="FFT.h" compile="0" resource="0" file="Source/audio/dsp/FFT.h"/>
+          <FILE id="owNdwN" name="Transport.cpp" compile="1" resource="0" file="Source/audio/dsp/Transport.cpp"/>
+          <FILE id="kuQckQ" name="Transport.h" compile="0" resource="0" file="Source/audio/dsp/Transport.h"/>
           <FILE id="IJRXRu" name="Oversampler.cpp" compile="1" resource="0" file="Source/audio/dsp/Oversampler.cpp"/>
           <FILE id="cJq9wX" name="Oversampler.h" compile="0" resource="0" file="Source/audio/dsp/Oversampler.h"/>
           <FILE id="v4AfAR" name="MidSide.cpp" compile="1" resource="0" file="Source/audio/dsp/MidSide.cpp"/>
@@ -258,6 +262,12 @@
         </GROUP>
         <FILE id="VSJIYZ" name="Ruler.cpp" compile="1" resource="0" file="Source/gui/Ruler.cpp"/>
         <FILE id="dEwQsp" name="Ruler.h" compile="0" resource="0" file="Source/gui/Ruler.h"/>
+        <FILE id="xfsHOD" name="RadioButton.cpp" compile="1" resource="0" file="Source/gui/RadioButton.cpp"/>
+        <FILE id="VNtSX4" name="RadioButton.h" compile="0" resource="0" file="Source/gui/RadioButton.h"/>
+        <FILE id="g8WtHe" name="RandomizerEditor.cpp" compile="1" resource="0"
+              file="Source/gui/RandomizerEditor.cpp"/>
+        <FILE id="rIyBXG" name="RandomizerEditor.h" compile="0" resource="0"
+              file="Source/gui/RandomizerEditor.h"/>
         <FILE id="dSFWdM" name="ParameterEditor.cpp" compile="1" resource="0"
               file="Source/gui/ParameterEditor.cpp"/>
         <FILE id="dKjQr2" name="ParameterEditor.h" compile="0" resource="0"
@@ -272,6 +282,10 @@
         <FILE id="bpI4zK" name="DropDownMenu.cpp" compile="1" resource="0"
               file="Source/gui/DropDownMenu.cpp"/>
         <FILE id="z6stJN" name="DropDownMenu.h" compile="0" resource="0" file="Source/gui/DropDownMenu.h"/>
+        <FILE id="TzTlHL" name="EnvelopeFollowerEditor.cpp" compile="1" resource="0"
+              file="Source/gui/EnvelopeFollowerEditor.cpp"/>
+        <FILE id="eDjCOX" name="EnvelopeFollowerEditor.h" compile="0" resource="0"
+              file="Source/gui/EnvelopeFollowerEditor.h"/>
         <FILE id="TCxx59" name="EnvelopeGeneratorEditor.cpp" compile="1" resource="0"
               file="Source/gui/EnvelopeGeneratorEditor.cpp"/>
         <FILE id="PrUoy5" name="EnvelopeGeneratorEditor.h" compile="0" resource="0"

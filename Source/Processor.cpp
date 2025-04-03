@@ -39,6 +39,7 @@ namespace audio
 #endif
         state(),
         
+        transport(),
         pluginProcessor(params
 #if PPDHasTuningEditor
 		, xenManager
@@ -174,6 +175,7 @@ namespace audio
         sampleRateUp = sampleRate;
 		blockSizeUp = dsp::BlockSize;
 #endif
+        transport.prepare(1. / sampleRate);
         pluginProcessor.prepare(sampleRateUp);
         juce::dsp::ProcessSpec spec;
 		spec.sampleRate = sampleRateUp;
@@ -323,7 +325,6 @@ namespace audio
         {
             const auto totalNumInputChannels = getTotalNumInputChannels();
             const auto totalNumOutputChannels = getTotalNumOutputChannels();
-
             for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
                 buffer.clear(i, 0, numSamplesMain);
         }
@@ -333,6 +334,7 @@ namespace audio
         const auto numChannels = buffer.getNumChannels();
 		auto samplesMain = buffer.getArrayOfWritePointers();
 
+        transport(playHead);
 #if PPDHasStereoConfig
         bool midSide = false;
         if (numChannels == 2)
@@ -420,7 +422,8 @@ namespace audio
                     midiSubBuffer.addEvent(it.getMessage(), ts - s);
 			}
 
-            processBlockOversampler(samples, midiSubBuffer, numChannels, numSamples);
+            processBlockOversampler(samples, midiSubBuffer, transport.info, numChannels, numSamples);
+            transport(numSamples);
 
             for(auto it : midiSubBuffer)
                 midiOutBuffer.addEvent(it.getMessage(), it.samplePosition + s);
@@ -470,7 +473,7 @@ namespace audio
 		if (midSide)
 			dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
-#if PPDTestEnvelope == 0
+#if PPDDCOffsetFilter != 0
         for (auto& highpass : highpasses)
         {
             juce::dsp::AudioBlock<double> block(buffer);
@@ -536,7 +539,7 @@ namespace audio
     }
 
     void Processor::processBlockOversampler(double* const* samples, MidiBuffer& midi,
-        int numChannels, int numSamples) noexcept
+        const dsp::Transport::Info& transportInfo, int numChannels, int numSamples) noexcept
     {
 #if PPDHasHQ
         auto bufferInfo = oversampler.upsample(samples, numChannels, numSamples);
@@ -546,19 +549,7 @@ namespace audio
         double* samplesUp[] = { samples[0], samples[1] };
         const auto numSamplesUp = numSamples;
 #endif
-        const auto ph = playHead.load();
-        const auto posOpt = ph->getPosition();
-        double bpm = 120.;
-        bool playing = false;
-        if (posOpt.hasValue())
-        {
-            auto pos = *posOpt;
-            playing = pos.getIsPlaying();
-            const auto bpmOpt = pos.getBpm();
-            if(bpmOpt.hasValue())
-				bpm = *bpmOpt;
-        }
-        pluginProcessor(samplesUp, midi, bpm, numChannels, numSamplesUp, playing);
+        pluginProcessor(samplesUp, midi, transportInfo, numChannels, numSamplesUp);
 #if PPDHasHQ
         oversampler.downsample(samples, numSamples);
 #endif

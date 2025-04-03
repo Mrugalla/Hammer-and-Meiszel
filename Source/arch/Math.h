@@ -153,15 +153,34 @@ namespace math
     }
 
     template<typename Float>
+    inline Float samplesToSecs(Float samples, Float fsInv) noexcept
+    {
+		return samples * fsInv;
+    }
+
+    template<typename Float>
     inline Float msToSamples(Float ms, Float Fs) noexcept
     {
         return secsToSamples(ms * static_cast<Float>(.001), Fs);
     }
 
     template<typename Float>
+    inline Float samplesToMs(Float samples, Float fsInv) noexcept
+    {
+		return samplesToSecs(samples, fsInv) * static_cast<Float>(1000);
+    }
+
+
+    template<typename Float>
     inline Float msToInc(Float ms, Float Fs) noexcept
     {
         return static_cast<Float>(1) / msToSamples(ms, Fs);
+    }
+
+    template<typename Float>
+    inline Float incToMs(Float inc, Float Fs) noexcept
+    {
+		return static_cast<Float>(1000) / inc;
     }
 
     template<typename Float>

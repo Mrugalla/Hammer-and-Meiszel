@@ -9,6 +9,8 @@
 #include "dsp/midi/MPESplit.h"
 #include "dsp/ParallelProcessor.h"
 #include "dsp/NoiseSynth.h"
+#include "dsp/EnvelopeFollower.h"
+#include "dsp/Randomizer.h"
 #include "dsp/hnm/modal/ModalFilter.h"
 #include "dsp/hnm/formant/FormantFilter.h"
 #include "dsp/hnm/HnmLowpass.h"
@@ -30,8 +32,8 @@ namespace audio
 		// sampleRate
 		void prepare(double);
 
-		// samples, midiBuffer, bpm, numChannels, numSamples, playing
-		void operator()(double**, dsp::MidiBuffer&, double, int, int, bool) noexcept;
+		// samples, midiBuffer, transport, numChannels, numSamples
+		void operator()(double**, dsp::MidiBuffer&, const dsp::Transport::Info&, int, int) noexcept;
 		
 		// samples, midiBuffer, numChannels, numSamples
 		void processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept;
@@ -54,6 +56,9 @@ namespace audio
 		std::array<std::array<double, dsp::BlockSize>, 2> formantLayer;
 
 		dsp::EnvGenMultiVoice envGensAmp, envGensMod;
+		dsp::EnvelopeFollower envFolMod;
+		dsp::Randomizer randMod;
+		std::array<std::function<double(int, int, int)>, 3> getModValFuncs;
 
 		dsp::NoiseSynth noiseSynth;
 		dsp::modal::ModalFilter modalFilter;

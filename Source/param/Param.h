@@ -59,7 +59,9 @@ namespace param
 		EnvGenAmpDecay,
 		EnvGenAmpSustain,
 		EnvGenAmpRelease,
-		// env gen mod:
+		// modulator:
+		ModSelect,
+		// mod env gen:
 		EnvGenModAttack,
 		EnvGenModDecay,
 		EnvGenModSustain,
@@ -68,6 +70,16 @@ namespace param
 		EnvGenModDecayTS,
 		EnvGenModReleaseTS,
 		EnvGenModTemposync,
+		// mod env fol:
+		EnvFolModGain,
+		EnvFolModAttack,
+		EnvFolModDecay,
+		EnvFolModSmooth,
+		// randomizer:
+		RandModGain,
+		RandModRateSync,
+		RandModSmooth,
+		RandModSpread,
 		// polyphony:
 		Polyphony,
 		// modal:

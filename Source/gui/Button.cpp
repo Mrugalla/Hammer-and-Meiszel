@@ -472,6 +472,12 @@ namespace gui
 			const auto interval = static_cast<int>(range.interval);
 			const auto direc = (wheel.deltaY > 0.f ? 1 : -1) * (wheel.isReversed ? -1 : 1);
 			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval * direc;
+			const auto start = static_cast<int>(range.start);
+			const auto end = static_cast<int>(range.end);
+			if (valDenorm < start)
+				valDenorm = end;
+			else if (valDenorm > end)
+				valDenorm = start;
 			valChangeFunc(valDenorm);
 		};
 	}
@@ -520,5 +526,68 @@ namespace gui
 
 			btn.value = val;
 		}, Button::kUpdateParameterCB, cbFPS::k15, true));
+	}
+
+	void makeParameter(std::vector<std::unique_ptr<Button>>& buttons, PID pID)
+	{
+		auto& utils = buttons[0]->utils;
+		auto& param = utils.getParam(pID);
+		
+		for (auto i = 0; i < buttons.size(); ++i)
+		{
+			auto& button = *buttons[i];
+			button.value = 0.f;
+			button.tooltip = param::toTooltip(pID);
+			const auto valNorm = param.range.convertTo0to1(static_cast<float>(i));
+
+			const auto valChangeFunc = [&prm = param, valNorm]()
+			{
+				prm.setValueWithGesture(valNorm);
+			};
+
+			button.onClick = [valChangeFunc](const Mouse&)
+			{
+				valChangeFunc();
+			};
+
+			button.onWheel = [&btn = button, pID, valChangeFunc](const Mouse&, const MouseWheel& wheel)
+			{
+				auto& utils = btn.utils;
+				auto& param = utils.getParam(pID);
+				const auto& range = param.range;
+				const auto interval = static_cast<int>(range.interval);
+				const auto direc = (wheel.deltaY > 0.f ? 1 : -1) * (wheel.isReversed ? -1 : 1);
+				auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval * direc;
+				const auto start = static_cast<int>(range.start);
+				const auto end = static_cast<int>(range.end);
+				if (valDenorm < start)
+					valDenorm = end;
+				else if (valDenorm > end)
+					valDenorm = start;
+				const auto valNorm = range.convertTo0to1(static_cast<float>(valDenorm));
+				param.setValueWithGesture(valNorm);
+			};
+
+			button.type = Button::Type::kToggle;
+			const auto text = param.getText(valNorm, 0);
+			button.setName(text);
+			const auto valToNameFunc = makeValToNameFunc(button, pID, text);
+			makeTextButton(button, valToNameFunc(), param::toTooltip(pID), CID::Interact);
+
+			button.label.cID = CID::Interact;
+			button.add(Callback([&, pID]()
+			{
+				const auto& utils = buttons[0]->utils;
+				const auto& param = utils.getParam(pID);
+				const auto val = static_cast<int>(std::round(param.getValueDenorm()));
+
+				for (auto& btn : buttons)
+					btn->value = 0.f;
+				buttons[val]->value = 1.f;
+			}, Button::kUpdateParameterCB, cbFPS::k15, true));
+		}
+
+		const auto curVal = static_cast<int>(std::round(param.getValueDenorm()));
+		buttons[curVal]->value = 1.f;
 	}
 }

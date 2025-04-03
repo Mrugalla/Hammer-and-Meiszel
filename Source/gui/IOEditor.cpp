@@ -33,6 +33,13 @@ namespace gui
 		label.autoMaxHeight = false;
 	}
 
+	void IOEditor::SidePanelParam::setVisible(bool visible)
+	{
+		label.setVisible(visible);
+		param.setVisible(visible);
+		modDial.setVisible(visible);
+	}
+
 	void IOEditor::SidePanelParam::setBounds(BoundsF bounds)
 	{
 		layout.resized(bounds);
@@ -80,7 +87,8 @@ namespace gui
 		buttonPower(u),
 		voiceGrid(u),
 		labelGroup(),
-		tuningLabelGroup()
+		tuningLabelGroup(),
+		keySelectorEnabled(false)
 	{
 		layout.init
 		(
@@ -96,6 +104,17 @@ namespace gui
 		initVoiceGrid();
 
 		setInterceptsMouseClicks(false, true);
+
+		add(Callback([&]()
+		{
+			const auto& keySelectorParam = utils.audioProcessor.params(PID::KeySelectorEnabled);
+			const auto enabled = keySelectorParam.getValMod() > 0.f;
+			if(keySelectorEnabled == enabled)
+				return;
+			keySelectorEnabled = enabled;
+			voiceGrid.setVisible(!keySelectorEnabled);
+			sidePanelParams[kPoly].setVisible(!keySelectorEnabled);
+		}, 0, cbFPS::k7_5, true));
 	}
 
 	void IOEditor::paint(Graphics& g)
