@@ -18,6 +18,7 @@ namespace gui
     using String = juce::String;
     using WChar = juce::juce_wchar;
     using Font = juce::Font;
+	using GlyphArrangement = juce::GlyphArrangement;
     using FontOptions = juce::FontOptions;
     using Props = juce::PropertiesFile;
     using AppProps = juce::ApplicationProperties;

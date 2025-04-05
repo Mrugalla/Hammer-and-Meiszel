@@ -533,17 +533,17 @@ namespace gui
 			auto sIdx = 0;
 			for (auto i = 1; i < text.length(); ++i)
 			{
-				if (isLineBreak(text[i]))
+				const auto chr = text[i];
+				if (isLineBreak(chr))
 				{
-					const auto lineWidth = font.getStringWidthFloat(text.substring(sIdx, i));
+					const auto lineWidth = GlyphArrangement::getStringWidth(font, text.substring(sIdx, i));
 					if (maxStrWidth < lineWidth)
 						maxStrWidth = lineWidth;
-					++i;
-					sIdx = i;
+					sIdx = i + 1;
 					++numLines;
 				}
 			}
-			const auto lineWidth = font.getStringWidthFloat(text.substring(sIdx));
+			const auto lineWidth = GlyphArrangement::getStringWidth(font, text.substring(sIdx));
 			if (maxStrWidth < lineWidth)
 				maxStrWidth = lineWidth;
 		}

@@ -295,6 +295,8 @@
         <FILE id="Zdnt0d" name="ColoursEditor.cpp" compile="1" resource="0"
               file="Source/gui/ColoursEditor.cpp"/>
         <FILE id="qAORvT" name="ColoursEditor.h" compile="0" resource="0" file="Source/gui/ColoursEditor.h"/>
+        <FILE id="uQqV67" name="Credits.cpp" compile="1" resource="0" file="Source/gui/Credits.cpp"/>
+        <FILE id="tS8nns" name="Credits.h" compile="0" resource="0" file="Source/gui/Credits.h"/>
         <FILE id="c4rTBK" name="ButtonRandomizer.cpp" compile="1" resource="0"
               file="Source/gui/ButtonRandomizer.cpp"/>
         <FILE id="uYUsyo" name="ButtonRandomizer.h" compile="0" resource="0"
@@ -357,6 +359,23 @@
     <FILE id="ofVXyR" name="cursor.png" compile="0" resource="1" file="Source/cursor.png"/>
     <FILE id="cUyULO" name="marble.png" compile="0" resource="1" file="Source/marble.png"/>
     <FILE id="om2vpl" name="mow.png" compile="0" resource="1" file="Source/mow.png"/>
+    <FILE id="SVZX5i" name="credits01.png" compile="0" resource="1" file="Source/credits01.png"/>
+    <FILE id="Cz7H7L" name="credits02.png" compile="0" resource="1" file="Source/credits02.png"/>
+    <FILE id="TKCswv" name="credits03.png" compile="0" resource="1" file="Source/credits03.png"/>
+    <FILE id="aCDtWL" name="credits04.png" compile="0" resource="1" file="Source/credits04.png"/>
+    <FILE id="hOP2pf" name="credits05.png" compile="0" resource="1" file="Source/credits05.png"/>
+    <FILE id="HazrL6" name="credits06.png" compile="0" resource="1" file="Source/credits06.png"/>
+    <FILE id="Rpk5PO" name="credits07.png" compile="0" resource="1" file="Source/credits07.png"/>
+    <FILE id="GlVSER" name="credits08.png" compile="0" resource="1" file="Source/credits08.png"/>
+    <FILE id="Q2Ak2X" name="credits09.png" compile="0" resource="1" file="Source/credits09.png"/>
+    <FILE id="Jt0o9e" name="credits10.png" compile="0" resource="1" file="Source/credits10.png"/>
+    <FILE id="tyDu7O" name="credits11.png" compile="0" resource="1" file="Source/credits11.png"/>
+    <FILE id="xgpxLW" name="credits12.png" compile="0" resource="1" file="Source/credits12.png"/>
+    <FILE id="wmK3EG" name="credits13.png" compile="0" resource="1" file="Source/credits13.png"/>
+    <FILE id="Teqekz" name="credits14.png" compile="0" resource="1" file="Source/credits14.png"/>
+    <FILE id="OW7Gmu" name="credits15.png" compile="0" resource="1" file="Source/credits15.png"/>
+    <FILE id="ZalKnC" name="credits16.png" compile="0" resource="1" file="Source/credits16.png"/>
+    <FILE id="Co5HxA" name="credits17.png" compile="0" resource="1" file="Source/credits17.png"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>

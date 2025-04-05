@@ -47,7 +47,7 @@ namespace gui
 			modDialWidth.attach(pIDWidth);
 
 			makeTextLabel(labelMain, _name, font::dosisMedium(), Just::centred, CID::Txt);
-			makeTextLabel(labelEnv, "Env", font::dosisMedium(), Just::centred, CID::Txt);
+			makeTextLabel(labelEnv, "Mod", font::dosisMedium(), Just::centred, CID::Txt);
 			makeTextLabel(labelWidth, "Width", font::dosisMedium(), Just::centred, CID::Txt);
 
 			labelGroup.add(labelEnv);

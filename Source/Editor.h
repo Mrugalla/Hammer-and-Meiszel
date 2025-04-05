@@ -10,6 +10,7 @@
 #include "gui/hnm/ModalModuleEditor.h"
 #include "gui/ColoursEditor.h"
 #include "gui/ManifestOfWisdom.h"
+#include "gui/Credits.h"
 #include "gui/KeySelectorEditor.h"
 #include "gui/hnm/TopEditor.h"
 #include "gui/LabelPluginRecorder.h"
@@ -46,6 +47,7 @@ namespace gui
 		IOEditor ioEditor;
         ColoursEditor coloursEditor;
         ManifestOfWisdom manifestOfWisdom;
+        Credits credits;
         Toast toast;
         LabelPluginRecorder labelTitle;
         Label labelDev, labelNoiseBlend;
@@ -62,5 +64,6 @@ namespace gui
 		ModalModuleEditor modalEditor;
         ButtonColours buttonColours;
         ButtonWisdom manifestOfWisdomButton;
+        ButtonCredits buttonCredits;
     };
 }
