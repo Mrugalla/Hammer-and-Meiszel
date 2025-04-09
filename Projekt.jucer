@@ -9,15 +9,12 @@
               pluginManufacturerCode="Bbmr" pluginCode="Hrmz" pluginVST3Category="Filter,Fx"
               pluginAAXCategory="64" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
               defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;PPDHasDelta=false&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-60.f&#10;PPDGainDryMax=0.f&#10;PPDGainWetMin=-60.f&#10;PPDGainWetMax=30.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=48&#10;&#10;PPDDCOffsetFilter=1"
-              includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
+              includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
       <GROUP id="{9465D1EC-34B9-7D70-2DC1-3218DB8AF92B}" name="unittests">
         <FILE id="cgyRcP" name="HammerUndMeiszelTests.h" compile="0" resource="0"
               file="Source/HammerUndMeiszelTests.h"/>
-      </GROUP>
-      <GROUP id="{40F40237-49C4-007E-63C9-0D102B40D1C6}" name="samples">
-        <FILE id="pR5Wnh" name="Eiskaffee.wav" compile="0" resource="1" file="Source/samples/Eiskaffee.wav"/>
       </GROUP>
       <GROUP id="{79F99DE3-0795-575F-6B0C-1A9C51E1ADD8}" name="libs">
         <GROUP id="{2C9DB278-D618-B345-13FD-B621351C3D58}" name="MoogLadders-master">
@@ -222,6 +219,8 @@
           <FILE id="YFFTvB" name="MixProcessor.h" compile="0" resource="0" file="Source/audio/dsp/MixProcessor.h"/>
           <FILE id="nBvgWV" name="Gain.cpp" compile="1" resource="0" file="Source/audio/dsp/Gain.cpp"/>
           <FILE id="KGCtmY" name="Gain.h" compile="0" resource="0" file="Source/audio/dsp/Gain.h"/>
+          <FILE id="j80ArC" name="Perlin.cpp" compile="1" resource="0" file="Source/audio/dsp/Perlin.cpp"/>
+          <FILE id="y122xx" name="Perlin.h" compile="0" resource="0" file="Source/audio/dsp/Perlin.h"/>
           <FILE id="gXz9v4" name="Phasor.cpp" compile="1" resource="0" file="Source/audio/dsp/Phasor.cpp"/>
           <FILE id="rcVAk3" name="Phasor.h" compile="0" resource="0" file="Source/audio/dsp/Phasor.h"/>
           <FILE id="rEJYSa" name="PRM.cpp" compile="1" resource="0" file="Source/audio/dsp/PRM.cpp"/>
@@ -230,6 +229,8 @@
           <FILE id="F0xV2s" name="Smooth.h" compile="0" resource="0" file="Source/audio/dsp/Smooth.h"/>
           <FILE id="SZXUEp" name="WHead.cpp" compile="1" resource="0" file="Source/audio/dsp/WHead.cpp"/>
           <FILE id="YAMe4T" name="WHead.h" compile="0" resource="0" file="Source/audio/dsp/WHead.h"/>
+          <FILE id="qV6Vv1" name="XFade.cpp" compile="1" resource="0" file="Source/audio/dsp/XFade.cpp"/>
+          <FILE id="BxPaoz" name="XFade.h" compile="0" resource="0" file="Source/audio/dsp/XFade.h"/>
         </GROUP>
         <FILE id="xmUROa" name="PluginProcessor.cpp" compile="1" resource="0"
               file="Source/audio/PluginProcessor.cpp"/>
@@ -303,6 +304,8 @@
               file="Source/gui/ButtonRandomizer.h"/>
         <FILE id="rYjSBg" name="BgImage.cpp" compile="1" resource="0" file="Source/gui/BgImage.cpp"/>
         <FILE id="XnUFHl" name="BgImage.h" compile="0" resource="0" file="Source/gui/BgImage.h"/>
+        <FILE id="dK04Ef" name="ButtonLink.cpp" compile="1" resource="0" file="Source/gui/ButtonLink.cpp"/>
+        <FILE id="J3sVM2" name="ButtonLink.h" compile="0" resource="0" file="Source/gui/ButtonLink.h"/>
         <FILE id="QmMPIV" name="ButtonPower.cpp" compile="1" resource="0" file="Source/gui/ButtonPower.cpp"/>
         <FILE id="MfsoRV" name="ButtonPower.h" compile="0" resource="0" file="Source/gui/ButtonPower.h"/>
         <FILE id="kKaRcj" name="Button.cpp" compile="1" resource="0" file="Source/gui/Button.cpp"/>
@@ -357,25 +360,25 @@
     <FILE id="mILeaZ" name="todo.h" compile="0" resource="0" file="Source/todo.h"/>
     <FILE id="xgM4fI" name="outtakes.h" compile="0" resource="0" file="Source/outtakes.h"/>
     <FILE id="ofVXyR" name="cursor.png" compile="0" resource="1" file="Source/cursor.png"/>
-    <FILE id="cUyULO" name="marble.png" compile="0" resource="1" file="Source/marble.png"/>
-    <FILE id="om2vpl" name="mow.png" compile="0" resource="1" file="Source/mow.png"/>
-    <FILE id="SVZX5i" name="credits01.png" compile="0" resource="1" file="Source/credits01.png"/>
-    <FILE id="Cz7H7L" name="credits02.png" compile="0" resource="1" file="Source/credits02.png"/>
-    <FILE id="TKCswv" name="credits03.png" compile="0" resource="1" file="Source/credits03.png"/>
-    <FILE id="aCDtWL" name="credits04.png" compile="0" resource="1" file="Source/credits04.png"/>
-    <FILE id="hOP2pf" name="credits05.png" compile="0" resource="1" file="Source/credits05.png"/>
-    <FILE id="HazrL6" name="credits06.png" compile="0" resource="1" file="Source/credits06.png"/>
-    <FILE id="Rpk5PO" name="credits07.png" compile="0" resource="1" file="Source/credits07.png"/>
-    <FILE id="GlVSER" name="credits08.png" compile="0" resource="1" file="Source/credits08.png"/>
-    <FILE id="Q2Ak2X" name="credits09.png" compile="0" resource="1" file="Source/credits09.png"/>
-    <FILE id="Jt0o9e" name="credits10.png" compile="0" resource="1" file="Source/credits10.png"/>
-    <FILE id="tyDu7O" name="credits11.png" compile="0" resource="1" file="Source/credits11.png"/>
-    <FILE id="xgpxLW" name="credits12.png" compile="0" resource="1" file="Source/credits12.png"/>
-    <FILE id="wmK3EG" name="credits13.png" compile="0" resource="1" file="Source/credits13.png"/>
-    <FILE id="Teqekz" name="credits14.png" compile="0" resource="1" file="Source/credits14.png"/>
-    <FILE id="OW7Gmu" name="credits15.png" compile="0" resource="1" file="Source/credits15.png"/>
-    <FILE id="ZalKnC" name="credits16.png" compile="0" resource="1" file="Source/credits16.png"/>
-    <FILE id="Co5HxA" name="credits17.png" compile="0" resource="1" file="Source/credits17.png"/>
+    <FILE id="ep75NJ" name="credits01.png" compile="0" resource="1" file="Source/credits01.png"/>
+    <FILE id="wdurE4" name="credits02.png" compile="0" resource="1" file="Source/credits02.png"/>
+    <FILE id="h2Z4Vr" name="credits03.png" compile="0" resource="1" file="Source/credits03.png"/>
+    <FILE id="KqDocU" name="credits04.png" compile="0" resource="1" file="Source/credits04.png"/>
+    <FILE id="d8NSE0" name="credits05.png" compile="0" resource="1" file="Source/credits05.png"/>
+    <FILE id="j8gfiI" name="credits06.png" compile="0" resource="1" file="Source/credits06.png"/>
+    <FILE id="saaf3Y" name="credits07.png" compile="0" resource="1" file="Source/credits07.png"/>
+    <FILE id="NvVQbb" name="credits08.png" compile="0" resource="1" file="Source/credits08.png"/>
+    <FILE id="CN5glq" name="credits09.png" compile="0" resource="1" file="Source/credits09.png"/>
+    <FILE id="TYOlOM" name="credits10.png" compile="0" resource="1" file="Source/credits10.png"/>
+    <FILE id="BWpux3" name="credits11.png" compile="0" resource="1" file="Source/credits11.png"/>
+    <FILE id="iPucPc" name="credits12.png" compile="0" resource="1" file="Source/credits12.png"/>
+    <FILE id="W24x6W" name="credits13.png" compile="0" resource="1" file="Source/credits13.png"/>
+    <FILE id="BlqwCj" name="credits14.png" compile="0" resource="1" file="Source/credits14.png"/>
+    <FILE id="XLSPS6" name="credits15.png" compile="0" resource="1" file="Source/credits15.png"/>
+    <FILE id="dhKGv3" name="credits16.png" compile="0" resource="1" file="Source/credits16.png"/>
+    <FILE id="L1eX9V" name="credits17.png" compile="0" resource="1" file="Source/credits17.png"/>
+    <FILE id="XCEz0h" name="marble.png" compile="0" resource="1" file="Source/marble.png"/>
+    <FILE id="Hx2c6m" name="mow.png" compile="0" resource="1" file="Source/mow.png"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>

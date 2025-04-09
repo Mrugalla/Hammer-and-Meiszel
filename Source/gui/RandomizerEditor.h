@@ -21,6 +21,8 @@ namespace gui
 				setOpaque(true);
 				add(Callback([&, &rand = randMod]()
 				{
+					if (!img.isValid())
+						return;
 					const auto thicc = utils.thicc;
 					const auto valSize = std::round(thicc);
 					const auto valSizeInt = static_cast<int>(valSize);
@@ -64,12 +66,12 @@ namespace gui
 			float y0;
 		};
 
-		RandomizerEditor(const RandMod& randMod, Utils& u, PID pGain, PID pRateSync, PID pSmooth, PID pSpread) :
+		RandomizerEditor(const RandMod& randMod, Utils& u, PID pRateSync, PID pSmooth, PID pComplex, PID pDropout) :
 			Comp(u),
 			visualizer(u, randMod),
-			title(u), gainLabel(u), rateSyncLabel(u), smoothLabel(u), spreadLabel(u),
-			gain(u), rateSync(u), smooth(u), spread(u),
-			gainMod(u), rateSyncMod(u), smoothMod(u), spreadMod(u),
+			title(u), rateSyncLabel(u), smoothLabel(u), complexLabel(u), dropoutLabel(u),
+			rateSync(u), smooth(u), complex(u), dropout(u),
+			rateSyncMod(u), smoothMod(u), complexMod(u), dropoutMod(u),
 			randomizer(u, "randmod"),
 			labelGroup()
 
@@ -82,38 +84,41 @@ namespace gui
 
 			addAndMakeVisible(visualizer);
 			addAndMakeVisible(title);
-			addAndMakeVisible(gainLabel);  addAndMakeVisible(rateSyncLabel); addAndMakeVisible(smoothLabel); addAndMakeVisible(spreadLabel);
-			addAndMakeVisible(gain); addAndMakeVisible(rateSync); addAndMakeVisible(smooth); addAndMakeVisible(spread);
-			addAndMakeVisible(gainMod); addAndMakeVisible(rateSyncMod); addAndMakeVisible(smoothMod); addAndMakeVisible(spreadMod);
+			addAndMakeVisible(rateSyncLabel); addAndMakeVisible(smoothLabel); addAndMakeVisible(complexLabel); addAndMakeVisible(dropoutLabel);
+			addAndMakeVisible(rateSync); addAndMakeVisible(smooth); addAndMakeVisible(complex); addAndMakeVisible(dropout);
+			addAndMakeVisible(rateSyncMod); addAndMakeVisible(smoothMod); addAndMakeVisible(complexMod); addAndMakeVisible(dropoutMod);
 			addAndMakeVisible(randomizer);
 
-			makeKnob(gain);
 			makeKnob(rateSync);
 			makeKnob(smooth);
-			makeKnob(spread);
+			makeKnob(complex);
+			makeKnob(dropout);
 
-			makeParameter(pGain, gain);
 			makeParameter(pRateSync, rateSync);
 			makeParameter(pSmooth, smooth);
-			makeParameter(pSpread, spread);
+			makeParameter(pComplex, complex);
+			makeParameter(pDropout, dropout);
 
-			gainMod.attach(pGain);
 			rateSyncMod.attach(pRateSync);
 			smoothMod.attach(pSmooth);
-			spreadMod.attach(pSpread);
+			complexMod.attach(pComplex);
+			dropoutMod.attach(pDropout);
 
 			const auto fontKnobs = font::dosisBold();
-			makeTextLabel(gainLabel, "Gain", fontKnobs, Just::centred, CID::Txt);
 			makeTextLabel(rateSyncLabel, "Rate", fontKnobs, Just::centred, CID::Txt);
 			makeTextLabel(smoothLabel, "Smooth", fontKnobs, Just::centred, CID::Txt);
-			makeTextLabel(spreadLabel, "Spread", fontKnobs, Just::centred, CID::Txt);
+			makeTextLabel(complexLabel, "Complex", fontKnobs, Just::centred, CID::Txt);
+			makeTextLabel(dropoutLabel, "Dropout", fontKnobs, Just::centred, CID::Txt);
 			makeTextLabel(title, "Mod Envelope:", font::dosisMedium(), Just::centredLeft, CID::Txt);
 			labelGroup.add(rateSyncLabel);
+			labelGroup.add(smoothLabel);
+			labelGroup.add(complexLabel);
+			labelGroup.add(dropoutLabel);
 
-			randomizer.add(pGain);
 			randomizer.add(pRateSync);
 			randomizer.add(pSmooth);
-			randomizer.add(pSpread);
+			randomizer.add(pComplex);
+			randomizer.add(pDropout);
 		}
 
 		void paint(Graphics& g)
@@ -137,23 +142,23 @@ namespace gui
 			layout.place(title, 0, 0, 2, 1);
 			title.setMaxHeight(thicc);
 			visualizer.setBounds(layout(0, 1, 4, 1).reduced(thicc).toNearestInt());
-			layout.place(gain, 0, 2, 1, 1); locateAtKnob(gainMod, gain);
-			layout.place(rateSync, 1, 2, 1, 1); locateAtKnob(rateSyncMod, rateSync);
-			layout.place(smooth, 2, 2, 1, 1); locateAtKnob(smoothMod, smooth);
-			layout.place(spread, 3, 2, 1, 1); locateAtKnob(spreadMod, spread);
-			layout.place(gainLabel, 0, 3, 1, 1);
-			layout.place(rateSyncLabel, 1, 3, 1, 1);
-			layout.place(smoothLabel, 2, 3, 1, 1);
-			layout.place(spreadLabel, 3, 3, 1, 1);
+			layout.place(rateSync, 0, 2, 1, 1); locateAtKnob(rateSyncMod, rateSync);
+			layout.place(smooth, 1, 2, 1, 1); locateAtKnob(smoothMod, smooth);
+			layout.place(complex, 2, 2, 1, 1); locateAtKnob(complexMod, complex);
+			layout.place(dropout, 3, 2, 1, 1); locateAtKnob(dropoutMod, dropout);
+			layout.place(rateSyncLabel, 0, 3, 1, 1);
+			layout.place(smoothLabel, 1, 3, 1, 1);
+			layout.place(complexLabel, 2, 3, 1, 1);
+			layout.place(dropoutLabel, 3, 3, 1, 1);
 			labelGroup.setMaxHeight();
 			layout.place(randomizer, 3, 0, 1, 1);
 		}
 
 	private:
 		Visualizer visualizer;
-		Label title, gainLabel, rateSyncLabel, smoothLabel, spreadLabel;
-		Knob gain, rateSync, smooth, spread;
-		ModDial gainMod, rateSyncMod, smoothMod, spreadMod;
+		Label title, rateSyncLabel, smoothLabel, complexLabel, dropoutLabel;
+		Knob rateSync, smooth, complex, dropout;
+		ModDial rateSyncMod, smoothMod, complexMod, dropoutMod;
 		ButtonRandomizer randomizer;
 		LabelGroup labelGroup;
 	};

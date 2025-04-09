@@ -123,8 +123,6 @@ namespace gui
 
 		void mouseDrag(const Mouse&) override;
 
-		void mouseDragRatios(PointD, double, double);
-
 		void mouseUp(const Mouse&) override;
 
 		void mouseWheelMove(const Mouse&, const MouseWheel&) override;

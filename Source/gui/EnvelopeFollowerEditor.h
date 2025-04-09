@@ -21,6 +21,8 @@ namespace gui
 				setOpaque(true);
 				add(Callback([&, &envFol = envelopeFollower]()
 				{
+					if (!img.isValid())
+						return;
 					const auto thicc = utils.thicc;
 					const auto valSize = std::round(thicc);
 					const auto valSizeInt = static_cast<int>(valSize);

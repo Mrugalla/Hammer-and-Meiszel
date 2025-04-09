@@ -89,10 +89,10 @@ namespace gui
         randMod
         (
 			p.pluginProcessor.randMod, utils,
-            PID::RandModGain,
 			PID::RandModRateSync,
 			PID::RandModSmooth,
-			PID::RandModSpread
+			PID::RandModComplex,
+            PID::RandModDropout
         ),
         modSelect(utils),
         modalEditor(utils),
@@ -211,6 +211,25 @@ namespace gui
                 "If the formant filter runs in parallel with the modal filter\nyou can add fixed frequency partials to the keytracked ones.\nBefore this, every partial had its own keytrack amount\nand fixed frequency value.\nIt required each partial to be 4dimensional and because of that\ntoo hard to find a good workflow for so far.");
 
             credits.add("A lot of the changes I made throughout the project\nwould not have been possible without my beta team.\n\nThank you for your voluntary work!\nI don't take that for granted,\nbecause it means that my work also means something to you!\n\nI hope I can also lead sounddesign enthusiasts to your work! :)");
+
+            Credits::Links links;
+            links.push_back({ "Flegel", URL("https://flegel.bandcamp.com/") });
+            links.push_back({ "Peazy", URL("https://www.twitch.tv/peazy_") });
+            links.push_back({ "fotisandstuff", URL("https://linktr.ee/fotisandstuff") });
+			links.push_back({ "Simon Weis", URL("https://darkpalace.studio/") });
+			links.push_back({ "Alex Reid", URL("https://alexreidstudio.com/") });
+			links.push_back({ "Lucas Schacht", URL("https://lucasschacht.wixsite.com/lucasschacht") });
+			links.push_back({ "anosci", URL("https://anosci.net/") });
+            links.push_back({ "2Rule", URL("https://tugrulakyuz.gumroad.com/") });
+            credits.add("Thanks to...", links, "...and everyone else involved.");
+
+            Credits::Links myLinks;
+            myLinks.push_back({ "GitHub", URL("https://github.com/Mrugalla/Hammer-and-Meiszel") });
+			myLinks.push_back({ "Discord", URL("https://discord.gg/xpTGJJNAZG") });
+			myLinks.push_back({ "Bandcamp", URL("https://beatsbasteln.bandcamp.com/") });
+			myLinks.push_back({ "PayPal", URL("https://www.paypal.me/AlteOma") });
+			myLinks.push_back({ "Patreon", URL("https://www.patreon.com/BeatsBasteln") });
+			credits.add("More stuff:", myLinks, "");
 
             credits.init();
         }

@@ -76,10 +76,10 @@ namespace param
 		EnvFolModDecay,
 		EnvFolModSmooth,
 		// randomizer:
-		RandModGain,
 		RandModRateSync,
 		RandModSmooth,
-		RandModSpread,
+		RandModComplex,
+		RandModDropout,
 		// polyphony:
 		Polyphony,
 		// modal:

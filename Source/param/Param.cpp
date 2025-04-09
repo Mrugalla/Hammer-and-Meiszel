@@ -86,10 +86,10 @@ namespace param
 		case PID::EnvFolModDecay: return "EnvFolMod Decay";
 		case PID::EnvFolModSmooth: return "EnvFolMod Smooth";
 		//
-		case PID::RandModGain: return "RandMod Gain";
 		case PID::RandModRateSync: return "RandMod Rate Sync";
 		case PID::RandModSmooth: return "RandMod Smooth";
-		case PID::RandModSpread: return "RandMod Spread";
+		case PID::RandModComplex: return "RandMod Complex";
+		case PID::RandModDropout: return "RandMod Dropout";
 		//
 		case PID::ModalOct: return "Modal Oct";
 		case PID::ModalSemi: return "Modal Semi";
@@ -226,10 +226,10 @@ namespace param
 		case PID::EnvFolModDecay: return "The envelope follower's decay time in ms.";
 		case PID::EnvFolModSmooth: return "Smoothen the envelope follower's output with this control.";
 		//
-		case PID::RandModGain: return "The randomizer's output gain.";
 		case PID::RandModRateSync: return "The rate of the randomizer in sync with the tempo.";
-		case PID::RandModSmooth: return "Make every new random value glide towards the next one.";
-		case PID::RandModSpread: return "Spread the range of random values occuring for each step.";
+		case PID::RandModSmooth: return "Blends between steppy and smooth modulation.";
+		case PID::RandModComplex: return "Adds more octaves of quieter noise to the modulation.";
+		case PID::RandModDropout: return "Like a touge with lots of technical sections.";
 		//
 		case PID::ModalOct: return "Transposes the modal fitler in octaves.";
 		case PID::ModalSemi: return "Transposes the modal fitler in semitones.";
@@ -334,7 +334,6 @@ namespace param
 	void Param::savePatch(State& state) const
 	{
 		const String idStr("params/" + toID(toString(id)));
-
 		const auto v = range.convertFrom0to1(getValue());
 		state.set(idStr + "/value", v);
 		const auto md = getModDepth();
@@ -347,9 +346,7 @@ namespace param
 	{
 		if (isLocked())
 			return;
-
 		const String idStr("params/" + toID(toString(id)));
-		
 		auto var = state.get(idStr + "/value");
 		if (var)
 		{
@@ -1558,10 +1555,10 @@ namespace param
 		params.push_back(makeParam(PID::EnvFolModDecay, 120.f, makeRange::quad(0.f, 8000.f, 2), Unit::Ms));
 		params.push_back(makeParam(PID::EnvFolModSmooth, 42.f, makeRange::quad(0.f, 1000.f, 2), Unit::Ms));
 		//
-		params.push_back(makeParam(PID::RandModGain, 1.f));
-		params.push_back(makeParam(PID::RandModRateSync, 1.f / 16.f, makeRange::beats(64.f, .5f), Unit::Beats));
+		params.push_back(makeParam(PID::RandModRateSync, 1.f / 16.f, makeRange::beats(64.f, .5f, false), Unit::Beats));
 		params.push_back(makeParam(PID::RandModSmooth, 0.f));
-		params.push_back(makeParam(PID::RandModSpread, 1.f));
+		params.push_back(makeParam(PID::RandModComplex, 1.f, makeRange::lin(1.f, 8.f), Unit::OctavesFloat));
+		params.push_back(makeParam(PID::RandModDropout, 0.f));
 		//
 		params.push_back(makeParam(PID::Polyphony, 15.f, makeRange::stepped(1.f, 15.f), Unit::Voices));
 		//

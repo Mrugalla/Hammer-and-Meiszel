@@ -188,7 +188,7 @@ namespace gui
 	void Toast::paint(Graphics& g)
 	{
 		setCol(g, CID::Darken);
-		const auto t2 = utils.thicc * 2.f;
+		const auto t2 = utils.thicc;
 		g.fillRoundedRectangle(getLocalBounds().toFloat().reduced(t2), t2);
 		Label::paint(g);
 	}

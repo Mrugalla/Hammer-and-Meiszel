@@ -128,19 +128,19 @@ namespace audio
 		}
 		else if (modSelect == kRandMod)
 		{
-			const auto& randModGainParam = params(PID::RandModGain);
-			const auto randModGain = static_cast<double>(randModGainParam.getValMod());
-
 			const auto& randModRateSyncParam = params(PID::RandModRateSync);
 			const auto randModRateSync = static_cast<double>(randModRateSyncParam.getValModDenorm());
 
 			const auto& randModSmoothParam = params(PID::RandModSmooth);
 			const auto randModSmooth = static_cast<double>(randModSmoothParam.getValMod());
 
-			const auto& randModSpreadParam = params(PID::RandModSpread);
-			const auto randModSpread = static_cast<double>(randModSpreadParam.getValMod());
+			const auto& randModComplexParam = params(PID::RandModComplex);
+			const auto randModComplex = static_cast<double>(randModComplexParam.getValModDenorm());
 
-			randMod({ randModGain, randModRateSync, randModSmooth, randModSpread }, transport, numSamples);
+			const auto& randModDropoutParam = params(PID::RandModDropout);
+			const auto randModDropout = static_cast<double>(randModDropoutParam.getValMod());
+
+			randMod({ randModRateSync, randModSmooth, randModComplex, randModDropout }, transport, numSamples);
 		}
 
 		const auto& noiseBlendParam = params(PID::NoiseBlend);

@@ -425,8 +425,6 @@ namespace gui
 	void ModalMaterialEditor::mouseDrag(const Mouse& mouse)
 	{
 		draggerfall.updateCoords(mouse.position);
-		draggerfall.updateSelection(partials);
-
 		if (draggerfall.selectionEmpty())
 			return;
 
@@ -443,34 +441,28 @@ namespace gui
 
 		if (status == Status::Processing)
 		{
-			mouseDragRatios(dragDist, xDepth, yDepth);
+			if (draggerfall.isSelected(0))
+			{
+				auto& peakInfo = material.peakInfos[0];
+				peakInfo.mag = juce::jlimit(0., 2., peakInfo.mag - dragDist.y * yDepth);
+			}
+			for (auto i = 1; i < NumPartials; ++i)
+			{
+				const bool selected = draggerfall.isSelected(i);
+				if (selected)
+				{
+					auto& peakInfo = material.peakInfos[i];
+					peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
+					auto ratio = peakInfo.fc;
+					ratio += dragDist.x * xDepth;
+					peakInfo.fc = juce::jlimit(1., 420., ratio);
+				}
+			}
 			material.updatePeakInfosFromGUI();
 			updateInfoLabel();
 		}
 
 		dragXY = mouse.position;
-	}
-
-	void ModalMaterialEditor::mouseDragRatios(PointD dragDist,
-		double xDepth, double yDepth)
-	{
-		if (draggerfall.isSelected(0))
-		{
-			auto& peakInfo = material.peakInfos[0];
-			peakInfo.mag = juce::jlimit(0., 2., peakInfo.mag - dragDist.y * yDepth);
-		}
-		for (auto i = 1; i < NumPartials; ++i)
-		{
-			const bool selected = draggerfall.isSelected(i);
-			if (selected)
-			{
-				auto& peakInfo = material.peakInfos[i];
-				peakInfo.mag = juce::jlimit(0., 100., peakInfo.mag - dragDist.y * yDepth);
-				auto ratio = peakInfo.fc;
-				ratio += dragDist.x * xDepth;
-				peakInfo.fc = juce::jlimit(1., 420., ratio);
-			}
-		}
 	}
 
 	void ModalMaterialEditor::mouseUp(const Mouse& mouse)

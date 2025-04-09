@@ -275,6 +275,31 @@ namespace math
         return dbToAmp(db);
     }
 
+    template<typename Float>
+	inline Float lerp(const Float* buffer, Float readHead) noexcept
+	{
+		const auto iFloor = std::floor(readHead);
+		auto i0 = static_cast<int>(iFloor);
+		auto i1 = i0 + 1;
+		const auto t = readHead - iFloor;
+		const auto v0 = buffer[i0];
+		const auto v1 = buffer[i1];
+		return v0 + t * (v1 - v0);
+	}
+
+    template<typename Float>
+	inline Float lerp(const Float* buffer, Float readHead, int size) noexcept
+	{
+		const auto iFloor = std::floor(readHead);
+		auto i0 = static_cast<int>(iFloor);
+		auto i1 = i0 + 1;
+		if (i1 >= size) i1 -= size;
+		const auto t = readHead - iFloor;
+		const auto v0 = buffer[i0];
+		const auto v1 = buffer[i1];
+		return v0 + t * (v1 - v0);
+	}
+
     template<typename T>
     inline T cubicHermiteSpline(const T* buffer, T readHead, int size) noexcept
     {

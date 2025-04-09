@@ -26,7 +26,7 @@ Param db valToStr can be -inf (gain wet [-inf, 0])
     but it can also be not (gain out [-12,12])
 GUI
     SharedPluginState (customizable state)
-        fonts für verschiedene funktionen
+        fonts fÃ¼r verschiedene funktionen
             (zB knob-labels, titel, etc)
         sensitivity
             drag, wheel, key

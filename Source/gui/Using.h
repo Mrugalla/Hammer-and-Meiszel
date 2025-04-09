@@ -76,6 +76,7 @@ namespace gui
 	using DragAndDropTarget = juce::DragAndDropTarget;
 	using DragAndDropContainer = juce::DragAndDropContainer;
     using DnDSrc = DragAndDropTarget::SourceDetails;
+	using URL = juce::URL;
 
     using Processor = audio::Processor;
 

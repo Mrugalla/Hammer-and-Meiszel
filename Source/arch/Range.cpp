@@ -199,9 +199,12 @@ namespace makeRange
 		const auto numValsX = numValuesInv * EpsInv;
 		const auto normValsY = numValuesF * Eps;
 
+		const auto minVal = table.front();
+		const auto maxVal = table.back();
+
 		return
 		{
-			table.front(), table.back(),
+			minVal, maxVal,
 			[table, normValsY](float, float, float normalized)
 			{
 				const auto valueIdx = normalized * normValsY;
@@ -210,8 +213,12 @@ namespace makeRange
 			[table, numValsX](float, float, float denormalized)
 			{
 				for (auto i = 0; i < table.size(); ++i)
-					if (denormalized <= table[i])
+				{
+					const auto val = table[i];
+					if (denormalized <= val)
 						return static_cast<float>(i) * numValsX;
+				}
+					
 				return 0.f;
 			},
 			[](float start, float end, float denormalized)

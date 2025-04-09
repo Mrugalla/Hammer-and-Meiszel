@@ -1,19 +1,23 @@
 #pragma once
-#include "Button.h"
+#include "ButtonLink.h"
 
 namespace gui
 {
-	class Credits :
+	struct Credits :
 		public Comp
 	{
-		enum class Mode { Image, Text };
-
+		enum class Mode { Image, Text, Links };
+		
+		using Links = ButtonLink::Links;
+	private:
 		struct Page
 		{
 			const void* data;
 			int size;
 			String info;
 			int idx;
+			Links links;
+			String footer;
 			Mode mode;
 		};
 
@@ -107,14 +111,64 @@ namespace gui
 			}
 		};
 
+		struct LinksPage :
+			public Comp
+		{
+			LinksPage(Utils& u) :
+				Comp(u)
+			{
+			}
+
+			void init(const Links& links)
+			{
+				clear();
+				for (auto& link : links)
+				{
+					buttons.push_back(std::make_unique<ButtonLink>(utils));
+					auto& button = *buttons.back();
+					button.init(link.name, link.url);
+				}
+				for (auto& button : buttons)
+					addAndMakeVisible(*button);
+				resized();
+				repaint();
+			}
+
+			void resized() override
+			{
+				auto bounds = getLocalBounds().toFloat();
+				const auto x = 0.f;
+				const auto w = bounds.getWidth();
+				const auto h = bounds.getHeight() / static_cast<float>(buttons.size());
+				auto y = 0.f;
+				for (auto& button : buttons)
+				{
+					button->setBounds(BoundsF(x,y,w,h).toNearestInt());
+					y += h;
+				}
+			}
+
+		private:
+			std::vector<std::unique_ptr<ButtonLink>> buttons;
+
+			void clear()
+			{
+				for (auto& button : buttons)
+					removeChildComponent(button.get());
+				buttons.clear();
+			}
+		};
+
 		struct Entry :
 			public Comp
 		{
 			Entry(Utils& u) :
 				Comp(u),
+				linksPage(u),
 				img(u),
 				info(u),
 				idx(u),
+				footer(u),
 				mode(Mode::Image)
 			{
 				layout.init
@@ -125,10 +179,14 @@ namespace gui
 				addAndMakeVisible(img);
 				addAndMakeVisible(info);
 				addAndMakeVisible(idx);
+				addAndMakeVisible(footer);
+				addAndMakeVisible(linksPage);
 				makeTextLabel(info, "", font::dosisMedium(), Just::topLeft, CID::Txt);
 				makeTextLabel(idx, "", font::dosisMedium(), Just::centred, CID::Hover);
+				makeTextLabel(footer, "", font::dosisMedium(), Just::topLeft, CID::Txt);
 				info.autoMaxHeight = true;
-				info.autoMaxHeight = true;
+				idx.autoMaxHeight = true;
+				footer.autoMaxHeight = true;
 			}
 
 			void init(const Page& page, int size)
@@ -141,7 +199,9 @@ namespace gui
 					img.setVisible(true);
 					img.init(page.data, page.size);
 				}
+				linksPage.init(page.links);
 				info.setText(page.info);
+				footer.setText(page.footer);
 				idx.setText(String(page.idx + 1) + " / " + String(size));
 			}
 
@@ -157,14 +217,20 @@ namespace gui
 				case Mode::Text:
 					layout.place(info, 0, 0, 2, 2);
 					break;
+				case Mode::Links:
+					layout.place(info, 0, 0.f, 2, .15f);
+					layout.place(linksPage, 0, .15f, 2, 1.55f);
+					layout.place(footer, 0, 1.7f, 2, .3f);
+					break;
 				}
 				layout.place(idx, 1, 1.7f, 1, .3f);
 				info.setMaxHeight(utils.thicc);
 			}
 
 		private:
+			LinksPage linksPage;
 			ZoomImage img;
-			Label info, idx;
+			Label info, idx, footer;
 			Mode mode;
 		};
 
@@ -213,12 +279,17 @@ namespace gui
 
 		void add(const void* data, int size, const String& info)
 		{
-			pages.push_back({ data, size, info, static_cast<int>(pages.size()), Mode::Image });
+			pages.push_back({ data, size, info, static_cast<int>(pages.size()), {}, "", Mode::Image});
 		}
 
 		void add(const String& info)
 		{
-			pages.push_back({ nullptr, 0, info, static_cast<int>(pages.size()), Mode::Text });
+			pages.push_back({ nullptr, 0, info, static_cast<int>(pages.size()), {}, "", Mode::Text });
+		}
+
+		void add(const String& title, const Links& links, const String& subTitle)
+		{
+			pages.push_back({ nullptr, 0, title, static_cast<int>(pages.size()), links, subTitle, Mode::Links });
 		}
 
 		void init()
