@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<state author="Florian" mat0pk0mg="0.2856680146221159" mat0pk0rt="1.0"
+       mat0pk0fr="0.0" mat0pk0kt="1.0" mat0pk1mg="0.3465115622903774"
+       mat0pk1rt="17.81686592102051" mat0pk1fr="1.0" mat0pk1kt="1.0"
+       mat0pk2mg="0.6562516401944963" mat0pk2rt="6.497561931610107"
+       mat0pk2fr="2.0" mat0pk2kt="1.0" mat0pk3mg="0.8498005675186728"
+       mat0pk3rt="0.1790080070495605" mat0pk3fr="3.0" mat0pk3kt="1.0"
+       mat0pk4mg="0.749443570179694" mat0pk4rt="30.90053367614746" mat0pk4fr="4.0"
+       mat0pk4kt="1.0" mat0pk5mg="0.199331437761502" mat0pk5rt="7.856734275817871"
+       mat0pk5fr="5.0" mat0pk5kt="1.0" mat0pk6mg="0.9879015916674934"
+       mat0pk6rt="15.34958934783936" mat0pk6fr="6.0" mat0pk6kt="1.0"
+       mat0pk7mg="1.0" mat0pk7rt="11.8353853225708" mat0pk7fr="7.0"
+       mat0pk7kt="1.0" mat0pk8mg="0.5971577344518664" mat0pk8rt="9.863763809204102"
+       mat0pk8fr="8.0" mat0pk8kt="1.0" mat0pk9mg="0.7520612068251508"
+       mat0pk9rt="3.587892770767212" mat0pk9fr="9.0" mat0pk9kt="1.0"
+       mat0pk10mg="0.1504408842806187" mat0pk10rt="23.13735198974609"
+       mat0pk10fr="10.0" mat0pk10kt="1.0" mat0pk11mg="0.4898555961388342"
+       mat0pk11rt="8.50615119934082" mat0pk11fr="11.0" mat0pk11kt="1.0"
+       mat1pk0mg="0.9138285451352873" mat1pk0rt="1.0" mat1pk0fr="0.0"
+       mat1pk0kt="1.0" mat1pk1mg="0.8371787435574297" mat1pk1rt="0.1943183839321136"
+       mat1pk1fr="1.0" mat1pk1kt="1.0" mat1pk2mg="0.1780726973355521"
+       mat1pk2rt="27.69585227966309" mat1pk2fr="2.0" mat1pk2kt="1.0"
+       mat1pk3mg="0.09744578215563408" mat1pk3rt="8.965812683105469"
+       mat1pk3fr="3.0" mat1pk3kt="1.0" mat1pk4mg="0.2566718875370205"
+       mat1pk4rt="24.62672805786133" mat1pk4fr="4.0" mat1pk4kt="1.0"
+       mat1pk5mg="0.4312655819780384" mat1pk5rt="10.88741016387939"
+       mat1pk5fr="5.0" mat1pk5kt="1.0" mat1pk6mg="1.0" mat1pk6rt="10.0930118560791"
+       mat1pk6fr="6.0" mat1pk6kt="1.0" mat1pk7mg="0.1022186995918787"
+       mat1pk7rt="17.6763916015625" mat1pk7fr="7.0" mat1pk7kt="1.0"
+       mat1pk8mg="0.2453803518775196" mat1pk8rt="19.1445426940918" mat1pk8fr="8.0"
+       mat1pk8kt="1.0" mat1pk9mg="0.8749374990056092" mat1pk9rt="22.27156829833984"
+       mat1pk9fr="9.0" mat1pk9kt="1.0" mat1pk10mg="0.09236377146461057"
+       mat1pk10rt="27.17583847045898" mat1pk10fr="10.0" mat1pk10kt="1.0"
+       mat1pk11mg="0.6272235991505922" mat1pk11rt="21.21653366088867"
+       mat1pk11fr="11.0" mat1pk11kt="1.0">
+  <params mdabs="0">
+    <macro value="0.0" md="0.0" mb="0.5"/>
+    <gainwet value="7.189353942871094" md="-0.0207100622355938" mb="0.5"/>
+    <mix value="1.0" md="0.0" mb="0.5"/>
+    <gainout value="0.0" md="0.0" mb="0.5"/>
+    <stereoconfig value="1.0" md="0.0" mb="0.5"/>
+    <xen value="12.00000095367432" md="0.0" mb="0.5"/>
+    <xensnap value="1.0" md="0.0" mb="0.5"/>
+    <mastertune value="437.8698120117188" md="0.1035503000020981" mb="0.5"/>
+    <anchorpitch value="69.0" md="0.0" mb="0.5"/>
+    <pitchbendrange value="2.0" md="0.0" mb="0.5"/>
+    <softclip value="0.0" md="0.0" mb="0.5"/>
+    <power value="1.0" md="0.0" mb="0.5"/>
+    <noiseblend value="1.0" md="0.0" mb="0.5"/>
+    <keyselectorenabled value="1.0" md="0.0" mb="0.5"/>
+    <envgenampattack value="4.0" md="0.0" mb="0.5"/>
+    <envgenampdecay value="420.0000305175781" md="0.0" mb="0.5"/>
+    <envgenampsustain value="0.800000011920929" md="0.0" mb="0.5"/>
+    <envgenamprelease value="42.00001525878906" md="0.0" mb="0.5"/>
+    <envgenmodattack value="4.0" md="0.0" mb="0.5"/>
+    <envgenmoddecay value="120.0" md="0.0" mb="0.5"/>
+    <envgenmodsustain value="0.0" md="0.0" mb="0.5"/>
+    <envgenmodrelease value="42.00001525878906" md="0.0" mb="0.5"/>
+    <modaloct value="-1.0" md="0.0" mb="0.5"/>
+    <modalsemi value="0.0" md="0.0" mb="0.5"/>
+    <modalkeytrack value="1.0" md="0.0" mb="0.5"/>
+    <modalkeytrackenv value="0.0" md="0.0" mb="0.5"/>
+    <modalkeytrackbreite value="0.0" md="0.0" mb="0.5"/>
+    <modalblend value="0.8402369022369385" md="-0.4940822720527649" mb="0.6064931154251099"/>
+    <modalblendenv value="0.0" md="0.0" mb="0.5"/>
+    <modalblendbreite value="-0.02366852760314941" md="-0.01183431781828403" mb="0.5"/>
+    <modalspreizung value="-1.692302584648132" md="0.2899406254291534" mb="0.372774600982666"/>
+    <modalspreizungenv value="0.0" md="0.0" mb="0.5"/>
+    <modalspreizungbreite value="-0.2840254306793213" md="-0.008875741623342037" mb="0.5"/>
+    <modalharmonie value="0.8402369618415833" md="-0.5680469274520874" mb="0.7159878611564636"/>
+    <modalharmonieenv value="0.0" md="0.0" mb="0.5"/>
+    <modalharmoniebreite value="0.4437868595123291" md="0.0710059329867363" mb="0.5"/>
+    <modalkraft value="0.3491123914718628" md="-0.09467455744743347" mb="0.2308003455400467"/>
+    <modalkraftenv value="0.0" md="0.0" mb="0.5"/>
+    <modalkraftbreite value="-0.03550052642822266" md="-0.002958578057587147" mb="0.5"/>
+    <modalreso value="0.9130185842514038" md="-0.2426029592752457" mb="0.2604100704193115"/>
+    <modalresoenv value="0.0" md="0.0" mb="0.5"/>
+    <modalresobreite value="0.2781087160110474" md="0.0" mb="0.5"/>
+    <modalresodamp value="0.6650885343551636" md="-0.4467452764511108" mb="0.3520706295967102"/>
+    <modalresodampenv value="0.0" md="0.0" mb="0.5"/>
+    <modalresodampbreite value="0.1301789283752441" md="0.1745562106370926" mb="0.5"/>
+    <comboct value="-2.0" md="0.0" mb="0.5"/>
+    <combsemi value="0.0" md="0.0" mb="0.5"/>
+    <combunison value="0.192308098077774" md="-0.0857987105846405" mb="0.5561745166778564"/>
+    <combfeedback value="0.4698214530944824" md="0.08875784277915955" mb="0.615387499332428"/>
+    <combfeedbackenv value="0.0" md="0.0" mb="0.5"/>
+    <combfeedbackwidth value="-0.2189339995384216" md="0.2189349979162216" mb="0.5"/>
+  </params>
+  <keys key0="0" key1="1" key2="0" key3="1" key4="0" key5="0" key6="1"
+        key7="0" key8="1" key9="0" key10="1" key11="0" key12="0" key13="0"
+        key14="0" key15="0" key16="0" key17="0" key18="0" key19="0" key20="0"
+        key21="0" key22="0" key23="0" key24="0" key25="0" key26="0" key27="0"
+        key28="0" key29="0" key30="0" key31="0" key32="0" key33="0" key34="0"
+        key35="0" key36="0" key37="0" key38="0" key39="0" key40="0" key41="0"
+        key42="0" key43="0" key44="0" key45="0" key46="0" key47="0"/>
+</state>

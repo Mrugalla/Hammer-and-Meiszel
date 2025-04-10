@@ -34,6 +34,35 @@ namespace gui
 			return size;
 		}
 
+		inline String generateWildcard(const String& filter)
+		{
+			if (filter.isEmpty())
+				return "*.txt";
+			String wildcard("*");
+			wildcard += filter + "*.txt";
+			const char charactersToReplace[] =
+			{
+				' ', '.', '-', '_', '(', ')', '\'', '\"', '!', '?', ',', ';', ':', '=', '+',
+				'/', '\\', '|', '~', '`', '@', '#', '$', '%', '^', '&'
+			};
+			for (const char c : charactersToReplace)
+				wildcard = wildcard.replaceCharacter(c, '*');
+			return wildcard;
+		}
+
+		inline bool isInAuthor(const String& author, const String& filter)
+		{
+			if (filter.isEmpty())
+				return true;
+			const auto authorLC = author.toLowerCase();
+			const auto filterLC = filter.toLowerCase();
+			const auto words = StringArray::fromTokens(filterLC, " ", "");
+			for (const auto& word : words)
+				if (authorLC.contains(word))
+					return true;
+			return false;
+		}
+
 		struct Patch :
 			public Comp
 		{
@@ -160,7 +189,9 @@ namespace gui
 				},
 				selected(nullptr),
 				scrollBar(u),
-				directorySize(getDirectorySize(getPatchesDirectory(u)))
+				directorySize(getDirectorySize(getPatchesDirectory(u))),
+				filterName(""),
+				filterAuthor("")
 			{
 				layout.init
 				(
@@ -211,26 +242,45 @@ namespace gui
 			void resized() override
 			{
 				layout.resized(getLocalBounds().toFloat());
+				layout.place(scrollBar, 1, 0, 1, 1);
 
 				const auto w = layout.getW(0);
 				const auto h = layout.getH(0);
 				const auto patchHeight = h / static_cast<float>(NumPatches);
 				auto patchY = 0.f;
+				auto j = 0;
 				for (auto i = 0; i < NumPatches; ++i)
 				{
-					auto& patch = patches[i];
+					while (!patches[j].isVisible())
+					{
+						++j;
+						if (j >= patches.size())
+							return;
+					}
+					auto& patch = patches[j];
 					patch.setBounds(BoundsF(0.f, patchY, w, patchHeight).toNearestInt());
 					patch.resized();
 					patchY += patchHeight;
-				}
 
-				layout.place(scrollBar, 1, 0, 1, 1);
+					++j;
+					if (j >= patches.size())
+						return;
+				}
+			}
+
+			void updateFilter(const String& _filterName, const String& _filterAuthor)
+			{
+				filterName = _filterName;
+				filterAuthor = _filterAuthor;
+				update();
+				resized();
+				repaint();
 			}
 
 			void update()
 			{
 				const auto patchesDirectory = getPatchesDirectory(utils);
-				const auto wildcard = "*.txt";
+				const auto wildcard = generateWildcard(filterName);
 				const auto type = File::TypesOfFileToFind::findFiles;
 				const RangedDirectoryIterator iterator
 				(
@@ -241,6 +291,14 @@ namespace gui
 				);
 
 				const auto numFiles = patchesDirectory.getNumberOfChildFiles(type, wildcard);
+				if (numFiles == 0)
+				{
+					scrollBar.numFiles = 1;
+					scrollBar.repaint();
+					for (auto idx = 0; idx < NumPatches; ++idx)
+						patches[idx].deactivate();
+					return;
+				}
 				if (scrollBar.numFiles != numFiles)
 				{
 					scrollBar.numFiles = numFiles;
@@ -272,33 +330,39 @@ namespace gui
 				auto name = file.getFileName();
 				name = name.substring(0, name.lastIndexOf("."));
 				const auto author = state.getProperty("author", "");
-
-				patches[i].activate(name, author, file);
-				patches[i].buttonLoad.onClick = [&, i](const Mouse&)
+				if (isInAuthor(author, filterAuthor))
 				{
-					selected = &patches[i];
-					const auto& file = patches[i].file;
-					const auto vt = ValueTree::fromXml(file.loadFileAsString());
-					if (!vt.isValid())
-						return;
-					auto& state = utils.audioProcessor.state;
-					state.state = vt;
-					utils.audioProcessor.params.loadPatch(state);
-					utils.audioProcessor.pluginProcessor.loadPatch(state);
-				};
-				patches[i].buttonDelete.onClick = [&, i](const Mouse&)
+					patches[i].activate(name, author, file);
+					patches[i].buttonLoad.onClick = [&, i](const Mouse&)
+					{
+						selected = &patches[i];
+						const auto& file = patches[i].file;
+						const auto vt = ValueTree::fromXml(file.loadFileAsString());
+						if (!vt.isValid())
+							return;
+						auto& state = utils.audioProcessor.state;
+						state.state = vt;
+						utils.audioProcessor.params.loadPatch(state);
+						utils.audioProcessor.pluginProcessor.loadPatch(state);
+					};
+					patches[i].buttonDelete.onClick = [&, i](const Mouse&)
+					{
+						if (patches[i].author == "factory")
+							return;
+						const auto file = patches[i].file;
+						file.deleteFile();
+						const auto directory = getPatchesDirectory(utils);
+						directorySize = getDirectorySize(directory);
+						patches[i].deactivate();
+						update();
+						resized();
+						repaint();
+					};
+				}
+				else
 				{
-					if (patches[i].author == "factory")
-						return;
-					const auto file = patches[i].file;
-					file.deleteFile();
-					const auto directory = getPatchesDirectory(utils);
-					directorySize = getDirectorySize(directory);
 					patches[i].deactivate();
-					update();
-					resized();
-					repaint();
-				};
+				}
 			}
 
 			const Patch& operator[](int i) const noexcept
@@ -335,6 +399,7 @@ namespace gui
 			Patch* selected;
 			ScrollBar scrollBar;
 			Int64 directorySize;
+			String filterName, filterAuthor;
 		};
 
 		struct ButtonSavePatch :
@@ -492,7 +557,9 @@ namespace gui
 				editorName(u, "enter name"),
 				patches(u),
 				saveButton(u, editorName, editorAuthor),
-				revealButton(u, patches)
+				revealButton(u, patches),
+				nameText(""),
+				authorText("")
 			{
 				layout.init
 				(
@@ -521,6 +588,24 @@ namespace gui
 					"You have entered the patch browser. no shit."
 				);
 				title.autoMaxHeight = true;
+
+				editorName.onKeyPress = [&](const KeyPress&)
+				{
+					const auto text = editorName.txt;
+					if (nameText == text)
+						return;
+					nameText = text;
+					patches.updateFilter(nameText, authorText);
+				};
+
+				editorAuthor.onKeyPress = [&](const KeyPress&)
+				{
+					const auto text = editorAuthor.txt;
+					if (authorText == text)
+						return;
+					authorText = text;
+					patches.updateFilter(nameText, authorText);
+				};
 			}
 
 			void paint(Graphics& g) override
@@ -554,6 +639,7 @@ namespace gui
 			Patches patches;
 			ButtonSavePatch saveButton;
 			ButtonReveal revealButton;
+			String nameText, authorText;
 		};
 
 		struct BrowserButton :

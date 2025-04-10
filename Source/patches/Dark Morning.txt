@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<state author="Alex Reid" mat0pk0mg="1.0" mat0pk0fc="1.0" mat0pk1mg="0.8571428571428572"
+       mat0pk1fc="31.83900260925293" mat0pk2mg="0.7142857142857143"
+       mat0pk2fc="4.829301834106445" mat0pk3mg="0.5714285714285714"
+       mat0pk3fc="7.784538269042969" mat0pk4mg="0.4285714285714286"
+       mat0pk4fc="18.19360542297363" mat0pk5mg="0.2857142857142858"
+       mat0pk5fc="27.09912300109863" mat0pk6mg="0.1428571428571429"
+       mat0pk6fc="9.069467544555664" mat1pk0mg="1.0" mat1pk0fc="1.0"
+       mat1pk1mg="0.8571428571428572" mat1pk1fc="14.21829986572266"
+       mat1pk2mg="0.7142857142857143" mat1pk2fc="19.53414726257324"
+       mat1pk3mg="0.5714285714285714" mat1pk3fc="16.57140159606934"
+       mat1pk4mg="0.4285714285714286" mat1pk4fc="15.21858978271484"
+       mat1pk5mg="0.2857142857142858" mat1pk5fc="9.33958625793457" mat1pk6mg="0.1428571428571429"
+       mat1pk6fc="14.43942260742188">
+  <params mdabs="0">
+    <macro value="0.0" md="0.0" mb="0.5"/>
+    <gainwet value="0.0" md="0.0" mb="0.5"/>
+    <mix value="1.0" md="0.0" mb="0.5"/>
+    <gainout value="0.0" md="0.0" mb="0.5"/>
+    <stereoconfig value="0.0" md="0.0" mb="0.5"/>
+    <xen value="12.00000095367432" md="0.0" mb="0.5"/>
+    <xensnap value="1.0" md="0.0" mb="0.5"/>
+    <mastertune value="440.0" md="0.0" mb="0.5"/>
+    <anchorpitch value="69.0" md="0.0" mb="0.5"/>
+    <pitchbendrange value="2.0" md="0.0" mb="0.5"/>
+    <softclip value="0.0" md="0.0" mb="0.5"/>
+    <power value="1.0" md="0.0" mb="0.5"/>
+    <noiseblend value="0.1374522596597672" md="0.0" mb="0.5"/>
+    <keyselectorenabled value="0.0" md="0.0" mb="0.5"/>
+    <envgenampattack value="4.0" md="0.0" mb="0.5"/>
+    <envgenampdecay value="420.0000305175781" md="0.0" mb="0.5"/>
+    <envgenampsustain value="0.800000011920929" md="0.0" mb="0.5"/>
+    <envgenamprelease value="42.00001525878906" md="0.0" mb="0.5"/>
+    <modselect value="0.0" md="0.0" mb="0.5"/>
+    <envgenmodattack value="4.0" md="0.0" mb="0.5"/>
+    <envgenmoddecay value="120.0" md="0.0" mb="0.5"/>
+    <envgenmodsustain value="0.0" md="0.0" mb="0.5"/>
+    <envgenmodrelease value="42.00001525878906" md="0.0" mb="0.5"/>
+    <envgenmodattacksync value="0.0" md="0.0" mb="0.5"/>
+    <envgenmoddecaysync value="0.0625" md="0.0" mb="0.5"/>
+    <envgenmodreleasesync value="0.0625" md="0.0" mb="0.5"/>
+    <envgenmodtemposync value="1.0" md="0.0" mb="0.5"/>
+    <envfolmodgain value="0.0" md="0.0" mb="0.5"/>
+    <envfolmodattack value="4.000000476837158" md="0.0" mb="0.5"/>
+    <envfolmoddecay value="120.0" md="0.0" mb="0.5"/>
+    <envfolmodsmooth value="42.00002288818359" md="0.0" mb="0.5"/>
+    <randmodratesync value="0.0625" md="0.0" mb="0.5"/>
+    <randmodsmooth value="0.0" md="0.0" mb="0.5"/>
+    <randmodcomplex value="1.0" md="0.0" mb="0.5"/>
+    <randmoddropout value="0.0" md="0.0" mb="0.5"/>
+    <polyphony value="15.0" md="0.0" mb="0.5"/>
+    <modaloct value="0.7108845710754395" md="0.0" mb="0.5"/>
+    <modalsemi value="0.0" md="0.0" mb="0.5"/>
+    <modalblend value="0.5209823846817017" md="0.0" mb="0.5"/>
+    <modalblendenv value="0.0" md="0.0" mb="0.5"/>
+    <modalblendbreite value="0.0" md="0.0" mb="0.5"/>
+    <modalspreizung value="-0.6878979206085205" md="0.1908006072044373" mb="0.5"/>
+    <modalspreizungenv value="0.0" md="0.0" mb="0.5"/>
+    <modalspreizungbreite value="0.0" md="0.0" mb="0.5"/>
+    <modalharmonie value="0.0" md="0.4872228801250458" mb="0.5"/>
+    <modalharmonieenv value="0.0" md="0.0" mb="0.5"/>
+    <modalharmoniebreite value="0.0" md="0.0" mb="0.5"/>
+    <modalkraft value="-0.7554610967636108" md="0.4088583588600159" mb="0.5"/>
+    <modalkraftenv value="0.0" md="0.0" mb="0.5"/>
+    <modalkraftbreite value="0.0" md="0.0" mb="0.5"/>
+    <modalreso value="1.0" md="0.0" mb="0.5"/>
+    <modalresoenv value="0.0" md="0.0" mb="0.5"/>
+    <modalresobreite value="0.0" md="0.0" mb="0.5"/>
+    <formanta value="15.0" md="0.0" mb="0.5"/>
+    <formantb value="18.0" md="0.0" mb="0.5"/>
+    <formantposition value="0.0" md="0.0" mb="0.5"/>
+    <formantpositionenv value="0.0" md="0.0" mb="0.5"/>
+    <formantpositionwidth value="0.0" md="0.0" mb="0.5"/>
+    <formantq value="0.8500000238418579" md="0.0" mb="0.5"/>
+    <formantqenv value="0.0" md="0.0" mb="0.5"/>
+    <formantqwidth value="0.0" md="0.0" mb="0.5"/>
+    <formantdecay value="999.9998168945312" md="0.0" mb="0.5"/>
+    <formantgain value="-48.0" md="0.0" mb="0.5"/>
+    <comboct value="0.0" md="0.0" mb="0.5"/>
+    <combsemi value="0.0" md="0.0" mb="0.5"/>
+    <combunison value="0.0" md="0.0" mb="0.5"/>
+    <combfeedback value="0.3045065402984619" md="0.0" mb="0.5"/>
+    <combfeedbackenv value="0.0" md="0.0" mb="0.5"/>
+    <combfeedbackwidth value="0.0" md="0.0" mb="0.5"/>
+    <damp value="8.0" md="0.0" mb="0.5"/>
+    <dampenv value="0.0" md="0.0" mb="0.5"/>
+    <dampwidth value="0.0" md="0.0" mb="0.5"/>
+  </params>
+  <keys key0="0" key1="1" key2="0" key3="0" key4="0" key5="1" key6="1"
+        key7="0" key8="0" key9="0" key10="1" key11="0" key12="0" key13="0"
+        key14="0" key15="0" key16="0" key17="0" key18="0" key19="0" key20="0"
+        key21="0" key22="0" key23="0" key24="0" key25="0" key26="0" key27="0"
+        key28="0" key29="0" key30="0" key31="0" key32="0" key33="0" key34="0"
+        key35="0" key36="0" key37="0" key38="0" key39="0" key40="0" key41="0"
+        key42="0" key43="0" key44="0" key45="0" key46="0" key47="0"/>
+</state>

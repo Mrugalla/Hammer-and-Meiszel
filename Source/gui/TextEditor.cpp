@@ -10,7 +10,8 @@ namespace gui
 			caret(0),
 			emptyAniIdx(0),
 			active(true),
-			onEnter([](){})
+			onEnter([](){}),
+			onKeyPress([](const KeyPress&) {})
 		{
 			addAndMakeVisible(labelEmpty);
 			makeTextLabel(labelEmpty, emptyString, font::dosisMedium(), Just::centred, CID::Hover);
@@ -140,6 +141,7 @@ namespace gui
 		}
 
 		updateLabel();
+		onKeyPress(key);
 		return true;
 	}
 

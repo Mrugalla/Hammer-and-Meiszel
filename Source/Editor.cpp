@@ -226,6 +226,7 @@ namespace gui
             Credits::Links myLinks;
             myLinks.push_back({ "GitHub", URL("https://github.com/Mrugalla/Hammer-and-Meiszel") });
 			myLinks.push_back({ "Discord", URL("https://discord.gg/xpTGJJNAZG") });
+			myLinks.push_back({ "YouTube", URL("https://www.youtube.com/@beatsbasteln") });
 			myLinks.push_back({ "Bandcamp", URL("https://beatsbasteln.bandcamp.com/") });
 			myLinks.push_back({ "PayPal", URL("https://www.paypal.me/AlteOma") });
 			myLinks.push_back({ "Patreon", URL("https://www.patreon.com/BeatsBasteln") });

@@ -34,6 +34,7 @@ namespace gui
 		int caret, emptyAniIdx;
 		bool active;
 		std::function<void()> onEnter;
+		std::function<void(const KeyPress&)> onKeyPress;
 	private:
 		void updateLabel();
 	};

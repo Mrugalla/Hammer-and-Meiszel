@@ -12,6 +12,31 @@
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520">
   <MAINGROUP id="WYhkvs" name="Hammer und Mei&#223;el">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
+      <GROUP id="{4263E970-7C32-F4EF-425B-B5F7F70F3781}" name="patches">
+        <FILE id="F4seE7" name="Black Hole.txt" compile="0" resource="1" file="Source/patches/Black Hole.txt"/>
+        <FILE id="jk04Xc" name="Dark Morning.txt" compile="0" resource="1"
+              file="Source/patches/Dark Morning.txt"/>
+        <FILE id="bXr9Nt" name="Dematerialisiere.txt" compile="0" resource="1"
+              file="Source/patches/Dematerialisiere.txt"/>
+        <FILE id="Nsqaci" name="Doktor Tropfsteinhoele.txt" compile="0" resource="1"
+              file="Source/patches/Doktor Tropfsteinhoele.txt"/>
+        <FILE id="Q3hCIS" name="Ensamble.txt" compile="0" resource="1" file="Source/patches/Ensamble.txt"/>
+        <FILE id="ZDC9FK" name="Fake Reverb.txt" compile="0" resource="1" file="Source/patches/Fake Reverb.txt"/>
+        <FILE id="QJdLhz" name="Hat Sweetener.txt" compile="0" resource="1"
+              file="Source/patches/Hat Sweetener.txt"/>
+        <FILE id="TFVPJ5" name="Percussive Particles.txt" compile="0" resource="1"
+              file="Source/patches/Percussive Particles.txt"/>
+        <FILE id="EYH2vu" name="Robo Madness.txt" compile="0" resource="1"
+              file="Source/patches/Robo Madness.txt"/>
+        <FILE id="BQ28R2" name="Shooting Star.txt" compile="0" resource="1"
+              file="Source/patches/Shooting Star.txt"/>
+        <FILE id="rRBbjI" name="Slickmap.txt" compile="0" resource="1" file="Source/patches/Slickmap.txt"/>
+        <FILE id="JY10xZ" name="Sweet Night.txt" compile="0" resource="1" file="Source/patches/Sweet Night.txt"/>
+        <FILE id="x5LGNX" name="Tingeling.txt" compile="0" resource="1" file="Source/patches/Tingeling.txt"/>
+        <FILE id="l2OfMy" name="Unstable Identity.txt" compile="0" resource="1"
+              file="Source/patches/Unstable Identity.txt"/>
+        <FILE id="A1SFuT" name="Zerbrochen.txt" compile="0" resource="1" file="Source/patches/Zerbrochen.txt"/>
+      </GROUP>
       <GROUP id="{9465D1EC-34B9-7D70-2DC1-3218DB8AF92B}" name="unittests">
         <FILE id="cgyRcP" name="HammerUndMeiszelTests.h" compile="0" resource="0"
               file="Source/HammerUndMeiszelTests.h"/>

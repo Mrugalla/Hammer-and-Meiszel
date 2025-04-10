@@ -62,14 +62,41 @@ namespace audio
         const auto& settingsFile = user.getFile();
         const auto settingsDirectory = settingsFile.getParentDirectory();
 		const auto patchesDirectory = settingsDirectory.getChildFile("Patches");
-		if (!patchesDirectory.exists())
+        if (!patchesDirectory.exists())
+        {
             patchesDirectory.createDirectory();
+
+			using String = juce::String;
+            const auto makePatch = [&p = patchesDirectory](const String& name, const void* data, int size)
+            {
+                const auto initFile = p.getChildFile(name + ".txt");
+                if (initFile.existsAsFile())
+                    initFile.deleteFile();
+                initFile.create();
+                initFile.replaceWithData(data, size);
+            };
+            makePatch("Dematerialisiere", BinaryData::Dematerialisiere_txt, BinaryData::Dematerialisiere_txtSize);
+			makePatch("Doktor Tropfsteinhoele", BinaryData::Doktor_Tropfsteinhoele_txt, BinaryData::Doktor_Tropfsteinhoele_txtSize);
+			makePatch("Zerbrochen", BinaryData::Zerbrochen_txt, BinaryData::Zerbrochen_txtSize);
+            makePatch("Tingeling", BinaryData::Tingeling_txt, BinaryData::Tingeling_txtSize);
+			makePatch("Slickmap", BinaryData::Slickmap_txt, BinaryData::Slickmap_txtSize);
+			makePatch("Black Hole", BinaryData::Black_Hole_txt, BinaryData::Black_Hole_txtSize);
+			makePatch("Dark Morning", BinaryData::Dark_Morning_txt, BinaryData::Dark_Morning_txtSize);
+			makePatch("Ensamble", BinaryData::Ensamble_txt, BinaryData::Ensamble_txtSize);
+			makePatch("Fake Reverb", BinaryData::Fake_Reverb_txt, BinaryData::Fake_Reverb_txtSize);
+			makePatch("Hat Sweetener", BinaryData::Hat_Sweetener_txt, BinaryData::Hat_Sweetener_txtSize);
+			makePatch("Percussive Particles", BinaryData::Percussive_Particles_txt, BinaryData::Percussive_Particles_txtSize);
+			makePatch("Robo Madness", BinaryData::Robo_Madness_txt, BinaryData::Robo_Madness_txtSize);
+			makePatch("Shooting Star", BinaryData::Shooting_Star_txt, BinaryData::Shooting_Star_txtSize);
+			makePatch("Sweet Night", BinaryData::Sweet_Night_txt, BinaryData::Sweet_Night_txtSize);
+			makePatch("Unstable Identity", BinaryData::Unstable_Identity_txt, BinaryData::Unstable_Identity_txtSize);
+		}
 
         state.set("author", "factory");
         params.savePatch(state);
         pluginProcessor.savePatch(state);
         const auto init = state.state.createCopy();
-        const auto initFile = patchesDirectory.getChildFile("init.txt");
+        const auto initFile = patchesDirectory.getChildFile(" init .txt");
         if (initFile.existsAsFile())
             initFile.deleteFile();
         initFile.create();
