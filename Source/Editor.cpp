@@ -213,6 +213,7 @@ namespace gui
             links.push_back({ "Someone64", URL() });
             links.push_back({ "anosci", URL("https://anosci.net/") });
             links.push_back({ "2Rule", URL("https://tugrulakyuz.gumroad.com/") });
+            links.push_back({ "mleuc", URL("https://linktr.ee/mleuc") });
             
             credits.add("Thanks to...", links, "...and everyone else involved.");
 

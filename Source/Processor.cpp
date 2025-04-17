@@ -90,6 +90,7 @@ namespace audio
 			makePatch("Shooting Star", BinaryData::Shooting_Star_txt, BinaryData::Shooting_Star_txtSize);
 			makePatch("Sweet Night", BinaryData::Sweet_Night_txt, BinaryData::Sweet_Night_txtSize);
 			makePatch("Unstable Identity", BinaryData::Unstable_Identity_txt, BinaryData::Unstable_Identity_txtSize);
+			makePatch("Orgelklang", BinaryData::Orgelklang_txt, BinaryData::Orgelklang_txtSize);
 		}
 
         state.set("author", "factory");

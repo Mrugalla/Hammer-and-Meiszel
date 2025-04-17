@@ -24,6 +24,7 @@
         <FILE id="ZDC9FK" name="Fake Reverb.txt" compile="0" resource="1" file="Source/patches/Fake Reverb.txt"/>
         <FILE id="QJdLhz" name="Hat Sweetener.txt" compile="0" resource="1"
               file="Source/patches/Hat Sweetener.txt"/>
+        <FILE id="F17xCU" name="Orgelklang.txt" compile="0" resource="1" file="Source/patches/Orgelklang.txt"/>
         <FILE id="TFVPJ5" name="Percussive Particles.txt" compile="0" resource="1"
               file="Source/patches/Percussive Particles.txt"/>
         <FILE id="EYH2vu" name="Robo Madness.txt" compile="0" resource="1"
