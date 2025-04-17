@@ -61,7 +61,6 @@ namespace gui
 		credits(utils),
         toast(utils),
         labelTitle(utils),
-        labelDev(utils),
         labelNoiseBlend(utils),
         noiseBlend(utils),
 		modDialNoiseBlend(utils),
@@ -105,7 +104,6 @@ namespace gui
             { 5, 13, 5 },
             { 1, 1, 13, 1, 1 }
         );
-        addAndMakeVisible(labelDev);
         addAndMakeVisible(labelTitle);
         addAndMakeVisible(tooltip);
         addAndMakeVisible(topEditor);
@@ -133,6 +131,8 @@ namespace gui
         addChildComponent(parameterEditor);
         addAndMakeVisible(compPower);
 
+        labelTitle.setImage(BinaryData::logo_png, BinaryData::logo_pngSize);
+
         {
             modSelect.attach(PID::ModSelect);
             utils.add(&callback);
@@ -148,15 +148,6 @@ namespace gui
 
         const auto sz = String(juce::CharPointer_UTF8("\xc3\x9f"));
         const String hnm("Hammer & Mei" + sz + "el");
-
-        {
-            String dev(JucePlugin_Manufacturer);
-            auto titleFont = font::flx();
-            const auto devFont = titleFont;
-            titleFont.setExtraKerningFactor(.2f);
-            makeTextLabel(labelDev, "gebastelt von Florian " + dev, devFont, Just::centred, CID::Txt);
-            makeTextLabel(labelTitle, hnm, titleFont, Just::centred, CID::Txt);
-        }
 
         {
             credits.add(BinaryData::credits01_png, BinaryData::credits01_pngSize,
@@ -338,10 +329,7 @@ namespace gui
         layout.resized(getLocalBounds());
 
         // top panel
-		layout.place(labelTitle, 0, 0, 1, 1);
-        labelTitle.setMaxHeight();
-		layout.place(labelDev, 0, 1, 1, 1);
-        labelDev.setMaxHeight();
+		layout.place(labelTitle, 0, 0, 1, 2);
         layout.place(topEditor, 1, 0, 1, 1);
 
         // left panel

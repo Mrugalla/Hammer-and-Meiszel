@@ -23,11 +23,16 @@ namespace dsp
 		virtual double operator()(double) noexcept = 0;
 
 		double fc, bw, gain;
+	protected:
+		double distort(double y) const noexcept;
 	};
 
 	//////////////////////////////////////////////////////////////////
-	// A digital resonator is a recursive (IIR) linear system having a complex conjugate pair of poles located inside the unit circle of the z-plane.
-	// The angle of the poles in polar co-ordinates sets the resonant frequency of the resonator, while the distance of the poles are to the unit circle sets the bandwidth.  The closer they are to the unit circle, the smaller the bandwidth.
+	// A digital resonator is a recursive (IIR) linear system having a complex conjugate pair of
+	// poles located inside the unit circle of the z-plane.
+	// The angle of the poles in polar co-ordinates sets the resonant frequency of the resonator,
+	// while the distance of the poles are to the unit circle sets the bandwidth.
+	// The closer they are to the unit circle, the smaller the bandwidth.
 	// https://www.phon.ucl.ac.uk/courses/spsci/dsp/resoncon.html
 	// personal note: incredibly resonant lowpass filter, maybe useful pre-distortion
 	struct Resonator1 :

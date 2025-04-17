@@ -11,13 +11,13 @@ namespace gui
 	{
 		setMouseCursor(makeCursor());
 
-		addEvt([this](const evt::Type type, const void*)
+		addEvt([this](const evt::Type type, const void* stuff)
 		{
-			switch (type)
+			if(type == evt::Type::ColourChanged)
 			{
-			case evt::Type::InteractColourChanged:
-				setMouseCursor(makeCursor());
-				break;
+				const auto cID = *static_cast<const CID*>(stuff);
+				if (cID == CID::Interact)
+					setMouseCursor(makeCursor());
 			}
 		});
 	}

@@ -50,7 +50,7 @@ namespace gui
         Credits credits;
         Toast toast;
         LabelPluginRecorder labelTitle;
-        Label labelDev, labelNoiseBlend;
+        Label labelNoiseBlend;
         Knob noiseBlend;
 		ModDial modDialNoiseBlend;
         KeySelectorEditor keySelector;

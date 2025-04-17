@@ -82,7 +82,7 @@ namespace gui
 			Colours::c.set(lastColour, cID);
 			selector->setCurrentColour(lastColour);
 			utils.pluginTop.repaint();
-			updateCursor(cID);
+			notifyUpdate(cID);
 		};
 
 		buttonDefault.onClick = [&](const Mouse&)
@@ -92,7 +92,7 @@ namespace gui
 			Colours::c.set(col, cID);
 			selector->setCurrentColour(col);
 			utils.pluginTop.repaint();
-			updateCursor(cID);
+			notifyUpdate(cID);
 		};
 
 		const auto fps = cbFPS::k7_5;
@@ -106,7 +106,7 @@ namespace gui
 			const auto cID = static_cast<CID>(cIdx);
 			Colours::c.set(selectorCol, cID);
 			u.pluginTop.repaint();
-			updateCursor(cID);
+			notifyUpdate(cID);
 		}, 0, fps, true));
 	}
 
@@ -235,10 +235,10 @@ namespace gui
 		}
 	}
 
-	void ColoursEditor::updateCursor(CID cID)
+	void ColoursEditor::notifyUpdate(CID cID)
 	{
+		notify(evt::Type::ColourChanged, &cID);
 		if (cID == CID::Interact)
-			notify(evt::Type::InteractColourChanged);
-		setMouseCursor(makeCursor());
+			setMouseCursor(makeCursor());
 	}
 }

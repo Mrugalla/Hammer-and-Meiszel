@@ -200,9 +200,9 @@ namespace dsp
 			double sprezi, double harmi, int i) noexcept
 		{
 			// SPREIZUNG
-			const auto iF = static_cast<double>(i);
-			dest[i].fc += iF * sprezi;
-
+			const auto offset = sprezi - 1.;
+			dest[i].fc = dest[i].fc * sprezi - offset;
+			
 			// HARMONIE
 			const auto r = dest[i].fc;
 			const auto rTuned = std::round(r);
@@ -254,7 +254,7 @@ namespace dsp
 
 					const auto blend = blendParam[ch];
 					const auto spreizung = spreziParam[ch];
-					const auto sprezi = std::exp(spreizung);
+					const auto sprezi = std::pow(2., spreizung);
 					const auto harmonie = harmonieParam[ch];
 					const auto harmi = math::tanhApprox(Pi * harmonie);
 
@@ -271,15 +271,18 @@ namespace dsp
 					}
 
 					const auto kraftVal = kraftParam[ch];
-					const auto kraft = (math::tanhApprox(Pi * kraftVal) + 1.) * .5;
-
 					if (kraftVal != 0.)
+					{
+						const auto kraft = (math::tanhApprox(Pi * kraftVal) + 1.) * .5;
 						for (auto i = 0; i < NumPartials; ++i)
 						{
 							const auto x = material[i].mag;
-							const auto y = kraft * x / ((1. - kraft) - x + 2. * kraft * x);
+							const auto dnm = ((1. - kraft) - x + 2. * kraft * x);
+							const auto y = kraft * x / dnm;
 							material[i].mag = y;
 						}
+					}
+						
 				}
 				resonatorBank.updateFreqRatios(materialStereo, numChannels);
 			}

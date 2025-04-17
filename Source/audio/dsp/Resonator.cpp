@@ -1,4 +1,5 @@
 #include "Resonator.h"
+#include "Distortion.h"
 
 namespace dsp
 {
@@ -21,6 +22,11 @@ namespace dsp
 	void ResonatorBase::setGain(double _gain) noexcept
 	{
 		gain = _gain;
+	}
+
+	double ResonatorBase::distort(double y) const noexcept
+	{
+		return softclipFiresledge(y, 1., PiHalf);
 	}
 
 	// Resonator1
@@ -55,10 +61,11 @@ namespace dsp
 
 	double Resonator1::operator()(double x0) noexcept
 	{
-		const auto y0 =
+		auto y0 =
 			x0
 			- b1 * y1
 			- b2 * y2;
+		y0 = distort(y0);
 		y2 = y1;
 		y1 = y0;
 		return y0 * gain;
@@ -102,6 +109,7 @@ namespace dsp
 			a0 * x
 			- b1 * z1
 			- b2 * z2;
+		y = distort(y);
 		z2 = z1;
 		z1 = y;
 		return y * gain;

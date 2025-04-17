@@ -166,7 +166,7 @@ namespace dsp
 		void ResonatorBank::setReso(double reso, int ch) noexcept
 		{
 			static constexpr auto BWStart = 200.;
-			static constexpr auto BWEnd = 0.;
+			static constexpr auto BWEnd = 1.;
 			static constexpr auto BWRange = BWEnd - BWStart;
 
 			const auto resoSqrt = std::sqrt(reso);
@@ -225,14 +225,6 @@ namespace dsp
 					}
 
 					wet *= autoGain;
-
-					if (wet * wet > 64.)
-					{
-						for (auto f = 0; f < nfbn; ++f)
-							resonators[f].reset(ch);
-						wet = 0.;
-					}
-
 					smpls[i] = wet;
 				}
 			}

@@ -19,8 +19,8 @@ namespace dsp
 
 		String toString(StatusMat);
 
-		static constexpr double SpreizungMin = -2.;
 		static constexpr double SpreizungMax = 2.;
+		static constexpr double SpreizungMin = -SpreizungMax;
 
 		enum kParam { kBlend, kSpreizung, kHarmonie, kKraft, kReso, kNumParams };
 	}

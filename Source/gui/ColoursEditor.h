@@ -21,7 +21,7 @@ namespace gui
 		int cIdx;
 		Colour lastColour;
 
-		void updateCursor(CID);
+		void notifyUpdate(CID);
 	};
 
 	struct ButtonColours :
