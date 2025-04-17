@@ -2,7 +2,7 @@
 
 namespace dsp
 {
-	/* samplesUp, samplesIn, numChannels, numSamples1x */
+	// samplesUp, samplesIn, numChannels, numSamples1x
 	void zeroStuff(double* const* samplesUp, const double* const* samplesIn,
 		int numChannels, int numSamples1x) noexcept
 	{
@@ -20,7 +20,7 @@ namespace dsp
 		}
 	}
 
-	/* samplesOut, samplesUp, numChannels, numSamples1x */
+	// samplesOut, samplesUp, numChannels, numSamples1x
 	void decimate(double* const* samplesOut, const double* const* samplesUp,
 		int numChannels, int numSamples1x) noexcept
 	{

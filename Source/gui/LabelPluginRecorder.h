@@ -14,7 +14,7 @@ namespace gui
 
 		void mouseDown(const Mouse&) override;
 
-		//dndSrc, files, canMoveFiles
+		// dndSrc, files, canMoveFiles
 		bool shouldDropFilesWhenDraggedExternally(const DnDSrc&,
 			StringArray&, bool&) override;
 

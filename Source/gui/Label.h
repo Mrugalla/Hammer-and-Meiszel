@@ -11,7 +11,7 @@ namespace gui
 		enum class Type { Text, Paint, Image, NumTypes };
 		static constexpr int NumTypes = static_cast<int>(Type::NumTypes);
 
-		/* u, autoMaxHeight */
+		// u, autoMaxHeight
 		Label(Utils&, bool = false);
 
 		void resized() override;
@@ -45,13 +45,13 @@ namespace gui
 
 	//////
 
-	/* label, text, font, just, cID, tooltip */
+	// label, text, font, just, cID, tooltip
 	void makeTextLabel(Label&, const String&, const Font&, Just, CID, const String& = "");
 
-	/* label, onPaint, tooltip */
+	// label, onPaint, tooltip
 	void makePaintLabel(Label&, const Label::OnPaint&, const String& = "");
 
-	/* label, image, tooltip */
+	// label, image, tooltip
 	void makeImageLabel(Label&, const Image&, const String& = "");
 
 	//////
@@ -69,15 +69,15 @@ namespace gui
 		bool alphaAniWeight;
 	};
 
-	/* labels, size */
+	// labels, size
 	float findMaxCommonHeight(const Label*, int) noexcept;
 
 	float findMaxCommonHeight(const std::vector<Label*>&) noexcept;
 
-	/* labels, size */
+	// labels, size
 	void setMaxCommonHeight(Label*, int) noexcept;
 
-	/* labels, size */
+	// labels, size
 	void setMaxCommonHeight(Label*, size_t) noexcept;
 	
 	struct LabelGroup

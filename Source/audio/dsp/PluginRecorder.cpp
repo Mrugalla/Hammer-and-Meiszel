@@ -72,7 +72,5 @@ namespace dsp
 		for (auto ch = 0; ch < numChannels; ++ch)
 			SIMD::multiply(samples[ch], g, numSamples);
 	}
-
-
 }
 

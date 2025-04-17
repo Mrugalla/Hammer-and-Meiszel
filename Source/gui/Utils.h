@@ -9,7 +9,7 @@ namespace gui
 	{
 		static constexpr float DragSpeed = .5f;
 	public:
-		/* pluginTop, processor */
+		// pluginTop, processor
 		Utils(Component&, Processor&);
 
 		void add(Callback*);
@@ -20,7 +20,7 @@ namespace gui
 		Param& getParam(PID) noexcept;
 		const Param& getParam(PID) const noexcept;
 
-		juce::ValueTree getState() const noexcept;
+		ValueTree getState() const noexcept;
 
 		float getDragSpeed() const noexcept;
 

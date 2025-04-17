@@ -15,6 +15,7 @@ namespace gui
 
 	protected:
 		patch::BrowserButton patchBrowserButton;
+		patch::NextPatchButton previous, next;
 		ButtonRandomizer buttonRandomizer;
 		Button buttonSoftClip;
 	};

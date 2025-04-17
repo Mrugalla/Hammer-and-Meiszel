@@ -5,16 +5,20 @@ namespace gui
 	TopEditor::TopEditor(Utils& u, patch::Browser& browser) :
 		Comp(u),
 		patchBrowserButton(u, browser),
+		previous(u, browser, false),
+		next(u, browser, true),
 		buttonRandomizer(u, "randall"),
 		buttonSoftClip(u)
 	{
 		layout.init
 		(
-			{ 2, 1, 1 },
+			{ 5, 1, 1, 1, 1 },
 			{ 5, 1 }
 		);
 
 		addAndMakeVisible(patchBrowserButton);
+		addAndMakeVisible(previous);
+		addAndMakeVisible(next);
 		addAndMakeVisible(buttonRandomizer);
 		addAndMakeVisible(buttonSoftClip);
 
@@ -58,8 +62,10 @@ namespace gui
 	{
 		layout.resized(getLocalBounds());
 		layout.place(patchBrowserButton, 0, 0, 1, 1);
-		layout.place(buttonSoftClip, 1, 0, 1, 1);
-		layout.place(buttonRandomizer, 2, 0, 1, 1);
+		layout.place(previous, 1, 0, 1, 1);
+		layout.place(next, 2, 0, 1, 1);
+		layout.place(buttonSoftClip, 3, 0, 1, 1);
+		layout.place(buttonRandomizer, 4, 0, 1, 1);
 	}
 
 	void TopEditor::paint(Graphics& g)

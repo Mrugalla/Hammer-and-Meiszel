@@ -2,7 +2,7 @@
 
 namespace arch
 {
-	static void makePropsOptions(Props& props)
+	void makePropsOptions(Props& props)
 	{
 		juce::PropertiesFile::Options options;
 		options.applicationName = JucePlugin_Name;

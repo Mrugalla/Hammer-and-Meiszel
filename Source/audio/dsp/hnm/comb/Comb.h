@@ -16,7 +16,7 @@ namespace dsp
 		
 		struct Params
 		{
-			// retune[-n,n]semi, retuneWidth[-1,1], fb[-1,1], fbEnv[-2,2], fbWidth[-2,2],
+			// retune[-n,n]semi, retuneWidth[-1,1], fb[-1,1], fbEnv[-2,2], fbWidth[-2,2]
 			double retune, retuneWidth, fb, fbEnv, fbWidth;
 		};
 

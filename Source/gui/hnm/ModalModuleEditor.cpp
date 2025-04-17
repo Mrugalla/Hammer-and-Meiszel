@@ -191,7 +191,7 @@ namespace gui
 				auto& material = modalFilter.getMaterial(i);
 				dsp::modal::generateSine(material);
 			},
-			"Sine", "Generates a modal material with a single partial."
+			"Sine", "Create a modal material with a single partial."
 		);
 
 		// GEN: SAW
@@ -204,7 +204,7 @@ namespace gui
 				auto& material = modalFilter.getMaterial(i);
 				dsp::modal::generateSaw(material);
 			},
-			"Saw", "Generates a sawtooth-shaped modal material."
+			"Saw", "Create a sawtooth wave modal material."
 		);
 
 		// GEN: SQUARE
@@ -217,7 +217,7 @@ namespace gui
 				auto& material = modalFilter.getMaterial(i);
 				dsp::modal::generateSquare(material);
 			},
-			"Square", "Generates a square-shaped modal material."
+			"Square", "Create a square wave modal material."
 		);
 
 		// GEN: FIBONACCI
@@ -230,7 +230,7 @@ namespace gui
 				auto& material = modalFilter.getMaterial(i);
 				dsp::modal::generateFibonacci(material);
 			},
-			"Fibonacci", "Generates a modal material with Fibonacci ratios."
+			"Fibonacci", "Create a modal material with fibonacci ratios."
 		);
 
 		// GEN: PRIME
@@ -243,7 +243,7 @@ namespace gui
 				auto& material = modalFilter.getMaterial(i);
 				dsp::modal::generatePrime(material);
 			},
-			"Prime", "Generates a modal material with prime ratios."
+			"Prime", "Create a modal material with prime ratios."
 		);
 
 		const auto randRatiosFunc = [&](const Mouse& mouse, int matIdx)
@@ -284,7 +284,7 @@ namespace gui
 				b(mouse, matIdx); 
 				u(matIdx);
 			},
-			"Rand: All", "Randomizes every property of the modal material."
+			"Randomize", "Randomize the modal material."
 		);
 
 		// GEN: Randomize Frequency Ratios
@@ -296,7 +296,7 @@ namespace gui
 				a(mouse, matIdx);
 				u(matIdx);
 			},
-			"Rand: Ratios", "Randomizes the modal material's ratios."
+			"Randomize Ratios", "Randomize the modal material's ratios."
 		);
 
 		// GEN: Randomize Magnitudes
@@ -308,7 +308,7 @@ namespace gui
 				b(mouse, matIdx);
 				u(matIdx);
 			},
-			"Rand: Magnitudes", "Randomizes the modal material's magnitudes."
+			"Randomize Magnitudes", "Randomize the modal material's magnitudes."
 		);
 
 		// GEN: Record Input
@@ -321,7 +321,7 @@ namespace gui
 				processor.recording.store(i);
 				processor.recSampleIndex = 0;
 			},
-			"Rec Input", "Records the input signal for modal analysis."
+			"Record", "Record the input signal for modal analysis."
 		);
 
 		// Proc: Copy To Other Material
@@ -336,7 +336,7 @@ namespace gui
 				materialThat.peakInfos = materialThis.peakInfos;
 				materialThat.reportUpdate();
 			},
-			"Copy To Other Material", "Copies the selected modal material to the other material."
+			"Copy To Other Material", "Copy the selected modal material to the other one."
 		);
 
 		// Proc: Vertical Flip
@@ -365,7 +365,7 @@ namespace gui
 				}
 				material.reportUpdate();
 			},
-			"Vertical Flip", "Flips the modal material's partials vertically."
+			"Vertical Flip", "Flip the modal material's partials vertically."
 		);
 
 		// Proc: Horizontal Flip
@@ -385,7 +385,7 @@ namespace gui
 				}
 				material.reportUpdate();
 			},
-			"Horizontal Flip", "Flips the modal material's partials horizontally."
+			"Horizontal Flip", "Flip the modal material's partials horizontally."
 		);
 
 		// Rescue Overlaps
@@ -440,13 +440,13 @@ namespace gui
 
 				material.reportUpdate();
 			},
-			"Rescue Overlaps", "This button puts overlapping partials somewhere else."
+			"Rescue Overlaps", "This button puts overlapping partials somewhere else so you can touch them."
 		);
 
 		dropDownGens.init();
 		dropDownProcess.init();
-		buttonDropDownGens.init(dropDownGens, "Generate", "Generate modal materials from magic! (math)");
-		buttonDropDownProcess.init(dropDownProcess, "Process", "Process the modal material in various ways!");
+		buttonDropDownGens.init(dropDownGens, "Create", "Create modal materials from magic! (math)");
+		buttonDropDownProcess.init(dropDownProcess, "Process", "Process the selected modal material!");
 	}
 
 	void ModalModuleEditor::initRandomizer()

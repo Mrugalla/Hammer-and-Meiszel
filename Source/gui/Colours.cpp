@@ -1,4 +1,5 @@
 #include "Colours.h"
+#include "Layout.h"
 #define DisregardState false
 
 namespace gui

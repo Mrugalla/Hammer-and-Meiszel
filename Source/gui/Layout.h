@@ -15,7 +15,7 @@ namespace gui
 
 	void centreCursor(const Component&, juce::MouseInputSource&);
 
-	/* text, randomizer, length, legalChars*/
+	// text, randomizer, length, legalChars
 	void appendRandomString(String&, Random&, int,
 		const String& = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
@@ -101,99 +101,23 @@ namespace gui
 
 	void make(Path&, const Layout&, std::vector<Point>&&);
 
-	/* g, y, left, right, thicc */
+	// g, y, left, right, thicc
 	void drawHorizontalLine(Graphics&, int, float, float, int = 1);
 
-	/* g, x, top, bottom, thicc */
+	// g, x, top, bottom, thicc
 	void drawVerticalLine(Graphics&, int, float, float, int = 1);
 
-	/* graphics, bounds, edgeWidth, edgeHeight, stroke */
+	// graphics, bounds, edgeWidth, edgeHeight, stroke
 	void drawRectEdges(Graphics&, const BoundsF&, float, float, const Stroke&);
 
-	/* graphics, bounds, edgeWidth, stroke */
+	// graphics, bounds, edgeWidth, stroke
 	void drawRectEdges(Graphics&, const BoundsF&, float, const Stroke&);
 
-	/* graphics, bounds, text */
+	// graphics, bounds, text
 	void drawHeadLine(Graphics&, const BoundsF&, const String&);
 
-	inline void visualizeGroupNEL(Graphics& g, BoundsF bounds, float thicc)
-	{
-		Stroke stroke(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
-
-		{
-			const auto x = bounds.getX();
-			const auto y = bounds.getY();
-			const auto w = bounds.getWidth();
-			const auto h = bounds.getHeight();
-
-			const auto midDimen = std::min(w, h);
-
-			const auto x0 = x;
-			const auto x125 = x + .125f * midDimen;
-			const auto x25 = x + .25f * midDimen;
-			const auto x75 = x + w - .25f * midDimen;
-			const auto x875 = x + w - .125f * midDimen;
-			const auto x1 = x + w;
-
-			const auto y0 = y;
-			const auto y125 = y + .125f * midDimen;
-			const auto y25 = y + .25f * midDimen;
-			const auto y75 = y + h - .25f * midDimen;
-			const auto y875 = y + h - .125f * midDimen;
-			const auto y1 = y + h;
-
-			Path p;
-			p.startNewSubPath(x0, y25);
-			p.lineTo(x0, y125);
-			p.lineTo(x125, y0);
-			p.lineTo(x25, y0);
-			for (auto i = 1; i < 3; ++i)
-			{
-				const auto iF = static_cast<float>(i);
-				const auto n = iF / 3.f;
-
-				const auto nY = y0 + n * (y125 - y0);
-				const auto nX = x0 + n * (x125 - x0);
-
-				p.startNewSubPath(x0, nY);
-				p.lineTo(nX, y0);
-			}
-
-			p.startNewSubPath(x875, y0);
-			p.lineTo(x1, y0);
-			p.lineTo(x1, y125);
-
-			p.startNewSubPath(x1, y75);
-			p.lineTo(x1, y875);
-			p.lineTo(x875, y1);
-			p.lineTo(x75, y1);
-			for (auto i = 1; i < 3; ++i)
-			{
-				const auto iF = static_cast<float>(i);
-				const auto n = iF / 3.f;
-
-				const auto nY = y1 + n * (y875 - y1);
-				const auto nX = x1 + n * (x875 - x1);
-
-				p.startNewSubPath(x1, nY);
-				p.lineTo(nX, y1);
-			}
-
-			for (auto i = 1; i <= 3; ++i)
-			{
-				const auto iF = static_cast<float>(i);
-				const auto n = iF / 3.f;
-
-				const auto nY = y1 + n * (y875 - y1);
-				const auto nX = x0 + n * (x125 - x0);
-
-				p.startNewSubPath(x0, nY);
-				p.lineTo(nX, y1);
-			}
-
-			g.strokePath(p, stroke);
-		}
-	}
+	// g, bounds, thicc
+	void visualizeGroupNEL(Graphics&, BoundsF, float);
 
 	// graphics, text, bounds, colour, thicc
 	void visualizeGroupNEL(Graphics&, String&&,
@@ -241,32 +165,14 @@ namespace gui
 	// font, text, width, height
 	float findMaxHeight(const Font&, const String&, float, float) noexcept;
 
+	// path, bounds, endPos, thicc, 0, 1, 2, 3
 	// lrud = left, right, up, down [0, 1, 2, 3]
-	inline void closePathOverBounds(Path& p, const BoundsF& bounds, const PointF& endPos, float thicc, int lrud0, int lrud1, int lrud2, int lrud3)
-	{
-		const auto startPos = p.getCurrentPosition();
-		auto x = lrud0 == 0 ? -thicc : lrud0 == 1 ? bounds.getWidth() + thicc : startPos.x;
-		auto y = lrud0 <= 1 ? startPos.y : lrud0 == 2 ? -thicc : bounds.getHeight() + thicc;
-		p.lineTo(x, y);
-		x = lrud1 == 0 ? -thicc : lrud1 == 1 ? bounds.getWidth() + thicc : x;
-		y = lrud1 <= 1 ? y : lrud1 == 2 ? -thicc : bounds.getHeight() + thicc;
-		p.lineTo(x, y);
-		x = lrud2 == 0 ? -thicc : lrud2 == 1 ? bounds.getWidth() + thicc : x;
-		y = lrud2 <= 1 ? y : lrud2 == 2 ? -thicc : bounds.getHeight() + thicc;
-		p.lineTo(x, y);
-		x = lrud3 == 0 ? -thicc : lrud3 == 1 ? bounds.getWidth() + thicc : x;
-		y = lrud3 <= 1 ? y : lrud3 == 2 ? -thicc : bounds.getHeight() + thicc;
-		p.lineTo(x, y);
-		if (endPos.x < 1.f || endPos.x >= bounds.getWidth() - 1.f)
-			y = endPos.y;
-		else if (endPos.y < 1.f || endPos.y >= bounds.getHeight() - 1.f)
-			x = endPos.x;
-		p.lineTo(x, y);
-		p.closeSubPath();
-	}
+	void closePathOverBounds(Path&, const BoundsF&, const PointF&,
+		float, int, int, int, int);
 
 	namespace imgPP
 	{
-		void blur(Image&, Graphics&, int /*its*/ = 3) noexcept;
+		// img, g, iterations
+		void blur(Image&, Graphics&, int = 3) noexcept;
 	}
 }

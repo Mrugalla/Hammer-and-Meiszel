@@ -2,50 +2,24 @@
 #include "Delay.h"
 #include "midi/MPESplit.h"
 #include "ParallelProcessor.h"
-#include "../../arch/Math.h"
 
 namespace dsp
 {
     struct CombFilterVoices
     {
-		CombFilterVoices(const arch::XenManager& xen) :
-			wHead(),
-			combFilters{ xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen, xen },
-			feedback(0.)
-		{}
+		CombFilterVoices(const arch::XenManager&);
 
 		// Fs
-		void prepare(double sampleRate)
-		{
-			for(auto i = 0; i < combFilters.size(); ++i)
-				combFilters[i].prepare(sampleRate);
-			wHead.prepare(combFilters[0].size);
-		}
+		void prepare(double);
 
 		// numSamples
-		void synthesizeWHead(int numSamples) noexcept
-		{
-			wHead(numSamples);
-		}
+		void synthesizeWHead(int) noexcept;
 
-		void updateParameters(double _feedback) noexcept
-		{
-			if(feedback == _feedback)
-				return;
-			feedback = math::sinApprox(_feedback * PiHalf);
-		}
+		void updateParameters(double) noexcept;
 
 		// samples, midi, retune, numChannels, numSamples, voiceIdx
-		void operator()(double** samples, const MidiBuffer& midi,
-			double retune, int numChannels, int numSamples, int v) noexcept
-		{
-			combFilters[v]
-			(
-				samples, midi, wHead.data(),
-				feedback, retune, 2.,
-				numChannels, numSamples
-			);
-		}
+		void operator()(double**, const MidiBuffer&,
+			double, int, int, int) noexcept;
 
 	protected:
 		WHead2x wHead;

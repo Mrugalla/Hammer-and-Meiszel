@@ -10,57 +10,21 @@ namespace dsp
 			double gainDb, atkMs, dcyMs, smoothMs;
 		};
 
-		EnvelopeFollower() :
-			meter(0.),
-			buffer(),
-			MinDb(math::dbToAmp(-60.)),
-			gainPRM(1.),
-			envLP(0.),
-			smooth(0.),
-			sampleRate(1.), smoothMs(-1.),
-			attackState(false)
-		{}
+		EnvelopeFollower();
 
-		void prepare(double Fs) noexcept
-		{
-			meter.store(0.);
-			sampleRate = Fs;
-			gainPRM.prepare(sampleRate, 4.);
-			smooth.reset();
-			smoothMs = -1.;
-			envLP.reset();
-		}
+		void prepare(double) noexcept;
 
-		void operator()(double* smpls, const Params& params, int numSamples) noexcept
-		{
-			rectify(smpls, numSamples);
-			applyGain(params.gainDb, numSamples);
-			synthesizeEnvelope(params, numSamples);
-			smoothen(params.smoothMs, numSamples);
-			processMeter();
-		}
+		// smpls, params, numSamples
+		void operator()(double*, const Params&, int) noexcept;
 
-		void operator()(double** samples, const Params& params,
-			int numChannels, int numSamples) noexcept
-		{
-			copyMid(samples, numChannels, numSamples);
-			operator()(buffer.data(), params, numSamples);
-		}
+		// samples, params, numChannels, numSamples
+		void operator()(double**, const Params&, int, int) noexcept;
 
-		bool isSleepy() const noexcept
-		{
-			return !attackState && envLP.y1 < MinDb;
-		}
+		bool isSleepy() const noexcept;
 
-		double operator[](int i) const noexcept
-		{
-			return buffer[i];
-		}
+		double operator[](int i) const noexcept;
 
-		double getMeter() const noexcept
-		{
-			return meter.load();
-		}
+		double getMeter() const noexcept;
 	private:
 		std::atomic<double> meter;
 		std::array<double, BlockSize> buffer;
@@ -70,76 +34,27 @@ namespace dsp
 		double sampleRate, smoothMs;
 		bool attackState;
 
-		void copyMid(double** samples, int numChannels, int numSamples) noexcept
-		{
-			SIMD::copy(buffer.data(), samples[0], numSamples);
-			if (numChannels == 1)
-				return;
-			SIMD::add(buffer.data(), samples[1], numSamples);
-			SIMD::multiply(buffer.data(), .5, numSamples);
-		}
+		// samples, numChannels, numSamples
+		void copyMid(double**, int, int) noexcept;
 
-		void rectify(double* smpls, int numSamples) noexcept
-		{
-			for(auto s = 0; s < numSamples; ++s)
-				buffer[s] = std::abs(smpls[s]);
-		}
+		// smpls, numSamples
+		void rectify(double*, int) noexcept;
 
-		void applyGain(double gainDb, int numSamples) noexcept
-		{
-			const auto gain = math::dbToAmp(gainDb);
-			const auto gainInfo = gainPRM(gain, numSamples);
-			auto data = buffer.data();
-			if (gainInfo.smoothing)
-				return SIMD::multiply(data, gainInfo.buf, numSamples);
-			SIMD::multiply(data, gain, numSamples);
-		}
+		// gainDb, numSamples
+		void applyGain(double, int) noexcept;
 
-		void synthesizeEnvelope(const Params& params, int numSamples) noexcept
-		{
-			for (auto s = 0; s < numSamples; ++s)
-			{
-				const auto s0 = envLP.y1;
-				const auto s1 = buffer[s];
-				if (attackState)
-					buffer[s] = processAttack(params, s0, s1);
-				else
-					buffer[s] = processDecay(params, s0, s1);
-			}
-		}
+		// params, numSamples
+		void synthesizeEnvelope(const Params&, int) noexcept;
 
-		double processAttack(const Params& params, double s0, double s1) noexcept
-		{
-			if (s0 <= s1)
-				return envLP(s1);
-			attackState = false;
-			envLP.makeFromDecayInMs(params.dcyMs, sampleRate);
-			return processDecay(params, s0, s1);
-		}
+		// params, s0, s1
+		double processAttack(const Params&, double, double) noexcept;
 
-		double processDecay(const Params& params, double s0, double s1) noexcept
-		{
-			if (s0 >= s1)
-				return envLP(s1);
-			attackState = true;
-			envLP.makeFromDecayInMs(params.atkMs, sampleRate);
-			return processAttack(params, s0, s1);
-		}
+		// params, s0, s1
+		double processDecay(const Params&, double, double) noexcept;
 
-		void smoothen(double _smoothMs, int numSamples) noexcept
-		{
-			if (smoothMs != _smoothMs)
-			{
-				smoothMs = _smoothMs;
-				smooth.makeFromDecayInMs(smoothMs, sampleRate);
-			}
-			smooth(buffer.data(), numSamples);
-		}
+		// _smoothMs, numSamples
+		void smoothen(double, int) noexcept;
 
-		void processMeter()
-		{
-			const auto max = *std::max_element(buffer.begin(), buffer.end());
-			meter.store(max);
-		}
+		void processMeter() noexcept;
 	};
 }

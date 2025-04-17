@@ -219,8 +219,10 @@ namespace gui
 			links.push_back({ "Simon Weis", URL("https://darkpalace.studio/") });
 			links.push_back({ "Alex Reid", URL("https://alexreidstudio.com/") });
 			links.push_back({ "Lucas Schacht", URL("https://lucasschacht.wixsite.com/lucasschacht") });
-			links.push_back({ "anosci", URL("https://anosci.net/") });
+            links.push_back({ "Someone64", URL() });
+            links.push_back({ "anosci", URL("https://anosci.net/") });
             links.push_back({ "2Rule", URL("https://tugrulakyuz.gumroad.com/") });
+            
             credits.add("Thanks to...", links, "...and everyone else involved.");
 
             Credits::Links myLinks;
