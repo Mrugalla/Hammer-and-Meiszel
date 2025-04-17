@@ -78,14 +78,14 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::getBand(int bandIdx) noexcept
+	typename ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::getBand(int bandIdx) noexcept
 	{
 		const auto b2 = 2 * bandIdx;
 		return { bands[b2].data(), bands[b2 + 1].data() };
 	}
 
 	template<size_t NumBands>
-	ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::operator[](int bandIdx) noexcept
+	typename ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::operator[](int bandIdx) noexcept
 	{
 		return getBand(bandIdx);
 	}

@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <array>
-#include "Util.h"
+#include "util.h"
 
 namespace moog
 {
