@@ -9,10 +9,16 @@ namespace dsp
 	}
 
 	template<typename Float>
+	Float ratioclip(Float smpl, Float threshold, Float ratioInv) noexcept
+	{
+		return smpl < threshold ? smpl : ratioInv * (smpl - threshold) + threshold;
+	}
+
+	template<typename Float>
 	Float softclipCubic(Float smpl, Float ceiling) noexcept
 	{
-		auto three = static_cast<Float>(3);
-		auto two = static_cast<Float>(2);
+		static constexpr auto three = static_cast<Float>(3);
+		static constexpr auto two = static_cast<Float>(2);
 		
 		return smpl < -ceiling ? -ceiling : smpl > ceiling ? ceiling :
 			(smpl - smpl * smpl * smpl / three) * three / two * ceiling;
@@ -21,7 +27,8 @@ namespace dsp
 	template<typename Float>
 	Float softclipAtan(Float sample, Float ceiling, Float alpha) noexcept
 	{
-		return static_cast<Float>(2) * ceiling / static_cast<Float>(Pi) * atan(alpha * sample);
+		static constexpr auto a = static_cast<Float>(2. / Pi);
+		return a * ceiling * std::atan(alpha * sample);
 	}
 
 	template<typename Float>
@@ -85,10 +92,11 @@ namespace dsp
 		return ceiling * func * gain;
 	}
 
-	// resolving functions for Float types float and double
-
 	template float hardclip(float, float) noexcept;
 	template double hardclip(double, double) noexcept;
+
+	template float ratioclip(float, float, float) noexcept;
+	template double ratioclip(double, double, double) noexcept;
 
 	template float softclipCubic(float, float) noexcept;
 	template double softclipCubic(double, double) noexcept;

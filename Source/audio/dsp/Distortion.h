@@ -3,15 +3,19 @@
 
 namespace dsp
 {
-	// sample, ceiling */
+	// sample, ceiling
 	template<typename Float>
 	Float hardclip(Float, Float) noexcept;
 
-	// sample, ceiling */
+	// sample, threshold, ratio
+	template<typename Float>
+	Float ratioclip(Float, Float, Float) noexcept;
+
+	// sample, ceiling
 	template<typename Float>
 	Float softclipCubic(Float, Float) noexcept;
 	
-	// sample, ceiling, alpha[1,10] */
+	// sample, ceiling, alpha[1,10]
 	template<typename Float>
 	Float softclipAtan(Float, Float, Float) noexcept;
 

@@ -26,7 +26,7 @@ namespace dsp
 
 	double ResonatorBase::distort(double y) const noexcept
 	{
-		return softclipFiresledge(y, 1., PiHalf);
+		return ratioclip(y, .8, 1. / 16.);
 	}
 
 	// Resonator1
