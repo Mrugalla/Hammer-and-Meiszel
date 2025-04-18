@@ -110,7 +110,7 @@ namespace dsp
 		for (auto ch = 0; ch < poly; ++ch)
 		{
 			auto i = channelIdx - ch;
-			if (i < 0)
+			while (i < 0)
 				i += poly;
 			auto& voice = voices[i];
 			const auto nn = msg.getNoteNumber();

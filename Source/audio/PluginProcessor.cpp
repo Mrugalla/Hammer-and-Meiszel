@@ -179,11 +179,15 @@ namespace audio
 			}
 		}
 
+		const auto edo = xen.getXen();
+		const auto edoInt = static_cast<int>(std::round(edo));
+		const auto edoInPoly = edoInt < 15 ? edoInt : 15;
+
 		const auto& polyParam = params(PID::Polyphony);
 		
 		const auto& keySelectorEnabledParam = params(PID::KeySelectorEnabled);
 		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
-		const auto polyphony = keySelectorEnabled ? static_cast<int>(xen.getXen()) : static_cast<int>(std::round(polyParam.getValModDenorm()));
+		const auto polyphony = keySelectorEnabled ? edoInPoly : static_cast<int>(std::round(polyParam.getValModDenorm()));
 		monophonyHandler(midi, polyphony);
 		keySelector(midi, xen, keySelectorEnabled, transport.playing);
 		autoMPE(midi, polyphony);
@@ -192,7 +196,7 @@ namespace audio
 		const auto& modalOctParam = params(PID::ModalOct);
 		const auto& modalSemiParam = params(PID::ModalSemi);
 		auto modalSemi = static_cast<double>(std::round(modalSemiParam.getValModDenorm()));
-		modalSemi += static_cast<double>(std::round(modalOctParam.getValModDenorm())) * xen.getXen();
+		modalSemi += static_cast<double>(std::round(modalOctParam.getValModDenorm())) * edo;
 
 		modalFilter.setTranspose(xen, modalSemi, numChannels);
 
@@ -274,8 +278,6 @@ namespace audio
 		(
 			formantPos, formantQ, formantPosEnv, formantQEnv, formantPosWidth, formantQWidth
 		);
-
-		const auto edo = xen.getXen();
 
 		const auto& combOctParam = params(PID::CombOct);
 		const auto combOct = std::round(static_cast<double>(combOctParam.getValModDenorm()));
