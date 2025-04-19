@@ -99,6 +99,8 @@ namespace gui
 		const auto speed = msToInc(AniLengthMs, fps);
 		add(Callback([&, speed]()
 		{
+			if (!isShowing())
+				return;
 			const auto selectorCol = selector->getCurrentColour();
 			const auto curCol = Colours::c(cIdx);
 			if (selectorCol == curCol)
