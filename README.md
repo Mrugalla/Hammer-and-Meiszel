@@ -1,5 +1,13 @@
 ![image](https://github.com/user-attachments/assets/e9de874c-3058-4ccc-a556-a7a9b954986d)
+
+H&M Trailer:
 https://youtu.be/bcv9lkhDrzI?si=7zBO2AE97zGevbP9
+
+H&M Routing MIDI in FL Studio:
+https://youtu.be/LBvgwIXNQhE?si=Tzi8ScNtdJQkEYbv
+
+H&M Music:
+https://youtu.be/rveePZIx33k?si=oS1t08KZsNUUHMoW
 
 Hammer & Meißel is a keytracked polyphonic modal filter (and more).
 
