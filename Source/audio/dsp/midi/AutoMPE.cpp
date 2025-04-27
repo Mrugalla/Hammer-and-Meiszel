@@ -63,6 +63,8 @@ namespace dsp
 				processNoteOn(msg, ts);
 			else if (msg.isNoteOff())
 				processNoteOff(msg, ts);
+			else if (msg.isAllNotesOff())
+				processAllNotesOff(buffer, ts);
 			else if (msg.isPitchWheel())
 				processPitchWheel(msg, ts);
 			else
@@ -126,6 +128,12 @@ namespace dsp
 			if (voice.note == nn)
 				return processNoteOff(voice, msg, ts);
 		}
+	}
+
+	void AutoMPE::processAllNotesOff(MidiBuffer& buffer, int ts) noexcept
+	{
+		for (auto ch = 0; ch < NumMPEChannels; ++ch)
+			buffer.addEvent(MidiMessage::allNotesOff(ch + 2), ts);
 	}
 
 	void AutoMPE::processNoteOff(Voice& voice, MidiMessage& msg, int ts) noexcept

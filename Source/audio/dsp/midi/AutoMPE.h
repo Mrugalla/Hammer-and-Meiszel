@@ -50,6 +50,9 @@ namespace dsp
 		// voice, msg, ts
 		void processNoteOff(Voice&, MidiMessage&, int) noexcept;
 
+		// buffer, ts
+		void processAllNotesOff(MidiBuffer&, int) noexcept;
+
 		// msg, ts
 		void processPitchWheel(MidiMessage&, int) noexcept;
 	};
