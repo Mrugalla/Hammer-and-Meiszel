@@ -54,6 +54,11 @@ namespace dsp
 			// sampleRate
 			void prepare(double) noexcept;
 
+			void panic(String& log)
+			{
+				resonatorBank.panic(log);
+			}
+
 			// samples, dualMaterial, parameters, envGenMod, numChannels, numSamples
 			void operator()(double**, const DualMaterial&,
 				const Parameters&, double, int, int) noexcept;

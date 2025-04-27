@@ -44,6 +44,9 @@ namespace audio
 
 		void timerCallback() override;
 
+		// log
+		void panic(dsp::String&);
+
 		Params& params;
 		arch::XenManager& xen;
 		double sampleRate;

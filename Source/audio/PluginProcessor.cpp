@@ -442,6 +442,14 @@ namespace audio
 	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept
 	{}
 
+	void PluginProcessor::panic(dsp::String& log)
+	{
+		monophonyHandler.panic(log);
+		keySelector.panic(log);
+		autoMPE.panic(log);
+		modalFilter.panic(log);
+	}
+
 	void PluginProcessor::savePatch(arch::State& state)
 	{
 		keySelector.savePatch(state);

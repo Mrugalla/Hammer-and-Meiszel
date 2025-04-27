@@ -86,6 +86,7 @@ namespace gui
 		},
 		buttonPower(u),
 		voiceGrid(u),
+		panic(u),
 		labelGroup(),
 		tuningLabelGroup(),
 		keySelectorEnabled(false)
@@ -168,7 +169,8 @@ namespace gui
 		layout.place(macro, 1.f, 1, 1.2f, 2);
 		layout.place(buttons[kMacroRel], 2.2f, 1.333f, .8f, .667f);
 		layout.place(buttons[kMacroSwap], 2.2f, 2, .8f, 1);
-		layout.place(voiceGrid, 0, 3, 3, 1);
+		layout.place(voiceGrid, 0.f, 3, 2.7f, 1);
+		layout.place(panic, 2.7f, 3, .3f, 1);
 		for (auto i = 0; i < sidePanelParams.size(); ++i)
 		{
 			auto& spp = sidePanelParams[i];
@@ -357,6 +359,13 @@ namespace gui
 			}
 			return updated;
 		});
+
+		addAndMakeVisible(panic);
+		makeTextButton(panic, "!", "Use the panic button to create a log file! Please report the bug to me! :)", CID::Interact);
+		panic.onClick = [&u = utils](const Mouse&)
+		{
+			u.audioProcessor.panic();
+		};
 	}
 
 	void IOEditor::initButtons()

@@ -601,6 +601,40 @@ namespace audio
         prepareToPlay(getSampleRate(), getBlockSize());
         suspendProcessing(false);
     }
+
+    void Processor::panic()
+    {
+        stopTimer();
+        suspendProcessing(true);
+
+        using String = dsp::String;
+        using Sys = juce::SystemStats;
+        String log("Panic Log:");
+        log += String("\nOS: " + Sys::getOperatingSystemName());
+		log += String("\nJUCE: " + Sys::getJUCEVersion());
+		log += String("\nDevice Description: " + Sys::getDeviceDescription());
+		log += String("\nNum Logical CPUs: " + String(Sys::getNumCpus()));
+		log += String("\nNum Physical CPUs: " + String(Sys::getNumPhysicalCpus()));
+		log += String("\nCPU Speed (mhz): " + String(Sys::getCpuSpeedInMegahertz()));
+        log += String("\nRAM (mb): " + String(Sys::getMemorySizeInMegabytes()));
+        log += String("\nBuild Date: " + String(__DATE__));
+        juce::PluginHostType host;
+        log += String("\nDAW: " + String(host.getHostDescription()));
+
+        pluginProcessor.panic(log);
+        
+        const auto& user = *state.props.getUserSettings();
+        const auto directory = user.getFile().getParentDirectory();
+		const auto file = directory.getChildFile("Panic.txt");
+		if (file.existsAsFile())
+			file.deleteFile();
+        file.create();
+        file.appendText(log);
+        file.revealToUser();
+
+        suspendProcessing(false);
+        startTimerHz(4);
+    }
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

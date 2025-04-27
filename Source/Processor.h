@@ -66,6 +66,8 @@ namespace audio
         bool supportsDoublePrecisionProcessing() const override;
         void forcePrepare();
 
+        void panic();
+
 #if PPDHasTuningEditor
         XenManager xenManager;
 #endif

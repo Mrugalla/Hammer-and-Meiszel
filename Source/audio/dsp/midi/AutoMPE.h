@@ -25,6 +25,8 @@ namespace dsp
 
 		const Voices& getVoices() const noexcept;
 
+		void panic(String& panic);
+
 	private:
 		MidiBuffer buffer;
 		Voices voices;

@@ -45,6 +45,14 @@ namespace dsp
 
 			void reset() noexcept;
 
+			void panic(String& log)
+			{
+				sleepy.panic(log);
+				log += "\nPitch: " + String(val.pitch);
+				log += "\nTranspose: " + String(val.transpose);
+				log += "\nPitchbend: " + String(val.pb);
+			}
+
 			// materialStereo, sampleRate
 			void prepare(const MaterialDataStereo&, double);
 

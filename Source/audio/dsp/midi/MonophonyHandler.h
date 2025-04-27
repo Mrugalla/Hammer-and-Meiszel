@@ -27,6 +27,14 @@ namespace dsp
 			processBlockPoly(midi);
 		}
 
+		void panic(String& log)
+		{
+			log += ("\n        MonophonyHandler:\n");
+			for (auto i = 0; i < heldNotes.size(); ++i)
+				log += String(i) + ":" + String(heldNotes[i]) + "; ";
+			log += String("\ncurNote: " + String(curNote));
+			log += String("\npolyphony: " + String(polyphony));
+		}
 	private:
 		MidiBuffer buffer;
 		std::array<uint8, 128> heldNotes;

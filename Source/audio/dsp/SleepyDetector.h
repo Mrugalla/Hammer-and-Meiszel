@@ -1,5 +1,5 @@
 #pragma once
-#include "../../arch/Math.h"
+#include "../Using.h"
 
 namespace dsp
 {
@@ -32,7 +32,6 @@ namespace dsp
 
 				double val;
 			};
-
 		public:
 			Mono() :
 				sample(),
@@ -98,6 +97,12 @@ namespace dsp
 				d.prepare(timerLength);
 			noteOn = false;
 		};
+
+		void panic(String& log)
+		{
+			log += "\nRinging: " + String(isRinging() ? "1" : "0");
+			log += "\nNoteOn: " + String(noteOn ? "1" : "0");
+		}
 
 		void triggerNoteOn() noexcept
 		{

@@ -53,6 +53,7 @@ namespace gui
 		std::array<Button, kNumButtons> buttons;
 		ButtonPower buttonPower;
 		VoiceGrid<dsp::AutoMPE::VoicesSize> voiceGrid;
+		Button panic;
 		LabelGroup labelGroup, tuningLabelGroup;
 		bool keySelectorEnabled;
 

@@ -106,6 +106,18 @@ namespace dsp
 		}
 	}
 
+	void KeySelector::panic(String& log)
+	{
+		log += "\n        KeySelector:\n";
+		for (auto i = 0; i < NumKeys; ++i)
+			log += String(i) + ":" + String((keys[i].load() ? 1 : 0)) + ";";
+		log += "\nRequest Update: " + String(requestUpdate.load() ? 1 : 0) + "\n";
+		for (auto i = 0; i < NumMPEChannels; ++i)
+			log += String(i) + ":" + String(actives[i]) + ";";
+		log += "\nOffset: " + String(offset);
+		log += "\nEnabled: " + String(enabled ? 1 : 0);
+	}
+
 	void KeySelector::generateNoteOff(MidiBuffer& midi, int active)
 	{
 		const auto s = 0;

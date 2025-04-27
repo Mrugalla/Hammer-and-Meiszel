@@ -14,6 +14,15 @@ namespace dsp
 		poly(VoicesSize)
 	{}
 
+	void AutoMPE::panic(String& log)
+	{
+		log += "\n        AutoMPE:\nVoices:";
+		for (auto i = 0; i < VoicesSize; ++i)
+			log += "\n" + String(i) + ", " + String(voices[i].note) + ", " + String(voices[i].channel);
+		log += "\nChannel Index:" + String(channelIdx);
+		log += "\nPolyphony:" + String(poly);
+	}
+
 	const AutoMPE::Voices& AutoMPE::AutoMPE::getVoices() const noexcept
 	{
 		return voices;

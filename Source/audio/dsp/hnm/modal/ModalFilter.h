@@ -15,6 +15,17 @@ namespace dsp
 
 			void operator()() noexcept;
 
+			void panic(String& log)
+			{
+				log += "\n        Modal:";
+				log += "\nTranspose(semi): " + String(transposeSemi);
+				for (auto i = 0; i < voices.size(); ++i)
+				{
+					log += "\n    Voice " + String(i) + ":";
+					voices[i].panic(log);
+				}
+			}
+
 			// samples, params, xen, envGenMod, numChannels, numSamples, v
 			void operator()(double**, const Voice::Parameters&,
 				double, int, int, int) noexcept;

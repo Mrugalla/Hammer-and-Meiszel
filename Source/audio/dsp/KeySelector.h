@@ -30,6 +30,8 @@ namespace dsp
 		void operator()(MidiBuffer&, const XenManager&,
 			int, bool);
 
+		void panic(String&);
+
 		std::array<std::atomic<bool>, NumKeys> keys;
 		std::atomic<bool> requestUpdate;
 	protected:
