@@ -62,9 +62,8 @@ namespace dsp
 		return static_cast<int>(std::round(offset));
 	}
 
-	// midi, xen, enabled, playing
 	void KeySelector::operator()(MidiBuffer& midi, const XenManager& xen,
-		bool _enabled, bool)
+		int poly, bool _enabled)
 	{
 		const bool enabledSame = enabled == _enabled;
 		if (enabledSame)
@@ -80,8 +79,8 @@ namespace dsp
 			{
 				generateNoteOffs(midi);
 				offset = _offset;
-				updateActives();
-				generateNoteOns(midi);
+				updateActives(poly);
+				generateNoteOns(midi, poly);
 			}
 		}
 		else
@@ -101,8 +100,8 @@ namespace dsp
 				midi.addEvent(MidiMessage::allNotesOff(1), 0);
 				enabled = true;
 				offset = getOffset(xen);
-				updateActives();
-				generateNoteOns(midi);
+				updateActives(poly);
+				generateNoteOns(midi, poly);
 			}
 		}
 	}
@@ -136,9 +135,9 @@ namespace dsp
 		}
 	}
 
-	void KeySelector::generateNoteOns(MidiBuffer& midi)
+	void KeySelector::generateNoteOns(MidiBuffer& midi, int poly)
 	{
-		for (auto i = 0; i < actives.size(); ++i)
+		for (auto i = 0; i < poly; ++i)
 		{
 			const auto active = actives[i];
 			if (active == -1)
@@ -147,10 +146,10 @@ namespace dsp
 		}
 	}
 
-	void KeySelector::updateActives() noexcept
+	void KeySelector::updateActives(int poly) noexcept
 	{
 		auto aIdx = 0;
-		for (auto i = 0; i < keys.size(); ++i)
+		for (auto i = 0; i < poly; ++i)
 		{
 			const bool keyEnabled = keys[i].load();
 			if (keyEnabled)
@@ -158,14 +157,14 @@ namespace dsp
 				auto& active = actives[aIdx];
 				active = i;
 				++aIdx;
-				if (aIdx == actives.size())
+				if (aIdx == poly)
 				{
 					requestUpdate.store(false);
 					return;
 				}
 			}
 		}
-		for (auto a = aIdx; a < actives.size(); ++a)
+		for (auto a = aIdx; a < poly; ++a)
 			actives[a] = -1;
 		requestUpdate.store(false);
 	}

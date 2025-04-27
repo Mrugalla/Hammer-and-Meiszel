@@ -26,9 +26,9 @@ namespace dsp
 		// keyIdx, e
 		void setKey(int, bool) noexcept;
 
-		// midi, xen, enabled, playing
+		// midi, xen, polyphony, enabled
 		void operator()(MidiBuffer&, const XenManager&,
-			bool, bool);
+			int, bool);
 
 		std::array<std::atomic<bool>, NumKeys> keys;
 		std::atomic<bool> requestUpdate;
@@ -45,8 +45,9 @@ namespace dsp
 		// midi, active
 		void generateNoteOn(MidiBuffer&, int active);
 
-		void generateNoteOns(MidiBuffer&);
+		void generateNoteOns(MidiBuffer&, int poly);
 
-		void updateActives() noexcept;
+		// poly
+		void updateActives(int) noexcept;
 	};
 }

@@ -181,7 +181,7 @@ namespace audio
 
 		const auto edo = xen.getXen();
 		const auto edoInt = static_cast<int>(std::round(edo));
-		const auto edoInPoly = edoInt < 15 ? edoInt : 15;
+		const auto edoInPoly = std::min(edoInt, dsp::NumMPEChannels);
 
 		const auto& polyParam = params(PID::Polyphony);
 		
@@ -189,7 +189,7 @@ namespace audio
 		const auto keySelectorEnabled = keySelectorEnabledParam.getValMod() > .5f;
 		const auto polyphony = keySelectorEnabled ? edoInPoly : static_cast<int>(std::round(polyParam.getValModDenorm()));
 		monophonyHandler(midi, polyphony);
-		keySelector(midi, xen, keySelectorEnabled, transport.playing);
+		keySelector(midi, xen, edoInPoly, keySelectorEnabled);
 		autoMPE(midi, polyphony);
 		voiceSplit(midi, numSamples);
 
