@@ -47,9 +47,9 @@ namespace dsp
 		// midi, active
 		void generateNoteOn(MidiBuffer&, int active);
 
-		void generateNoteOns(MidiBuffer&, int poly);
+		void generateNoteOns(MidiBuffer&);
 
 		// poly
-		void updateActives(int) noexcept;
+		void updateActives(int, int) noexcept;
 	};
 }

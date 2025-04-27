@@ -79,8 +79,9 @@ namespace dsp
 			{
 				generateNoteOffs(midi);
 				offset = _offset;
-				updateActives(poly);
-				generateNoteOns(midi, poly);
+				const auto xenFloor = static_cast<int>(std::floor(xen.getXen()));
+				updateActives(poly, xenFloor);
+				generateNoteOns(midi);
 			}
 		}
 		else
@@ -100,8 +101,9 @@ namespace dsp
 				midi.addEvent(MidiMessage::allNotesOff(1), 0);
 				enabled = true;
 				offset = getOffset(xen);
-				updateActives(poly);
-				generateNoteOns(midi, poly);
+				const auto xenFloor = static_cast<int>(std::floor(xen.getXen()));
+				updateActives(poly, xenFloor);
+				generateNoteOns(midi);
 			}
 		}
 	}
@@ -121,7 +123,7 @@ namespace dsp
 	void KeySelector::generateNoteOff(MidiBuffer& midi, int active)
 	{
 		const auto s = 0;
-		const Uint8 velocity(127);
+		const Uint8 velocity(100);
 		const auto pitch = active + offset;
 		if(pitch >= 0 && pitch < 128)
 			midi.addEvent(MidiMessage::noteOff(1, pitch, velocity), s);
@@ -130,7 +132,7 @@ namespace dsp
 	void KeySelector::generateNoteOn(MidiBuffer& midi, int active)
 	{
 		const auto s = 0;
-		const Uint8 velocity(127);
+		const Uint8 velocity(100);
 		const auto pitch = active + offset;
 		if (pitch >= 0 && pitch < 128)
 			midi.addEvent(MidiMessage::noteOn(1, pitch, velocity), s);
@@ -138,7 +140,7 @@ namespace dsp
 
 	void KeySelector::generateNoteOffs(MidiBuffer& midi)
 	{
-		for (auto i = 0; i < actives.size(); ++i)
+		for (auto i = 0; i < NumMPEChannels; ++i)
 		{
 			const auto active = actives[i];
 			if (active == -1)
@@ -147,9 +149,9 @@ namespace dsp
 		}
 	}
 
-	void KeySelector::generateNoteOns(MidiBuffer& midi, int poly)
+	void KeySelector::generateNoteOns(MidiBuffer& midi)
 	{
-		for (auto i = 0; i < poly; ++i)
+		for (auto i = 0; i < NumMPEChannels; ++i)
 		{
 			const auto active = actives[i];
 			if (active == -1)
@@ -158,26 +160,34 @@ namespace dsp
 		}
 	}
 
-	void KeySelector::updateActives(int poly) noexcept
+	void KeySelector::updateActives(int poly, int xen) noexcept
 	{
-		auto aIdx = 0;
-		for (auto i = 0; i < poly; ++i)
+		for (auto& a : actives)
+			a = -1;
+		auto i = 0;
+		for (auto a = 0; a < poly; ++a)
 		{
-			const bool keyEnabled = keys[i].load();
-			if (keyEnabled)
+			bool lookingForKey = true;
+			do
 			{
-				auto& active = actives[aIdx];
-				active = i;
-				++aIdx;
-				if (aIdx == poly)
+				if (i < xen)
 				{
-					requestUpdate.store(false);
-					return;
+					const bool keyEnabled = keys[i].load();
+					if (keyEnabled)
+					{
+						actives[a] = i;
+						lookingForKey = false;
+					}
+					++i;
 				}
-			}
+				else
+				{
+					lookingForKey = false;
+					a = poly;
+				}
+				
+			} while (lookingForKey);
 		}
-		for (auto a = aIdx; a < poly; ++a)
-			actives[a] = -1;
 		requestUpdate.store(false);
 	}
 }

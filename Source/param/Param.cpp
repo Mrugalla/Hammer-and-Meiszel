@@ -1487,7 +1487,7 @@ namespace param
 			params.push_back(makeParam(PID::GainWet, -18.f, gainWetRange, Unit::Decibel));
 #elif PPDIO == PPDIOWetMix
 			const auto gainWetRange = makeRange::lin(PPDGainWetMin, PPDGainWetMax);
-			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainWet, -12.f, gainWetRange, Unit::Decibel));
 			params.push_back(makeParam(PID::Mix, 1.f));
 #if PPDHasDelta
 			params.push_back(makeParam(PID::Delta, 0.f, makeRange::toggle(), Unit::Power));
