@@ -11,6 +11,11 @@ https://youtu.be/rveePZIx33k?si=oS1t08KZsNUUHMoW
 
 Hammer & Meißel is a keytracked polyphonic modal filter (and more).
 
+Did you ever wonder what would happen if you used a ton of bandpass- and comb filters to shape
+any kind of noise into something beautiful with intricate harmonics? For example, what if
+there were drums that are also kinda bells and they are playing your chords, while still being
+punchy? That is one of the kinds of situations H&M throws you into! :)
+
 Every voice has:
 1. An ADSR Envelope Generator
 2. A modal filter and a formant filter in parallel
