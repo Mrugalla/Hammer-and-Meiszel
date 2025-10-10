@@ -7,6 +7,7 @@ H&M Routing MIDI in FL Studio:
 https://youtu.be/LBvgwIXNQhE?si=Tzi8ScNtdJQkEYbv
 
 H&M Music:
+https://beatsbasteln.bandcamp.com/album/bach-und-mei-el-in-7edo
 https://youtu.be/rveePZIx33k?si=oS1t08KZsNUUHMoW
 
 Hammer & Meißel is a keytracked polyphonic modal filter (and more).
